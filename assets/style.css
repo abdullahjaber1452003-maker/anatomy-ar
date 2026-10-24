@@ -168,3 +168,10 @@ model-viewer{direction:ltr;width:100%;height:100%;--poster-color:transparent;--p
 .ns-static .ns-scan,.ns-static .ns-bar{display:none}
 .ns-static .ns-in{transform:translateY(-3vh)}
 .logo svg{width:26px;height:26px;display:block}
+/* Adsterra banners (assets/ads.js): in the page flow, never sticky/overlay */
+.adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
+.adx.adx-on{display:block}
+.adx.adx-off{display:none}
+.adx-top{margin-top:12px}
+.adx-lbl{font-size:11px;line-height:1.2;color:#9ca3af;margin:0 0 3px;letter-spacing:.02em}
+.adx iframe{display:block;margin:0 auto;border:0;max-width:100%;background:transparent}

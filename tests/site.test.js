@@ -113,3 +113,28 @@ test('Google Analytics (GA4) tag on every page exactly once, inside <head>', () 
     assert.ok(h.includes('ca-pub-2554036492962277'), p + ' AdSense kept');
   }
 });
+
+test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () => {
+  const K = { m320: '735f5c76ee5abde951ff9d70e2263fab', d728: 'f0cd90c85278798fba5a155236050d61', box: '9892bba2f704f8ea66787de07f9f7be3' };
+  const want = { 'index.html': ['m320','d728'], 'cardio.html': ['m320','d728','box'], 'neuro.html': ['m320','d728','box'], 'henderson.html': ['m320','d728','box'], 'quiz.html': ['m320','d728','box'], '3d.html': ['box'] };
+  for (const [p, keys] of Object.entries(want)) {
+    const h = read(p);
+    for (const k of Object.keys(K)) assert.strictEqual(h.split(K[k]).length - 1, keys.includes(k) ? 1 : 0, p + ' ' + k);
+    assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1, p + ' ads.js once');
+    assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'), p + ' AdSense + GA kept');
+  }
+  const q = read('quiz.html');
+  assert.ok(q.indexOf(K.box) > q.indexOf('id="quiz"'), 'quiz box ad sits below the quiz/results area');
+  for (const p of ['404.html','privacy.html','credits.html','about.html']) {
+    const h = read(p);
+    for (const k of Object.values(K)) assert.ok(!h.includes(k), p + ' must not carry ' + k);
+    assert.ok(!h.includes('ads.js') && !h.includes('bauval.org') && !h.includes('class="adx'), p + ' no Adsterra');
+  }
+  const js = read('assets/ads.js'), css = read('assets/style.css');
+  for (const k of Object.values(K)) assert.ok(js.includes(k), 'ads.js knows ' + k);
+  assert.ok(js.includes("matchMedia('(min-width: 769px)')"), 'phone/desktop split at 768px');
+  assert.ok(js.includes('srcdoc') && js.includes('https://bauval.org/22/'), 'each unit in its own srcdoc iframe');
+  assert.ok(js.includes('إعلان'), 'ad label');
+  assert.ok(!/position\s*:\s*(fixed|sticky)/.test(css.slice(css.indexOf('.adx{'))), 'ads never sticky/overlay');
+  assert.ok(read('privacy.html').includes('Adsterra'), 'privacy mentions Adsterra');
+});
