@@ -144,7 +144,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024g/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024h/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -159,7 +159,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   assert.ok(fb.includes('signInWithPopup') && fb.includes('signInWithRedirect') && fb.includes('getRedirectResult'), 'popup with redirect fallback');
   assert.ok(fb.includes('تسجيل الدخول بغوغل') && fb.includes('ترتيب أصحابي') && fb.includes('wa.me'), 'Arabic UI, leaderboard, WhatsApp share');
   const rules = read('firestore.rules');
-  for (const k of ['match /users/{uid}', 'points is int', 'points < 1000000', 'name.size() < 40', 'match /friends/{fid}', 'match /friendCodes/{code}', 'allow update, delete: if false']) assert.ok(rules.includes(k), 'rules: ' + k);
+  for (const k of ['match /users/{uid}', 'points is int', 'points < 1000000', 'name.size() < 40', 'match /friends/{fid}', 'match /friendCodes/{code}', 'allow update, delete: if false', 'match /challenges/{cid}']) assert.ok(rules.includes(k), 'rules: ' + k);
   const pv = read('privacy.html');
   assert.ok(pv.includes('Firebase') && /name, photo and quiz points are stored with Google Firebase/.test(pv), 'privacy mentions Firebase (ar + en)');
   assert.ok(read('sitemap.xml').includes('friends.html'), 'sitemap');
@@ -186,4 +186,30 @@ test('levels and profile data fit the Firestore rules', () => {
   for (let i = 0; i < 200; i++) assert.match(N.newCode(), /^[A-Z0-9]{6}$/);
   assert.strictEqual(N.normCode(' k7q-2mx '), 'K7Q2MX');
   assert.strictEqual(N.esc('<img onerror=x>'), '&lt;img onerror=x&gt;');
+});
+
+test('phase 2: wrong answers cost 5 (never below 0), challenges pick the same 10 questions from a seed, rules allow the challenge lists', () => {
+  const vm = require('node:vm');
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(read('assets/quiz-data.js'), ctx);
+  vm.runInContext(read('assets/account.js'), ctx);
+  const N = ctx.window.Nursin, Q = ctx.window.QUIZ;
+  assert.strictEqual(N.addPoints(100, 7, 3), 155, '+10 right, -5 wrong');
+  assert.strictEqual(N.addPoints(10, 0, 5), 0, 'clamped at 0');
+  assert.strictEqual(N.quizDelta(2, 6), -10);
+  const ids = Q.map(q => q.id);
+  const a = N.pickQids(12345, ids, 10), b = N.pickQids(12345, ids.slice().reverse(), 10);
+  assert.strictEqual(a.length, 10); assert.strictEqual(new Set(a).size, 10, 'no repeats');
+  assert.strictEqual(JSON.stringify(a), JSON.stringify(b), 'same seed -> same questions, whatever the bank order');
+  for (const id of a) assert.ok(ids.includes(id), id);
+  assert.notStrictEqual(JSON.stringify(N.pickQids(999, ids, 10)), JSON.stringify(a), 'another seed -> another set');
+  assert.strictEqual(N.winner(7, 5), 'from'); assert.strictEqual(N.winner(4, 6), 'to'); assert.strictEqual(N.winner(5, 5), 'tie'); assert.strictEqual(N.winner(5, null), null);
+  const quiz = read('assets/quiz.js'), fb = read('assets/fb.js'), f = read('friends.html'), rules = read('firestore.rules');
+  assert.ok(quiz.includes('NursinQuiz') && quiz.includes('startChallenge') && quiz.includes('p.challenge'), 'quiz challenge mode');
+  assert.ok(f.includes('assets/quiz-data.js'), 'friends page has the question bank to pick challenge questions');
+  assert.ok(fb.includes('تحدّيات إلك') && fb.includes('تحدّياتي') && fb.includes('تحدّى'), 'challenge UI');
+  assert.ok(/where\("to", "==", user\.uid\)/.test(fb) && /where\("from", "==", user\.uid\)/.test(fb), 'challenge queries always filter by the signed-in user');
+  assert.ok(fb.includes('Bonus') && fb.includes('+ 20'), 'winner bonus once, by flag');
+  assert.ok(rules.includes('match /challenges/{cid}') && rules.includes('resource.data.to == request.auth.uid'), 'challenge rules with a list-friendly read');
 });
