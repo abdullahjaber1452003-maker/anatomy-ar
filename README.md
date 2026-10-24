@@ -77,3 +77,6 @@ Approval is required and not guaranteed; a `github.io` address is usually refuse
 
 ### Disclaimer
 Educational revision content only; not medical advice. Always follow your institution's protocols.
+
+## Opening splash
+`assets/splash.js` (loaded right after `<body>` on every page) shows the nursin logo — a heart with a heartbeat line, a small nurse cross, «nursin» and «تمريض بالعربي» — once per browser session (sessionStorage), about 2 s, tap to skip. It hides itself by CSS even if JS stops, and shows a static logo for visitors who prefer reduced motion. The same heart is the favicon and the header logo.

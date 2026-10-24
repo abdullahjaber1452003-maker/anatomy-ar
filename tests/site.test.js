@@ -88,3 +88,10 @@ test('weak store: wrong answers saved per browser, graduate after 2 right in a r
   W.reset();
   assert.strictEqual(W.count(), 0);
 });
+test('opening splash: on every page, once per session, reduced-motion aware, never blocks', () => {
+  const js = read('assets/splash.js'), css = read('assets/style.css');
+  assert.ok(js.includes('sessionStorage'), 'session rule');
+  assert.ok(js.includes('prefers-reduced-motion'), 'reduced motion');
+  assert.ok(/\.nsplash\{[^}]*animation:ns-out/.test(css), 'splash hides itself by CSS even if JS stops');
+  for (const p of pages) { const h = read(p); assert.match(h, /<body[^>]*>\s*<script src="assets\/splash\.js\?v=/, p + ' splash'); assert.ok(h.includes('<main'), p + ' content stays in the HTML'); }
+});
