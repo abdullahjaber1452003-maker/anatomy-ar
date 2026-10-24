@@ -20,5 +20,13 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
+    match /challenges/{cid} {
+      // written as two == checks (not `in [from, to]`) so the list queries where("to","==",uid) / where("from","==",uid) pass
+      allow read: if request.auth != null && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.from == request.auth.uid;
+      allow update: if request.auth != null && request.auth.uid in [resource.data.from, resource.data.to]
+        && request.resource.data.from == resource.data.from
+        && request.resource.data.to == resource.data.to;
+    }
   }
 }
