@@ -35,7 +35,7 @@ A static (HTML/CSS/JS only) nursing-revision site in Arabic with French terms: c
 5. بعد دقيقة أو اثنتين: `https://اسم-المستخدم.github.io/nursing/`
 
 ### بعد ما يشتغل: غيّر الرابط
-الرابط التجريبي `https://abdullahjaber1452003-maker.github.io/anatomy-ar` مكتوب في `sitemap.xml` و`robots.txt` وأول كل صفحة `.html` (`canonical` و`og:url` و`og:image`). بدّلو برابطك بـ Find & Replace (مثلاً بـ VS Code). وغيّر `[ضع بريدك الإلكتروني هنا]` في `about.html` و`privacy.html`.
+الرابط التجريبي `https://nursin.store` مكتوب في `sitemap.xml` و`robots.txt` وأول كل صفحة `.html` (`canonical` و`og:url` و`og:image`). بدّلو برابطك بـ Find & Replace (مثلاً بـ VS Code). وغيّر `[ضع بريدك الإلكتروني هنا]` في `about.html` و`privacy.html`.
 
 ### الإعلانات (Google AdSense) — بصراحة
 - AdSense **بدها موافقة** من Google ومش مضمونة: محتوى أصلي وكافي، صفحة خصوصية (موجودة)، صفحة "من نحن" وطريقة تواصل.
@@ -66,7 +66,7 @@ Home, cardiology (12 lessons + 3D heart), neurology (8 lessons + 3D brain and lu
 3D uses Google's `<model-viewer>` (vendored in `vendor/`). The site first loads `vendor/model-viewer.min.js.bin` (the same file gzip-compressed, decompressed in the browser) and falls back to `vendor/model-viewer.min.js`. Models are meshopt-compressed GLB files in `models/`. Note: browsers block GLB loading from `file://`, so test over http (GitHub Pages or `python3 -m http.server`).
 
 ### Publish on GitHub Pages
-1. Create a **public** repository. 2. Upload the **contents** of the folder (including `assets/`, `models/`, `vendor/`, and `.nojekyll`). 3. *Settings → Pages → Deploy from a branch → `main` / root → Save.* 4. Replace `https://abdullahjaber1452003-maker.github.io/anatomy-ar` with your URL in `sitemap.xml`, `robots.txt` and each page's `canonical`/`og:` tags; add your email to `about.html` and `privacy.html`.
+1. Create a **public** repository. 2. Upload the **contents** of the folder (including `assets/`, `models/`, `vendor/`, and `.nojekyll`). 3. *Settings → Pages → Deploy from a branch → `main` / root → Save.* 4. Replace `https://nursin.store` with your URL in `sitemap.xml`, `robots.txt` and each page's `canonical`/`og:` tags; add your email to `about.html` and `privacy.html`.
 
 ### AdSense, honestly
 Approval is required and not guaranteed; a `github.io` address is usually refused — buy a custom domain and connect it in *Settings → Pages*. Revenue starts small. After approval, uncomment the head script (search `Google AdSense`) and the `<ins class="adsbygoogle">` units inside `class="ad-slot"`, and fill `ads.txt`. EU/UK visitors need a certified consent banner (AdSense *Privacy & messaging*). Some lesson content is based on class course material — check with the instructor/institute before monetising it publicly.
