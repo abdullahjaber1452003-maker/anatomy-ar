@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const SITE = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(SITE, f), 'utf8');
-const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html'];
+const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html','exams.html','live.html'];
 test('pages exist with title, viewport, rtl', () => {
   for (const p of pages) {
     const h = read(p);
@@ -116,7 +116,7 @@ test('Google Analytics (GA4) tag on every page exactly once, inside <head>', () 
 
 test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () => {
   const K = { m320: '735f5c76ee5abde951ff9d70e2263fab', d728: 'f0cd90c85278798fba5a155236050d61', box: '9892bba2f704f8ea66787de07f9f7be3' };
-  const want = { 'index.html': ['m320','d728'], 'cardio.html': ['m320','d728','box'], 'neuro.html': ['m320','d728','box'], 'henderson.html': ['m320','d728','box'], 'quiz.html': ['m320','d728','box'], '3d.html': ['box'] };
+  const want = { 'index.html': ['m320','d728'], 'cardio.html': ['m320','d728','box'], 'neuro.html': ['m320','d728','box'], 'henderson.html': ['m320','d728','box'], 'quiz.html': ['m320','d728','box'], '3d.html': ['box'], 'exams.html': ['m320','d728'] };
   for (const [p, keys] of Object.entries(want)) {
     const h = read(p);
     for (const k of Object.keys(K)) assert.strictEqual(h.split(K[k]).length - 1, keys.includes(k) ? 1 : 0, p + ' ' + k);
@@ -125,7 +125,7 @@ test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () =>
   }
   const q = read('quiz.html');
   assert.ok(q.indexOf(K.box) > q.indexOf('id="quiz"'), 'quiz box ad sits below the quiz/results area');
-  for (const p of ['404.html','privacy.html','credits.html','about.html']) {
+  for (const p of ['404.html','privacy.html','credits.html','about.html','live.html']) {
     const h = read(p);
     for (const k of Object.values(K)) assert.ok(!h.includes(k), p + ' must not carry ' + k);
     assert.ok(!h.includes('ads.js') && !h.includes('bauval.org') && !h.includes('class="adx'), p + ' no Adsterra');
@@ -144,7 +144,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024h/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024i/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -172,11 +172,11 @@ test('levels and profile data fit the Firestore rules', () => {
   vm.createContext(ctx);
   vm.runInContext(read('assets/account.js'), ctx);
   const N = ctx.window.Nursin;
-  const lv = [[0,1],[49,1],[50,2],[199,2],[200,3],[450,4],[800,5],[4050,10]];
+  const lv = [[0,1],[14,1],[15,2],[59,2],[60,3],[135,4],[240,5],[1215,10]];
   for (const [p, l] of lv) assert.strictEqual(N.level(p), l, 'level at ' + p);
-  const g = N.progress(120);
-  assert.strictEqual(g.level, 2); assert.strictEqual(g.to, 200); assert.strictEqual(g.left, 80); assert.ok(g.pct >= 0 && g.pct <= 100);
-  assert.strictEqual(N.addPoints(30, 7), 100, 'correct answers x 10');
+  const g = N.progress(40);
+  assert.strictEqual(g.level, 2); assert.strictEqual(g.to, 60); assert.strictEqual(g.left, 20); assert.ok(g.pct >= 0 && g.pct <= 100);
+  assert.strictEqual(N.addPoints(30, 7), 51, 'correct answers x 3');
   const big = N.addPoints(999990, 20);
   assert.ok(Number.isInteger(big) && big >= 0 && big < 1000000, 'points stay an int under 1e6');
   assert.ok(Number.isInteger(N.addPoints(-5, 2.7)) && N.addPoints(-5, 0) === 0, 'never negative or fractional');
@@ -195,9 +195,9 @@ test('phase 2: wrong answers cost 5 (never below 0), challenges pick the same 10
   vm.runInContext(read('assets/quiz-data.js'), ctx);
   vm.runInContext(read('assets/account.js'), ctx);
   const N = ctx.window.Nursin, Q = ctx.window.QUIZ;
-  assert.strictEqual(N.addPoints(100, 7, 3), 155, '+10 right, -5 wrong');
+  assert.strictEqual(N.addPoints(100, 7, 3), 106, '+3 right, -5 wrong');
   assert.strictEqual(N.addPoints(10, 0, 5), 0, 'clamped at 0');
-  assert.strictEqual(N.quizDelta(2, 6), -10);
+  assert.strictEqual(N.quizDelta(2, 6), -24);
   const ids = Q.map(q => q.id);
   const a = N.pickQids(12345, ids, 10), b = N.pickQids(12345, ids.slice().reverse(), 10);
   assert.strictEqual(a.length, 10); assert.strictEqual(new Set(a).size, 10, 'no repeats');
@@ -210,6 +210,98 @@ test('phase 2: wrong answers cost 5 (never below 0), challenges pick the same 10
   assert.ok(f.includes('assets/quiz-data.js'), 'friends page has the question bank to pick challenge questions');
   assert.ok(fb.includes('تحدّيات إلك') && fb.includes('تحدّياتي') && fb.includes('تحدّى'), 'challenge UI');
   assert.ok(/where\("to", "==", user\.uid\)/.test(fb) && /where\("from", "==", user\.uid\)/.test(fb), 'challenge queries always filter by the signed-in user');
-  assert.ok(fb.includes('Bonus') && fb.includes('+ 20'), 'winner bonus once, by flag');
+  assert.ok(fb.includes('Bonus') && fb.includes('+ N.BONUS') && N.BONUS === 10, 'winner bonus (+10) once, by flag');
   assert.ok(rules.includes('match /challenges/{cid}') && rules.includes('resource.data.to == request.auth.uid'), 'challenge rules with a list-friendly read');
+});
+
+function loadN() {
+  const vm = require('node:vm');
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(read('assets/quiz-data.js'), ctx);
+  vm.runInContext(read('assets/account.js'), ctx);
+  return { N: ctx.window.Nursin, Q: ctx.window.QUIZ };
+}
+test('phase 3: weekly exams — Mon–Sat, 2 different subjects a day, Sunday off, same questions for everyone, ids the rules accept', () => {
+  const { N, Q } = loadN();
+  const seen = new Set();
+  for (let w = 0; w < 4; w++) {
+    const week = N.weekOf(N.addDays('2026-10-26', 7 * w));
+    assert.strictEqual(week.length, 6, 'Mon–Sat');
+    assert.strictEqual(N.weekday(week[0].day), 0, 'starts Monday');
+    for (const d of week) {
+      assert.strictEqual(d.exams.length, 2, d.day + ' has 2 exams');
+      assert.notStrictEqual(d.exams[0].k, d.exams[1].k, d.day + ' two different subjects');
+      for (const e of d.exams) {
+        seen.add(e.k);
+        assert.match(e.id, /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z]+$/, 'rules regex ' + e.id);
+        const a = N.examQids(e, Q), b = N.examQids(e, Q.slice().reverse());
+        assert.ok(a.length >= 8 && a.length <= 10, e.id + ' 8–10 questions');
+        assert.strictEqual(JSON.stringify(a), JSON.stringify(b), 'same questions for every student');
+        for (const id of a) assert.ok(e.t.includes(Q.find(q => q.id === id).t), id + ' belongs to ' + e.k);
+        assert.strictEqual(N.examById(e.id).k, e.k);
+      }
+    }
+    assert.strictEqual(N.examsFor(N.addDays(week[0].day, 6)).length, 0, 'Sunday off');
+  }
+  assert.strictEqual(seen.size, N.SUBJECTS.length, 'rotation covers every subject');
+  for (const s of N.SUBJECTS) for (const t of s.t) assert.ok(Q.some(q => q.t === t), 'subject topic exists: ' + t);
+  assert.strictEqual(N.examById('2026-10-25-ecg'), null, 'no exam on a Sunday');
+  assert.strictEqual(N.examById('bad'), null);
+  assert.match(N.dayKey(new Date('2026-10-24T22:30:00Z')), /^2026-10-25$/, 'Lebanon day (UTC+3 in October)');
+});
+test('phase 3: month points reset with the month, live-room scoring, 50/50 counts', () => {
+  const { N, Q } = loadN();
+  const now = new Date('2026-10-24T12:00:00Z');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(N.monthWrite({ monthKey: '2026-10', monthPoints: 20 }, 100, 109, now))), { monthKey: '2026-10', monthPoints: 29, m202610: 29 });
+  assert.strictEqual(N.monthWrite({ monthKey: '2026-09', monthPoints: 500 }, 100, 106, now).monthPoints, 6, 'new month starts from 0');
+  assert.strictEqual(N.monthWrite({ monthKey: '2026-10', monthPoints: 4 }, 100, 90, now).monthPoints, 0, 'month points never below 0');
+  assert.strictEqual(N.monthField('2026-10'), 'm202610'); assert.strictEqual(N.prevMonth('2026-01'), '2025-12');
+  const qids = Q.slice(0, 4).map(q => q.id), right = Q[0].a, wrong = (Q[1].a + 1) % Q[1].o.length;
+  const t = N.roomTally(qids, { 0: right, 1: wrong }, Q);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(t)), { c: 1, w: 1, skip: 2 });
+  assert.strictEqual(N.roomPoints(20, t, false), 18, '+3 −5, unanswered 0');
+  assert.strictEqual(N.roomPoints(20, t, true), 28, 'winner +10');
+  assert.strictEqual(N.roomPoints(0, { c: 0, w: 3 }, true), 10, 'clamp at 0 then the bonus');
+  assert.strictEqual(N.roomWinner(5, 3, null, 'H', 'G'), 'host'); assert.strictEqual(N.roomWinner(2, 3, null, 'H', 'G'), 'guest');
+  assert.strictEqual(N.roomWinner(3, 3, null, 'H', 'G'), 'tie'); assert.strictEqual(N.roomWinner(9, 0, 'H', 'H', 'G'), 'guest', 'the one who left loses');
+  assert.strictEqual(N.LIVE.Q_SEC, 20); assert.ok(N.LIVE.STALE_MS > 2 * N.LIVE.HB_MS, 'timeout longer than two heartbeats');
+  const today = N.dayKey();
+  assert.strictEqual(N.puAvail({}, today), 1, 'one free a day');
+  assert.strictEqual(N.puAvail({ puDay: today, powerups: 2 }, today), 2);
+  assert.strictEqual(N.puAvail({ puDay: today, powerups: 99 }, today), 50, 'capped at 50');
+  assert.strictEqual(N.PU_PRICE, 10);
+});
+test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams / month / power-ups', () => {
+  for (const p of pages) assert.ok(read(p).includes('<a href="exams.html"'), p + ' nav links exams.html');
+  const lv = read('live.html'), ex = read('exams.html');
+  assert.ok(lv.includes('id="live-app"') && lv.includes('assets/quiz-data.js'), 'live page shell + question bank');
+  assert.ok(ex.includes('id="exams-app"') && ex.includes('assets/quiz-data.js') && ex.includes('aria-current="page"'), 'exams page shell');
+  const acc = read('assets/account.js');
+  assert.ok(acc.includes("page==='live.html'") && acc.includes("page==='exams.html'"), 'Firebase loads on the new pages for signed-out visitors too');
+  const fb = read('assets/fb.js'), live = read('assets/live.js'), exj = read('assets/exams.js'), quiz = read('assets/quiz.js');
+  assert.ok(fb.includes('import("./" + name + ".js" + ver)'), 'live/exams modules load lazily with the same cache tag');
+  for (const js of [live, exj]) assert.ok(!/from "/.test(js) && !/measurementId|getAnalytics/.test(js), 'no extra SDK imports in the lazy modules');
+  assert.ok(live.includes('onSnapshot') && live.includes('Seen') && live.includes('runTransaction') && live.includes('serverTimestamps: "estimate"'), 'synced room: live listener, heartbeats, transactional next question');
+  assert.ok(live.includes('where("invited", "==", A.user.uid)') && live.includes('ltoast'), 'invitations filtered by the signed-in user + toast');
+  assert.ok(live.includes('مش مسموح باللايف') && quiz.includes('بالامتحان') && quiz.includes('بالتحدّي'), '50/50 disabled in live, exams and challenges');
+  assert.ok(exj.includes('examStarts') && exj.includes('الأوائل هالشهر') && exj.includes('orderBy(f, "desc")'), 'exams: start marker, monthly leaderboard');
+  assert.ok(fb.includes('"examResults", q.exam + "_" + user.uid') && fb.includes('{ merge: true }'), 'exam result keyed {examId}_{uid}; profile writes merge');
+  assert.ok(fb.includes('NOT') || exj.includes('NOT_READY'), 'friendly message while the old rules are live');
+  const rules = read('firestore.rules');
+  for (const k of ['match /rooms/{rid}', 'match /examStarts/{key}', 'match /examResults/{key}', "optInt(request.resource.data, 'powerups', 50)", "optInt(request.resource.data, 'monthPoints', 999999)",
+    'exists(/databases/$(database)/documents/examStarts/$(key))', 'changed().hasOnly(', 'examOpen(', "key.split('_')[1] == request.auth.uid"]) assert.ok(rules.includes(k), 'rules: ' + k);
+  assert.strictEqual((rules.match(/allow update, delete: if false;/g) || []).length, 3, 'friendCodes, examStarts, examResults are create-only');
+  assert.ok(read('sitemap.xml').includes('exams.html') && read('privacy.html').includes('monthly leaderboard'), 'sitemap + privacy');
+});
+
+test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
+  const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261024i') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
+  assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
+  assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
+  assert.ok(v.includes('window.nursin3dGate.then(go)'), 'models load only after the gate');
+  assert.ok(/\.gate3d\{position:fixed;left:0;right:0;top:56px/.test(css), 'overlay starts under the site header');
+  for (const p of ['cardio.html', 'neuro.html']) assert.ok(!read(p).includes('gate3d'), p + ' has no ad screen');
 });
