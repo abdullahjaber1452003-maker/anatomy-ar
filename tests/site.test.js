@@ -54,3 +54,37 @@ test('SEO files', () => {
   assert.match(read('robots.txt'), /Sitemap:/);
   assert.ok(read('index.html').includes('class="ad-slot"'));
 });
+test('weak points are personal: no hard-coded list, every question has a stable id', () => {
+  const src = read('assets/quiz-data.js');
+  const Q = JSON.parse(src.match(/window\.QUIZ=(\[.*?\]);\n/s)[1]);
+  const ids = new Set(Q.map(q => q.id));
+  assert.strictEqual(ids.size, Q.length, 'ids unique');
+  for (const q of Q) { assert.match(q.id, /^q\d{3,}$/); assert.ok(!('w' in q), q.id + ' still has a hard-coded weak flag'); }
+  for (const p of pages) { const h = read(p); assert.ok(!/نقطة ضعف|نقاط الضعف/.test(h), p + ' still frames tips as the owner\'s weak points'); }
+  for (const p of ['index.html','quiz.html']) { const h = read(p); assert.ok(h.includes('id="weak"'), p + ' #weak'); assert.ok(h.includes('assets/weak.js'), p + ' weak.js'); }
+});
+test('weak store: wrong answers saved per browser, graduate after 2 right in a row, reset clears', () => {
+  const vm = require('node:vm');
+  const store = {};
+  const ctx = { window: { localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } } } };
+  vm.createContext(ctx);
+  vm.runInContext(read('assets/quiz-data.js'), ctx);
+  vm.runInContext(read('assets/weak.js'), ctx);
+  const W = ctx.window.Weak, Q = ctx.window.QUIZ;
+  assert.strictEqual(W.count(), 0);
+  assert.strictEqual(W.record(Q[0], true), null, 'right answer on a new question stores nothing');
+  assert.strictEqual(W.record(Q[0], false), 'added');
+  assert.strictEqual(W.record(Q[1], false), 'added');
+  assert.strictEqual(W.record(Q[0], false), 'progress');
+  assert.strictEqual(W.count(), 2);
+  assert.strictEqual(JSON.stringify(W.questions().map(q => q.id).sort()), JSON.stringify([Q[0].id, Q[1].id].sort()));
+  assert.ok(W.topics().length >= 1);
+  assert.strictEqual(W.record(Q[0], true), 'progress');
+  assert.strictEqual(W.record(Q[0], false), 'progress', 'a miss resets the streak');
+  assert.strictEqual(W.record(Q[0], true), 'progress');
+  assert.strictEqual(W.record(Q[0], true), 'graduated');
+  assert.strictEqual(W.count(), 1);
+  assert.ok(store.nursin_weak_v1.includes(Q[1].id), 'persisted in localStorage');
+  W.reset();
+  assert.strictEqual(W.count(), 0);
+});
