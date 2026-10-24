@@ -10,7 +10,7 @@
   /* escape أول، بعدين **…** ← <b>، عناوين # وبنود * ← نص عادي، وسطر جديد ← <br> */
   function fmt(t){
     var h=esc(String(t==null?'':t).replace(/\r\n?/g,'\n'));
-    h=h.replace(/^\s{0,3}#{1,6}\s+(.+)$/gm,'**$1**');
+    h=h.replace(/^\s{0,3}#{1,6}\s+(.+)$/gm,'**$1**').replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm,'');
     h=h.replace(/^(\s*)[*\-]\s+/gm,'$1• ');
     h=h.replace(/\*\*([^*\n][^\n]*?)\*\*/g,'<b>$1</b>');
     h=h.replace(/\*\*/g,'').replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\w)/g,'$1$2');
