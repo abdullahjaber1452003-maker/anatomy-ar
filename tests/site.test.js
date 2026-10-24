@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const SITE = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(SITE, f), 'utf8');
-const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html'];
+const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html'];
 test('pages exist with title, viewport, rtl', () => {
   for (const p of pages) {
     const h = read(p);
@@ -137,4 +137,53 @@ test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () =>
   assert.ok(js.includes('إعلان'), 'ad label');
   assert.ok(!/position\s*:\s*(fixed|sticky)/.test(css.slice(css.indexOf('.adx{'))), 'ads never sticky/overlay');
   assert.ok(read('privacy.html').includes('Adsterra'), 'privacy mentions Adsterra');
+});
+
+test('friends + levels: page, nav link and account script on every page, Firebase modular CDN, no Firebase Analytics', () => {
+  assert.ok(pages.includes('friends.html'), 'friends.html checked by every page test above');
+  for (const p of pages) {
+    const h = read(p);
+    assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024g/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
+  }
+  const f = read('friends.html');
+  assert.ok(f.includes('id="friends-app"') && f.includes('aria-current="page"'), 'friends page shell');
+  assert.ok(!f.includes('ads.js') && !f.includes('class="adx'), 'no Adsterra on the sign-in page');
+  const fb = read('assets/fb.js');
+  const imports = [...fb.matchAll(/from "([^"]+)"/g)].map(m => m[1]);
+  assert.ok(imports.length >= 3, 'modular imports');
+  for (const u of imports) assert.match(u, /^https:\/\/www\.gstatic\.com\/firebasejs\/1\d\.\d+\.\d+\/firebase-(app|auth|firestore)\.js$/, u);
+  assert.ok(fb.includes('projectId: "nursin-5aaa0"') && fb.includes('authDomain: "nursin-5aaa0.firebaseapp.com"'), 'project config');
+  assert.ok(!/measurementId|getAnalytics|firebase-analytics/.test(fb), 'no Firebase Analytics (site uses GA4)');
+  assert.ok(fb.includes('signInWithPopup') && fb.includes('signInWithRedirect') && fb.includes('getRedirectResult'), 'popup with redirect fallback');
+  assert.ok(fb.includes('تسجيل الدخول بغوغل') && fb.includes('ترتيب أصحابي') && fb.includes('wa.me'), 'Arabic UI, leaderboard, WhatsApp share');
+  const rules = read('firestore.rules');
+  for (const k of ['match /users/{uid}', 'points is int', 'points < 1000000', 'name.size() < 40', 'match /friends/{fid}', 'match /friendCodes/{code}', 'allow update, delete: if false']) assert.ok(rules.includes(k), 'rules: ' + k);
+  const pv = read('privacy.html');
+  assert.ok(pv.includes('Firebase') && /name, photo and quiz points are stored with Google Firebase/.test(pv), 'privacy mentions Firebase (ar + en)');
+  assert.ok(read('sitemap.xml').includes('friends.html'), 'sitemap');
+  const q = read('assets/quiz.js');
+  assert.ok(q.includes("'nursin:quiz-done'") && q.includes('id="qpts"'), 'quiz results fire the points hook');
+});
+test('levels and profile data fit the Firestore rules', () => {
+  const vm = require('node:vm');
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(read('assets/account.js'), ctx);
+  const N = ctx.window.Nursin;
+  const lv = [[0,1],[49,1],[50,2],[199,2],[200,3],[450,4],[800,5],[4050,10]];
+  for (const [p, l] of lv) assert.strictEqual(N.level(p), l, 'level at ' + p);
+  const g = N.progress(120);
+  assert.strictEqual(g.level, 2); assert.strictEqual(g.to, 200); assert.strictEqual(g.left, 80); assert.ok(g.pct >= 0 && g.pct <= 100);
+  assert.strictEqual(N.addPoints(30, 7), 100, 'correct answers x 10');
+  const big = N.addPoints(999990, 20);
+  assert.ok(Number.isInteger(big) && big >= 0 && big < 1000000, 'points stay an int under 1e6');
+  assert.ok(Number.isInteger(N.addPoints(-5, 2.7)) && N.addPoints(-5, 0) === 0, 'never negative or fractional');
+  const long = N.cleanName('عبدالله '.repeat(20));
+  assert.ok(typeof long === 'string' && Array.from(long).length <= 39 && long.length < 40, 'name under 40 chars');
+  assert.ok(N.cleanName('').length > 0, 'empty name gets a default');
+  for (let i = 0; i < 200; i++) assert.match(N.newCode(), /^[A-Z0-9]{6}$/);
+  assert.strictEqual(N.normCode(' k7q-2mx '), 'K7Q2MX');
+  assert.strictEqual(N.esc('<img onerror=x>'), '&lt;img onerror=x&gt;');
 });
