@@ -1,7 +1,7 @@
 /* الأستاذ المساعد */
 .tchat{padding:10px;display:flex;flex-direction:column;gap:8px}
 .tlink{background:none;border:0;padding:0 4px;font:inherit;color:var(--pri2);text-decoration:underline;cursor:pointer}.tlink[hidden]{display:none}
-.tlog{height:58vh;height:calc(100dvh - 340px);min-height:240px;max-height:640px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:6px 2px;background:#f8fbfb;border:1px solid var(--line);border-radius:12px}
+.tlog{position:relative;height:58vh;height:calc(100dvh - 340px);min-height:240px;max-height:640px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:6px 2px;background:#f8fbfb;border:1px solid var(--line);border-radius:12px}
 .tmsg{display:flex;gap:6px;align-items:flex-end;max-width:92%;padding:0 6px}
 .tme{align-self:flex-end}
 .tbot{align-self:flex-start}

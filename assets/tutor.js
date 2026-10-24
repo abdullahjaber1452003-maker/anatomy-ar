@@ -13,7 +13,7 @@
     h=h.replace(/^\s{0,3}#{1,6}\s+(.+)$/gm,'**$1**');
     h=h.replace(/^(\s*)[*\-]\s+/gm,'$1• ');
     h=h.replace(/\*\*([^*\n][^\n]*?)\*\*/g,'<b>$1</b>');
-    h=h.replace(/\*\*/g,'');
+    h=h.replace(/\*\*/g,'').replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\w)/g,'$1$2');
     return h.replace(/\n/g,'<br>');
   }
   /* نص للقراءة بالصوت: بلا ** ولا # ولا إيموجي */
@@ -93,7 +93,7 @@
         var s=document.createElement('button');s.type='button';s.className='btn tspk';s.textContent='🔊 اسمع';s.setAttribute('aria-pressed','false');s.setAttribute('aria-label','اسمع الجواب بالصوت');
         s.addEventListener('click',function(){speak(text,s);});b.appendChild(s);
       }
-      log.appendChild(d);scroll();return d;
+      log.appendChild(d);if(opts.top)log.scrollTop=Math.max(0,d.offsetTop-8);else scroll();return d;
     }
     function renderAll(){
       stopSpeak();log.innerHTML='';
@@ -121,7 +121,7 @@
       var typing=bubble('assistant','',{noVoice:true,cls:'ttyping'});
       typing.querySelector('.tb').innerHTML='<span class="tdots" aria-label="الأستاذ عم يكتب"><i></i><i></i><i></i></span>';
       call().catch(function(){return wait(RETRY_MS).then(call);}).then(function(text){
-        typing.remove();hist.push({role:'assistant',text:text});save();bubble('assistant',text);setBusy(false);
+        typing.remove();hist.push({role:'assistant',text:text});save();bubble('assistant',text,{top:true});setBusy(false);
       },function(){
         typing.remove();
         var d=bubble('assistant',BUSY,{noVoice:true,cls:'terr'});
