@@ -182,7 +182,7 @@ model-viewer{direction:ltr;width:100%;height:100%;--poster-color:transparent;--p
 .acct .av{width:26px;height:26px}
 .acct .lv{display:flex;flex-direction:column;gap:2px;align-items:stretch}.acct .lv b{font:700 12px/1.1 system-ui,sans-serif;direction:ltr}
 .lvbar{display:block;width:40px;height:4px;border-radius:9px;background:rgba(255,255,255,.3);overflow:hidden;direction:ltr}.lvbar i{display:block;height:100%;background:#fbbf24;border-radius:9px}
-.bar .brand{min-width:0}.bar .brand b{overflow:hidden;text-overflow:ellipsis}
+.bar .brand{min-width:0;flex:1 1 auto}.bar .brand>span:last-child{min-width:0;overflow:hidden}.bar .brand b{overflow:hidden;text-overflow:ellipsis}.acct .uic{flex:0 0 16px}
 @media(max-width:480px){.bar .brand b{white-space:nowrap}}
 @media(max-width:400px){.bar .brand small{display:none}.bar .brand b{font-size:15.5px}}
 @media(min-width:860px){.nav ul.wrap{max-width:1240px}.nav a{padding:6px 8px}}
@@ -215,3 +215,11 @@ model-viewer{direction:ltr;width:100%;height:100%;--poster-color:transparent;--p
 .fout2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .lvt{min-width:0;max-width:320px}
 .qpts{font-size:16px;background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:8px 10px;margin:10px 0}.qpts:empty{display:none}
+.chal{font-size:13px;padding:4px 10px;white-space:nowrap;flex:0 0 auto}
+.chl{list-style:none;margin:6px 0 0;padding:0}.chr{padding:9px 6px;border-bottom:1px solid var(--line);line-height:1.9}.chr:last-child{border-bottom:0}
+.chr .btn{font-size:14px;padding:4px 12px;margin-inline-start:6px;text-decoration:none;display:inline-block}
+.chr.won{background:#f0fdf4;border-radius:10px}.chr.lost{background:#fafafa;border-radius:10px}
+.chsc{font:700 16px system-ui,sans-serif;background:#eef2f4;border-radius:8px;padding:0 8px;white-space:nowrap}
+.qnet .pos{color:#15803d}.qnet .neg{color:#b91c1c}
+.qch{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed #fde68a}.qch .btn{margin-top:6px;text-decoration:none;display:inline-block}
+.lbr .nm small .lvc{font-size:11.5px;padding:0 7px;margin-inline-end:4px}
