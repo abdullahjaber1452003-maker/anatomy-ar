@@ -1,5 +1,5 @@
 rules_version = '2';
-// nursin.store — Firestore rules v3 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50)
+// nursin.store — Firestore rules v4 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes)
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
@@ -23,6 +23,13 @@ service cloud.firestore {
       match /friends/{fid} {
         allow read: if signedIn();
         allow write: if signedIn() && request.auth.uid == uid;
+      }
+      // v4: the student's own list of classes (index only; the class itself decides who is a member)
+      match /myClasses/{cid} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['name', 'owner', 'at'])
+          && request.resource.data.name is string && request.resource.data.name.size() <= 40;
       }
     }
     match /friendCodes/{code} {
@@ -93,6 +100,86 @@ service cloud.firestore {
         && request.resource.data.total is int && request.resource.data.total >= 1 && request.resource.data.total <= 20
         && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= request.resource.data.total;
       allow update, delete: if false;
+    }
+
+    // 🏫 v4 classes «الصفوف»: members-only reads, owner-only admin, one exam per class per ISO week, one result per student per week
+    function classPath(cid) { return /databases/$(database)/documents/classes/$(cid); }
+    function codePath(code) { return /databases/$(database)/documents/classCodes/$(code); }
+    function isMember(cid) { return signedIn() && exists(/databases/$(database)/documents/classes/$(cid)/members/$(request.auth.uid)); }
+    function isClassOwner(cid) { return signedIn() && get(classPath(cid)).data.owner == request.auth.uid; }
+    function codeOk(c) { return c is string && c.matches('^[A-Z0-9]{6}$'); }
+    function nameOk(n) { return n is string && n.size() > 0 && n.size() <= 40; }
+    match /classCodes/{code} {
+      allow get: if signedIn();                                   // you need the code to find the class
+      allow list: if false;
+      allow create: if signedIn() && codeOk(code)
+        && request.resource.data.keys().hasOnly(['cid', 'name']) && nameOk(request.resource.data.name)
+        && getAfter(classPath(request.resource.data.cid)).data.owner == request.auth.uid
+        && getAfter(classPath(request.resource.data.cid)).data.code == code;
+      allow update: if false;
+      allow delete: if signedIn() && getAfter(classPath(resource.data.cid)).data.owner == request.auth.uid
+        && getAfter(classPath(resource.data.cid)).data.code != code;   // only an old code, after the owner made a new one
+    }
+    match /classes/{cid} {
+      allow read: if isMember(cid) || (signedIn() && resource.data.owner == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid
+        && request.resource.data.keys().hasOnly(['name', 'owner', 'ownerName', 'code', 'createdAt'])
+        && nameOk(request.resource.data.name) && codeOk(request.resource.data.code)
+        && request.resource.data.ownerName is string && request.resource.data.ownerName.size() < 40
+        && getAfter(codePath(request.resource.data.code)).data.cid == cid;
+      allow update: if signedIn() && resource.data.owner == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'code'])
+        && nameOk(request.resource.data.name) && codeOk(request.resource.data.code)
+        && getAfter(codePath(request.resource.data.code)).data.cid == cid;
+      allow delete: if false;
+
+      match /members/{uid} {
+        function memberOk(d) { return d.name is string && d.name.size() < 40 && d.photo is string && d.photo.size() <= 500
+          && d.level is int && d.level >= 1 && d.level <= 1000; }
+        allow read: if isMember(cid);
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['name', 'photo', 'level', 'code', 'joinedAt'])
+          && memberOk(request.resource.data) && codeOk(request.resource.data.code)
+          && getAfter(codePath(request.resource.data.code)).data.cid == cid;   // joined with the class's current code
+        allow update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photo', 'level'])
+          && memberOk(request.resource.data);
+        allow delete: if signedIn() && (request.auth.uid == uid || isClassOwner(cid));   // leave, or the owner removes
+      }
+      match /weeks/{wk} {
+        allow read: if isMember(cid);
+        allow create: if isMember(cid) && wk.matches('^[0-9]{4}-W[0-9]{2}$')
+          && request.resource.data.keys().hasOnly(['wk', 'qids', 'topics', 'intro', 'src', 'by', 'createdAt'])
+          && request.resource.data.wk == wk && request.resource.data.by == request.auth.uid
+          && request.resource.data.qids is list && request.resource.data.qids.size() >= 5 && request.resource.data.qids.size() <= 20
+          && request.resource.data.topics is list && request.resource.data.topics.size() <= 8
+          && request.resource.data.intro is string && request.resource.data.intro.size() <= 400
+          && request.resource.data.src in ['ai', 'auto'];
+        allow update, delete: if false;
+      }
+      match /starts/{key} {
+        allow read: if isMember(cid);
+        allow create: if isMember(cid) && request.resource.data.uid == request.auth.uid
+          && key == request.resource.data.wk + '_' + request.auth.uid
+          && request.resource.data.keys().hasOnly(['uid', 'wk', 'at']) && request.resource.data.at == request.time
+          && exists(/databases/$(database)/documents/classes/$(cid)/weeks/$(request.resource.data.wk));
+        allow update, delete: if false;
+      }
+      match /results/{key} {
+        allow read: if isMember(cid);
+        allow create: if isMember(cid) && request.resource.data.uid == request.auth.uid
+          && key == request.resource.data.wk + '_' + request.auth.uid
+          && exists(/databases/$(database)/documents/classes/$(cid)/starts/$(key))
+          && request.resource.data.keys().hasOnly(['uid', 'wk', 'name', 'photo', 'score', 'total', 'wrongQ', 'wrongT', 'at'])
+          && request.resource.data.at == request.time
+          && request.resource.data.name is string && request.resource.data.name.size() < 40
+          && request.resource.data.photo is string && request.resource.data.photo.size() <= 500
+          && request.resource.data.total is int && request.resource.data.total >= 1 && request.resource.data.total <= 20
+          && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= request.resource.data.total
+          && request.resource.data.wrongQ is list && request.resource.data.wrongQ.size() <= 20
+          && request.resource.data.wrongT is list && request.resource.data.wrongT.size() <= 20;
+        allow update, delete: if false;
+      }
     }
   }
 }
