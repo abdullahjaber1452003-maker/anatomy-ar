@@ -76,5 +76,6 @@
       stage.appendChild(mv);
     }).catch(function(){msg.textContent='⚠️ المتصفح قديم وما بيدعم الـ 3D. حدّث المتصفح (Chrome أو Safari).';});
   }
-  document.querySelectorAll('.viewer[data-model]').forEach(build);
+  function go(){document.querySelectorAll('.viewer[data-model]').forEach(build);}
+  if(window.nursin3dGate&&window.nursin3dGate.then)window.nursin3dGate.then(go);else go();   // 3d.html: after the short ad screen (assets/gate3d.js)
 })();
