@@ -103,3 +103,13 @@ test('opening splash: on every page, once per session, reduced-motion aware, nev
   assert.ok(/addEventListener\('pointerdown',skip\)/.test(js), 'tap anywhere skips');
   for (const p of pages) { const h = read(p); assert.match(h, /<body[^>]*>\s*<script src="assets\/splash\.js\?v=/, p + ' splash'); assert.ok(h.includes('<main'), p + ' content stays in the HTML'); }
 });
+test('Google Analytics (GA4) tag on every page exactly once, inside <head>', () => {
+  for (const p of pages) {
+    const h = read(p);
+    const head = h.slice(0, h.indexOf('</head>'));
+    assert.strictEqual((h.match(/googletagmanager\.com\/gtag\/js\?id=G-7MY0Z597WC/g) || []).length, 1, p + ' gtag loader once');
+    assert.strictEqual((h.match(/gtag\('config', 'G-7MY0Z597WC'\)/g) || []).length, 1, p + ' gtag config once');
+    assert.ok(head.includes('gtag/js?id=G-7MY0Z597WC') && head.includes("gtag('config', 'G-7MY0Z597WC')"), p + ' tag inside <head>');
+    assert.ok(h.includes('ca-pub-2554036492962277'), p + ' AdSense kept');
+  }
+});
