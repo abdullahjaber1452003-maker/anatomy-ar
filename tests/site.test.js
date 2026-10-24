@@ -321,6 +321,7 @@ test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic
   const T = require(path.join(SITE, 'assets/tutor.js'));
   assert.strictEqual(T.fmt('<img src=x onerror=alert(1)> **Troponine**\nسطر'), '&lt;img src=x onerror=alert(1)&gt; <b>Troponine</b><br>سطر');
   assert.ok(!T.fmt('**<script>**').includes('<script>'));
+  assert.strictEqual(T.fmt('الـ *Troponine* و 2*3'), 'الـ Troponine و 2*3', 'single-star italics stripped');
   assert.strictEqual(T.speakable('**ECG** 🫀 تخطيط ✅'), 'ECG تخطيط');
   assert.ok(T.isBusy('صار في مشكلة: high demand') && T.isBusy('') && !T.isBusy('الجواب'));
   assert.strictEqual(T.LIMIT, 30); assert.strictEqual(T.KEEP, 12);
