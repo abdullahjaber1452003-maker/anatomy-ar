@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const SITE = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(SITE, f), 'utf8');
-const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html','exams.html','live.html'];
+const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html','exams.html','live.html','tutor.html'];
 test('pages exist with title, viewport, rtl', () => {
   for (const p of pages) {
     const h = read(p);
@@ -125,7 +125,7 @@ test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () =>
   }
   const q = read('quiz.html');
   assert.ok(q.indexOf(K.box) > q.indexOf('id="quiz"'), 'quiz box ad sits below the quiz/results area');
-  for (const p of ['404.html','privacy.html','credits.html','about.html','live.html']) {
+  for (const p of ['404.html','privacy.html','credits.html','about.html','live.html','tutor.html']) {
     const h = read(p);
     for (const k of Object.values(K)) assert.ok(!h.includes(k), p + ' must not carry ' + k);
     assert.ok(!h.includes('ads.js') && !h.includes('bauval.org') && !h.includes('class="adx'), p + ' no Adsterra');
@@ -144,7 +144,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024i/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024j/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -297,11 +297,40 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261024i') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261024j') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
   assert.ok(v.includes('window.nursin3dGate.then(go)'), 'models load only after the gate');
   assert.ok(/\.gate3d\{position:fixed;left:0;right:0;top:56px/.test(css), 'overlay starts under the site header');
   for (const p of ['cardio.html', 'neuro.html']) assert.ok(!read(p).includes('gate3d'), p + ' has no ad screen');
+});
+
+test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic, privacy + sitemap', () => {
+  for (const p of pages) assert.ok(read(p).includes('<a href="tutor.html"'), p + ' nav links tutor.html');
+  const h = read('tutor.html'), js = read('assets/tutor.js');
+  assert.ok(h.includes('🧑‍🏫 الأستاذ المساعد') && h.includes('id="tlog"') && h.includes('id="tform"') && h.includes('aria-current="page"'), 'page shell');
+  for (const c of ['اشرحلي الـ ECG', 'شو يعني troponine؟', 'اعملّي كويز صغير عن القلب', 'شو لازم إدرس بعدين؟']) assert.ok(h.includes(c), 'chip ' + c);
+  assert.ok(h.includes('الأستاذ المساعد ذكاء اصطناعي وممكن يغلط، راجع دروسك 📚'), 'disclaimer');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.indexOf('assets/weak.js') < h.indexOf('assets/tutor.js?v='), 'topics + weak points load before the tutor');
+  assert.ok(js.includes('https://summer-forest-fd40.abdullahjaber1452003.workers.dev/') && js.includes('sessionStorage') && js.includes('AbortController'), 'worker URL, session history, abort');
+  assert.ok(js.includes('TIMEOUT=45000') && js.includes('RETRY_MS=3000') && js.includes('الأستاذ مشغول هلّق، جرّب كمان شوي 🙏') && js.includes('tretry'), '45 s timeout, one retry after 3 s, busy message + retry button');
+  assert.ok(js.includes("'speechSynthesis' in w") && js.includes("'ar-SA'") && js.includes('speechSynthesis.cancel'), 'voice with stop, hidden when unsupported');
+  assert.ok(!/\(\?<[=!]/.test(js), 'no lookbehind regex (older Safari)');
+  assert.ok(!/innerHTML\s*=\s*text|innerHTML\s*=\s*j\.text/.test(js), 'model text never goes raw into innerHTML');
+  const T = require(path.join(SITE, 'assets/tutor.js'));
+  assert.strictEqual(T.fmt('<img src=x onerror=alert(1)> **Troponine**\nسطر'), '&lt;img src=x onerror=alert(1)&gt; <b>Troponine</b><br>سطر');
+  assert.ok(!T.fmt('**<script>**').includes('<script>'));
+  assert.strictEqual(T.speakable('**ECG** 🫀 تخطيط ✅'), 'ECG تخطيط');
+  assert.ok(T.isBusy('صار في مشكلة: high demand') && T.isBusy('') && !T.isBusy('الجواب'));
+  assert.strictEqual(T.LIMIT, 30); assert.strictEqual(T.KEEP, 12);
+  const hist = Array.from({ length: 20 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', text: 'm' + i }));
+  assert.deepStrictEqual(T.trim(hist).map(m => m.text), hist.slice(-12).map(m => m.text));
+  const mem = {}; const store = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
+  for (let i = 0; i < 3; i++) T.countAdd(store, '2026-10-24');
+  assert.strictEqual(T.countRead(store, '2026-10-24'), 3); assert.strictEqual(T.countRead(store, '2026-10-25'), 0, 'counter resets each day');
+  const ctx = T.buildContext({ topics: { ecg: 'ECG (تخطيط القلب)', avc: 'AVC (جلطة دماغية)' }, me: { name: 'Ali', points: 70 }, level: 3, weak: [{ t: 'ecg', n: 2 }] });
+  assert.ok(ctx.includes('الطالب على موقع nursin.store اللي فيه دروس: ECG (تخطيط القلب)، AVC (جلطة دماغية)') && ctx.includes('نقاط ضعف الطالب') && ctx.includes('ECG (تخطيط القلب) (2 أسئلة)') && ctx.includes('ليفل 3'), 'context: topics, weak points, level');
+  assert.ok(!T.buildContext({ topics: {}, weak: [] }).includes('ليفل'), 'signed-out context has no level');
+  assert.ok(read('sitemap.xml').includes('tutor.html') && /Google Gemini/.test(read('privacy.html')) && /sent to Google Gemini via Cloudflare/.test(read('privacy.html')), 'sitemap + privacy (ar + en)');
 });
