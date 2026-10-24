@@ -1,5 +1,5 @@
 /* nursin accounts: level math, points, months, weekly exams, live-room math (all pure) + header badge + quiz points hook.
-   Firebase itself (assets/fb.js) loads only on friends/live/exams pages or for someone who signed in before,
+   Firebase itself (assets/fb.js) loads only on friends/live/exams/classes pages or for someone who signed in before,
    so signed-out visitors on every other page load nothing extra. */
 (function(w){
   var STEP=15,MAXP=999999,ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -108,7 +108,7 @@
 
   // load Firebase only where it is needed
   var page=(location.pathname.split('/').pop()||'index.html');
-  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'){
+  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'){
     var me=document.currentScript&&document.currentScript.src,v=(me&&me.split('?')[1])||'';
     var s=document.createElement('script');s.type='module';s.src='assets/fb.js'+(v?'?'+v:'');document.head.appendChild(s);
   }

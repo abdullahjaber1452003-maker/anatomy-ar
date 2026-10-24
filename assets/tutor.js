@@ -153,6 +153,8 @@
     newBtn.addEventListener('click',function(){if(busy)return;hist=[];save();renderAll();inp.focus();});
     w.addEventListener('pagehide',stopSpeak);
     renderAll();
+    // prefilled question from a link (classes «اسأل الأستاذ عن هالموضوع»): put it in the box, the student presses send
+    try{var pq=new URLSearchParams(location.search).get('q');if(pq){inp.value=String(pq).slice(0,500);grow();}}catch(e){}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })(typeof window!=='undefined'?window:this);

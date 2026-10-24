@@ -1,0 +1,344 @@
+// nursin «🏫 الصفوف» — classes with a weekly class exam chosen by the AI tutor, a class board and per-student advice.
+// Loaded by assets/fb.js on classes.html only. The pure helpers at the top have no browser/Firebase needs (tests import them).
+
+export const N_Q = 15, AI_TIMEOUT = 25000, AI_RETRY_MS = 2000;
+export const TUTOR_API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+
+/* ---------- pure helpers ---------- */
+function rng(seed) { let t = seed >>> 0; return () => { t = (t + 0x6D2B79F5) >>> 0; let r = Math.imul(t ^ (t >>> 15), 1 | t); r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r; return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
+function hash(s) { s = String(s); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function shuffled(a, seed) { a = a.slice(); const r = rng(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// ISO week of a Beirut day key 'YYYY-MM-DD' → '2026-W43' (weeks start Monday)
+export function isoWeek(dk) {
+  const d = new Date(dk + "T12:00:00Z"), wd = (d.getUTCDay() + 6) % 7;
+  const thu = new Date(d.getTime() + (3 - wd) * 864e5), y = thu.getUTCFullYear();
+  const n = 1 + Math.floor((thu - new Date(Date.UTC(y, 0, 1, 12))) / 864e5 / 7);
+  return y + "-W" + (n < 10 ? "0" : "") + n;
+}
+// topics that have enough questions for an exam
+export function examTopics(quiz) { const c = {}; (quiz || []).forEach(q => { c[q.t] = (c[q.t] || 0) + 1; }); return Object.keys(c).filter(t => c[t] >= 3).sort(); }
+// class weak points from all past results: topic → wrong answers, sorted (most wrong first)
+export function classWeak(results, quiz) {
+  const by = {}; (quiz || []).forEach(q => { by[q.id] = q.t; });
+  const w = {}; (results || []).forEach(r => (r.wrongQ || []).forEach(id => { const t = by[id]; if (t) w[t] = (w[t] || 0) + 1; }));
+  return Object.keys(w).map(t => ({ t, n: w[t] })).sort((a, b) => b.n - a.n || (a.t < b.t ? -1 : 1));
+}
+// deterministic topics: the class's 3 weakest + rotating ones, 4–5 topics in all
+export function autoTopics(wk, weak, quiz) {
+  const all = examTopics(quiz), out = (weak || []).map(x => x.t).filter(t => all.includes(t)).slice(0, 3);
+  const n = +String(wk).slice(-2) || 0, want = out.length ? 5 : 4;
+  for (let i = 0; out.length < want && i < all.length; i++) { const t = all[(n * 3 + i * 7) % all.length]; if (!out.includes(t)) out.push(t); }
+  return out;
+}
+// questions for the class exam: round-robin across the chosen topics, same for everyone (seeded by class + week)
+export function buildExam(seed, topics, quiz, n = N_Q) {
+  const pools = topics.map(t => shuffled((quiz || []).filter(q => q.t === t).map(q => q.id).sort(), hash(seed + ":" + t)));
+  const out = [];
+  for (let round = 0; out.length < n && pools.some(p => p.length > round); round++) pools.forEach(p => { if (out.length < n && p[round]) out.push(p[round]); });
+  if (out.length < n) shuffled((quiz || []).map(q => q.id).filter(id => !out.includes(id)).sort(), hash(seed + ":fill")).slice(0, n - out.length).forEach(id => out.push(id));
+  return shuffled(out, hash(seed + ":order"));
+}
+// the tutor's answer → {topics, intro} (JSON somewhere in the text) or null
+export function parsePlan(text, quiz) {
+  const s = String(text || ""), a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if (/^\s*صار في مشكلة/.test(s) || a < 0 || b <= a) return null;
+  let j; try { j = JSON.parse(s.slice(a, b + 1)); } catch (e) { return null; }
+  const ok = examTopics(quiz), topics = [];
+  (Array.isArray(j.topics) ? j.topics : []).forEach(t => { t = String(t).trim().toLowerCase(); if (ok.includes(t) && !topics.includes(t) && topics.length < 6) topics.push(t); });
+  let intro = String(j.intro || "").replace(/\*+/g, "").replace(/\s+/g, " ").trim();
+  if (intro.length > 240) { const cut = intro.slice(0, 240), k = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("؟")); intro = k > 60 ? cut.slice(0, k + 1) : cut.replace(/\s+\S*$/, "") + " …"; }
+  return topics.length >= 2 ? { topics, intro } : null;
+}
+export function planPrompt(name, members, topics, weak, names) {
+  const T = names || {};
+  return "انت الأستاذ المساعد لصف «" + name + "» (" + members + " طلاب). لازم تختار مواضيع امتحان هالأسبوع (" + N_Q + " سؤال).\n" +
+    "المواضيع الموجودة (key: الاسم):\n" + topics.map(t => t + ": " + (T[t] || t)).join("\n") + "\n" +
+    (weak && weak.length ? "أكتر مواضيع غلط فيها الصف بالامتحانات يلي فاتت (key: عدد الغلطات): " + weak.slice(0, 6).map(w => w.t + ": " + w.n).join("، ") + "\n" : "هيدا أوّل امتحان للصف، ما في نتايج قبل.\n") +
+    "اختار من ٣ لـ ٥ مواضيع: ركّز على نقاط ضعف الصف وزيد موضوع أو اتنين للمراجعة من دروس تانية.\n" +
+    'جاوب بس JSON بلا أي كلمة تانية، هيك: {"topics":["key1","key2","key3"],"intro":"جملتين قصار للصف كلّو (أقل من ٣٠ كلمة) بالعربي اللبناني: ليش اخترت هالمواضيع + تشجيع"}';
+}
+// per-student advice: topics of the wrong answers, most first
+export function advice(wrongQ, quiz) {
+  const by = {}; (quiz || []).forEach(q => { by[q.id] = q.t; });
+  const c = {}; (wrongQ || []).forEach(id => { const t = by[id]; if (t) c[t] = (c[t] || 0) + 1; });
+  return Object.keys(c).map(t => ({ t, n: c[t] })).sort((a, b) => b.n - a.n || (a.t < b.t ? -1 : 1));
+}
+// class ranking over all weeks: total right answers / total questions, then weeks taken
+export function ranking(results, memberIds) {
+  const by = {};
+  (results || []).forEach(r => { if (memberIds && !memberIds.includes(r.uid)) return; const e = by[r.uid] || (by[r.uid] = { uid: r.uid, name: r.name, photo: r.photo, score: 0, total: 0, weeks: 0 }); e.score += r.score | 0; e.total += r.total | 0; e.weeks++; });
+  return Object.values(by).map(e => ({ ...e, pct: e.total ? Math.round(100 * e.score / e.total) : 0 })).sort((a, b) => b.pct - a.pct || b.weeks - a.weeks || b.score - a.score);
+}
+export const pct = (s, t) => t ? Math.round(100 * s / t) : 0;
+
+/* ---------- page ---------- */
+let A, F, N, esc, $;
+const NOT_READY = "🏫 الصفوف بعدها عم تتجهّز (ناطرين تحديث صغير بإعدادات الموقع). جرّب كمان شوي 🙏";
+const denied = e => e && e.code === "permission-denied";
+const L = "abc";
+function topicName(t) { return (window.QTOP || {})[t] || t; }
+function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : "cardio.html"; }
+function qById(id) { return (window.QUIZ || []).find(q => q.id === id); }
+function params() { return new URLSearchParams(location.search); }
+function failMsg(e) { return denied(e) ? NOT_READY : "⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة."; }
+
+export function page(api) {
+  A = api; F = api.fs; N = api.N; esc = api.esc; $ = s => document.querySelector(s);
+  const el = document.getElementById("classes-app"); if (!el) return;
+  if (!A.user) {
+    A.signInCard(el, '<p class="fbig">🏫 صفّك كلّو بمكان واحد</p><p>امتحان كل أسبوع بيختارو الأستاذ المساعد، علامات الكل مبيّنة، وكل واحد بيعرف شو لازم يشدّ حالو فيه. سجّل دخول بغوغل تا تعمل صف أو تفوت على صفّك.</p>');
+    return;
+  }
+  const cid = params().get("c");
+  if (cid) openClass(el, cid); else home(el);
+}
+
+/* ---- my classes + create + join ---- */
+async function home(el, note) {
+  const join = N.normCode(params().get("join") || "");
+  el.innerHTML = (note ? '<p class="finv">' + note + "</p>" : "") +
+    '<section class="qcard"><h2>📚 صفوفي</h2><div id="clist"><p class="small">⏳ …</p></div></section>' +
+    '<section class="qcard"><h2>🔑 فوت على صف بالكود</h2><form id="cjoin" class="fadd" autocomplete="off"><input id="cjcode" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود الصف" value="' + esc(join) + '"><button class="btn pri" type="submit">فوت</button></form><p id="cjmsg" class="small" aria-live="polite"></p></section>' +
+    '<section class="qcard"><h2>➕ اعمل صف جديد</h2><form id="cnew" class="fadd" autocomplete="off"><input id="cname" maxlength="40" placeholder="مثلاً LT2" aria-label="اسم الصف"><button class="btn pri" type="submit">اعمل</button></form><p class="small">بتاخد كود من ٦ حروف، بتبعتو لرفقاتك بالصف وبيفوتو فيه.</p><p id="cnmsg" class="small" aria-live="polite"></p></section>';
+  $("#cjoin").addEventListener("submit", e => { e.preventDefault(); joinByCode($("#cjcode").value); });
+  $("#cnew").addEventListener("submit", e => { e.preventDefault(); createClass($("#cname").value); });
+  try {
+    const s = await F.getDocs(F.collection(A.db, "users", A.user.uid, "myClasses"));
+    const list = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    $("#clist").innerHTML = list.length ? '<div class="excards">' + list.map(c => '<a class="excard ccard" href="classes.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>🏫 ' + esc(c.name) + "</bdi></b><small>" + (c.owner ? "إنت صاحب الصف" : "طالب بالصف") + '</small><span class="btn pri">فوت ←</span></a>').join("") + "</div>"
+      : '<p class="small fempty">لسّا مش بأي صف. فوت بكود من رفيقك أو اعمل صف جديد 👇</p>';
+  } catch (e) { if (!denied(e)) console.warn("nursin: classes list", e && e.code); $("#clist").innerHTML = '<p class="small">' + failMsg(e) + "</p>"; }
+  if (join) joinByCode(join, true);
+}
+function profileBits() { const p = A.profile || {}; return { name: N.cleanName(p.name || A.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, N.level(p.points))) }; }
+async function createClass(raw) {
+  const name = String(raw || "").replace(/\s+/g, " ").trim().slice(0, 40), msg = $("#cnmsg");
+  if (!name) { msg.textContent = "اكتب اسم الصف (مثلاً LT2)."; return; }
+  const btn = $("#cnew button"); btn.disabled = true; msg.textContent = "⏳ …";
+  const ref = F.doc(F.collection(A.db, "classes")), me = A.user.uid, pb = profileBits();
+  for (let i = 0; i < 4; i++) {
+    const code = N.newCode();
+    try {
+      await F.runTransaction(A.db, async tx => {
+        const c = await tx.get(F.doc(A.db, "classCodes", code));
+        if (c.exists()) throw { taken: true };
+        tx.set(F.doc(A.db, "classCodes", code), { cid: ref.id, name });
+        tx.set(ref, { name, owner: me, ownerName: pb.name, code, createdAt: F.serverTimestamp() });
+        tx.set(F.doc(A.db, "classes", ref.id, "members", me), { ...pb, code, joinedAt: F.serverTimestamp() });
+        tx.set(F.doc(A.db, "users", me, "myClasses", ref.id), { name, owner: true, at: F.serverTimestamp() });
+      });
+      location.href = "classes.html?c=" + encodeURIComponent(ref.id); return;
+    } catch (e) { if (e && e.taken) continue; if (!denied(e)) console.warn("nursin: class create", e && e.code); msg.textContent = failMsg(e); btn.disabled = false; return; }
+  }
+  msg.textContent = "⚠️ ما زبط، جرّب كمان مرّة."; btn.disabled = false;
+}
+async function joinByCode(raw, fromLink) {
+  const code = N.normCode(raw), msg = $("#cjmsg");
+  if (code.length !== 6) { msg.textContent = "الكود ٦ حروف/أرقام."; return; }
+  msg.textContent = "⏳ …";
+  try {
+    const c = await F.getDoc(F.doc(A.db, "classCodes", code));
+    if (!c.exists()) { msg.textContent = "❌ ما في صف بهالكود. تأكّد منو (يمكن صاحب الصف غيّرو)."; return; }
+    const { cid, name } = c.data(), me = A.user.uid;
+    const mine = await F.getDoc(F.doc(A.db, "users", me, "myClasses", cid));
+    if (mine.exists()) { location.href = "classes.html?c=" + encodeURIComponent(cid); return; }
+    if (fromLink && !confirm("بدّك تفوت على صف «" + name + "»؟")) { msg.textContent = ""; return; }
+    await F.runTransaction(A.db, async tx => {
+      tx.set(F.doc(A.db, "classes", cid, "members", me), { ...profileBits(), code, joinedAt: F.serverTimestamp() });
+      tx.set(F.doc(A.db, "users", me, "myClasses", cid), { name, owner: false, at: F.serverTimestamp() });
+    });
+    location.href = "classes.html?c=" + encodeURIComponent(cid);
+  } catch (e) { if (!denied(e)) console.warn("nursin: class join", e && e.code); msg.textContent = failMsg(e); }
+}
+
+/* ---- one class ---- */
+let C = null;   // {cid, cls, members, results, wk, week, mine, started}
+async function openClass(el, cid) {
+  el.innerHTML = '<p>⏳ …</p>';
+  const me = A.user.uid, wk = isoWeek(N.dayKey());
+  let cls, members, results;
+  try {
+    const [c, m, r] = await Promise.all([F.getDoc(F.doc(A.db, "classes", cid)), F.getDocs(F.collection(A.db, "classes", cid, "members")), F.getDocs(F.collection(A.db, "classes", cid, "results"))]);
+    if (!c.exists()) throw { code: "not-found" };
+    cls = c.data(); members = m.docs.map(d => ({ uid: d.id, ...d.data() })); results = r.docs.map(d => d.data());
+  } catch (e) {
+    if (denied(e) || (e && e.code === "not-found")) {
+      // not a member (removed, or the class is gone) — tidy my list
+      try { if ((await F.getDoc(F.doc(A.db, "users", me, "myClasses", cid))).exists()) { await F.deleteDoc(F.doc(A.db, "users", me, "myClasses", cid)); return home(el, "🚪 ما عدت بهالصف (يمكن صاحب الصف طلّعك). فيك تفوت من جديد بكود."); } } catch (x) {}
+    }
+    if (!denied(e)) console.warn("nursin: class open", e && e.code);
+    el.innerHTML = '<div class="qcard"><p>' + (denied(e) ? NOT_READY : "⚠️ ما قدرنا نفتح الصف. تأكّد من الإنترنت وجرّب بعد شوي.") + '</p><p><a href="classes.html">← صفوفي</a></p></div>'; return;
+  }
+  C = { cid, cls, members, results, wk, owner: cls.owner === me };
+  C.mine = results.find(r => r.uid === me && r.wk === wk) || null;
+  // keep my name/level fresh on the member list
+  const pb = profileBits(), m0 = members.find(x => x.uid === me);
+  if (m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
+  el.innerHTML = '<nav class="small"><a href="classes.html">← صفوفي</a></nav>' +
+    '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(cls.ownerName)) + '</bdi></p><div id="ccode"></div></section>' +
+    '<section class="qcard" id="cweek"><h2>📝 امتحان هالأسبوع</h2><div id="cexam"><p class="small">⏳ …</p></div></section>' +
+    '<section class="qcard"><h2>📊 علامات هالأسبوع</h2><ol class="lb" id="cboard"></ol></section>' +
+    '<section class="qcard"><h2>🏆 ترتيب الصف <small>(كل الأسابيع)</small></h2><ol class="lb" id="crank"></ol></section>' +
+    '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p></section>';
+  drawCode(); drawBoard(); drawRank(); drawMembers();
+  weekCard();
+}
+function drawCode() {
+  const code = C.cls.code, link = "https://nursin.store/classes.html?join=" + code;
+  const share = "https://wa.me/?text=" + encodeURIComponent("فوت على صفّنا «" + C.cls.name + "» على nursin 🏫\nالكود: " + code + "\n" + link);
+  $("#ccode").innerHTML = '<p class="finv">🔑 كود الصف: <b dir="ltr" class="ccodev">' + esc(code) + '</b></p><p class="fbtns"><a class="btn pri" href="' + esc(share) + '" target="_blank" rel="noopener">📲 ابعت الكود عالواتساب</a>' +
+    (C.owner ? ' <button class="btn" id="cregen" type="button">🔄 كود جديد</button>' : ' <button class="btn" id="cleave" type="button">🚪 طلاع من الصف</button>') + '</p><p id="ccmsg" class="small" aria-live="polite"></p>';
+  const rg = $("#cregen"); if (rg) rg.addEventListener("click", regenCode);
+  const lv = $("#cleave"); if (lv) lv.addEventListener("click", leave);
+}
+async function regenCode() {
+  if (!confirm("الكود القديم ما عاد يشتغل. أكيد؟")) return;
+  const msg = $("#ccmsg"), old = C.cls.code; msg.textContent = "⏳ …";
+  for (let i = 0; i < 4; i++) {
+    const code = N.newCode();
+    try {
+      await F.runTransaction(A.db, async tx => {
+        const c = await tx.get(F.doc(A.db, "classCodes", code)); if (c.exists()) throw { taken: true };
+        tx.set(F.doc(A.db, "classCodes", code), { cid: C.cid, name: C.cls.name });
+        tx.update(F.doc(A.db, "classes", C.cid), { code });
+        tx.delete(F.doc(A.db, "classCodes", old));
+      });
+      C.cls.code = code; drawCode(); $("#ccmsg").textContent = "✅ صار في كود جديد."; return;
+    } catch (e) { if (e && e.taken) continue; if (!denied(e)) console.warn("nursin: regen", e && e.code); msg.textContent = failMsg(e); return; }
+  }
+}
+async function leave() {
+  if (!confirm("أكيد بدّك تطلع من «" + C.cls.name + "»؟")) return;
+  try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", A.user.uid)); await F.deleteDoc(F.doc(A.db, "users", A.user.uid, "myClasses", C.cid)); location.href = "classes.html"; }
+  catch (e) { $("#ccmsg").textContent = failMsg(e); }
+}
+function row(rk, p, sub, me, extra) {
+  return '<li class="lbr' + (me ? " me" : "") + '"><span class="rk">' + rk + "</span>" + N.avatar(p.photo, p.name, "av") + '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (me ? " <small>(إنت)</small>" : "") + "</b><small>" + sub + "</small></span>" + (extra || "") + "</li>";
+}
+function drawBoard() {
+  const me = A.user.uid, wkr = C.results.filter(r => r.wk === C.wk), done = {};
+  wkr.forEach(r => { done[r.uid] = r; });
+  const rows = C.members.map(m => ({ m, r: done[m.uid] })).sort((a, b) => (b.r ? pct(b.r.score, b.r.total) + 1 : 0) - (a.r ? pct(a.r.score, a.r.total) + 1 : 0));
+  let i = 0;
+  $("#cboard").innerHTML = rows.map(x => {
+    if (!x.r) return row("—", x.m, "لسّا ما قدّم", x.m.uid === me);
+    const rk = ["🥇", "🥈", "🥉"][i] || i + 1; i++;
+    return row(rk, x.m, '<b dir="ltr">' + pct(x.r.score, x.r.total) + "%</b> · " + x.r.score + "/" + x.r.total + " صح", x.m.uid === me);
+  }).join("") || '<li class="small">ما في طلاب.</li>';
+}
+function drawRank() {
+  const r = ranking(C.results, C.members.map(m => m.uid)), me = A.user.uid, byUid = {};
+  C.members.forEach(m => { byUid[m.uid] = m; });
+  $("#crank").innerHTML = r.length ? r.map((e, i) => row(["🥇", "🥈", "🥉"][i] || i + 1, byUid[e.uid] || e, '<b dir="ltr">' + e.pct + "%</b> معدّل · " + e.weeks + (e.weeks === 1 ? " امتحان" : " امتحانات"), e.uid === me)).join("")
+    : '<li class="small fempty">الترتيب بيطلع بعد أوّل امتحان.</li>';
+}
+function drawMembers() {
+  const me = A.user.uid;
+  $("#cmem").innerHTML = C.members.slice().sort((a, b) => (b.uid === C.cls.owner) - (a.uid === C.cls.owner) || (b.level | 0) - (a.level | 0)).map(m =>
+    row(m.uid === C.cls.owner ? "👑" : "🎓", m, '<span class="lvc">Lv ' + (m.level | 0 || 1) + "</span>", m.uid === me,
+      C.owner && m.uid !== me ? '<button class="rm" type="button" data-uid="' + esc(m.uid) + '" aria-label="طلّع ' + esc(N.cleanName(m.name)) + ' من الصف">✖</button>' : "")).join("");
+  document.querySelectorAll("#cmem .rm").forEach(b => b.addEventListener("click", async () => {
+    const m = C.members.find(x => x.uid === b.dataset.uid); if (!m || !confirm("تطلّع " + N.cleanName(m.name) + " من الصف؟")) return;
+    try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
+    catch (e) { $("#cmmsg").textContent = failMsg(e); }
+  }));
+}
+
+/* ---- the week's exam: created once per class per ISO week; the tutor picks the topics ---- */
+async function askTutor(prompt) {
+  const once = async () => {
+    const ctl = "AbortController" in window ? new AbortController() : null, t = setTimeout(() => ctl && ctl.abort(), AI_TIMEOUT);
+    try {
+      const r = await fetch(TUTOR_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", text: prompt }], context: "جاوب بس JSON." }), signal: ctl ? ctl.signal : undefined });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json(), plan = parsePlan(j && j.text, window.QUIZ);
+      if (!plan) throw new Error("no plan");
+      return plan;
+    } finally { clearTimeout(t); }
+  };
+  try { return await once(); } catch (e) { await new Promise(r => setTimeout(r, AI_RETRY_MS)); try { return await once(); } catch (x) { return null; } }
+}
+async function ensureWeek() {
+  const ref = F.doc(A.db, "classes", C.cid, "weeks", C.wk);
+  const s = await F.getDoc(ref); if (s.exists()) return s.data();
+  $("#cexam").innerHTML = '<p>🧑‍🏫 الأستاذ المساعد عم يحضّر امتحان هالأسبوع حسب نقاط ضعف الصف… <span class="ctdots" aria-hidden="true"><i></i><i></i><i></i></span></p><p class="small">أوّل واحد بيفتح الصف كل أسبوع بيستنّى شوي، الباقي لا.</p>';
+  const quiz = window.QUIZ || [], weak = classWeak(C.results, quiz), all = examTopics(quiz);
+  const plan = await askTutor(planPrompt(C.cls.name, C.members.length, all, weak, window.QTOP));
+  const topics = plan ? plan.topics : autoTopics(C.wk, weak, quiz);
+  const intro = (plan && plan.intro) || (weak.length ? "امتحان هالأسبوع ركّز على المواضيع يلي الصف غلط فيها أكتر، مع شوية مراجعة. يلا نشدّ حالنا 💪" : "أوّل امتحان للصف! منشوف وين منيحين ووين لازم نشدّ 💪");
+  const data = { wk: C.wk, qids: buildExam(C.cid + ":" + C.wk, topics, quiz), topics, intro, src: plan ? "ai" : "auto", by: A.user.uid, createdAt: F.serverTimestamp() };
+  return F.runTransaction(A.db, async tx => { const g = await tx.get(ref); if (g.exists()) return g.data(); tx.set(ref, data); return data; });
+}
+const PKEY = () => "nursin_class_" + C.cid + "_" + C.wk;
+function progRead() { try { return JSON.parse(localStorage.getItem(PKEY()) || "null"); } catch (e) { return null; } }
+function progSave(p) { try { if (p) localStorage.setItem(PKEY(), JSON.stringify(p)); else localStorage.removeItem(PKEY()); } catch (e) {} }
+async function weekCard() {
+  const box = $("#cexam");
+  try { C.week = await ensureWeek(); }
+  catch (e) { if (!denied(e)) console.warn("nursin: class week", e && e.code); box.innerHTML = "<p>" + failMsg(e) + "</p>"; return; }
+  const w = C.week, chips = '<p class="exchips cchips">' + w.topics.map(t => '<i lang="fr" dir="ltr">' + esc(topicName(t)) + "</i>").join("") + "</p>";
+  const intro = '<p class="cintro">🧑‍🏫 ' + esc(w.intro) + "</p>" + chips;
+  if (C.mine) { box.innerHTML = intro + resultHtml(C.mine); return; }
+  let started = false;
+  try { started = (await F.getDoc(F.doc(A.db, "classes", C.cid, "starts", C.wk + "_" + A.user.uid))).exists(); } catch (e) {}
+  const prog = progRead();
+  if (started && !prog) { box.innerHTML = intro + '<p class="qq">⛔ بلّشت امتحان هالأسبوع من جهاز تاني أو مسحت الصفحة وما كمّلت.</p><p class="small">المحاولة وحدة بس. الأسبوع الجاي في امتحان جديد 💪</p>'; return; }
+  box.innerHTML = intro + '<ul class="fsteps"><li>📝 ' + w.qids.length + ' سؤال · محاولة وحدة بس</li><li>✅ النتيجة بتطلع لكل الصف، ومعها شو لازم تشدّ حالك فيه</li></ul><p><button class="btn pri big" id="cgo" type="button">' + (prog ? "▶️ كمّل الامتحان" : "▶️ بلّش امتحان الأسبوع") + '</button></p><p id="cgmsg" class="small" aria-live="polite"></p>';
+  $("#cgo").addEventListener("click", async () => {
+    const b = $("#cgo"); b.disabled = true;
+    if (!started) {
+      try { await F.setDoc(F.doc(A.db, "classes", C.cid, "starts", C.wk + "_" + A.user.uid), { uid: A.user.uid, wk: C.wk, at: F.serverTimestamp() }); }
+      catch (e) { if (!denied(e)) console.warn("nursin: class start", e && e.code); $("#cgmsg").textContent = failMsg(e); b.disabled = false; return; }
+    }
+    runExam(prog || { i: 0, ans: [] });
+  });
+}
+function runExam(p) {
+  const box = $("#cexam"), qs = C.week.qids.map(qById).filter(Boolean);
+  progSave(p);
+  const draw = () => {
+    const q = qs[p.i], a = p.ans[p.i];
+    box.innerHTML = '<div class="qbar"><span>📝 امتحان الصف</span><span>سؤال ' + (p.i + 1) + " من " + qs.length + '</span></div><div class="prog"><i style="width:' + (100 * p.i / qs.length) + '%"></i></div>' +
+      '<div class="cq"><span class="qtopic">' + esc(topicName(q.t)) + '</span><p class="qq">' + q.q + "</p>" +
+      q.o.map((o, k) => '<button class="opt' + (a === k ? " pick" : "") + '" type="button" data-k="' + k + '" aria-pressed="' + (a === k) + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></button>").join("") +
+      '<div class="qnav">' + (p.i ? '<button class="btn" id="cprev" type="button">→ رجوع</button>' : "<span></span>") +
+      '<button class="btn pri" id="cnext" type="button"' + (a == null ? " disabled" : "") + ">" + (p.i + 1 < qs.length ? "التالي ←" : "سلّم الامتحان ✅") + "</button></div></div>";
+    box.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => { p.ans[p.i] = +b.dataset.k; progSave(p); draw(); }));
+    const pv = $("#cprev"); if (pv) pv.addEventListener("click", () => { p.i--; progSave(p); draw(); });
+    $("#cnext").addEventListener("click", () => { if (p.i + 1 < qs.length) { p.i++; progSave(p); draw(); } else submit(qs, p); });
+    $("#cweek").scrollIntoView({ block: "start" });
+  };
+  draw();
+}
+async function submit(qs, p) {
+  const b = $("#cnext"); b.disabled = true; b.textContent = "⏳ …";
+  const wrongQ = [], wrongT = []; let score = 0;
+  qs.forEach((q, i) => { if (p.ans[i] === q.a) score++; else { wrongQ.push(q.id); wrongT.push(q.t); } });
+  const pb = profileBits(), r = { uid: A.user.uid, wk: C.wk, name: pb.name, photo: pb.photo, score, total: qs.length, wrongQ, wrongT, at: F.serverTimestamp() };
+  try { await F.setDoc(F.doc(A.db, "classes", C.cid, "results", C.wk + "_" + A.user.uid), r); }
+  catch (e) {
+    if (denied(e)) { try { const ex = await F.getDoc(F.doc(A.db, "classes", C.cid, "results", C.wk + "_" + A.user.uid)); if (ex.exists()) { progSave(null); C.mine = ex.data(); return openClass(document.getElementById("classes-app"), C.cid); } } catch (x) {} }
+    if (!denied(e)) console.warn("nursin: class result", e && e.code);
+    b.disabled = false; b.textContent = "سلّم الامتحان ✅"; const m = document.createElement("p"); m.className = "small"; m.textContent = failMsg(e); b.parentNode.after(m); return;
+  }
+  progSave(null);
+  try { if (window.Weak) qs.forEach((q, i) => window.Weak.record(q, p.ans[i] === q.a)); } catch (e) {}
+  C.mine = r; C.results.push(r);
+  $("#cexam").innerHTML = '<p class="cintro">🧑‍🏫 ' + esc(C.week.intro) + "</p>" + resultHtml(r, p, qs);
+  drawBoard(); drawRank(); $("#cweek").scrollIntoView({ block: "start" });
+}
+function resultHtml(r, p, qs) {
+  const P = pct(r.score, r.total), adv = advice(r.wrongQ, window.QUIZ);
+  let h = '<div class="score cres"><p>نتيجتك: <b dir="ltr">' + P + "%</b> · " + r.score + " من " + r.total + " صح</p><p>" + (P >= 85 ? "ممتاز 🔥" : P >= 60 ? "منيح 👍" : "بدّها شدّة 💪") + "</p></div>";
+  if (adv.length) {
+    const top = adv.slice(0, 3), q = "غلطت بامتحان الصف بـ " + top.map(a => topicName(a.t)).join(" و ") + ". اشرحلي أهم الأفكار يلي لازم إعرفها، خطوة خطوة.";
+    h += '<div class="cadv"><p class="qq">💪 شدّ حالك بـ:</p><ul>' + top.map(a => '<li><a href="' + lessonPage(a.t) + "#" + esc(a.t) + '"><b lang="fr" dir="ltr">' + esc(topicName(a.t)) + "</b></a> <small>(" + a.n + (a.n === 1 ? " غلطة" : " غلطات") + ")</small></li>").join("") + "</ul>" +
+      '<p><a class="btn pri" href="tutor.html?q=' + encodeURIComponent(q) + '">🧑‍🏫 اسأل الأستاذ عن هالموضوع</a></p></div>';
+  } else h += '<p class="cadv">🔥 ولا غلطة! كفّي هيك.</p>';
+  if (p && qs) {
+    const wrong = qs.map((q, i) => ({ q, a: p.ans[i] })).filter(x => x.a !== x.q.a);
+    if (wrong.length) h += "<h3>راجع غلطاتك:</h3>" + wrong.map(x => '<div class="qcard"><span class="qtopic">' + esc(topicName(x.q.t)) + '</span><p class="qq">' + x.q.q + '</p><div class="expl w">❌ جاوبت: ' + L[x.a] + ") " + x.q.o[x.a] + '</div><div class="expl">✅ <b>' + L[x.q.a] + ") " + x.q.o[x.q.a] + "</b><br>" + x.q.x + "</div></div>").join("");
+  }
+  return h;
+}

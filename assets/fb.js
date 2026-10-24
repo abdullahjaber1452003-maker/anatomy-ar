@@ -1,5 +1,5 @@
 // nursin friends + levels — Firebase (Google sign-in + Firestore). Loaded as a module by assets/account.js.
-// Live rooms (assets/live.js) and weekly exams (assets/exams.js) are loaded from here only where they are needed.
+// Live rooms (assets/live.js), weekly exams (assets/exams.js) and classes (assets/classes.js) are loaded from here only where they are needed.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -238,7 +238,7 @@ const params = new URLSearchParams(location.search);
 let pendingAdd = N.normCode(params.get("add") || "");
 
 function showErr(e) {
-  const root = rootOverride || document.getElementById("friends-app") || document.getElementById("live-app") || document.getElementById("exams-app");
+  const root = rootOverride || document.getElementById("friends-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
   if (!root || !e) return;
   const c = e.code || "";
   let m = "⚠️ صار في مشكلة بتسجيل الدخول. جرّب مرّة تانية.";
@@ -430,6 +430,7 @@ onAuthStateChanged(auth, async u => {
     if (params.get("challenge") && window.NursinQuiz) window.NursinQuiz.message('<p class="qq">⚔️ صاحبك تحدّاك!</p><p><b><a href="friends.html">سجّل دخول بغوغل بصفحة أصحابي</a></b>، والتحدّي بيستنّاك هونيك تحت «تحدّيات إلك».</p>');
     if (page === "live.html") { const m = await mod("live"); if (m) m.page(API); }
     if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
+    if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
     N.flush();
     return;
   }
@@ -438,7 +439,7 @@ onAuthStateChanged(auth, async u => {
   } catch (e) {
     console.warn("nursin: profile", e && e.code);
     profile = { uid: u.uid, name: N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "" };
-    const box = root || document.getElementById("live-app") || document.getElementById("exams-app");
+    const box = root || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
     if (box) { box.innerHTML = '<div class="qcard"><p>⚠️ ما قدرنا نجيب حسابك هلّق. تأكّد من الإنترنت وجرّب بعد شوي.</p><button class="btn" id="fout" type="button">تسجيل الخروج</button></div>'; document.getElementById("fout").addEventListener("click", () => signOut(auth)); }
     ready = true; return;
   }
@@ -454,6 +455,7 @@ onAuthStateChanged(auth, async u => {
   const exId = params.get("exam");
   if (exId && window.NursinQuiz) { const m = await mod("exams"); if (m) await m.openOnQuiz(API, exId); }
   if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
+  if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
   const lm = await mod("live");
   if (lm) { if (page === "live.html") lm.page(API); lm.toast(API); }
   N.flush();

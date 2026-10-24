@@ -279,3 +279,18 @@ html.g3on body{overflow:hidden}
 .qnet .pos{color:#15803d}.qnet .neg{color:#b91c1c}
 .qch{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed #fde68a}.qch .btn{margin-top:6px;text-decoration:none;display:inline-block}
 .lbr .nm small .lvc{font-size:11.5px;padding:0 7px;margin-inline-end:4px}
+
+/* 🏫 classes */
+.ccard{text-decoration:none;color:var(--ink)}.ccard .btn{pointer-events:none}
+.ccodev{font:700 20px ui-monospace,monospace;letter-spacing:2px}
+.cintro{background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:8px 10px;margin:4px 0 8px}
+.cchips{margin:4px 0 8px}
+.ctdots{display:inline-flex;gap:4px;padding:0 4px}.ctdots i{width:7px;height:7px;border-radius:50%;background:var(--mut);opacity:.35;animation:ctdot 1.2s infinite}.ctdots i:nth-child(2){animation-delay:.2s}.ctdots i:nth-child(3){animation-delay:.4s}
+@keyframes ctdot{0%,60%,100%{opacity:.25}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ctdots i{animation:none;opacity:.6}}
+.opt.pick{border-color:var(--pri);background:#f0fdfa}.opt.pick .l{background:var(--pri);color:#fff}
+.cq{margin-top:8px}.cq .qnav{display:flex;justify-content:space-between;gap:8px;margin-top:8px}
+.cres{text-align:center;font-size:18px}.cres b{font-size:22px}
+.cadv{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:8px 12px;margin:8px 0}.cadv ul{margin:4px 0 8px;padding-inline-start:20px}.cadv .btn{text-decoration:none;display:inline-block}
+#cboard .nm b,#crank .nm b,#cmem .nm b{max-width:100%}
+#cweek{scroll-margin-top:70px}
