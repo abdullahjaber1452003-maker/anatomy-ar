@@ -93,5 +93,13 @@ test('opening splash: on every page, once per session, reduced-motion aware, nev
   assert.ok(js.includes('sessionStorage'), 'session rule');
   assert.ok(js.includes('prefers-reduced-motion'), 'reduced motion');
   assert.ok(/\.nsplash\{[^}]*animation:ns-out/.test(css), 'splash hides itself by CSS even if JS stops');
+  const out = css.match(/\.nsplash\{[^}]*animation:ns-out ([\d.]+)s[^}]*? ([\d.]+)s forwards/);
+  assert.ok(out, 'splash fade timing');
+  const total = parseFloat(out[1]) + parseFloat(out[2]);
+  assert.ok(total >= 9 && total <= 11, 'splash lasts about 10 s, got ' + total);
+  const safe = js.match(/setTimeout\(kill,reduce\?\d+:(\d+)\)/);
+  assert.ok(safe && +safe[1] > total * 1000 && +safe[1] <= 11000, 'JS fail-safe just after the CSS fade');
+  assert.ok(js.includes('ns-skipbtn') && js.includes('تخطّي'), 'visible skip button');
+  assert.ok(/addEventListener\('pointerdown',skip\)/.test(js), 'tap anywhere skips');
   for (const p of pages) { const h = read(p); assert.match(h, /<body[^>]*>\s*<script src="assets\/splash\.js\?v=/, p + ' splash'); assert.ok(h.includes('<main'), p + ' content stays in the HTML'); }
 });
