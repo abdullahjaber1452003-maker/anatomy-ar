@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://abdullahjaber1452003-maker.github.io/anatomy-ar/sitemap.xml

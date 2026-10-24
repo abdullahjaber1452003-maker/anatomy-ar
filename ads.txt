@@ -1,0 +1,2 @@
+# بعد موافقة AdSense حط هون السطر يلي بتعطيك ياه Google / After AdSense approval paste Google's line here, e.g.:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
