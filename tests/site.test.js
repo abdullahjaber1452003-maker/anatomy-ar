@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const SITE = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(SITE, f), 'utf8');
-const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html','exams.html','live.html','tutor.html'];
+const pages = ['index.html','cardio.html','neuro.html','henderson.html','quiz.html','3d.html','about.html','privacy.html','credits.html','404.html','friends.html','exams.html','live.html','tutor.html','classes.html'];
 test('pages exist with title, viewport, rtl', () => {
   for (const p of pages) {
     const h = read(p);
@@ -144,7 +144,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024j/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024k/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -291,13 +291,13 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
   const rules = read('firestore.rules');
   for (const k of ['match /rooms/{rid}', 'match /examStarts/{key}', 'match /examResults/{key}', "optInt(request.resource.data, 'powerups', 50)", "optInt(request.resource.data, 'monthPoints', 999999)",
     'exists(/databases/$(database)/documents/examStarts/$(key))', 'changed().hasOnly(', 'examOpen(', "key.split('_')[1] == request.auth.uid"]) assert.ok(rules.includes(k), 'rules: ' + k);
-  assert.strictEqual((rules.match(/allow update, delete: if false;/g) || []).length, 3, 'friendCodes, examStarts, examResults are create-only');
+  assert.strictEqual((rules.match(/allow update, delete: if false;/g) || []).length, 6, 'friendCodes, examStarts, examResults (+ v4 class weeks, starts, results) are create-only');
   assert.ok(read('sitemap.xml').includes('exams.html') && read('privacy.html').includes('monthly leaderboard'), 'sitemap + privacy');
 });
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261024j') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261024k') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -334,4 +334,44 @@ test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic
   assert.ok(ctx.includes('الطالب على موقع nursin.store اللي فيه دروس: ECG (تخطيط القلب)، AVC (جلطة دماغية)') && ctx.includes('نقاط ضعف الطالب') && ctx.includes('ECG (تخطيط القلب) (2 أسئلة)') && ctx.includes('ليفل 3'), 'context: topics, weak points, level');
   assert.ok(!T.buildContext({ topics: {}, weak: [] }).includes('ليفل'), 'signed-out context has no level');
   assert.ok(read('sitemap.xml').includes('tutor.html') && /Google Gemini/.test(read('privacy.html')) && /sent to Google Gemini via Cloudflare/.test(read('privacy.html')), 'sitemap + privacy (ar + en)');
+});
+
+test('classes page: nav on every page, signed-in only shell, light top banner (not inside the exam), privacy + sitemap', () => {
+  for (const p of pages) assert.ok(read(p).includes('<a href="classes.html"'), p + ' nav links classes.html');
+  const h = read('classes.html'), acc = read('assets/account.js'), fb = read('assets/fb.js'), js = read('assets/classes.js');
+  assert.ok(h.includes('🏫 الصفوف') && h.includes('id="classes-app"') && h.includes('<a href="classes.html" aria-current="page"'), 'page shell');
+  assert.ok(h.includes('class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"') && !h.includes('9892bba2f704f8ea66787de07f9f7be3'), 'top banner only');
+  assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
+  assert.ok(!/adx|bauval/.test(js), 'no ads inside the class exam');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261024k'), 'quiz bank + weak points loaded');
+  assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
+  assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
+  assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
+  assert.ok(js.includes('summer-forest-fd40') && js.includes('AI_TIMEOUT = 25000') && js.includes('AI_RETRY_MS') && js.includes('autoTopics(C.wk'), 'tutor picks the topics, retry once, fallback');
+  assert.ok(js.includes('شدّ حالك بـ') && js.includes('tutor.html?q=') && read('assets/tutor.js').includes("get('q')"), 'advice + ask-the-tutor link prefilled');
+  assert.ok(read('sitemap.xml').includes('classes.html') && /visible only to members of the same class/.test(read('privacy.html')), 'sitemap + privacy');
+  const rules = read('firestore.rules');
+  for (const k of ['match /classes/{cid}', 'match /classCodes/{code}', 'match /myClasses/{cid}', 'match /members/{uid}', 'match /weeks/{wk}', 'match /starts/{key}', 'match /results/{key}', 'isMember(cid)', 'isClassOwner(cid)', "key == request.resource.data.wk + '_' + request.auth.uid", 'match /examResults/{key}', 'match /rooms/{rid}', 'match /challenges/{cid}']) assert.ok(rules.includes(k), 'rules v4 keeps v3 and adds: ' + k);
+});
+
+test('classes logic: ISO week (Beirut day), 15 questions weighted to the class weak topics, same for everyone, tutor plan parsing, advice, ranking', async () => {
+  const C = await import(require('node:url').pathToFileURL(path.join(SITE, 'assets/classes.js')).href);
+  const src = read('assets/quiz-data.js'), Q = JSON.parse(src.match(/window\.QUIZ=(\[.*?\]);\n/s)[1]);
+  assert.strictEqual(C.isoWeek('2026-10-24'), '2026-W43'); assert.strictEqual(C.isoWeek('2026-10-26'), '2026-W44'); assert.strictEqual(C.isoWeek('2027-01-01'), '2026-W53'); assert.strictEqual(C.isoWeek('2027-01-04'), '2027-W01');
+  const ex = C.buildExam('C1:2026-W43', ['ecg', 'avc', 'htic'], Q);
+  assert.strictEqual(ex.length, 15); assert.strictEqual(new Set(ex).size, 15, 'no repeats');
+  assert.deepStrictEqual(ex, C.buildExam('C1:2026-W43', ['ecg', 'avc', 'htic'], Q), 'same questions for everyone');
+  const by = Object.fromEntries(Q.map(q => [q.id, q.t]));
+  assert.ok(ex.filter(id => ['ecg', 'avc', 'htic'].includes(by[id])).length >= 13, 'mostly the chosen topics (htic has only 3, rest filled)');
+  const weak = C.classWeak([{ wrongQ: Q.filter(q => q.t === 'glasgow').map(q => q.id) }, { wrongQ: [Q.find(q => q.t === 'ecg').id] }], Q);
+  assert.deepStrictEqual(weak.map(w => w.t), ['glasgow', 'ecg']);
+  const at = C.autoTopics('2026-W43', weak, Q); assert.ok(at[0] === 'glasgow' && at[1] === 'ecg' && at.length === 5 && new Set(at).size === 5, 'fallback: weakest first + rotation');
+  assert.strictEqual(C.autoTopics('2026-W43', [], Q).length, 4);
+  assert.deepStrictEqual(C.parsePlan('```json\n{"topics":["ECG","avc","nope","ecg"],"intro":"**يلا** نشدّ"}\n```', Q), { topics: ['ecg', 'avc'], intro: 'يلا نشدّ' });
+  assert.strictEqual(C.parsePlan('صار في مشكلة: high demand', Q), null); assert.strictEqual(C.parsePlan('{"topics":["ecg"]}', Q), null, 'needs 2+ valid topics');
+  assert.ok(C.planPrompt('LT2', 12, ['ecg'], weak, { ecg: 'ECG' }).includes('LT2') && C.planPrompt('LT2', 1, ['ecg'], [], {}).includes('أوّل امتحان'));
+  const ecg = Q.filter(q => q.t === 'ecg').map(q => q.id), avc = Q.find(q => q.t === 'avc').id;
+  assert.deepStrictEqual(C.advice([ecg[0], avc, ecg[1]], Q), [{ t: 'ecg', n: 2 }, { t: 'avc', n: 1 }]);
+  const rk = C.ranking([{ uid: 'a', score: 15, total: 15 }, { uid: 'b', score: 10, total: 15 }, { uid: 'b', score: 15, total: 15 }, { uid: 'gone', score: 15, total: 15 }], ['a', 'b']);
+  assert.deepStrictEqual(rk.map(r => [r.uid, r.pct, r.weeks]), [['a', 100, 1], ['b', 83, 2]], 'average over weeks, current members only');
 });
