@@ -148,7 +148,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025d/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025e/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -301,7 +301,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025d') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025e') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -348,7 +348,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025d'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025e'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -570,4 +570,28 @@ test('3D heart (Oct 25): whole heart framed, slow auto-rotate that pauses on dra
   assert.ok(v.includes('🏷️ الأسماء') && v.includes("classList.toggle('vlabels')") && v.includes('setEmissiveFactor'), 'labels toggle + brighter vessels');
   assert.ok(/\.vlabels \.hs\.ves:not\(\.back\) \.vlbl\{display:block\}/.test(css), 'labels only on the facing side');
   assert.ok(read('assets/gate3d.js').includes("KEY='nursin_3dgate_v1'"), '3D ad screen kept');
+});
+
+test('📢 announcements (Oct 25): banner + 🔔 on every page from one public read, owner-only admin page, rules v6', () => {
+  const a = read('assets/announce.js');
+  assert.ok(a.includes('announcements/current') && a.includes(':batchGet'), 'reads announcements/current over REST');
+  assert.ok(!/firebase-firestore|import /.test(a), 'no Firebase SDK on every page');
+  assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
+  assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
+  assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025e" defer><\/script>/, p);
+  const ad = read('admin.html');
+  assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
+  assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
+  for (const p of pages) assert.ok(!read(p).includes('href="admin.html"'), p + ' must not link the admin page');
+  const m = read('assets/admin.js');
+  assert.ok(m.includes('"abdullahjaber1452003@gmail.com"') && m.includes('emailVerified') && m.includes('مش مسموح'));
+  assert.ok(m.includes('ابعت للكل') && m.includes('امحي الإعلان') && m.includes('maxlength="500"'));
+  const fb = read('assets/fb.js');
+  assert.equal((fb.match(/page === "admin\.html"/g) || []).length, 2, 'admin module wired signed in and out');
+  assert.ok(fb.includes('href="admin.html"') && fb.includes('user.emailVerified'), 'admin link only for the owner');
+  assert.ok(read('assets/account.js').includes("page==='admin.html'"), 'Firebase loads on admin.html');
+  const r = read('firestore.rules');
+  assert.ok(r.includes('match /announcements/{id}') && r.includes("request.auth.token.email == 'abdullahjaber1452003@gmail.com'") && r.includes('request.auth.token.email_verified == true'));
+  assert.ok(r.includes('request.resource.data.text.size() <= 500') && r.includes('match /dq/{key}'), 'v6 keeps v5');
 });
