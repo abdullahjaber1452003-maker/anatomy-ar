@@ -464,3 +464,37 @@ function resultHtml(r, p, qs) {
   }
   return h;
 }
+
+
+/* ---- 🧑‍🏫 for the tutor: a short, plain summary of my classes (reads only what the class page already reads) ---- */
+// one class → plain data the tutor context turns into words (pure, tested)
+export function classInfo(cls, members, results, week, dqAns, uid, dk, quiz) {
+  const wk = isoWeek(dk), pw = prevWeek(dk), ids = (members || []).map(m => m.uid), nm = u => { const r = (members || []).find(m => m.uid === u) || (results || []).find(x => x.uid === u); return r ? String(r.name || "طالب").slice(0, 30) : "طالب"; };
+  const aw = w => { const a = weekAwards(results, w, ids.length ? ids : null); return { n: a.n, top: a.top, champ: a.champ.map(nm), up: a.up.map(u => ({ name: nm(u.uid), from: u.from, to: u.to })) }; };
+  const mine = (results || []).find(r => r.uid === uid && r.wk === wk) || null;
+  const out = { name: String(cls.name || "").slice(0, 30), owner: cls.owner === uid, members: ids.length, week: week ? { topics: (week.topics || []).slice(0, 6), intro: String(week.intro || "").slice(0, 160), n: (week.qids || []).length } : null,
+    mine: mine ? { score: mine.score, total: mine.total, pct: pct(mine.score, mine.total), weak: advice(mine.wrongQ, quiz).slice(0, 3).map(a => a.t) } : null, now: aw(wk), last: aw(pw), dq: null };
+  if (dqAns === "notready") out.dq = "notready";
+  else if (Array.isArray(dqAns)) {
+    const q = (quiz || []).find(x => x.id === dailyQid(cls.id || "", dk, quiz)), me = dqAns.find(a => a.uid === uid), s = dqSummary(dqAns);
+    out.dq = { t: q ? q.t : "", mine: me ? (me.ok ? "ok" : "wrong") : null, first: s.first ? String(s.first.name || "طالب").slice(0, 30) : "", right: s.right, n: s.n };
+  }
+  return out;
+}
+export async function tutorSummary(api, max = 3) {
+  const { db, fs: F2, user } = api; if (!user) return null;
+  const uid = user.uid, dk = api.N.dayKey(), wk = isoWeek(dk), quiz = window.QUIZ || [];
+  let list;
+  try { list = (await F2.getDocs(F2.collection(db, "users", uid, "myClasses"))).docs.map(d => d.id).slice(0, max); }
+  catch (e) { return { err: denied(e) ? "notready" : "err" }; }
+  const one = async cid => {
+    try {
+      const [c, m, r, w] = await Promise.all([F2.getDoc(F2.doc(db, "classes", cid)), F2.getDocs(F2.collection(db, "classes", cid, "members")), F2.getDocs(F2.collection(db, "classes", cid, "results")), F2.getDoc(F2.doc(db, "classes", cid, "weeks", wk))]);
+      if (!c.exists()) return null;
+      let dq = null;
+      try { dq = (await F2.getDocs(F2.query(F2.collection(db, "classes", cid, "dq"), F2.where("day", "==", dk)))).docs.map(d => d.data()); } catch (e) { dq = denied(e) ? "notready" : null; }
+      return classInfo({ id: cid, ...c.data() }, m.docs.map(d => ({ uid: d.id, ...d.data() })), r.docs.map(d => d.data()), w.exists() ? w.data() : null, dq, uid, dk, quiz);
+    } catch (e) { return null; }
+  };
+  return { list: (await Promise.all(list.map(one))).filter(Boolean) };
+}

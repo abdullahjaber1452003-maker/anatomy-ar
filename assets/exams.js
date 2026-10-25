@@ -105,3 +105,17 @@ export async function openOnQuiz(api, id) {
     }
   });
 }
+
+
+// 🧑‍🏫 for the tutor: did I take these exams? (today: start + result; earlier days: result only)
+export async function tutorStatus(api, exs) {
+  init(api); if (!A.user) return null;
+  const today = N.dayKey(), out = {};
+  await Promise.all((exs || []).map(async ex => {
+    if (ex.day === today) { out[ex.id] = await status(ex); return; }
+    if (ex.day > today) return;                                   // not open yet
+    try { const r = await F.getDoc(F.doc(A.db, "examResults", ex.id + "_" + A.user.uid)); out[ex.id] = r.exists() ? { s: "done", score: r.data().score, total: r.data().total } : { s: "missed" }; }
+    catch (e) { out[ex.id] = { s: denied(e) ? "notready" : "err" }; }
+  }));
+  return out;
+}

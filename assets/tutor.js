@@ -38,19 +38,79 @@
   function countRead(store,day){try{var c=JSON.parse(store.getItem(CKEY)||'null');if(c&&c.d===day)return c.n|0;}catch(e){}return 0;}
   function countAdd(store,day){var n=countRead(store,day)+1;try{store.setItem(CKEY,JSON.stringify({d:day,n:n}));}catch(e){}return n;}
 
-  /* شو منبعت للأستاذ عن الطالب والموقع */
+  /* شو منبعت للأستاذ عن الطالب والموقع: التاريخ، جدول الامتحانات (نفس exams.html)، صفوفو، حسابو، نقاط ضعفو، ودروس الموقع حسب الصفحة.
+     o = {dk, days:[الاتنين…], topics, groups, exams:[{label, day, list:[{id,n,ar,t,q}]}], later:[{day,list}], st:{id:{s,score,total}}, past:[ex…],
+          me, level, prof, badges:[{e,n}], weak, classes:{list}|{err}|null, signedIn} — كلّو نص قصير (< ~2500 حرف) */
+  var PAGES={cardio:'cardio.html',neuro:'neuro.html',henderson:'henderson.html'};
+  var PAGE_AR={cardio:'القلب',neuro:'الأعصاب',henderson:'Henderson'};
+  function pageOf(t,G){for(var g in (G||{}))if((G[g]||[]).indexOf(t)>=0)return PAGES[g]||'';return '';}
+  function dm(dk){return +String(dk).slice(8,10)+'/'+(+String(dk).slice(5,7));}
+  function dayName(o,dk){var d=new Date(dk+'T12:00:00Z').getUTCDay();return (o.days||[])[(d+6)%7]||'';}
+  function exLine(o,ex){
+    var T=o.topics||{},pg=[];
+    (ex.t||[]).forEach(function(t){var x=pageOf(t,o.groups);if(x&&pg.indexOf(x)<0)pg.push(x);});
+    var st=(o.st||{})[ex.id],tail='';
+    if(st&&st.s==='done')tail=' — قدّمو الطالب: '+st.score+'/'+st.total;
+    else if(st&&st.s==='started')tail=' — بلّشو وما كمّلو (ما فيه يعيدو)';
+    else if(st&&st.s==='open')tail=' — لسّا ما قدّمو';
+    else if(st&&st.s==='missed')tail=' — ما قدّمو';
+    return ex.n+' ('+ex.ar+'): الدروس '+(ex.t||[]).map(function(t){return T[t]||t;}).join('، ')+(pg.length?' — صفحة '+pg.join(' و'):'')+'، '+(ex.q||10)+' أسئلة'+tail;
+  }
+  function classLine(o,c){
+    var T=o.topics||{},tn=function(t){return T[t]||t;},h='صف «'+c.name+'» ('+(c.members===1?'طالب واحد':c.members+' طلاب')+(c.owner?'، الطالب صاحب الصف':'')+'): ';
+    if(c.week)h+='امتحان الصف هالأسبوع ('+(c.week.n||15)+' سؤال) على '+c.week.topics.map(tn).join('، ')+(c.week.intro?' — «'+c.week.intro+'»':'')+'. ';
+    else h+='امتحان الصف هالأسبوع لسّا ما انعمل (بينعمل أوّل ما حدا يفتح الصف). ';
+    if(c.mine)h+='الطالب قدّمو: '+c.mine.score+'/'+c.mine.total+' ('+c.mine.pct+'%)'+(c.mine.weak.length?'، غلط أكتر بـ '+c.mine.weak.map(tn).join('، '):'')+'. ';
+    else if(c.week)h+='الطالب لسّا ما قدّمو (classes.html). ';
+    var aw=function(a,lbl){if(!a||!a.n)return '';var x=lbl+': بطل الأسبوع '+a.champ.join(' و')+' '+a.top+'%';if(a.up.length)x+='، أكثر واحد تحسّن '+a.up.map(function(u){return u.name+' ('+u.from+'%→'+u.to+'%)';}).join(' و');return x+'. ';};
+    h+=aw(c.now,'هالأسبوع لهلّق')+aw(c.last,'الأسبوع الماضي');
+    if(c.dq==='notready')h+='سؤال اليوم بعدو عم يتجهّز.';
+    else if(c.dq)h+='سؤال اليوم'+(c.dq.t?' (عن '+tn(c.dq.t)+')':'')+': الطالب '+(c.dq.mine==='ok'?'جاوب صح':c.dq.mine==='wrong'?'جاوب غلط':'لسّا ما جاوب')+(c.dq.first?'، أوّل واحد جاوب صح '+c.dq.first:'')+' ('+c.dq.right+' من '+c.dq.n+' صح).';
+    return h.trim();
+  }
   function buildContext(o){
-    o=o||{};var T=o.topics||{},parts=[];
-    var names=Object.keys(T).map(function(k){return T[k];});
-    parts.push('الطالب على موقع nursin.store اللي فيه دروس: '+(names.length?names.join('، '):'القلب، الأعصاب، حاجات Henderson')+'.');
-    if(o.me){parts.push('الطالب مسجّل دخول'+(o.me.name?' واسمه '+String(o.me.name).slice(0,30):'')+'، ليفل '+(o.level||1)+' ('+(o.me.points|0)+' نقطة).');}
+    o=o||{};var T=o.topics||{},G=o.groups||{},parts=[];
+    parts.push('[معلومات من موقع nursin.store عن الطالب، استعملها بجوابك] إذا الطالب طلب يدرس لامتحان، استعمل جدول الامتحانات تحت واشرح الدروس المطلوبة بالترتيب واعمل أسئلة تجريبية. «بكرا» و«اليوم» حسب التواريخ تحت. لما تبعتو على درس قلّو «روح على صفحة …» من القائمة تحت.');
+    if(o.dk)parts.push('اليوم '+dayName(o,o.dk)+' '+dm(o.dk)+'/'+String(o.dk).slice(0,4)+' (توقيت بيروت).');
+    if(o.exams&&o.exams.length){
+      parts.push('جدول امتحانات الموقع (صفحة exams.html: امتحانين كل يوم من الاتنين للسبت، الأحد عطلة، كل امتحان مفتوح نهارو بس ومحاولة وحدة، صح +3 غلط −5):');
+      o.exams.forEach(function(d){parts.push('- '+d.label+' ('+dayName(o,d.day)+' '+dm(d.day)+'): '+(d.list.length?d.list.map(function(ex,i){return (i+1)+') '+exLine(o,ex);}).join(' | '):'ما في امتحان (عطلة).'));});
+      if(o.later&&o.later.length)parts.push('- الأيام الجاية: '+o.later.map(function(d){return dayName(o,d.day)+' '+dm(d.day)+': '+(d.list.length?d.list.map(function(x){return x.n;}).join(' | '):'عطلة');}).join('؛ ')+'.');
+      var done=(o.past||[]).map(function(ex){var st=(o.st||{})[ex.id];return st&&st.s==='done'?dayName(o,ex.day)+' '+ex.n+' '+st.score+'/'+st.total:'';}).filter(Boolean);
+      if(done.length)parts.push('نتائج امتحاناتو هالأسبوع: '+done.join('، ')+'.');
+    }
+    if(o.me){
+      var p=o.prof||{},b=(o.badges||[]).map(function(x){return x.e+' '+x.n;});
+      parts.push('الطالب مسجّل دخول'+(o.me.name?' واسمه '+String(o.me.name).slice(0,30):'')+'، ليفل '+(o.level||1)+' ('+(o.me.points|0)+' نقطة)'+(p.streak?'، سلسلة 🔥'+p.streak+' يوم':'')+(p.best?' (أحسن سلسلة '+p.best+')':'')+(p.qTotal?'، جاوب على '+p.qTotal+' سؤال':'')+(b.length?'، أوسمتو: '+b.join('، '):'، ما عندو أوسمة لهلّق')+'.');
+      var cl=o.classes;
+      if(cl&&cl.list)parts.push(cl.list.length?'صفوف الطالب (صفحة classes.html): '+cl.list.map(function(c){return classLine(o,c);}).join(' || '):'الطالب مش بأي صف (فيه يعمل صف أو يفوت بكود بصفحة classes.html).');
+      else if(cl&&cl.err==='notready')parts.push('الصفوف بعدها عم تتجهّز.');
+    }else parts.push('الطالب مش مسجّل دخول، فما منعرف نتايجو ولا صفوفو؛ إذا سجّل بغوغل (صفحة friends.html) بيقدّم الامتحانات وبتنحسبلو نقاط.');
     var wk=(o.weak||[]).slice(0,8).map(function(x){return (T[x.t]||x.t)+' ('+x.n+(x.n===1?' سؤال':' أسئلة')+')';});
     parts.push(wk.length?'نقاط ضعف الطالب (أسئلة غلط فيها بالكويز): '+wk.join('، ')+'.':'ما في نقاط ضعف مسجّلة للطالب لهلّق.');
-    parts.push('لما تقترح شو يدرس، اقترح من دروس الموقع وركّز على نقاط ضعفه.');
-    return parts.join(' ');
+    var gk=Object.keys(G);
+    if(gk.length)parts.push('دروس الموقع حسب الصفحة: '+gk.map(function(g){return (PAGES[g]||g)+' ('+(PAGE_AR[g]||g)+'): '+G[g].map(function(t){return T[t]||t;}).join('، ');}).join('؛ ')+'.');
+    else{var names=Object.keys(T).map(function(k){return T[k];});parts.push('دروس الموقع: '+(names.length?names.join('، '):'القلب، الأعصاب، حاجات Henderson')+'.');}
+    parts.push('صفحات تانية: quiz.html كويز (وفيه كويز من أخطائك)، exams.html الامتحانات والأوائل، classes.html الصفوف، friends.html أصحابي والأوسمة، live.html تحدّي لايف، 3d.html تشريح 3D. لما تقترح شو يدرس، اقترح من دروس الموقع وركّز على الامتحان الجاي ونقاط ضعفه.');
+    return parts.join('\n');
+  }
+  /* بيجمع كل شي بيعرفو الموقع بلا إنترنت (الجدول من account.js، نفس exams.html) */
+  function gather(N,live){
+    N=N||{};var dk=N.dayKey?N.dayKey():null,Q=w.QUIZ||[],o={dk:dk,days:N.DAYS||[],topics:w.QTOP||{},groups:w.QGROUPS||{},me:N.me||null,weak:[]};
+    try{if(w.Weak)o.weak=w.Weak.topics();}catch(e){}
+    if(dk&&N.examsFor){
+      var mk=function(d){return N.examsFor(d).map(function(ex){var c={};for(var k in ex)c[k]=ex[k];c.q=N.examQids?N.examQids(ex,Q).length:10;return c;});};
+      o.exams=[{label:'اليوم',day:dk,list:mk(dk)},{label:'بكرا',day:N.addDays(dk,1),list:mk(N.addDays(dk,1))}];
+      o.later=[];for(var i=2;i<=6;i++){var d=N.addDays(dk,i);o.later.push({day:d,list:mk(d)});}
+      o.past=[];var wd=N.weekday(dk);for(var j=wd;j>0;j--)o.past=o.past.concat(mk(N.addDays(dk,-j)));
+    }
+    if(o.me){o.level=N.level?N.level(o.me.points):1;var p=(live&&live.prof)||o.me;o.prof={streak:N.streakNow?N.streakNow(p,dk):(p.streak|0),best:p.bestStreak|0,qTotal:p.qTotal|0};
+      o.badges=(N.BADGES||[]).filter(function(x){return p.badges&&p.badges[x.id];});}
+    if(live){o.st=live.st||{};o.classes=live.classes||null;}
+    return o;
   }
 
-  var T={API:API,LIMIT:LIMIT,KEEP:KEEP,TIMEOUT:TIMEOUT,BUSY:BUSY,esc:esc,fmt:fmt,speakable:speakable,chunks:chunks,isBusy:isBusy,trim:trim,buildContext:buildContext,countRead:countRead,countAdd:countAdd};
+  var T={API:API,LIMIT:LIMIT,KEEP:KEEP,TIMEOUT:TIMEOUT,BUSY:BUSY,esc:esc,fmt:fmt,speakable:speakable,chunks:chunks,isBusy:isBusy,trim:trim,buildContext:buildContext,gather:gather,classLine:classLine,countRead:countRead,countAdd:countAdd};
   w.Tutor=T;
   if(typeof module!=='undefined'&&module.exports)module.exports=T;
   if(typeof document==='undefined'||!document.getElementById)return;
@@ -102,14 +162,35 @@
       chips.hidden=hist.length>0;chat.classList.toggle('tempty',!hist.length);newBtn.hidden=!hist.length;showLeft();
     }
 
-    function context(){
-      var N=w.Nursin||{},me=N.me||null,wk=[];
-      try{if(w.Weak)wk=w.Weak.topics();}catch(e){}
-      return buildContext({topics:w.QTOP||{},me:me,level:me&&N.level?N.level(me.points):1,weak:wk});
+    /* حساب الطالب الحيّ (نتايج الامتحانات + الصفوف) من Firebase إذا مسجّل دخول؛ بينحفظ ٣ دقايق، وما منستنّاه أكتر من ٥ ثواني */
+    var live=null,liveAt=0;
+    function fetchLive(){
+      var api=w.NursinFB,N=w.Nursin||{};if(!api||!api.user||!N.dayKey)return Promise.resolve(null);
+      if(live&&Date.now()-liveAt<180000)return live;
+      var o=gather(N,null),exs=[];(o.exams||[]).forEach(function(d){exs=exs.concat(d.list);});exs=exs.concat(o.past||[]);
+      liveAt=Date.now();
+      live=Promise.all([
+        api.mod('exams').then(function(m){return m&&m.tutorStatus?m.tutorStatus(api,exs):null;}).catch(function(){return null;}),
+        api.mod('classes').then(function(m){return m&&m.tutorSummary?m.tutorSummary(api):null;}).catch(function(){return null;})
+      ]).then(function(r){return {st:r[0]||{},classes:r[1],prof:api.profile};},function(){live=null;return null;});
+      return live;
     }
+    function liveInfo(){
+      if(!(w.Nursin||{}).me)return Promise.resolve(null);
+      var got=new Promise(function(res){
+        if(w.NursinFB&&w.NursinFB.user)return fetchLive().then(res);
+        document.addEventListener('nursin:me',function(){fetchLive().then(res);},{once:true});
+      });
+      return Promise.race([got,wait(5000).then(function(){return null;})]);
+    }
+    document.addEventListener('nursin:me',function(){if(w.NursinFB&&w.NursinFB.user)fetchLive();});
+    function context(lv){return buildContext(gather(w.Nursin||{},lv));}
     function call(){
+      return liveInfo().catch(function(){return null;}).then(post);
+    }
+    function post(lv){
       var ctl=('AbortController' in w)?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort();},TIMEOUT);
-      return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-KEEP),context:context()}),signal:ctl?ctl.signal:undefined})
+      return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-KEEP),context:context(lv)}),signal:ctl?ctl.signal:undefined})
         .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
         .then(function(j){clearTimeout(timer);var t=j&&j.text;if(isBusy(t))throw new Error('busy');return t;},function(e){clearTimeout(timer);throw e;});
     }
