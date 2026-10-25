@@ -2,7 +2,7 @@
 // Live rooms (assets/live.js), weekly exams (assets/exams.js) and classes (assets/classes.js) are loaded from here only where they are needed.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyARPvtXJ_STkWrP8dpZcE9BqwMxEOW1WQs",
@@ -307,7 +307,7 @@ function rowHtml(p, i) {
   const medal = ["🥇", "🥈", "🥉"][i] || String(i + 1);
   return '<li class="lbr' + (p.me ? " me" : "") + '"><span class="rk">' + medal + "</span>" + N.avatar(p.photo, p.name, "av") +
     '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : "") + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + N.streakPill(p) + " " + (p.points | 0) + " نقطة" + N.badgeRow(p) + "</small></span>" +
-    (p.me ? "" : '<a class="btn live" href="live.html?with=' + encodeURIComponent(p.uid) + '" aria-label="تحدّي لايف مع ' + esc(N.cleanName(p.name)) + '">🔴 لايف</a><button class="btn chal" type="button" data-uid="' + esc(p.uid) + '">⚔️ تحدّى</button><button class="rm" type="button" data-uid="' + esc(p.uid) + '" aria-label="شيل ' + esc(N.cleanName(p.name)) + ' من أصحابي">✕</button>') + "</li>";
+    (p.me ? "" : '<a class="btn chat" href="chat.html?with=' + encodeURIComponent(p.uid) + '" aria-label="حكي مع ' + esc(N.cleanName(p.name)) + '">💬 حكي</a><a class="btn live" href="live.html?with=' + encodeURIComponent(p.uid) + '" aria-label="تحدّي لايف مع ' + esc(N.cleanName(p.name)) + '">🔴 لايف</a><button class="btn chal" type="button" data-uid="' + esc(p.uid) + '">⚔️ تحدّى</button><button class="rm" type="button" data-uid="' + esc(p.uid) + '" aria-label="شيل ' + esc(N.cleanName(p.name)) + ' من أصحابي">✕</button>') + "</li>";
 }
 
 function streakHtml() {
@@ -347,6 +347,7 @@ async function renderIn() {
     '<div class="qcard"><h2>🔑 كود الصداقة تبعك</h2><p class="fcode" dir="ltr">' + esc(profile.friendCode) + "</p>" +
     '<p class="fbtns"><button class="btn" id="fcopy" type="button">📋 نسخ الكود</button> <a class="btn wa" id="fwa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(share) + '">🟢 ابعتو عالواتساب</a></p></div>' +
     '<div class="qcard"><h2>➕ زيد صاحب</h2><form id="fadd" class="fadd" autocomplete="off"><input id="fcodein" dir="ltr" maxlength="7" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود صاحبك"><button class="btn pri" type="submit">زيد</button></form><p id="faddmsg" class="small" aria-live="polite"></p></div>' +
+    '<p class="fbtns"><a class="btn pri" href="chat.html">💬 المحادثات</a> <a class="btn" href="chat.html?new">➕ مجموعة جديدة</a></p>' +
     '<div class="qcard"><h2>🏅 ترتيب أصحابي</h2><ol id="fboard" class="lb"><li class="small">⏳ …</li></ol></div>' +
     '<div class="qcard" id="livein"><h2>🔴 تحدّي لايف</h2><ul class="chl" id="liveinl"><li class="small">⏳ …</li></ul><p class="small">كبس «🔴 لايف» حد صاحبك، أو <a href="live.html">اعمل غرفة وابعت الرابط</a>. الكويز بيبلّش بس تكونوا التنين أونلاين وجاهزين.</p></div>' +
     '<div class="qcard" id="chin"><h2>⚔️ تحدّيات إلك</h2><ul class="chl" id="chinl"><li class="small">⏳ …</li></ul></div>' +
@@ -453,7 +454,7 @@ function mod(name) {
 const page = location.pathname.split("/").pop() || "index.html";
 const API = {
   db, auth, N, esc, MERGE,
-  fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp },
+  fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
   signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
 };
@@ -470,6 +471,7 @@ onAuthStateChanged(auth, async u => {
     if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
     if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
     if (page === "admin.html") { const m = await mod("admin"); if (m) m.page(API); }
+    if (page === "chat.html") { const m = await mod("chat"); if (m) m.page(API); }
     N.flush();
     return;
   }
@@ -478,13 +480,14 @@ onAuthStateChanged(auth, async u => {
   } catch (e) {
     console.warn("nursin: profile", e && e.code);
     profile = { uid: u.uid, name: N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "" };
-    const box = root || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
+    const box = root || document.getElementById("chat-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
     if (box) { box.innerHTML = '<div class="qcard"><p>⚠️ ما قدرنا نجيب حسابك هلّق. تأكّد من الإنترنت وجرّب بعد شوي.</p><button class="btn" id="fout" type="button">تسجيل الخروج</button></div>'; document.getElementById("fout").addEventListener("click", () => signOut(auth)); }
     ready = true; return;
   }
   ready = true;
   if (root) await renderIn();
   if (page === "admin.html") { const m = await mod("admin"); if (m) m.page(API); }
+  if (page === "chat.html") { const m = await mod("chat"); if (m) m.page(API); }
   const chId = params.get("challenge");
   if (chId && window.NursinQuiz) await openChallengeOnQuiz(chId);
   try {                                                            // an exam whose result could not be saved (network) is sent again, same day only

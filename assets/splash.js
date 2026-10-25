@@ -36,7 +36,7 @@
       '<g class="ns-cross"><circle cx="97" cy="27" r="13"/><path d="M97 20v14M90 27h14"/></g>'+
     '</svg>'+
     /* صورة عبدالله الدائرية حدّ لوغو القلب */
-    '<picture class="ns-me"><source srcset="assets/abdullah.webp?v=20261025f" type="image/webp"><img src="assets/abdullah.png?v=20261025f" alt="عبدالله جابر" width="320" height="320" decoding="async"></picture>'+
+    '<picture class="ns-me"><source srcset="assets/abdullah.webp?v=20261025g" type="image/webp"><img src="assets/abdullah.png?v=20261025g" alt="عبدالله جابر" width="320" height="320" decoding="async"></picture>'+
     '</div>'+
     '<div class="ns-word" dir="ltr" lang="en">nursin</div>'+
     '<div class="ns-ar">تمريض بالعربي</div>'+
