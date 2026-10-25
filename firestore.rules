@@ -1,5 +1,6 @@
 rules_version = '2';
-// nursin.store — Firestore rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// nursin.store — Firestore rules v7, built on rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// v7 = v6 (v5 + 📢 announcements) + 💬 chats/{cid} and chats/{cid}/messages (friends' 1:1 chats and groups).
 // v5 = v4 + classes/{cid}/dq (the class's daily question answers). Streaks and badges live on users/{uid} and needed no change.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -207,6 +208,52 @@ service cloud.firestore {
         && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
         && request.resource.data.createdAt == request.time
         && request.resource.data.by == request.auth.token.email;
+    }
+    // v7 💬 chats: 1:1 between friends + groups (≤ 15 members). Members only. Text ≤ 500. The author (or the site owner) deletes a message.
+    function chatPath(cid) { return /databases/$(database)/documents/chats/$(cid); }
+    function friends(a, b) { return exists(/databases/$(database)/documents/users/$(a)/friends/$(b)) || exists(/databases/$(database)/documents/users/$(b)/friends/$(a)); }
+    match /chats/{cid} {
+      function od() { return resource.data; }
+      function nd() { return request.resource.data; }
+      function changed() { return nd().diff(od()).affectedKeys(); }
+      function me() { return request.auth.uid; }
+      function membersOk() { return nd().members is list && nd().members.size() >= 1 && nd().members.size() <= 15
+        && nd().members.toSet().size() == nd().members.size() && nd().names is map && nd().names.keys().hasOnly(nd().members); }
+      // one message per second per person per chat; the preview is written in the same batch as the message
+      function lastOk() { return nd().last is map && nd().last.keys().hasOnly(['text', 'by', 'name', 'at'])
+        && nd().last.text is string && nd().last.text.size() <= 500 && nd().last.by == me()
+        && nd().last.name is string && nd().last.name.size() < 40 && nd().last.at == request.time && nd().updatedAt == request.time
+        && (!('last' in od()) || od().last == null || od().last.by != me() || request.time > od().last.at + duration.value(1, 's')); }
+      allow get: if signedIn() && (resource == null || me() in od().members);
+      allow list: if signedIn() && me() in od().members;
+      allow create: if signedIn() && membersOk() && me() in nd().members && nd().updatedAt == request.time && (
+          (nd().type == 'dm' && nd().keys().hasOnly(['type', 'members', 'names', 'updatedAt'])
+            && nd().members.size() == 2 && nd().members[0] < nd().members[1] && cid == nd().members[0] + '_' + nd().members[1]
+            && friends(nd().members[0], nd().members[1]))
+       || (nd().type == 'group' && nd().keys().hasOnly(['type', 'members', 'names', 'updatedAt', 'name', 'owner'])
+            && nd().owner == me() && nameOk(nd().name) && !cid.matches('.*_.*')));
+      allow update: if signedIn() && me() in od().members && (
+          (changed().hasOnly(['last', 'updatedAt']) && lastOk())                                   // send
+       || (changed().hasOnly(['last']) && nd().last == null)                                      // clear the preview after a delete
+       || (od().type == 'group' && od().owner == me() && changed().hasOnly(['members', 'names', 'name'])
+            && membersOk() && me() in nd().members && nameOk(nd().name))                           // creator edits members
+       || (od().type == 'group' && od().owner != me() && changed().hasOnly(['members', 'names'])
+            && nd().members.toSet() == od().members.toSet().difference([me()].toSet())
+            && nd().members.size() == od().members.size() - 1 && nd().names.keys().hasOnly(nd().members)));  // leave
+      allow delete: if false;
+      match /messages/{mid} {
+        function member() { return signedIn() && request.auth.uid in get(chatPath(cid)).data.members; }
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['text', 'uid', 'name', 'createdAt'])
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.name is string && request.resource.data.name.size() < 40
+          && request.resource.data.createdAt == request.time
+          && getAfter(chatPath(cid)).data.updatedAt == request.time;
+        allow update: if false;
+        allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAnnOwner());
+      }
     }
     function isAnnOwner() {
       return request.auth != null && request.auth.token.email == 'abdullahjaber1452003@gmail.com' && request.auth.token.email_verified == true;
