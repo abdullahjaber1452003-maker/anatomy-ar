@@ -1,5 +1,6 @@
 rules_version = '2';
-// nursin.store — Firestore rules v7, built on rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// nursin.store — Firestore rules v8, built on rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// v8 = v7 + 🔔 pushSubs/{uid} (sealed chat-notification subscriptions; owner writes, signed-in get, no list).
 // v7 = v6 (v5 + 📢 announcements) + 💬 chats/{cid} and chats/{cid}/messages (friends' 1:1 chats and groups).
 // v5 = v4 + classes/{cid}/dq (the class's daily question answers). Streaks and badges live on users/{uid} and needed no change.
 service cloud.firestore {
@@ -254,6 +255,18 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAnnOwner());
       }
+    }
+    // v8 🔔 chat notifications: one doc per person, { d: { device: sealed subscription }, updatedAt }, ≤ 5 devices. Only the owner writes.
+    // The subscriptions are sealed by the nursin worker (only it can open them), so a signed-in sender may get a member's doc (never list):
+    // the worker reads it with the sender's own ID token after checking he is in the chat and just sent the message.
+    match /pushSubs/{uid} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['d', 'updatedAt'])
+        && request.resource.data.d is map && request.resource.data.d.size() <= 5
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
     function isAnnOwner() {
       return request.auth != null && request.auth.token.email == 'abdullahjaber1452003@gmail.com' && request.auth.token.email_verified == true;
