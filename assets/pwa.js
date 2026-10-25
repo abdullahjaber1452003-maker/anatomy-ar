@@ -1,9 +1,10 @@
 /* nursin app mode (Oct 25 2026): service worker (/sw.js, push only, no caching), «📲 زيد عالشاشة الرئيسية» (Android prompt / iPhone sheet),
-   and 🔔 chat notifications (window.NursinPWA.pushCard / .ping, used by chat.js and the account page). Sending goes through the tutor worker's /push. */
+   and 🔔 notifications (window.NursinPWA.pushCard / .ping, used by chat.js and the account page; a small strip on the home page). One subscription per device
+   covers both chat messages (worker /push) and the owner's 📢 news broadcasts (worker /broadcast, sent from admin.html). */
 (function (w, d) {
   var VAPID = "BKksGwxUoWgG0qt1_sqcByK659uqSu8G9KL-mZxjdvb_3l419B547XUStchY5b91fDnprBrg14R_Iki49kTpOpo";
   var WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev";
-  var FLAG = "nursin_push_on_v1", DEV = "nursin_push_dev_v1", OFF = "nursin_push_srv_off";
+  var FLAG = "nursin_push_on_v1", DEV = "nursin_push_dev_v1", OFF = "nursin_push_srv_off", HIDE = "nursin_push_strip_v1";
   var ua = navigator.userAgent || "";
   var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var android = /Android/.test(ua);
@@ -80,12 +81,12 @@
   }
   async function pushCard(el, API) {
     if (!el || !API || !API.user) return;
-    var st = await state(API), msg = arguments[2] || "", h = '<h2>🔔 إشعارات الرسائل</h2>';
+    var st = await state(API), msg = arguments[2] || "", h = '<h2>🔔 الإشعارات: رسائل + أخبار</h2>';
     if (st === "ios") h += '<p>عالآيفون: زيد Nursin عالشاشة الرئيسية وافتحو من الأيقونة، بعدين بتقدر تفعّل الإشعارات هون.</p><p class="fbtns">' + installBtn().replace(" hidden", "") + "</p>";
     else if (st === "none") h += '<p class="small">هالمتصفح ما بيدعم الإشعارات. جرّب Chrome عالأندرويد، أو Safari عالآيفون (من الشاشة الرئيسية).</p>';
     else if (st === "denied") h += '<p>🔕 الإشعارات مسكّرة لـ Nursin. فتّحها من إعدادات التلفون/المتصفح (الإشعارات ← Nursin)، ورجاع لهون.</p>';
-    else if (st === "on") h += '<p>✅ شغّالة على هالجهاز: بس حدا يبعتلك رسالة بيطلعلك إشعار، حتى لو الموقع مسكّر.</p><p class="fbtns"><button class="btn sm pushoff" type="button">🔕 وقّف الإشعارات</button></p>';
-    else h += '<p>بس حدا يبعتلك رسالة (لحالك أو بمجموعة) بيطلعلك إشعار عالتلفون، حتى لو الموقع مسكّر.</p><p class="fbtns"><button class="btn pri pushon" type="button">🔔 فعّل الإشعارات</button>' + (installable() ? " " + installBtn() : "") + "</p>";
+    else if (st === "on") h += '<p>✅ شغّالة على هالجهاز: بيطلعلك إشعار بس حدا يبعتلك رسالة، وبس ينزل درس جديد أو تحديث عالموقع، حتى لو الموقع مسكّر.</p><p class="fbtns"><button class="btn sm pushoff" type="button">🔕 وقّف الإشعارات</button></p>';
+    else h += '<p>بيطلعلك إشعار عالتلفون بس حدا يبعتلك رسالة (لحالك أو بمجموعة)، وبس ينزل درس أو مادة جديدة عالموقع، حتى لو الموقع مسكّر.</p><p class="fbtns"><button class="btn pri pushon" type="button">🔔 فعّل الإشعارات</button>' + (installable() ? " " + installBtn() : "") + "</p>";
     el.innerHTML = '<div class="qcard pushcard">' + h + '<p class="small pushmsg" aria-live="polite">' + esc(msg) + "</p></div>";
     var on = el.querySelector(".pushon"), off = el.querySelector(".pushoff");
     if (on) on.addEventListener("click", async function () {
@@ -105,5 +106,36 @@
       if (!j || j.ok === undefined) { try { sessionStorage.setItem(OFF, "1"); } catch (e) {} }   // the worker isn't updated yet
     }).catch(function () {});
   }
+  /* ---------- 🔔 small strip on the home page (one line, ✕ hides it for good) ---------- */
+  async function homeStrip() {
+    var page = location.pathname.split("/").pop() || "index.html";
+    if (page !== "index.html" || ls(HIDE) || ls(FLAG)) return;
+    if (!canPush && !(ios && !standalone)) return;
+    if (canPush && Notification.permission !== "default" && Notification.permission !== "granted") return;
+    if (canPush) { try { var s0 = await getSub(); if (s0 && Notification.permission === "granted") return; } catch (e) {} }
+    var hero = d.querySelector("main .hero"); if (!hero || d.querySelector(".pushstrip")) return;
+    var el = d.createElement("div"); el.className = "pushstrip"; el.setAttribute("aria-live", "polite");
+    var iosOnly = !canPush;
+    el.innerHTML = '<span class="pstxt">🔔 بدّك يوصلك خبر لمّا ينزل درس جديد؟</span>' +
+      (iosOnly ? installBtn().replace(" hidden", "").replace("btn pwainst", "btn sm pwainst") : '<button class="btn sm pri psgo" type="button">فعّل الإشعارات</button>') +
+      '<button class="psx" type="button" aria-label="سكّر">✕</button>';
+    hero.parentNode.insertBefore(el, hero.nextSibling);
+    el.querySelector(".psx").addEventListener("click", function () { ls(HIDE, "1"); el.remove(); });
+    var go = el.querySelector(".psgo"); if (!go) return;
+    go.addEventListener("click", async function () {
+      go.disabled = true;
+      var API = w.NursinFB;
+      for (var i = 0; i < 40 && w.Nursin && w.Nursin.me && !(API && API.user); i++) { await new Promise(function (r) { setTimeout(r, 100); }); API = w.NursinFB; }
+      if (!(API && API.user)) { location.href = "friends.html#fpush"; return; }      // signed out: sign in on أصحابي, the 🔔 card is there
+      var t = el.querySelector(".pstxt");
+      try {
+        var r = await enable(API);
+        if (r === "on") { t.textContent = "✅ تفعّلت! رح يوصلك خبر بكل جديد، وبرسائل أصحابك."; go.remove(); setTimeout(function () { el.remove(); }, 5000); return; }
+        t.textContent = r === "default" ? "ما وافقت عالإشعارات. كبوس مرّة تانية لمّا تكون جاهز." : "🔕 الإشعارات مسكّرة من إعدادات المتصفح.";
+      } catch (e) { t.textContent = "🔔 الإشعارات عم تتجهّز، جرّب بعد شوي."; }
+      go.disabled = false;
+    });
+  }
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", homeStrip); else homeStrip();
   w.NursinPWA = { pushCard: pushCard, ping: ping, install: install, installable: installable };
 })(window, document);

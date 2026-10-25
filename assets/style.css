@@ -240,6 +240,8 @@ html.g3on body{overflow:hidden}
 .pwabox{background:#fff;color:#0b3b38;border-radius:16px;padding:16px 18px;max-width:440px;width:100%;box-sizing:border-box;max-height:85vh;overflow:auto}
 .pwabox h2{margin:0 0 8px;font-size:18px}.pwabox ol{margin:0 0 8px;padding-inline-start:22px;line-height:1.8}.pwabox p{margin:8px 0}
 .pushcard h2{margin-top:0}.pushcard .pushmsg:empty{display:none}
+.pushstrip{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;padding:8px 12px;border:1px solid #99d5cf;background:#f0fdfa;border-radius:12px;font-size:.95em}.pushstrip .pstxt{flex:1 1 180px;min-width:0}.pushstrip .psx{background:none;border:0;font:inherit;color:#64748b;cursor:pointer;padding:4px 6px;line-height:1}
+.alab{display:block;font-weight:700;margin:10px 0 4px}.ain{resize:none;background:#fff}.achk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}
