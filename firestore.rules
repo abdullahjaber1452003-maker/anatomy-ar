@@ -1,5 +1,6 @@
 rules_version = '2';
 // nursin.store — Firestore rules v8, built on rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// v9 = v8 + 📢 the site owner (isAnnOwner) may list pushSubs and remove gone devices from d (for the «إشعار للكل» broadcast).
 // v8 = v7 + 🔔 pushSubs/{uid} (sealed chat-notification subscriptions; owner writes, signed-in get, no list).
 // v7 = v6 (v5 + 📢 announcements) + 💬 chats/{cid} and chats/{cid}/messages (friends' 1:1 chats and groups).
 // v5 = v4 + classes/{cid}/dq (the class's daily question answers). Streaks and badges live on users/{uid} and needed no change.
@@ -261,12 +262,17 @@ service cloud.firestore {
     // the worker reads it with the sender's own ID token after checking he is in the chat and just sent the message.
     match /pushSubs/{uid} {
       allow get: if signedIn();
-      allow list: if false;
+      allow list: if isAnnOwner();
       allow create, update: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['d', 'updatedAt'])
         && request.resource.data.d is map && request.resource.data.d.size() <= 5
         && request.resource.data.updatedAt == request.time;
       allow delete: if signedIn() && request.auth.uid == uid;
+      allow update: if isAnnOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['d'])
+        && request.resource.data.d is map
+        && request.resource.data.d.diff(resource.data.d).addedKeys().size() == 0
+        && request.resource.data.d.diff(resource.data.d).changedKeys().size() == 0;
     }
     function isAnnOwner() {
       return request.auth != null && request.auth.token.email == 'abdullahjaber1452003@gmail.com' && request.auth.token.email_verified == true;
