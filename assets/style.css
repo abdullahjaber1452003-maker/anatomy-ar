@@ -357,8 +357,31 @@ html.g3on body{overflow:hidden}
 .flowbtn.on{background:#b91c1c;border-color:#b91c1c}
 .flowing .hs:not(.ves){display:none}
 .flowing .hs.ves{background:transparent;border-color:transparent;box-shadow:none;color:transparent;pointer-events:none}
-.fdot{width:11px;height:11px;border-radius:50%;background:rgb(37,99,235);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 6px rgba(0,0,0,.35);pointer-events:none}
-.fdot.guide{width:17px;height:17px;border:3px solid #fff;box-shadow:0 0 0 2px rgba(17,24,39,.55),0 0 10px rgba(0,0,0,.4)}
+.fov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:.85}
+.fdyn{will-change:transform}
+.fbw{position:relative;display:inline-block;max-width:100%;align-self:center}.fbw .fdyn{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+.fanc{width:2px;height:2px;pointer-events:none;opacity:0}
+.lw path{opacity:.2;transition:opacity .4s}.lw path.hi{opacity:.55}.lc path{opacity:.82}.lc path.hi{opacity:1}
+.fbody{background:linear-gradient(#fbfdfd,#eef4f6);border-top:1px solid var(--line);padding:6px 4px 4px;text-align:center}
+.fbh{font-size:13px;font-weight:700;color:#334155}.fbh span{font-weight:400;font-size:12px;color:var(--mut)}
+.fbody .fbs{display:block;height:min(56vh,440px);min-height:300px;width:auto;max-width:100%;margin:0 auto;overflow:visible}
+.bsil{fill:rgba(15,118,110,.07);stroke:rgba(15,118,110,.42);stroke-width:1.1;transition:fill .5s}
+.fb.o-body .bsil{fill:rgba(220,38,38,.07)}
+.blung{fill:rgba(244,114,182,.16);stroke:rgba(219,39,119,.35);stroke-width:.8;transition:fill .5s}.fb.o-lung .blung{fill:rgba(244,114,182,.42)}
+.bheart{fill:rgba(220,38,38,.12);stroke:rgba(153,27,27,.45);stroke-width:.8}
+.bch{fill:rgba(255,255,255,.3);stroke:rgba(153,27,27,.28);stroke-width:.5;transition:fill .3s}.bch.hi{fill:rgba(250,204,21,.6)}
+.blab{font:700 9px system-ui,sans-serif;fill:#334155;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.fspd{display:inline-flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap}.fspd input{width:96px;accent-color:#b91c1c}.fspd output{font-size:12px;color:var(--mut);min-width:3.2em}
+.stage.flowing{height:50vh;min-height:280px}
+@media (min-width:860px){
+ .viewer.flowon{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:0}
+ .viewer.flowon>*{grid-column:1/-1}
+ .viewer.flowon>.vhead{grid-row:1}
+ .viewer.flowon>.stage{grid-column:1;grid-row:2;height:62vh;max-height:560px}
+ .viewer.flowon>.fbody{grid-column:2;grid-row:2;border-top:0;border-inline-start:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+ .viewer.flowon>.fbody .fbs{height:min(56vh,500px)}
+ .viewer.flowon>.fcap{grid-row:3}
+}
 .forg{display:flex;flex-direction:column;align-items:center;pointer-events:none;font-size:26px;line-height:1;opacity:.75;transition:transform .3s,opacity .3s}
 .forg small{font:600 11px/1.3 system-ui;background:rgba(255,255,255,.9);border-radius:6px;padding:1px 5px;margin-top:2px;white-space:nowrap;color:#374151}
 .forg.on{opacity:1;transform:scale(1.25)}
