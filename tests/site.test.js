@@ -96,9 +96,12 @@ test('opening splash: on every page, once per session, reduced-motion aware, nev
   const out = css.match(/\.nsplash\{[^}]*animation:ns-out ([\d.]+)s[^}]*? ([\d.]+)s forwards/);
   assert.ok(out, 'splash fade timing');
   const total = parseFloat(out[1]) + parseFloat(out[2]);
-  assert.ok(total >= 9 && total <= 11, 'splash lasts about 10 s, got ' + total);
+  assert.ok(total >= 5.5 && total <= 6.5, 'splash lasts about 6 s, got ' + total);
+  const bar = css.match(/\.ns-bar i\{[^}]*animation:ns-bar ([\d.]+)s/);
+  assert.ok(bar && Math.abs(+bar[1] - parseFloat(out[2])) < 0.01, 'progress bar ends when the fade starts');
+  for (const m of css.matchAll(/\.ns-[^{]*\{[^}]*animation:[^}]*\}/g)) for (const d of m[0].matchAll(/ ([\d.]+)s (\d+)\b/g)) assert.ok(+d[2] <= 3, 'monitor beats fit inside 6 s: ' + m[0].slice(0, 40));
   const safe = js.match(/setTimeout\(kill,reduce\?\d+:(\d+)\)/);
-  assert.ok(safe && +safe[1] > total * 1000 && +safe[1] <= 11000, 'JS fail-safe just after the CSS fade');
+  assert.ok(safe && +safe[1] > total * 1000 && +safe[1] <= 7000, 'JS fail-safe just after the CSS fade');
   assert.ok(js.includes('ns-skipbtn') && js.includes('تخطّي'), 'visible skip button');
   assert.ok(/addEventListener\('pointerdown',skip\)/.test(js), 'tap anywhere skips');
   for (const p of pages) { const h = read(p); assert.match(h, /<body[^>]*>\s*<script src="assets\/splash\.js\?v=/, p + ' splash'); assert.ok(h.includes('<main'), p + ' content stays in the HTML'); }
@@ -144,7 +147,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261024k/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025a/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -291,13 +294,13 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
   const rules = read('firestore.rules');
   for (const k of ['match /rooms/{rid}', 'match /examStarts/{key}', 'match /examResults/{key}', "optInt(request.resource.data, 'powerups', 50)", "optInt(request.resource.data, 'monthPoints', 999999)",
     'exists(/databases/$(database)/documents/examStarts/$(key))', 'changed().hasOnly(', 'examOpen(', "key.split('_')[1] == request.auth.uid"]) assert.ok(rules.includes(k), 'rules: ' + k);
-  assert.strictEqual((rules.match(/allow update, delete: if false;/g) || []).length, 6, 'friendCodes, examStarts, examResults (+ v4 class weeks, starts, results) are create-only');
+  assert.strictEqual((rules.match(/allow update, delete: if false;/g) || []).length, 7, 'friendCodes, examStarts, examResults (+ v4 class weeks, starts, results, v5 daily answers) are create-only');
   assert.ok(read('sitemap.xml').includes('exams.html') && read('privacy.html').includes('monthly leaderboard'), 'sitemap + privacy');
 });
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261024k') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025a') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -343,7 +346,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.ok(h.includes('class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"') && !h.includes('9892bba2f704f8ea66787de07f9f7be3'), 'top banner only');
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   assert.ok(!/adx|bauval/.test(js), 'no ads inside the class exam');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261024k'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025a'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -374,4 +377,85 @@ test('classes logic: ISO week (Beirut day), 15 questions weighted to the class w
   assert.deepStrictEqual(C.advice([ecg[0], avc, ecg[1]], Q), [{ t: 'ecg', n: 2 }, { t: 'avc', n: 1 }]);
   const rk = C.ranking([{ uid: 'a', score: 15, total: 15 }, { uid: 'b', score: 10, total: 15 }, { uid: 'b', score: 15, total: 15 }, { uid: 'gone', score: 15, total: 15 }], ['a', 'b']);
   assert.deepStrictEqual(rk.map(r => [r.uid, r.pct, r.weeks]), [['a', 100, 1], ['b', 83, 2]], 'average over weeks, current members only');
+});
+test('motivation: 🔥 streak (5 answers a Beirut day, missed day → 0, best kept), 🏅 badges (8, earned once), nav + friends + profile', () => {
+  const vm = require('node:vm');
+  const ctx = { window: {} }; vm.createContext(ctx); vm.runInContext(read('assets/account.js'), ctx);
+  const N = ctx.window.Nursin, D = '2026-10-25', Y = '2026-10-24', OLD = '2026-10-22';
+  const plain = o => JSON.parse(JSON.stringify(o));
+  assert.strictEqual(N.STREAK_MIN, 5);
+  let w = N.actWrite({}, 3, null, [], D);
+  assert.ok(!w.streak && w.actN === 3 && w.qTotal === 3, '3 answers: the day does not count yet');
+  assert.strictEqual(N.dayLeft(w, D), 2);
+  w = N.actWrite(w, 2, null, [], D);
+  assert.ok(w.streak === 1 && w.sDay === D && w.bestStreak === 1, '5th answer starts a streak');
+  assert.strictEqual(N.dayLeft(w, D), 0);
+  const again = N.actWrite({ ...w, ...plain(w) }, 10, null, [], D);
+  assert.ok(again.streak === undefined && again.actN === 15, 'a day counts once');
+  const y = N.actWrite({ streak: 6, sDay: Y, bestStreak: 6, actDay: Y, actN: 20, qTotal: 95 }, 10, [9, 10], [], D);
+  assert.strictEqual(y.streak, 7, 'yesterday counted → +1'); assert.strictEqual(y.bestStreak, 7);
+  assert.ok(y.badges.s7 === D && y.badges.q100 === D && !y.badges.ecg, '7-day streak + 100 questions badges; ECG needs ' + 15 + ' answers');
+  const gap = N.actWrite({ streak: 9, sDay: OLD, bestStreak: 9 }, 5, null, [], D);
+  assert.ok(gap.streak === 1 && gap.bestStreak === 9, 'a missed day restarts at 1, best kept');
+  assert.strictEqual(N.streakNow({ streak: 9, sDay: OLD }, D), 0, 'shown as 0 after a missed day');
+  assert.strictEqual(N.streakNow({ streak: 4, sDay: Y }, D), 4, 'still alive until today ends');
+  const e = N.actWrite({ ecgN: 10, ecgOk: 8 }, 5, [5, 5], [], D);
+  assert.ok(e.ecgN === 15 && e.ecgOk === 13 && e.badges.ecg === D, '«ملك الـ ECG» at 15 ECG answers, 80%+ right');
+  assert.ok(!N.actWrite({ ecgN: 10, ecgOk: 5 }, 5, [5, 5], [], D).badges.ecg, 'not under 80%');
+  const ev = N.actWrite({ badges: { q100: '2026-10-01', bogus: 'x' } }, 0, null, ['live1', 'nope'], D);
+  assert.deepStrictEqual(plain(ev.badges), { q100: '2026-10-01', live1: D }, 'old dates kept, unknown ids dropped');
+  assert.deepStrictEqual(plain(N.newBadges({ badges: { q100: 'x' } }, ev.badges)), ['live1']);
+  assert.ok(N.BADGES.length >= 6 && N.BADGES.length <= 10 && new Set(N.BADGES.map(b => b.id)).size === N.BADGES.length, '6–10 badges');
+  for (const id of ['s7', 'q100', 'ecg', 'champ', 'up', 'class1', 'live1', 'dq1']) assert.ok(N.badgeById(id), 'badge ' + id);
+  for (const b of N.BADGES) assert.ok(/[\u0600-\u06FF]/.test(b.n) && b.e && b.how, 'Arabic name + emoji + how: ' + b.id);
+  assert.ok(N.badgeById('ecg').n.includes('ECG') && N.badgeById('s7').n.includes('٧') && N.badgeById('q100').n.includes('١٠٠'));
+  const qs = [{ t: 'ecg', a: 1 }, { t: 'avc', a: 0 }, { t: 'arythmies', a: 2 }];
+  assert.deepStrictEqual(plain(N.ecgCount(qs, [1, 0, 0])), [1, 2]); assert.strictEqual(N.ecgCount([{ t: 'avc' }], [0]), null);
+  assert.ok(N.streakPill({ streak: 3, sDay: N.dayKey() }).includes('🔥3') && N.streakPill({}) === '', 'pill only when alive');
+  assert.ok(N.badgeRow({ badges: { live1: D, q100: D } }).includes('⚡') && N.badgeRow({}) === '');
+  assert.ok(N.actLine({}, N.actWrite({}, 5, null, [], D), D).includes('سلسلة'), 'result line names the streak');
+  assert.ok(N.esc(N.actLine({}, ev, D)).length && N.actLine({}, ev, D).includes('وسام جديد'));
+  const acc = read('assets/account.js'), fb = read('assets/fb.js'), quiz = read('assets/quiz.js'), live = read('assets/live.js');
+  assert.ok(acc.includes("streak:me.streak|0,sDay:me.sDay||''") && acc.includes('class="stk"'), 'nav pill from the cached profile');
+  assert.ok(quiz.includes("ecg:s.eN?[s.eOk|0,s.eN]:null"), 'quiz reports ECG answers');
+  assert.ok(fb.includes('async function logActivity(') && fb.includes('const act = await logActivity(') && fb.includes('logActivity, loadFriends'), 'quiz/exam/challenge results log the day');
+  assert.ok(fb.includes('N.streakPill(p)') && fb.includes('N.badgeRow(p)'), 'friends list shows 🔥 + badges');
+  assert.ok(fb.includes('id="badges"') && fb.includes('🏅 أوسمتي') && fb.includes('🔒'), 'profile badges section with locked state');
+  assert.ok(live.includes('A.logActivity(p.tally.c + p.tally.w, null, p.won ? ["live1"] : [])'), 'live win → badge');
+  const css = read('assets/style.css');
+  for (const k of ['.stk{', '.bgrid{', '.bdgc.on', '.cdq{', '.caw{']) assert.ok(css.includes(k), 'css ' + k);
+});
+test('motivation in classes: 👑 champion + 📈 most improved (this + last week), ❓ سؤال اليوم (same all day, first right answer), rules v5 add only dq', async () => {
+  const C = await import(require('node:url').pathToFileURL(path.join(SITE, 'assets/classes.js')).href);
+  const src = read('assets/quiz-data.js'), Q = JSON.parse(src.match(/window\.QUIZ=(\[.*?\]);\n/s)[1]);
+  assert.strictEqual(C.prevWeek('2026-10-25'), '2026-W42'); assert.strictEqual(C.prevWeek('2026-10-26'), '2026-W43');
+  const R = [
+    { uid: 'a', wk: '2026-W42', score: 6, total: 15 }, { uid: 'b', wk: '2026-W42', score: 12, total: 15 },
+    { uid: 'a', wk: '2026-W43', score: 13, total: 15 }, { uid: 'b', wk: '2026-W43', score: 13, total: 15 }, { uid: 'c', wk: '2026-W43', score: 15, total: 15 },
+    { uid: 'gone', wk: '2026-W43', score: 15, total: 15 }];
+  const w = C.weekAwards(R, '2026-W43', ['a', 'b', 'c']);
+  assert.deepStrictEqual(w.champ, ['c'], 'top % (removed members left out)'); assert.strictEqual(w.top, 100);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(w.up)), [{ uid: 'a', from: 40, to: 87 }], 'biggest rise vs the previous class exam');
+  const tie = C.weekAwards([{ uid: 'x', wk: 'W', score: 5, total: 10 }, { uid: 'y', wk: 'W', score: 5, total: 10 }], 'W');
+  assert.deepStrictEqual(tie.champ, ['x', 'y'], 'ties share'); assert.deepStrictEqual(tie.up, [], 'no previous exam → no improvement');
+  assert.strictEqual(C.weekAwards(R, '2026-W44').n, 0);
+  assert.deepStrictEqual(C.classBadges(R, 'a', '2026-W44').sort(), ['class1', 'up']);
+  assert.deepStrictEqual(C.classBadges(R, 'b', '2026-W43'), ['class1', 'champ'], 'champion of a finished week (2+ students)');
+  assert.deepStrictEqual(C.classBadges(R, 'c', '2026-W43'), ['class1'], 'the running week does not award yet');
+  assert.deepStrictEqual(C.classBadges([{ uid: 'solo', wk: 'W1', score: 1, total: 15 }], 'solo', 'W2'), ['class1'], 'alone in a week is not a champion');
+  const ids = new Set(Q.map(q => q.id)), d1 = C.dailyQid('C1', '2026-10-25', Q);
+  assert.ok(ids.has(d1) && d1 === C.dailyQid('C1', '2026-10-25', Q), 'same question for the whole class all day');
+  for (let i = 0; i < 40; i++) { const a = '2026-11-' + String(1 + (i % 28)).padStart(2, '0'); const b = new Date(Date.parse(a + 'T12:00:00Z') - 864e5).toISOString().slice(0, 10); assert.notStrictEqual(C.dailyQid('K' + i, a, Q), C.dailyQid('K' + i, b, Q), 'never yesterday\'s'); }
+  const sum = C.dqSummary([{ uid: 'b', ok: true, at: 200 }, { uid: 'a', ok: false, at: 100 }, { uid: 'c', ok: true, at: { toMillis: () => 150 } }]);
+  assert.strictEqual(sum.first.uid, 'c'); assert.strictEqual(sum.right, 2); assert.strictEqual(sum.n, 3);
+  assert.strictEqual(C.dqSummary([]).first, null);
+  const js = read('assets/classes.js');
+  assert.ok(js.includes('id="cdq"') && js.indexOf('id="cdq"') < js.indexOf('id="cweek"'), 'daily question at the top of the class page');
+  assert.ok(js.includes('أول واحد جاوب صح') && js.includes('جاوبو صح من') && js.includes('DQ_NOT_READY'), 'first right answer + count + friendly message before rules v5');
+  assert.ok(js.includes('بطل الأسبوع') && js.includes('أكثر واحد تحسّن') && js.includes('الأسبوع الماضي'), 'awards for this and last week');
+  assert.ok(js.includes('N.streakPill(C.prof[m.uid]) + N.badgeRow(C.prof[m.uid])'), 'member list shows 🔥 + badges');
+  assert.ok(js.includes('A.logActivity(qs.length, N.ecgCount(qs, p.ans), ["class1"])'), 'class exam counts for the streak');
+  const rules = read('firestore.rules');
+  assert.ok(rules.includes('rules v5') && rules.includes('match /dq/{key}') && rules.includes("key == request.resource.data.day + '_' + request.auth.uid") && rules.includes('examOpen(request.resource.data.day)'), 'v5: one answer per student per day');
+  for (const k of ['match /classes/{cid}', 'match /members/{uid}', 'match /weeks/{wk}', 'match /results/{key}', 'match /rooms/{rid}', 'match /challenges/{cid}']) assert.ok(rules.includes(k), 'v4 kept: ' + k);
 });
