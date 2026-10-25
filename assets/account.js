@@ -3,7 +3,7 @@
    so signed-out visitors on every other page load nothing extra. */
 (function(w){
   var STEP=15,MAXP=999999,ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var RIGHT=3,WRONG=5,BONUS=10,PU_PRICE=10,PU_MAX=50;           // +3 right, −5 wrong, winner +10, 50/50 costs 10 points
+  var RIGHT=3,WRONG=5,BONUS=10,PU_PRICE=70,PU_MAX=50;           // +3 right, −5 wrong, winner +10, 50/50 costs 70 points (was 10; Abdullah, Oct 25 2026)
   function toInt(n){n=Math.floor(+n||0);return n<0?0:n>MAXP?MAXP:n;}
   function level(p){return Math.floor(Math.sqrt(toInt(p)/STEP))+1;}          // 0→1, 15→2, 60→3, 135→4, 240→5, 375→6 … 1215→10
   function levelStart(l){return STEP*(l-1)*(l-1);}

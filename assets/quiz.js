@@ -46,11 +46,11 @@
     if(s.used50)return '<p class="p50row"><button class="btn p50" type="button" disabled>✂️ 50/50</button> <small>استعملتو بهالكويز</small></p>';
     var n=N.puAvail(N.me);
     if(n>0)return '<p class="p50row"><button class="btn p50" id="p50" type="button">✂️ احذف جواب غلط <b>('+n+')</b></button></p>';
-    return '<p class="p50row"><button class="btn p50" id="p50" type="button"'+((N.me.points|0)<N.PU_PRICE?' disabled':'')+'>✂️ اشتري 50/50 بـ '+N.PU_PRICE+' نقاط</button></p>';
+    return '<p class="p50row"><button class="btn p50" id="p50" type="button"'+((N.me.points|0)<N.PU_PRICE?' disabled':'')+'>✂️ اشتري 50/50 بـ '+N.PU_PRICE+' نقطة</button></p>';
   }
   function use50(){
     var s=state,N=window.Nursin,b=$('#p50');if(!s||s.used50||!b||!N||!N.use5050)return;
-    if(!N.puAvail(N.me)&&!confirm('بدّك تشتري حذف جواب بـ '+N.PU_PRICE+' نقاط؟'))return;
+    if(!N.puAvail(N.me)&&!confirm('بدّك تشتري حذف جواب بـ '+N.PU_PRICE+' نقطة؟'))return;
     b.disabled=true;var i0=s.i;s.busy50=true;
     N.use5050().then(function(r){
       s.busy50=false;

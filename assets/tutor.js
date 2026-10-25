@@ -1,9 +1,12 @@
 /* الأستاذ المساعد: محادثة مع ذكاء اصطناعي (Gemini عبر Cloudflare Worker تبع الموقع).
-   المحادثة بتنحفظ بالـ sessionStorage (آخر 12 رسالة)، والعدّاد اليومي بالـ localStorage (30 سؤال بالنهار).
+   المحادثة بتنحفظ بالـ sessionStorage (آخر 12 رسالة)، والعدّاد اليومي بالـ localStorage: 15 سؤال مجاناً بالنهار (يوم بيروت)،
+   وبعدين «🎬 شوف إعلان وخود ٥ أسئلة»: شاشة إعلان Adsterra 300x250 (مش AdSense) مع عدّ 15 ثانية ثم «كمّل» = +5 أسئلة،
+   أكتر شي 3 مرات بالنهار (30 سؤال بالمجموع) لحتى ما يخلص مفتاح Gemini المجاني المشترك. بلا إعلانات جوّا المحادثة.
+   إذا الإعلان ما حمّل (adblock) الفتح بيصير بعد العدّ كمان (Abdullah، 25 تشرين الأول 2026).
    نص الموديل بيتنظّف (escape) قبل ما ينعرض، وبعدين بس الـ **bold** وفواصل الأسطر بيصيروا HTML. */
 (function(w){
   var API='https://summer-forest-fd40.abdullahjaber1452003.workers.dev/';
-  var HKEY='nursin_tutor_v1',CKEY='nursin_tutor_day_v1',KEEP=12,LIMIT=30,TIMEOUT=45000,RETRY_MS=3000;
+  var HKEY='nursin_tutor_v1',CKEY='nursin_tutor_day_v1',KEEP=12,LIMIT=15,BONUS=5,MAX_UNLOCKS=3,AD_WAIT=15,AD_KEY='9892bba2f704f8ea66787de07f9f7be3',TIMEOUT=45000,RETRY_MS=3000;
   var BUSY='الأستاذ مشغول هلّق، جرّب كمان شوي 🙏';
 
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -35,8 +38,13 @@
   function isBusy(t){return !t||typeof t!=='string'||/^\s*صار في مشكلة/.test(t);}
   function trim(h){return (h||[]).filter(function(m){return m&&(m.role==='user'||m.role==='assistant')&&typeof m.text==='string';}).slice(-KEEP);}
   function today(){var N=w.Nursin;if(N&&N.dayKey)return N.dayKey();var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
-  function countRead(store,day){try{var c=JSON.parse(store.getItem(CKEY)||'null');if(c&&c.d===day)return c.n|0;}catch(e){}return 0;}
-  function countAdd(store,day){var n=countRead(store,day)+1;try{store.setItem(CKEY,JSON.stringify({d:day,n:n}));}catch(e){}return n;}
+  /* العدّاد اليومي {d:يوم، n:أسئلة، u:كم مرّة فتح بإعلان}؛ بيرجع صفر كل يوم */
+  function cRead(store,day){try{var c=JSON.parse(store.getItem(CKEY)||'null');if(c&&c.d===day)return {n:c.n|0,u:Math.min(MAX_UNLOCKS,c.u|0)};}catch(e){}return {n:0,u:0};}
+  function cWrite(store,day,c){try{store.setItem(CKEY,JSON.stringify({d:day,n:c.n,u:c.u}));}catch(e){}}
+  function countRead(store,day){return cRead(store,day).n;}
+  function countAdd(store,day){var c=cRead(store,day);c.n++;cWrite(store,day,c);return c.n;}
+  function quota(store,day){var c=cRead(store,day),cap=LIMIT+BONUS*c.u;return {used:c.n,unlocks:c.u,cap:cap,left:Math.max(0,cap-c.n),canUnlock:c.u<MAX_UNLOCKS};}
+  function unlock(store,day){var c=cRead(store,day);if(c.u<MAX_UNLOCKS){c.u++;cWrite(store,day,c);}return quota(store,day);}
 
   /* شو منبعت للأستاذ عن الطالب والموقع: التاريخ، جدول الامتحانات (نفس exams.html)، صفوفو، حسابو، نقاط ضعفو، ودروس الموقع حسب الصفحة.
      o = {dk, days:[الاتنين…], topics, groups, exams:[{label, day, list:[{id,n,ar,t,q}]}], later:[{day,list}], st:{id:{s,score,total}}, past:[ex…],
@@ -110,7 +118,7 @@
     return o;
   }
 
-  var T={API:API,LIMIT:LIMIT,KEEP:KEEP,TIMEOUT:TIMEOUT,BUSY:BUSY,esc:esc,fmt:fmt,speakable:speakable,chunks:chunks,isBusy:isBusy,trim:trim,buildContext:buildContext,gather:gather,classLine:classLine,countRead:countRead,countAdd:countAdd};
+  var T={API:API,LIMIT:LIMIT,KEEP:KEEP,TIMEOUT:TIMEOUT,BUSY:BUSY,esc:esc,fmt:fmt,speakable:speakable,chunks:chunks,isBusy:isBusy,trim:trim,buildContext:buildContext,gather:gather,classLine:classLine,countRead:countRead,countAdd:countAdd,quota:quota,unlock:unlock,BONUS:BONUS,MAX_UNLOCKS:MAX_UNLOCKS,AD_WAIT:AD_WAIT,AD_KEY:AD_KEY};
   w.Tutor=T;
   if(typeof module!=='undefined'&&module.exports)module.exports=T;
   if(typeof document==='undefined'||!document.getElementById)return;
@@ -124,7 +132,35 @@
     try{hist=trim(JSON.parse(sessionStorage.getItem(HKEY)||'[]'));}catch(e){hist=[];}
     function save(){hist=trim(hist);try{sessionStorage.setItem(HKEY,JSON.stringify(hist));}catch(e){}}
     function lsafe(){try{return w.localStorage;}catch(e){return {getItem:function(){return null;},setItem:function(){}};}}
-    function showLeft(){var n=LIMIT-countRead(lsafe(),today());left.textContent=n<LIMIT?'· باقيلك '+Math.max(0,n)+' سؤال اليوم':'';}
+    function showLeft(){
+      var q=quota(lsafe(),today());left.textContent='· باقيلك '+q.left+' سؤال اليوم';
+      if(!q.left&&q.canUnlock){var b=document.createElement('button');b.type='button';b.className='tlink tadbtn';b.textContent=AD_LABEL;b.addEventListener('click',function(){adScreen(null);});left.appendChild(document.createTextNode(' '));left.appendChild(b);}
+    }
+    /* شاشة الإعلان: نفس شكل شاشة صفحة الـ 3D (gate3d)، وحدة Adsterra 300x250 بـ iframe لحالها، عدّ 15 ثانية، «كمّل» = +5 */
+    var AD_LABEL='🎬 شوف إعلان وخود ٥ أسئلة',adOpen=false;
+    function adScreen(pending){
+      if(adOpen||busy)return;var st=lsafe(),day=today();if(!quota(st,day).canUnlock)return;
+      adOpen=true;
+      var o=document.createElement('div');o.className='gate3d tadgate';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label','إعلان قصير لأسئلة زيادة');
+      o.innerHTML='<div class="g3card"><p class="g3t">🎬 إعلان قصير وبتاخد ٥ أسئلة</p><div class="g3ad"><small class="g3lab">إعلان</small><div class="g3slot"></div></div><p class="g3c" aria-live="polite"><span class="g3n">'+AD_WAIT+'</span></p><button type="button" class="btn pri g3go" hidden>كمّل</button><p><button type="button" class="tlink tadx">✖ رجوع بلا أسئلة</button></p></div>';
+      document.body.appendChild(o);document.documentElement.classList.add('g3on');
+      try{
+        var f=document.createElement('iframe');f.width='300';f.height='250';f.setAttribute('scrolling','no');f.setAttribute('frameborder','0');f.title='إعلان';f.loading='eager';
+        f.srcdoc='<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent}</style></head><body><script>atOptions={key:"'+AD_KEY+'",format:"iframe",height:250,width:300,params:{}};<\/script><script src="https://bauval.org/22/'+AD_KEY+'" onerror="window.__adxErr=1"><\/script></body></html>';
+        o.querySelector('.g3slot').appendChild(f);
+      }catch(e){}
+      var n=o.querySelector('.g3n'),go=o.querySelector('.g3go'),secs=AD_WAIT,timer=null;
+      function close(){clearTimeout(timer);o.remove();document.documentElement.classList.remove('g3on');adOpen=false;}
+      // العدّ بيكمّل حتى لو الإعلان ما حمّل (adblock): ما منعلّق الطالب
+      (function tick(){if(secs>0){n.textContent=secs;secs--;timer=setTimeout(tick,1000);return;}o.querySelector('.g3c').hidden=true;go.hidden=false;try{go.focus({preventScroll:true});}catch(e){}})();
+      o.querySelector('.tadx').addEventListener('click',close);
+      go.addEventListener('click',function(){
+        close();var q=unlock(lsafe(),today());
+        log.querySelectorAll('.tlimit').forEach(function(x){x.remove();});
+        var m=bubble('assistant','',{noVoice:true,cls:'tok'});m.querySelector('.tb').innerHTML=fmt('✅ زادولك **'+BONUS+' أسئلة**، باقيلك '+q.left+' سؤال اليوم');
+        showLeft();if(pending)send(pending);else inp.focus();
+      });
+    }
     function scroll(){log.scrollTop=log.scrollHeight;}
 
     function stopSpeak(){if(!tts)return;try{w.speechSynthesis.cancel();}catch(e){}if(speakingBtn){speakingBtn.textContent='🔊 اسمع';speakingBtn.setAttribute('aria-pressed','false');}speakingBtn=null;}
@@ -214,9 +250,17 @@
     function send(text){
       text=String(text||'').trim().slice(0,1000);if(!text||busy)return;
       var st=lsafe(),day=today();
-      if(countRead(st,day)>=LIMIT){
-        var m=bubble('assistant','',{noVoice:true,cls:'terr'});
-        m.querySelector('.tb').innerHTML=fmt('وصلت لـ **'+LIMIT+' سؤال** اليوم 🙏 الأستاذ بيرتاح لبكرا.\nهلّق فيك تراجع الدروس أو تعمل ')+'<a href="quiz.html">كويز 📝</a>';
+      var q=quota(st,day);
+      if(!q.left){
+        log.querySelectorAll('.tlimit').forEach(function(x){x.remove();});
+        var m=bubble('assistant','',{noVoice:true,cls:'terr tlimit'});
+        if(q.canUnlock){
+          m.querySelector('.tb').innerHTML=fmt(q.unlocks?'خلصو الأسئلة اللي فتحتن 🙏':'خلصو الـ **'+LIMIT+' سؤال** المجانيين لليوم 🙏');
+          var ab=document.createElement('button');ab.type='button';ab.className='btn pri tadbtn';ab.textContent=AD_LABEL;
+          ab.addEventListener('click',function(){adScreen(text);});m.querySelector('.tb').appendChild(ab);
+        }else{
+          m.querySelector('.tb').innerHTML=fmt('خلصت أسئلة اليوم، رجاع بكرا 🙏\nهلّق فيك تراجع الدروس أو تعمل ')+'<a href="quiz.html">كويز 📝</a>';
+        }
         return;
       }
       countAdd(st,day);

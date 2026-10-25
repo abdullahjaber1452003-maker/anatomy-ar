@@ -331,7 +331,7 @@ function drawMe() {
     '<div class="prog"><i style="width:' + g.pct + '%"></i></div>' +
     '<p class="small">' + g.points + " نقطة · باقي <b>" + g.left + "</b> نقطة لليفل " + (g.level + 1) + "</p>" +
     streakHtml() +
-    '<p class="small pu">✂️ حذف جواب غلط: معك <b>' + N.puAvail(profile) + '</b> <small>(واحد ببلاش كل يوم)</small> <button class="btn sm" id="pubuy" type="button"' + ((profile.points | 0) < N.PU_PRICE ? " disabled" : "") + ">اشتري واحد بـ " + N.PU_PRICE + ' نقاط</button><span id="pumsg" aria-live="polite"></span></p></div>';
+    '<p class="small pu">✂️ حذف جواب غلط: معك <b>' + N.puAvail(profile) + '</b> <small>(واحد ببلاش كل يوم)</small> <button class="btn sm" id="pubuy" type="button"' + ((profile.points | 0) < N.PU_PRICE ? " disabled" : "") + ">اشتري واحد بـ " + N.PU_PRICE + ' نقطة</button><span id="pumsg" aria-live="polite"></span></p></div>';
   drawBadges();
   const b = document.getElementById("pubuy");
   if (b) b.addEventListener("click", async () => {
