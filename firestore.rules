@@ -198,5 +198,18 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+    // v6 📢 announcements: everyone reads (signed out too); only the site owner (verified Google email) writes; text ≤ 500 chars
+    match /announcements/{id} {
+      allow read: if true;
+      allow delete: if isAnnOwner();
+      allow create, update: if isAnnOwner()
+        && request.resource.data.keys().hasOnly(['text', 'createdAt', 'by'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.by == request.auth.token.email;
+    }
+    function isAnnOwner() {
+      return request.auth != null && request.auth.token.email == 'abdullahjaber1452003@gmail.com' && request.auth.token.email_verified == true;
+    }
   }
 }
