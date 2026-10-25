@@ -43,7 +43,7 @@
     var bFlow=el('button','btn flowbtn','🩸 مسار الدم');bFlow.type='button';bFlow.setAttribute('aria-pressed','false');o.tools.appendChild(bFlow);
     var cap=el('div','fcap');cap.dir='rtl';cap.hidden=true;
     cap.innerHTML='<div class="ftag"></div><div class="fstep"><bdi class="fnum" dir="ltr"></bdi> <b></b> <span class="fr" lang="fr" dir="ltr"></span></div><div class="fnote"></div>'+
-      '<div class="fctl"><button type="button" class="btn fplay">⏸ وقّف</button><button type="button" class="btn fnext">التالي ▶</button><span class="fleg"><i style="background:rgb('+BLUE+')"></i>بلا أوكسجين <i style="background:rgb('+RED+')"></i>فيه أوكسجين</span></div>';
+      '<div class="fctl"><button type="button" class="btn fplay">⏸ وقّف</button><button type="button" class="btn fnext">التالي ▶</button><span class="fleg"><span><i style="background:rgb('+BLUE+')"></i> بلا أوكسجين</span><span><i style="background:rgb('+RED+')"></i> فيه أوكسجين</span></span></div>';
     stage.parentNode.insertBefore(cap,stage.nextSibling);
     var bPlay=cap.querySelector('.fplay'),bNext=cap.querySelector('.fnext');
     function mats(k){
