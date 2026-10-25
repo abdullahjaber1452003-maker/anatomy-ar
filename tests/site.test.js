@@ -160,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025j/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025k/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -313,7 +313,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025j') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025k') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -360,7 +360,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025j'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025k'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -591,7 +591,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025j" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025k" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
@@ -633,7 +633,7 @@ test('💬 chats (Oct 25): friends 1:1 + groups ≤ 15, text ≤ 500, members-on
 
 test('🩸 blood flow on the 3D heart (Oct 25): «مسار الدم» particles blue → red at the lungs, Ar–Fr step captions, small/big circulation, play/pause + step', () => {
   const f = read('assets/flow.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/flow.js?v=20261025j') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
+  assert.ok(h.indexOf('assets/flow.js?v=20261025k') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
   assert.ok(v.includes("key==='heart'&&window.nursinFlow"), 'viewer hands the heart to the flow');
   assert.ok(f.includes('🩸 مسار الدم') && f.includes('التالي ▶') && f.includes('⏸ وقّف') && f.includes('▶ كمّل'), 'button, play/pause, next');
   const order = ['Veines caves','Oreillette droite','Valve tricuspide','Ventricule droit','Valve pulmonaire','Artère pulmonaire','Poumons','Veines pulmonaires','Oreillette gauche','Valve mitrale','Ventricule gauche','Valve aortique','Aorte','Organes'];
@@ -653,5 +653,37 @@ test('💧 liquid blood flow (Oct 25): flowing stream instead of dots on the 3D 
   assert.ok(f.includes('🐢 السرعة') && /min="0\.25" max="1\.5"/.test(f) && f.includes('spd=0.5') && f.includes('nursin_flow_speed'), 'speed 0.25×–1.5×, default 0.5×, remembered');
   assert.ok(f.includes('beat') && f.includes("'class':'fov fdyn'") && css.includes('.fdyn{will-change:transform}'), 'heartbeat pulse; moving layer kept apart so static vessels are not repainted');
   assert.ok(/@media \(min-width:860px\)\{[^@]*\.viewer\.flowon>\.fbody\{grid-column:2/.test(css), 'beside the heart on desktop, below on phones');
-  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261025j'), '3d.html mentions it, fresh cache tag');
+  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261025k'), '3d.html mentions it, fresh cache tag');
+});
+
+test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service worker, 📲 install, opt-in, worker ping, rules v8', () => {
+  const m = JSON.parse(read('manifest.json'));
+  assert.equal(m.short_name, 'Nursin'); assert.equal(m.lang, 'ar'); assert.equal(m.dir, 'rtl'); assert.equal(m.display, 'standalone');
+  assert.equal(m.theme_color, '#0f766e'); assert.equal(m.scope, '/');
+  for (const sz of ['192x192', '512x512']) assert.ok(m.icons.some(i => i.sizes === sz), 'icon ' + sz);
+  assert.ok(m.icons.some(i => i.purpose === 'maskable'), 'maskable icon');
+  for (const i of m.icons) assert.strictEqual(fs.readFileSync(path.join(SITE, i.src)).slice(1, 4).toString(), 'PNG', i.src);
+  assert.ok(fs.existsSync(path.join(SITE, 'assets/apple-touch-icon.png')) && fs.existsSync(path.join(SITE, 'assets/badge-96.png')), 'apple + badge icons');
+  for (const p of pages.concat('admin.html', 'chat.html')) {
+    const h = read(p);
+    assert.ok(h.includes('<link rel="manifest" href="/manifest.json">') && h.includes('<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'), p + ' manifest + apple icon');
+    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261025k" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
+  }
+  const sw = read('sw.js');
+  assert.ok(sw.includes('"push"') && sw.includes('showNotification') && sw.includes('"notificationclick"') && sw.includes('/chat.html?c='), 'push + tap opens the chat');
+  assert.ok(!sw.includes('"fetch"') && !/caches\./.test(sw), 'no fetch handler, no cache (never a stale site)');
+  const pw = read('assets/pwa.js');
+  assert.ok(pw.includes('register("/sw.js", { scope: "/" })') && pw.includes('beforeinstallprompt') && pw.includes('📲 زيد عالشاشة الرئيسية'), 'SW + install button');
+  assert.ok(pw.includes('إضافة إلى الشاشة الرئيسية') && pw.includes('iOS 16.4') && pw.includes('⬆️'), 'iPhone sheet');
+  assert.ok(pw.includes('🔔 فعّل الإشعارات') && pw.includes('🔕 وقّف الإشعارات') && pw.includes('Notification.requestPermission'), 'opt-in and off');
+  assert.ok(/addEventListener\("click", async function \(\) \{\s*on\.disabled = true;[\s\S]{0,80}enable\(API\)/.test(pw) && (pw.match(/requestPermission/g) || []).length === 1, 'permission asked only on tap');
+  assert.ok(pw.includes('"/push/seal"') && pw.includes('"/push"') && pw.includes('"pushSubs"') && pw.includes('userVisibleOnly: true'), 'seal + save + ping');
+  const vapid = (pw.match(/VAPID = "([A-Za-z0-9_-]+)"/) || [])[1];
+  assert.ok(vapid && Buffer.from(vapid, 'base64url').length === 65, 'VAPID public key (65 bytes)');
+  for (const f of fs.readdirSync(SITE)) if (/\.(js|json|html|rules|md|txt)$/.test(f)) assert.ok(!/"d"\s*:\s*"[A-Za-z0-9_-]{40,}"/.test(read(f)), f + ' no private key');
+  assert.ok(read('assets/chat.js').includes('window.NursinPWA.ping(API, cid)') && read('assets/chat.js').includes('NursinPWA.pushCard($("cpush"), API)'), 'chat: ping after send + opt-in card');
+  assert.ok(read('assets/fb.js').includes('NursinPWA.pushCard(document.getElementById("fpush"), API)'), 'account page opt-in card');
+  const r = read('firestore.rules');
+  assert.ok(r.includes('match /pushSubs/{uid}') && r.includes('allow list: if false;') && r.includes("hasOnly(['d', 'updatedAt'])") && r.includes('d.size() <= 5'), 'rules v8 pushSubs');
+  assert.ok(r.includes('match /chats/{cid}') && r.includes('match /announcements/{id}'), 'v8 keeps v7');
 });
