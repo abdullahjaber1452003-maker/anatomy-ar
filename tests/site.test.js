@@ -160,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025h/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025i/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -313,7 +313,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025h') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025i') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -360,7 +360,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025h'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025i'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -591,7 +591,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025h" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025i" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
@@ -633,13 +633,25 @@ test('💬 chats (Oct 25): friends 1:1 + groups ≤ 15, text ≤ 500, members-on
 
 test('🩸 blood flow on the 3D heart (Oct 25): «مسار الدم» particles blue → red at the lungs, Ar–Fr step captions, small/big circulation, play/pause + step', () => {
   const f = read('assets/flow.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/flow.js?v=20261025h') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
+  assert.ok(h.indexOf('assets/flow.js?v=20261025i') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
   assert.ok(v.includes("key==='heart'&&window.nursinFlow"), 'viewer hands the heart to the flow');
   assert.ok(f.includes('🩸 مسار الدم') && f.includes('التالي ▶') && f.includes('⏸ وقّف') && f.includes('▶ كمّل'), 'button, play/pause, next');
   const order = ['Veines caves','Oreillette droite','Valve tricuspide','Ventricule droit','Valve pulmonaire','Artère pulmonaire','Poumons','Veines pulmonaires','Oreillette gauche','Valve mitrale','Ventricule gauche','Valve aortique','Aorte','Organes'];
   let at = 0; for (const s of order) { const i = f.indexOf("fr:'" + s + "'"); assert.ok(i > at, 'step order: ' + s); at = i; }
   assert.ok(f.includes('الدورة الصغرى (الرئوية)') && f.includes('الدورة الكبرى (الجهازية)') && f.includes('يتأكسج الدم 🫁'), 'circulation labels + oxygenation');
-  assert.ok(/BLUE=\[37,99,235\],RED=\[220,38,38\]/.test(f) && f.includes('updateHotspot') && f.includes("setAlphaMode(b[3]<1?'BLEND':'OPAQUE')"), 'colour lerp, hotspot particles, see-through chambers');
-  assert.ok(f.includes('prefers-reduced-motion') && !/import |three\.module|cdn\./.test(f) && f.length < 12000, 'light: no new library, reduced motion respected');
-  assert.ok(css.includes('.fcap{') && css.includes('.fdot{') && /\.fcap \.fstep\{[^}]*overflow-wrap:anywhere/.test(css), 'caption bar wraps on phones');
+  assert.ok(/BLUE=\[37,99,235\],RED=\[220,38,38\]/.test(f) && f.includes("setAlphaMode(b[3]<1?'BLEND':'OPAQUE')"), 'colour blue → red, see-through chambers');
+  assert.ok(f.includes('prefers-reduced-motion') && !/import |three\.module|cdn\./.test(f) && f.length < 24000, 'light: no new library, reduced motion respected');
+  assert.ok(css.includes('.fcap{') && /\.fcap \.fstep\{[^}]*overflow-wrap:anywhere/.test(css), 'caption bar wraps on phones');
+});
+
+test('💧 liquid blood flow (Oct 25): flowing stream instead of dots on the 3D heart, whole-body figure beside it, 🐢 speed slider shared by both', () => {
+  const f = read('assets/flow.js'), css = read('assets/style.css'), h = read('3d.html');
+  assert.ok(!f.includes('fdot') && !f.includes('updateHotspot') && !css.includes('.fdot{'), 'no more moving dots / per-frame hotspot moves');
+  assert.ok(f.includes('function Liquid(') && f.includes('stroke-dashoffset') && f.includes('linearGradient') && f.includes("'stroke-linecap':'round'"), 'liquid: rounded tubes, gradient blue→red, flowing dash streaks');
+  assert.ok(f.includes('camera-change') && f.includes('hotspot-fa') && f.includes('getBoundingClientRect'), 'heart stream re-projected from 3D anchors only when the camera moves');
+  assert.ok(f.includes('function body(') && f.includes('🧍 الدم بكل الجسم') && ['الراس','الرئتين','القلب','الإيد','الإجر'].every(w => f.includes("'" + w + "'")), 'body figure with head, lungs, heart, arms, legs');
+  assert.ok(f.includes('🐢 السرعة') && /min="0\.25" max="1\.5"/.test(f) && f.includes('spd=0.5') && f.includes('nursin_flow_speed'), 'speed 0.25×–1.5×, default 0.5×, remembered');
+  assert.ok(f.includes('beat') && f.includes("'class':'fov fdyn'") && css.includes('.fdyn{will-change:transform}'), 'heartbeat pulse; moving layer kept apart so static vessels are not repainted');
+  assert.ok(/@media \(min-width:860px\)\{[^@]*\.viewer\.flowon>\.fbody\{grid-column:2/.test(css), 'beside the heart on desktop, below on phones');
+  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261025i'), '3d.html mentions it, fresh cache tag');
 });
