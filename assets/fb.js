@@ -348,11 +348,13 @@ async function renderIn() {
     '<p class="fbtns"><button class="btn" id="fcopy" type="button">📋 نسخ الكود</button> <a class="btn wa" id="fwa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(share) + '">🟢 ابعتو عالواتساب</a></p></div>' +
     '<div class="qcard"><h2>➕ زيد صاحب</h2><form id="fadd" class="fadd" autocomplete="off"><input id="fcodein" dir="ltr" maxlength="7" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود صاحبك"><button class="btn pri" type="submit">زيد</button></form><p id="faddmsg" class="small" aria-live="polite"></p></div>' +
     '<p class="fbtns"><a class="btn pri" href="chat.html">💬 المحادثات</a> <a class="btn" href="chat.html?new">➕ مجموعة جديدة</a></p>' +
+    '<div id="fpush"></div>' +
     '<div class="qcard"><h2>🏅 ترتيب أصحابي</h2><ol id="fboard" class="lb"><li class="small">⏳ …</li></ol></div>' +
     '<div class="qcard" id="livein"><h2>🔴 تحدّي لايف</h2><ul class="chl" id="liveinl"><li class="small">⏳ …</li></ul><p class="small">كبس «🔴 لايف» حد صاحبك، أو <a href="live.html">اعمل غرفة وابعت الرابط</a>. الكويز بيبلّش بس تكونوا التنين أونلاين وجاهزين.</p></div>' +
     '<div class="qcard" id="chin"><h2>⚔️ تحدّيات إلك</h2><ul class="chl" id="chinl"><li class="small">⏳ …</li></ul></div>' +
     '<div class="qcard" id="chout"><h2>🎯 تحدّياتي</h2><ul class="chl" id="choutl"><li class="small">⏳ …</li></ul><p class="small">كبس «⚔️ تحدّى» حد أي صاحب بالترتيب: بتلعبو نفس الـ ١٠ أسئلة كل واحد بوقتو، ويلي بيجيب أكتر بياخد <b>+10 نقاط</b>.</p></div>' +
     '<p class="fout2"><a class="quizlink" href="quiz.html">📝 اعمل كويز وجمّع نقاط</a> <button class="btn" id="fout" type="button">تسجيل الخروج</button>' + (user && user.email === "abdullahjaber1452003@gmail.com" && user.emailVerified ? ' <a class="btn" href="admin.html">📢 إعلان للكل</a>' : "") + '</p>';
+  if (window.NursinPWA) window.NursinPWA.pushCard(document.getElementById("fpush"), API);   // 🔔 chat notifications opt-in
   document.getElementById("fcopy").addEventListener("click", async e => {
     const b = e.currentTarget;
     try { await navigator.clipboard.writeText(profile.friendCode); } catch (x) {

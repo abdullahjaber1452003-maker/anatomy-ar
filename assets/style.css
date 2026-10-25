@@ -234,6 +234,12 @@ model-viewer{direction:ltr;width:100%;height:100%;--poster-color:transparent;--p
 .g3slot{width:300px;height:250px;max-width:100%;margin:0 auto;background:#f1f5f9;border-radius:8px;overflow:hidden}.g3slot iframe{display:block;border:0}
 .g3c{margin:10px 0 0;font:800 26px/1 system-ui,sans-serif;color:var(--pri)}.g3go{font-size:18px;padding:10px 26px;margin-top:10px}
 html.g3on body{overflow:hidden}
+/* 📲 app mode + 🔔 notifications (assets/pwa.js) */
+.pwafoot{margin:0 0 10px}.pwafoot .pwainst{background:#fff;color:#0b3b38;border-color:#fff}
+.pwasheet{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.pwabox{background:#fff;color:#0b3b38;border-radius:16px;padding:16px 18px;max-width:440px;width:100%;box-sizing:border-box;max-height:85vh;overflow:auto}
+.pwabox h2{margin:0 0 8px;font-size:18px}.pwabox ol{margin:0 0 8px;padding-inline-start:22px;line-height:1.8}.pwabox p{margin:8px 0}
+.pushcard h2{margin-top:0}.pushcard .pushmsg:empty{display:none}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}

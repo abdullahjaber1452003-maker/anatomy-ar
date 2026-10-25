@@ -1,5 +1,5 @@
 // 💬 chats (v7 rules): 1:1 between friends + groups (≤ 15). Text only, ≤ 500 chars. Live (onSnapshot) only while a chat is open, last 50 messages.
-// Loaded by fb.js on chat.html. Until rules v7 are published every read is permission-denied → a calm «عم يتجهّز» note, no errors.
+// 🔔 after a send, NursinPWA.ping asks the worker's /push to notify the other members (rules v8 pushSubs). Loaded by fb.js on chat.html. Until rules v7 are published every read is permission-denied → a calm «عم يتجهّز» note, no errors.
 const OWNER = "abdullahjaber1452003@gmail.com", MAXM = 15, SEEN = "nursin_chat_seen_v1";
 let API, el, unsub = null, friendsP = null;
 const $ = id => document.getElementById(id);
@@ -50,8 +50,10 @@ async function drawList() {
       const l = c.last, unread = l && l.by !== me && ms(l.at) > (s[c.id] || 0);
       return '<li><a class="crow" href="chat.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>' + API.esc(title(c)) + "</bdi></b>" + (unread ? '<i class="cdot" aria-label="جديد"></i>' : "") +
         '<small>' + (l ? (c.type === "group" ? "<bdi>" + API.esc(l.name) + "</bdi>: " : "") + API.esc(l.text.slice(0, 70)) : "…") + "</small></a></li>";
-    }).join("") + "</ul>" : '<p class="small">لسّا ما في محادثات. كبوس «💬 حكي» حدّ أي صاحب بصفحة أصحابي، أو اعمل مجموعة تدرسو فيها سوا.</p>');
+    }).join("") + "</ul>" : '<p class="small">لسّا ما في محادثات. كبوس «💬 حكي» حدّ أي صاحب بصفحة أصحابي، أو اعمل مجموعة تدرسو فيها سوا.</p>') +
+    '<div id="cpush"></div>';
   $("cnew").addEventListener("click", () => go("?new"));
+  if (window.NursinPWA) window.NursinPWA.pushCard($("cpush"), API);   // 🔔 notifications opt-in (assets/pwa.js)
 }
 
 /* ---------- DM ---------- */
@@ -115,7 +117,7 @@ async function openRoom(cid) {
     b.set(doc(collection(API.db, "chats", cid, "messages")), { text, uid: me, name, createdAt: serverTimestamp() });
     b.update(doc(API.db, "chats", cid), { last: { text: text.slice(0, 100), by: me, name, at: serverTimestamp() }, updatedAt: serverTimestamp() });
     t.value = ""; $("cmsg").textContent = "";
-    try { await b.commit(); } catch (x) { t.value = text; $("cmsg").textContent = "⚠️ ما انبعتت، استنّى ثانية وجرّب كمان مرّة."; console.warn("nursin: chat send", x && x.code); }
+    try { await b.commit(); if (window.NursinPWA) window.NursinPWA.ping(API, cid); } catch (x) { t.value = text; $("cmsg").textContent = "⚠️ ما انبعتت، استنّى ثانية وجرّب كمان مرّة."; console.warn("nursin: chat send", x && x.code); }
   });
 }
 async function rulesUp() {                     // a permission error on a chat id: rules missing (→ «عم يتجهّز») or simply not a member
