@@ -76,23 +76,32 @@
   var BA=[[[93,104],[95,132]]].concat(H,[[[104,130],[96,120],[84,118]],[[74,118],[70,134],[78,146],[86,134]],[[98,130],[108,134]],[[112,138]],[[113,146]],[[114,158],[110,162]],[[103,142]],[[102,126],[101,108],[103,96],[104,78],[104,62]],[[106,50],[100,38],[94,50],[95,66],[94,84]]]);
   var BB=[[[95,190],[96,160]]].concat(H,[[[106,128],[114,118],[122,116]],[[128,118],[132,132],[126,144],[119,136]],[[120,132],[112,134]],[[112,138]],[[113,146]],[[114,158],[110,162]],[[103,142]],[[102,126],[101,108],[106,100],[110,110],[109,150],[108,200],[106,224],[112,240],[114,300],[116,350],[116,385]],[[119,398],[114,404],[110,394],[109,350],[108,300],[106,245],[96,226]]]);
   // other vessels (arms, the other leg): arteries are step 12, capillaries + veins step 13
-  var EX=[[[101,102],[88,92],[70,96],[60,130],[52,180],[44,230]],[[44,230],[40,244],[46,250],[50,230],[57,180],[64,130],[74,100],[90,96],[93,104]],
-    [[104,100],[118,94],[132,96],[142,130],[150,180],[158,230]],[[158,230],[160,244],[154,250],[150,230],[143,180],[136,130],[126,100],[110,95],[94,102]],
+  var EX=[[[101,100],[88,86],[70,90],[60,130],[52,180],[44,230]],[[44,230],[40,244],[46,250],[50,230],[57,180],[64,130],[74,104],[90,102],[94,106]],
+    [[104,98],[118,86],[132,90],[142,130],[150,180],[158,230]],[[158,230],[160,244],[154,250],[150,230],[143,180],[136,130],[126,104],[110,101],[96,106]],
     [[106,224],[92,240],[86,300],[84,350],[84,385]],[[84,385],[81,398],[86,404],[90,394],[91,350],[92,300],[94,245],[96,226]]];
   var HALF=[[100,62],[108,63],[109,78],[132,84],[146,93],[152,122],[158,170],[164,214],[169,240],[163,258],[155,250],[153,230],[146,190],[140,142],[134,120],[132,160],[128,200],[134,232],[131,300],[125,332],[124,372],[121,396],[131,408],[108,411],[110,380],[107,330],[105,262],[100,252]];
   function smooth(P){var n=P.length,d='M'+P[0].join(',');for(var i=0;i<n;i++){var p0=P[(i-1+n)%n],p1=P[i],p2=P[(i+1)%n],p3=P[(i+2)%n];
     d+='C'+f1(p1[0]+(p2[0]-p0[0])/6)+','+f1(p1[1]+(p2[1]-p0[1])/6)+' '+f1(p2[0]-(p3[0]-p1[0])/6)+','+f1(p2[1]-(p3[1]-p1[1])/6)+' '+p2.join(',');}return d+'Z';}
+  // wider figure (Oct 25): x spreads from the midline (×1.15 near it so the heart stays heart-shaped, ×1.5 further out), arteries and veins pushed apart so each stream has its own lane
+  function wx(x){var a=Math.abs(x-100),s=x<100?-1:1;return 100+s*(Math.min(a,14)*1.15+Math.max(a-14,0)*1.5);}
+  function cl(v){return Math.max(0,Math.min(1,v));}
+  function wide(t){t.p=t.p.map(function(q,i){var x=q[0],y=q[1],k=t.g[i],o=t.o[i],sd=x<100?-1:x>100?1:0,X=wx(x),Y=y;
+      if(k===5)Y-=4;else if(k===7)Y+=4; // pulmonary artery above, pulmonary veins below
+      else if(k===0||k>=12){var w=Math.max(cl((Math.abs(x-100)-16)/14),cl((y-205)/25));
+        X+=sd*((1-w)*2.5+w*(2*o-1)*4.5+(y>215?4*cl((y-215)/20):0));} // trunk: aorta right, cavae left; limbs: artery outside, vein inside
+      return [f1(X),Y];});return t;}
   function body(box){
-    var vb='18 14 164 402',w=el('div','fbw'),svg=sv('svg',{viewBox:vb,'class':'fbs',role:'img','aria-label':'جسم الإنسان: الدم من القلب للرئتين ولكل الجسم'},w),dyn=sv('svg',{viewBox:vb,'class':'fdyn','aria-hidden':'true'},null);
-    var sil=HALF.concat(HALF.slice(1,-1).reverse().map(function(p){return [200-p[0],p[1]];}));
-    sv('ellipse',{'class':'bsil',cx:100,cy:40,rx:21,ry:25},svg);sv('path',{'class':'bsil',d:smooth(sil)},svg);
-    sv('ellipse',{'class':'blung',cx:79,cy:129,rx:16,ry:31,transform:'rotate(6 79 129)'},svg);sv('ellipse',{'class':'blung',cx:124,cy:128,rx:14,ry:29,transform:'rotate(-6 124 128)'},svg);
-    sv('path',{'class':'bheart',d:'M104 133C96 128 89 134 91 144C93 154 103 163 112 167C119 160 123 150 121 141C119 132 110 129 104 133Z'},svg);
-    [['RA',97,145,6.5,8],['RV',103,156,7,6.5],['LA',112,138,6.5,5.5],['LV',114,153,6,8.5]].forEach(function(c){sv('ellipse',{'class':'bch','data-c':c[0],cx:c[1],cy:c[2],rx:c[3],ry:c[4]},svg);});
-    var L=Liquid(svg,dyn,4.2);
-    [BA,BB].forEach(function(r,k){var t=route(r);t.bolus=1;t.r=k;L.add(t);});
-    EX.forEach(function(p,k){var art=k%2===0;L.add({p:p,o:p.map(function(_,i){return art?1:(i<2?[0.65,0.3][i]:0);}),g:p.map(function(){return art?12:13;}),bolus:0});});
-    [['الراس',128,30],['الرئتين',150,112],['القلب',142,166],['الإيد',178,258],['الإجر',150,404]].forEach(function(l){var t=sv('text',{'class':'blab',x:l[1],y:l[2],'text-anchor':'middle'},svg);t.textContent=l[0];});
+    var vb='-6 14 212 402',w=el('div','fbw'),svg=sv('svg',{viewBox:vb,'class':'fbs',role:'img','aria-label':'جسم الإنسان: الدم من القلب للرئتين ولكل الجسم'},w),dyn=sv('svg',{viewBox:vb,'class':'fdyn','aria-hidden':'true'},null);
+    var sil=HALF.concat(HALF.slice(1,-1).reverse().map(function(p){return [200-p[0],p[1]];})).map(function(p){return [f1(wx(p[0])),p[1]];});
+    function ell(c,cx,cy,rx,ry,rot){var a={'class':c,cx:f1(wx(cx)),cy:cy,rx:f1((wx(cx+rx)-wx(cx-rx))/2),ry:ry};if(rot)a.transform='rotate('+rot+' '+a.cx+' '+cy+')';return sv('ellipse',a,svg);}
+    ell('bsil',100,40,21,25);sv('path',{'class':'bsil',d:smooth(sil)},svg);
+    ell('blung',77,134,15,27,7);ell('blung',125,133,13,26,-7);
+    sv('path',{'class':'bheart',d:'M104 133C96 128 89 134 91 144C93 154 103 163 112 167C119 160 123 150 121 141C119 132 110 129 104 133Z'.replace(/(\d+) (\d+)/g,function(m,x,y){return f1(wx(+x))+' '+y;})},svg);
+    [['RA',97,145,6.5,8],['RV',103,156,7,6.5],['LA',112,138,6.5,5.5],['LV',114,153,6,8.5]].forEach(function(c){ell('bch',c[1],c[2],c[3],c[4]).setAttribute('data-c',c[0]);});
+    var L=Liquid(svg,dyn,3.8);
+    [BA,BB].forEach(function(r,k){var t=wide(route(r));t.bolus=1;t.r=k;L.add(t);});
+    EX.forEach(function(p,k){var art=k%2===0;L.add(wide({p:p,o:p.map(function(_,i){return art?1:(i<2?[0.65,0.3][i]:0);}),g:p.map(function(){return art?12:13;}),bolus:0}));});
+    [['الراس',140,30],['الرئتين',172,96],['القلب',156,170],['الإيد',196,272],['الإجر',168,404]].forEach(function(l){var t=sv('text',{'class':'blab',x:l[1],y:l[2],'text-anchor':'middle'},svg);t.textContent=l[0];});
     w.appendChild(dyn);box.appendChild(w);L.svg=svg;return L;
   }
 

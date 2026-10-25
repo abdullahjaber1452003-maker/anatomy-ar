@@ -364,7 +364,7 @@ html.g3on body{overflow:hidden}
 .lw path{opacity:.2;transition:opacity .4s}.lw path.hi{opacity:.55}.lc path{opacity:.82}.lc path.hi{opacity:1}
 .fbody{background:linear-gradient(#fbfdfd,#eef4f6);border-top:1px solid var(--line);padding:6px 4px 4px;text-align:center}
 .fbh{font-size:13px;font-weight:700;color:#334155}.fbh span{font-weight:400;font-size:12px;color:var(--mut)}
-.fbody .fbs{display:block;height:min(56vh,440px);min-height:300px;width:auto;max-width:100%;margin:0 auto;overflow:visible}
+.fbody .fbs{display:block;height:min(68vh,560px);min-height:320px;width:auto;max-width:100%;margin:0 auto;overflow:visible}
 .bsil{fill:rgba(15,118,110,.07);stroke:rgba(15,118,110,.42);stroke-width:1.1;transition:fill .5s}
 .fb.o-body .bsil{fill:rgba(220,38,38,.07)}
 .blung{fill:rgba(244,114,182,.16);stroke:rgba(219,39,119,.35);stroke-width:.8;transition:fill .5s}.fb.o-lung .blung{fill:rgba(244,114,182,.42)}
