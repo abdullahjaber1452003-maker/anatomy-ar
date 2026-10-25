@@ -119,16 +119,17 @@ test('Google Analytics (GA4) tag on every page exactly once, inside <head>', () 
 
 test('Adsterra banners: ad pages carry the keys, non-ad pages carry none', () => {
   const K = { m320: '735f5c76ee5abde951ff9d70e2263fab', d728: 'f0cd90c85278798fba5a155236050d61', box: '9892bba2f704f8ea66787de07f9f7be3' };
-  const want = { 'index.html': ['m320','d728'], 'cardio.html': ['m320','d728','box'], 'neuro.html': ['m320','d728','box'], 'henderson.html': ['m320','d728','box'], 'quiz.html': ['m320','d728','box'], '3d.html': ['box'], 'exams.html': ['m320','d728'] };
+  // cardio + neuro: top + end box + ONE mid-lesson banner (Oct 25) → d728 and box twice
+  const want = { 'index.html': ['m320','d728'], 'cardio.html': ['m320','d728','box','d728','box'], 'neuro.html': ['m320','d728','box','d728','box'], 'henderson.html': ['m320','d728','box'], 'quiz.html': ['m320','d728','box'], '3d.html': ['box'], 'exams.html': ['m320','d728'] };
   for (const [p, keys] of Object.entries(want)) {
     const h = read(p);
-    for (const k of Object.keys(K)) assert.strictEqual(h.split(K[k]).length - 1, keys.includes(k) ? 1 : 0, p + ' ' + k);
+    for (const k of Object.keys(K)) assert.strictEqual(h.split(K[k]).length - 1, keys.filter(x => x === k).length, p + ' ' + k);
     assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1, p + ' ads.js once');
     assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'), p + ' AdSense + GA kept');
   }
   const q = read('quiz.html');
   assert.ok(q.indexOf(K.box) > q.indexOf('id="quiz"'), 'quiz box ad sits below the quiz/results area');
-  for (const p of ['404.html','privacy.html','credits.html','about.html','live.html','tutor.html']) {
+  for (const p of ['404.html','privacy.html','credits.html','about.html','tutor.html']) {
     const h = read(p);
     for (const k of Object.values(K)) assert.ok(!h.includes(k), p + ' must not carry ' + k);
     assert.ok(!h.includes('ads.js') && !h.includes('bauval.org') && !h.includes('class="adx'), p + ' no Adsterra');
@@ -147,7 +148,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025c/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025d/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -300,7 +301,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025c') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025d') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -345,8 +346,9 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.ok(h.includes('🏫 الصفوف') && h.includes('id="classes-app"') && h.includes('<a href="classes.html" aria-current="page"'), 'page shell');
   assert.ok(h.includes('class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"') && !h.includes('9892bba2f704f8ea66787de07f9f7be3'), 'top banner only');
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
-  assert.ok(!/adx|bauval/.test(js), 'no ads inside the class exam');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025c'), 'quiz bank + weak points loaded');
+  const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
+  assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025d'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -522,4 +524,50 @@ test('50/50 «حذف جواب غلط» costs 70 points: labels show the price, n
   assert.ok(fb.includes('ما عندك نقاط كفاية (بدّك " + N.PU_PRICE'), 'not-enough-points message names the price');
   assert.ok(qz.includes("<N.PU_PRICE?' disabled'") && fb.includes('< N.PU_PRICE ? " disabled"'), 'buy buttons disabled under 70 points');
   assert.ok(fr.includes('بـ ٧٠ نقطة') && !fr.includes('بـ ١٠ نقاط'), 'friends page explains the new price');
+});
+
+test('result-screen + mid-lesson banners (Oct 25): labelled Adsterra box after the score, never during questions, reserved size, one mid banner per long lesson page', () => {
+  const box = '9892bba2f704f8ea66787de07f9f7be3', d728 = 'f0cd90c85278798fba5a155236050d61';
+  const slot = 'class="adx adx-box adx-keep adx-res" data-mobile="' + box + '" data-desktop="' + d728 + '"';
+  const quiz = read('assets/quiz.js'), cls = read('assets/classes.js'), live = read('assets/live.js');
+  // quiz / daily exam / friend challenge: only in done(), after the score card, before the review list
+  const done = quiz.slice(quiz.indexOf('function done('));
+  assert.ok(quiz.indexOf(slot) > quiz.indexOf('function done(') && done.indexOf(slot) > done.indexOf('النتيجة:') && done.indexOf(slot) < done.indexOf('راجع هودي'), 'quiz result banner after the score');
+  assert.strictEqual(quiz.split(slot).length - 1, 1, 'one banner in quiz.js');
+  assert.ok(!/adx/.test(quiz.slice(0, quiz.indexOf('function done('))), 'no banner while answering');
+  // class exam: only in resultHtml, after the score
+  const rh = cls.slice(cls.indexOf('function resultHtml('));
+  assert.ok(cls.split(slot).length - 1 === 1 && rh.indexOf(slot) > rh.indexOf('نتيجتك:') && cls.indexOf(slot) > cls.indexOf('function resultHtml('), 'class exam result banner');
+  // live challenge: only in drawDone, created once beside the card (redraws do not reload it)
+  const dd = live.slice(live.indexOf('function drawDone('));
+  assert.ok(live.split(slot).length - 1 === 1 && live.indexOf(slot) > live.indexOf('function drawDone(') && dd.includes('getElementById("lresad")') && dd.includes('insertAdjacentHTML("afterend"'), 'live result banner once');
+  const lh = read('live.html');
+  assert.ok((lh.match(/assets\/ads\.js\?v=/g) || []).length === 1 && !lh.includes('class="adx'), 'live page: ads.js for the result only, no static slot');
+  // ads.js fills slots added later, keeps the reserved box when empty
+  const js = read('assets/ads.js'), css = read('assets/style.css');
+  assert.ok(js.includes('MutationObserver') && js.includes(".adx:not([data-adx])") && js.includes("'adx-keep'") && js.includes("'adx-empty'"), 'late slots filled; keep slots never collapse');
+  assert.ok(/\.adx\.adx-keep\{display:block;min-height:266px/.test(css) && /\.adx\.adx-keep\.adx-off\{display:block\}/.test(css) && /min-width:769px\)\{\.adx\.adx-keep\{min-height:106px\}/.test(css), 'reserved box size, phone + desktop');
+  // lesson pages: exactly one mid banner, between two topics, roughly in the middle
+  for (const [p, before] of [['cardio.html', 'pacemaker'], ['neuro.html', 'craniotomie']]) {
+    const h = read(p), mid = '<div class="adx adx-box adx-keep adx-mid" data-mobile="' + box + '" data-desktop="' + d728 + '"></div>';
+    assert.strictEqual(h.split('adx-mid').length - 1, 1, p + ' one mid banner');
+    assert.ok(h.includes('</details>\n' + mid + '\n<details class="topic" id="' + before + '">'), p + ' mid banner between two lessons');
+    const tops = h.split('<details class="topic"').length - 1, i = h.split(mid)[0].split('<details class="topic"').length - 1;
+    assert.ok(i >= tops / 2 - 1 && i <= tops / 2 + 1, p + ' banner near the middle (' + i + '/' + tops + ')');
+  }
+});
+
+test('3D heart (Oct 25): whole heart framed, slow auto-rotate that pauses on drag, coloured great vessels with Ar–Fr labels and a «🏷️ الأسماء» toggle', () => {
+  const v = read('assets/viewer.js'), css = read('assets/style.css');
+  const M = JSON.parse(v.slice(v.indexOf('var M=') + 6, v.indexOf('};\n', v.indexOf('var M=')) + 1).replace(/,\s*}$/, '}'));
+  const h = M.heart;
+  assert.ok(/^0deg \d+deg 1[2-4]\d%$/.test(h.orbit) && h.spin === true, 'framed with a margin + spin');
+  for (const m of ['aorta', 'pulm_trunk', 'svc', 'pulm_veins']) assert.ok(Array.isArray(h.vcol[m]) && h.vcol[m].length === 3, 'colour for ' + m);
+  const ves = h.hs.filter(x => x.ves);
+  assert.deepStrictEqual(ves.map(x => x.key).sort(), ['aorta', 'ivc', 'pt', 'pv', 'svc']);
+  for (const x of ves) assert.ok(/[\u0600-\u06FF].* – [A-Za-zé]/.test(x.lab) && /^#[0-9a-f]{6}$/i.test(x.ves) && x.normal, 'Ar – Fr label: ' + x.key);
+  assert.ok(v.includes("'auto-rotate-delay','3000'") && v.includes("'rotation-per-second','12deg'") && v.includes('jumpCameraToGoal'), 'gentle spin, resumes after a drag, starts framed');
+  assert.ok(v.includes('🏷️ الأسماء') && v.includes("classList.toggle('vlabels')") && v.includes('setEmissiveFactor'), 'labels toggle + brighter vessels');
+  assert.ok(/\.vlabels \.hs\.ves:not\(\.back\) \.vlbl\{display:block\}/.test(css), 'labels only on the facing side');
+  assert.ok(read('assets/gate3d.js').includes("KEY='nursin_3dgate_v1'"), '3D ad screen kept');
 });
