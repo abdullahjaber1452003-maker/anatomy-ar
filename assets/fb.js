@@ -351,7 +351,7 @@ async function renderIn() {
     '<div class="qcard" id="livein"><h2>🔴 تحدّي لايف</h2><ul class="chl" id="liveinl"><li class="small">⏳ …</li></ul><p class="small">كبس «🔴 لايف» حد صاحبك، أو <a href="live.html">اعمل غرفة وابعت الرابط</a>. الكويز بيبلّش بس تكونوا التنين أونلاين وجاهزين.</p></div>' +
     '<div class="qcard" id="chin"><h2>⚔️ تحدّيات إلك</h2><ul class="chl" id="chinl"><li class="small">⏳ …</li></ul></div>' +
     '<div class="qcard" id="chout"><h2>🎯 تحدّياتي</h2><ul class="chl" id="choutl"><li class="small">⏳ …</li></ul><p class="small">كبس «⚔️ تحدّى» حد أي صاحب بالترتيب: بتلعبو نفس الـ ١٠ أسئلة كل واحد بوقتو، ويلي بيجيب أكتر بياخد <b>+10 نقاط</b>.</p></div>' +
-    '<p class="fout2"><a class="quizlink" href="quiz.html">📝 اعمل كويز وجمّع نقاط</a> <button class="btn" id="fout" type="button">تسجيل الخروج</button></p>';
+    '<p class="fout2"><a class="quizlink" href="quiz.html">📝 اعمل كويز وجمّع نقاط</a> <button class="btn" id="fout" type="button">تسجيل الخروج</button>' + (user && user.email === "abdullahjaber1452003@gmail.com" && user.emailVerified ? ' <a class="btn" href="admin.html">📢 إعلان للكل</a>' : "") + '</p>';
   document.getElementById("fcopy").addEventListener("click", async e => {
     const b = e.currentTarget;
     try { await navigator.clipboard.writeText(profile.friendCode); } catch (x) {
@@ -469,6 +469,7 @@ onAuthStateChanged(auth, async u => {
     if (page === "live.html") { const m = await mod("live"); if (m) m.page(API); }
     if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
     if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
+    if (page === "admin.html") { const m = await mod("admin"); if (m) m.page(API); }
     N.flush();
     return;
   }
@@ -483,6 +484,7 @@ onAuthStateChanged(auth, async u => {
   }
   ready = true;
   if (root) await renderIn();
+  if (page === "admin.html") { const m = await mod("admin"); if (m) m.page(API); }
   const chId = params.get("challenge");
   if (chId && window.NursinQuiz) await openChallengeOnQuiz(chId);
   try {                                                            // an exam whose result could not be saved (network) is sent again, same day only
