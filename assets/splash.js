@@ -21,6 +21,7 @@
   d.setAttribute('aria-hidden','true');
   d.innerHTML='<button type="button" class="ns-skipbtn" tabindex="-1">تخطّي ←</button>'+
   '<div class="ns-in">'+
+    '<div class="ns-row">'+
     '<svg class="ns-mark" viewBox="0 0 120 120" width="150" height="150" focusable="false">'+
       '<defs><clipPath id="ns-clip"><path d="'+H+'"/></clipPath></defs>'+
       '<circle class="ns-ring ns-r1" cx="60" cy="60" r="50"/>'+
@@ -34,6 +35,9 @@
       '</g>'+
       '<g class="ns-cross"><circle cx="97" cy="27" r="13"/><path d="M97 20v14M90 27h14"/></g>'+
     '</svg>'+
+    /* صورة عبدالله الدائرية حدّ لوغو القلب */
+    '<picture class="ns-me"><source srcset="assets/abdullah.webp?v=20261025f" type="image/webp"><img src="assets/abdullah.png?v=20261025f" alt="عبدالله جابر" width="320" height="320" decoding="async"></picture>'+
+    '</div>'+
     '<div class="ns-word" dir="ltr" lang="en">nursin</div>'+
     '<div class="ns-ar">تمريض بالعربي</div>'+
     '<div class="ns-mon" dir="ltr">'+
@@ -46,6 +50,7 @@
   '</div>'+
   '<div class="ns-bar"><i></i></div>';
   b.insertBefore(d,b.firstChild);
+  try{var me=d.querySelector('.ns-me img');me.onerror=function(){var p=me.parentNode;if(p&&p.parentNode)p.parentNode.removeChild(p);};}catch(e){}
   try{var ps=d.querySelectorAll('.ns-d');for(var i=0;i<ps.length;i++){var L=Math.ceil(ps[i].getTotalLength())+2;ps[i].style.strokeDasharray=L;ps[i].style.setProperty('--L',L);}}catch(e){}
   var gone=false;
   function kill(){if(gone)return;gone=true;if(d.parentNode)d.parentNode.removeChild(d);}
