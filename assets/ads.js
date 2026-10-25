@@ -2,7 +2,8 @@
    Each unit renders inside its own srcdoc iframe of its exact size, so every unit has its own
    atOptions set immediately before its own invoke script (no clash between units on one page).
    Only the unit that matches the viewport is created, so hidden units never load.
-   A slot whose ad does not come back collapses, so no empty box stays on the page. */
+   A slot whose ad does not come back collapses, so no empty box stays on the page;
+   an .adx-keep slot (result screens, mid-lesson) keeps its reserved size instead, so the page never jumps. */
 (function () {
   var SIZE = {
     '735f5c76ee5abde951ff9d70e2263fab': [320, 50],
@@ -10,8 +11,15 @@
     '9892bba2f704f8ea66787de07f9f7be3': [300, 250]
   };
   var desktop = !!(window.matchMedia && window.matchMedia('(min-width: 769px)').matches);
-  var slots = document.querySelectorAll('.adx');
-  for (var i = 0; i < slots.length; i++) render(slots[i]);
+  scan(document);
+  // result screens are drawn later by JS: a new .adx slot is filled the moment it is added (Oct 25)
+  if (window.MutationObserver) new MutationObserver(function () { scan(document); }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  window.NursinAds = { scan: scan };
+
+  function scan(root) {
+    var slots = root.querySelectorAll('.adx:not([data-adx])');
+    for (var i = 0; i < slots.length; i++) { slots[i].setAttribute('data-adx', '1'); render(slots[i]); }
+  }
 
   function render(slot) {
     var key = slot.getAttribute('data-key') || slot.getAttribute(desktop ? 'data-desktop' : 'data-mobile');
@@ -47,7 +55,8 @@
       if (filled) { slot.classList.add('adx-filled'); clearInterval(timer); return; }
       var waited = Date.now() - t0;
       if ((win && win.__adxErr && waited > 1500) || waited > 20000) {
-        slot.classList.add('adx-off');
+        // .adx-keep (result screens, mid-lesson) keeps its reserved box so nothing jumps; others collapse
+        slot.classList.add(slot.classList.contains('adx-keep') ? 'adx-empty' : 'adx-off');
         clearInterval(timer);
       }
     }, 500);

@@ -58,6 +58,10 @@ model-viewer{direction:ltr;width:100%;height:100%;--poster-color:transparent;--p
 .hs.on{background:#c2410c;transform:scale(1.25)}
 .hs .lbl{display:none;position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font:600 12px/1.4 system-ui;white-space:nowrap;padding:3px 7px;border-radius:7px}
 .hs.on .lbl,.showlabels .hs .lbl{display:block}
+/* 3D heart: great-vessel labels (Ar – Fr), follow the vessel, only on the visible side, «🏷️ الأسماء» toggles */
+.hs .vlbl{display:none;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(17,24,39,.86);color:#fff;font:600 10.5px/1.35 system-ui;white-space:nowrap;padding:2px 6px;border-radius:6px;border-inline-start:4px solid #fff;pointer-events:none}
+.vlabels .hs.ves:not(.back) .vlbl{display:block}
+.hs.on .vlbl,.showlabels .hs .vlbl{display:none!important}
 .vtools{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);background:#fafcfc}
 .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}
 .btn.on{background:var(--pri);color:#fff;border-color:var(--pri)}
@@ -231,6 +235,13 @@ html.g3on body{overflow:hidden}
 .adx-top{margin-top:12px}
 .adx-lbl{font-size:11px;line-height:1.2;color:#9ca3af;margin:0 0 3px;letter-spacing:.02em}
 .adx iframe{display:block;margin:0 auto;border:0;max-width:100%;background:transparent}
+
+/* Oct 25: result-screen + mid-lesson banners keep a reserved box (no layout jump, tidy if empty) */
+.adx.adx-keep{display:block;min-height:266px;margin:16px auto}
+.adx.adx-keep.adx-off{display:block}
+.adx-keep iframe{background:#f3f4f6;border-radius:6px}
+.adx-keep.adx-filled iframe{background:transparent}
+@media (min-width:769px){.adx.adx-keep{min-height:106px}}
 
 /* friends + levels (assets/account.js, assets/fb.js) */
 .acct{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;margin-inline-start:auto;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:3px 10px;font-size:13px;line-height:1.4;white-space:nowrap;min-height:34px}

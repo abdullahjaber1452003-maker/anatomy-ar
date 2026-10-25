@@ -453,6 +453,7 @@ async function submit(qs, p) {
 function resultHtml(r, p, qs) {
   const P = pct(r.score, r.total), adv = advice(r.wrongQ, window.QUIZ);
   let h = '<div class="score cres"><p>نتيجتك: <b dir="ltr">' + P + "%</b> · " + r.score + " من " + r.total + " صح</p><p>" + (P >= 85 ? "ممتاز 🔥" : P >= 60 ? "منيح 👍" : "بدّها شدّة 💪") + "</p></div>";
+  h += '<div class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>'; // result-screen banner (after the exam, never during it)
   if (adv.length) {
     const top = adv.slice(0, 3), q = "غلطت بامتحان الصف بـ " + top.map(a => topicName(a.t)).join(" و ") + ". اشرحلي أهم الأفكار يلي لازم إعرفها، خطوة خطوة.";
     h += '<div class="cadv"><p class="qq">💪 شدّ حالك بـ:</p><ul>' + top.map(a => '<li><a href="' + lessonPage(a.t) + "#" + esc(a.t) + '"><b lang="fr" dir="ltr">' + esc(topicName(a.t)) + "</b></a> <small>(" + a.n + (a.n === 1 ? " غلطة" : " غلطات") + ")</small></li>").join("") + "</ul>" +

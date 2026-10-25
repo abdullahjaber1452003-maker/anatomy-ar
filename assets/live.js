@@ -303,6 +303,8 @@ function drawDone(S) {
     '<p><button class="btn pri" id="lagain" type="button">🔁 جولة تانية</button> <a class="btn" href="friends.html">🏆 أصحابي</a> <a class="btn" href="exams.html">📅 الأوائل</a></p><p id="lmsg" class="small"></p></div>';
   if (S.view !== html) {
     S.view = html; el.innerHTML = html;
+    // result-screen banner: a sibling made once, so redraws of the score never reload it
+    if (!document.getElementById("lresad")) el.insertAdjacentHTML("afterend", '<div id="lresad" class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>');
     $("#lagain", el).addEventListener("click", async e => {
       const b = e.currentTarget; b.disabled = true;
       try { const id = await createRoom(r.topic, { uid: r[o], name: r[o + "Name"] }); location.href = "live.html?room=" + encodeURIComponent(id); }
