@@ -147,7 +147,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025a/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025b/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -300,7 +300,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025a') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025b') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -313,7 +313,7 @@ test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic
   for (const p of pages) assert.ok(read(p).includes('<a href="tutor.html"'), p + ' nav links tutor.html');
   const h = read('tutor.html'), js = read('assets/tutor.js');
   assert.ok(h.includes('🧑‍🏫 الأستاذ المساعد') && h.includes('id="tlog"') && h.includes('id="tform"') && h.includes('aria-current="page"'), 'page shell');
-  for (const c of ['اشرحلي الـ ECG', 'شو يعني troponine؟', 'اعملّي كويز صغير عن القلب', 'شو لازم إدرس بعدين؟']) assert.ok(h.includes(c), 'chip ' + c);
+  for (const c of ['درّسني لامتحان بكرا', 'شو عندي امتحانات هالأسبوع؟', 'اشرحلي الـ ECG', 'شو يعني troponine؟', 'اعملّي كويز صغير عن القلب', 'شو لازم إدرس بعدين؟']) assert.ok(h.includes(c), 'chip ' + c);
   assert.ok(h.includes('الأستاذ المساعد ذكاء اصطناعي وممكن يغلط، راجع دروسك 📚'), 'disclaimer');
   assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.indexOf('assets/weak.js') < h.indexOf('assets/tutor.js?v='), 'topics + weak points load before the tutor');
   assert.ok(js.includes('https://summer-forest-fd40.abdullahjaber1452003.workers.dev/') && js.includes('sessionStorage') && js.includes('AbortController'), 'worker URL, session history, abort');
@@ -334,7 +334,7 @@ test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic
   for (let i = 0; i < 3; i++) T.countAdd(store, '2026-10-24');
   assert.strictEqual(T.countRead(store, '2026-10-24'), 3); assert.strictEqual(T.countRead(store, '2026-10-25'), 0, 'counter resets each day');
   const ctx = T.buildContext({ topics: { ecg: 'ECG (تخطيط القلب)', avc: 'AVC (جلطة دماغية)' }, me: { name: 'Ali', points: 70 }, level: 3, weak: [{ t: 'ecg', n: 2 }] });
-  assert.ok(ctx.includes('الطالب على موقع nursin.store اللي فيه دروس: ECG (تخطيط القلب)، AVC (جلطة دماغية)') && ctx.includes('نقاط ضعف الطالب') && ctx.includes('ECG (تخطيط القلب) (2 أسئلة)') && ctx.includes('ليفل 3'), 'context: topics, weak points, level');
+  assert.ok(ctx.includes('دروس الموقع: ECG (تخطيط القلب)، AVC (جلطة دماغية)') && ctx.includes('نقاط ضعف الطالب') && ctx.includes('ECG (تخطيط القلب) (2 أسئلة)') && ctx.includes('ليفل 3'), 'context: topics, weak points, level');
   assert.ok(!T.buildContext({ topics: {}, weak: [] }).includes('ليفل'), 'signed-out context has no level');
   assert.ok(read('sitemap.xml').includes('tutor.html') && /Google Gemini/.test(read('privacy.html')) && /sent to Google Gemini via Cloudflare/.test(read('privacy.html')), 'sitemap + privacy (ar + en)');
 });
@@ -346,7 +346,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.ok(h.includes('class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"') && !h.includes('9892bba2f704f8ea66787de07f9f7be3'), 'top banner only');
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   assert.ok(!/adx|bauval/.test(js), 'no ads inside the class exam');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025a'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025b'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -458,4 +458,35 @@ test('motivation in classes: 👑 champion + 📈 most improved (this + last wee
   const rules = read('firestore.rules');
   assert.ok(rules.includes('rules v5') && rules.includes('match /dq/{key}') && rules.includes("key == request.resource.data.day + '_' + request.auth.uid") && rules.includes('examOpen(request.resource.data.day)'), 'v5: one answer per student per day');
   for (const k of ['match /classes/{cid}', 'match /members/{uid}', 'match /weeks/{wk}', 'match /results/{key}', 'match /rooms/{rid}', 'match /challenges/{cid}']) assert.ok(rules.includes(k), 'v4 kept: ' + k);
+});
+
+test('tutor knows the site: date, the exams.html schedule (today, tomorrow, the week, taken or not), classes, streak, badges, lesson pages', () => {
+  global.window = global; delete require.cache[require.resolve(path.join(SITE, 'assets/account.js'))]; require(path.join(SITE, 'assets/account.js'));
+  const N = global.Nursin; eval(read('assets/quiz-data.js'));
+  delete require.cache[require.resolve(path.join(SITE, 'assets/tutor.js'))]; const T = require(path.join(SITE, 'assets/tutor.js'));
+  const fake = Object.assign({}, N, { dayKey: () => '2026-10-25', me: null });           // Sunday: no exam today, two tomorrow
+  const out = T.buildContext(T.gather(fake, null));
+  assert.ok(out.includes('إذا الطالب طلب يدرس لامتحان، استعمل جدول الامتحانات تحت واشرح الدروس المطلوبة بالترتيب واعمل أسئلة تجريبية'), 'study-for-an-exam hint');
+  assert.ok(out.includes('اليوم الأحد 25/10/2026') && out.includes('- اليوم (الأحد 25/10): ما في امتحان'), 'today in Beirut, Sunday off');
+  const tom = N.examsFor('2026-10-26'); assert.strictEqual(tom.length, 2);
+  const line = out.split('\n').find(l => l.startsWith('- بكرا (الاتنين 26/10)'));
+  assert.ok(line, 'tomorrow line');
+  for (const ex of tom) { assert.ok(line.includes(ex.n), 'tomorrow subject ' + ex.n); for (const t of ex.t) assert.ok(line.includes(window.QTOP[t]), 'tomorrow lesson ' + t); assert.ok(line.includes(N.examQids(ex, window.QUIZ).length + ' أسئلة')); }
+  assert.ok(/صفحة (neuro|cardio|henderson)\.html/.test(line), 'tomorrow names the lesson page');
+  assert.ok(out.includes('الأيام الجاية: التلاتا 27/10') && out.includes('السبت 31/10'), 'rest of the week');
+  assert.ok(out.includes('الطالب مش مسجّل دخول') && out.includes('cardio.html (القلب)') && out.includes('henderson.html'), 'signed out still gets the schedule + lesson pages');
+  assert.ok(out.length < 2500, 'compact: ' + out.length);
+  const me = { name: 'Abdullah', points: 200, streak: 3, sDay: '2026-10-25', bestStreak: 5, qTotal: 140, badges: { q100: '2026-10-25' } };
+  const mon = Object.assign({}, fake, { dayKey: () => '2026-10-26', me });
+  const ids = N.examsFor('2026-10-26').map(x => x.id);
+  const st = {}; st[ids[0]] = { s: 'done', score: 8, total: 10 }; st[ids[1]] = { s: 'open' };
+  const cl = { list: [{ name: 'LT', owner: true, members: 6, week: { topics: ['ecg', 'avc'], intro: 'يلا', n: 15 }, mine: { score: 11, total: 15, pct: 73, weak: ['ecg'] }, now: { n: 2, top: 93, champ: ['Ali'], up: [{ name: 'Sara', from: 40, to: 80 }] }, last: { n: 0 }, dq: { t: 'htic', mine: null, first: 'Ali', right: 2, n: 3 } }] };
+  const c2 = T.buildContext(T.gather(mon, { st, classes: cl, prof: me }));
+  assert.ok(c2.includes('قدّمو الطالب: 8/10') && c2.includes('لسّا ما قدّمو'), 'today\'s exams: taken or not');
+  assert.ok(c2.includes('سلسلة 🔥3') && c2.includes('💯 ١٠٠ سؤال') && c2.includes('ليفل 4'), 'streak, badges, level');
+  assert.ok(c2.includes('صف «LT»') && c2.includes('11/15 (73%)') && c2.includes('بطل الأسبوع Ali 93%') && c2.includes('أكثر واحد تحسّن Sara (40%→80%)') && c2.includes('سؤال اليوم (عن HTIC): الطالب لسّا ما جاوب'), 'class exam, champion, most improved, daily question');
+  assert.ok(c2.length < 2500, 'compact signed in: ' + c2.length);
+  const js = read('assets/tutor.js'), ex = read('assets/exams.js'), cj = read('assets/classes.js');
+  assert.ok(js.includes("api.mod('exams')") && js.includes("api.mod('classes')") && ex.includes('export async function tutorStatus') && cj.includes('export async function tutorSummary'), 'live data reuses the exams + classes modules');
+  assert.ok(!/examsFor\s*\(dk\)\s*\{/.test(js), 'no second copy of the schedule in the tutor');
 });
