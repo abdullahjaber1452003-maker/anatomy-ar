@@ -58,8 +58,28 @@ async function ensureProfile(u) {
   const prof = { name: N.cleanName(u.displayName), photo: String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
   if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
     await setDoc(ref, { ...prof, updatedAt: serverTimestamp() }, { merge: true });
-  profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0 };
+  profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, ...actFields(d) };
   N.setMe(profile);
+}
+
+/* ---------- 🔥 streak + 🏅 badges: merged into users/{uid} (fields the v4 rules already accept) ---------- */
+const ACT_KEYS = ["streak", "sDay", "bestStreak", "actDay", "actN", "qTotal", "ecgN", "ecgOk", "badges"];
+function actFields(d) { const o = {}; ACT_KEYS.forEach(k => { if (d && d[k] != null) o[k] = d[k]; }); return o; }
+// n more answers today (ecg = [right, total] on ECG questions; extra = event badges like "live1") → {before, w, html}
+async function logActivity(n, ecg, extra) {
+  if (!user || !profile) return null;
+  const ref = doc(db, "users", user.uid), dk = N.dayKey();
+  try {
+    const r = await runTransaction(db, async tx => {
+      const s = await tx.get(ref); const d = s.exists() ? s.data() : {};
+      const w = N.actWrite(d, n, ecg, extra, dk);
+      tx.set(ref, { ...w, updatedAt: serverTimestamp() }, MERGE);
+      return { before: actFields(d), w };
+    });
+    Object.assign(profile, r.w); N.setMe(profile);
+    r.html = N.actLine(r.before, r.w, dk);
+    return r;
+  } catch (e) { console.warn("nursin: streak", e && e.code); return null; }
 }
 
 /* ---------- quiz points: +3 per right answer, −5 per wrong, never below 0 ---------- */
@@ -206,6 +226,8 @@ N.flush = async function () {
           (r.w == null && r.me === "from" ? '<br><a class="btn wa" target="_blank" rel="noopener" href="' + chalShare(r.c.id) + '">🟢 قلّو عالواتساب</a>' : "") + "</span>";
       } catch (e) { console.warn("nursin: challenge score", e && e.code); html += '<span class="qch">⚠️ ما قدرنا نسجّل نتيجة التحدّي. جرّب تفتح صفحة أصحابي.</span>'; }
     }
+    const act = await logActivity((q.score | 0) + (q.wrong | 0), q.ecg);
+    if (act) html += act.html;
     if (el) el.innerHTML = html + ' <a href="friends.html">ترتيب أصحابي ←</a>';
   }
 };
@@ -284,10 +306,23 @@ function renderOut() {
 function rowHtml(p, i) {
   const medal = ["🥇", "🥈", "🥉"][i] || String(i + 1);
   return '<li class="lbr' + (p.me ? " me" : "") + '"><span class="rk">' + medal + "</span>" + N.avatar(p.photo, p.name, "av") +
-    '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : "") + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + (p.points | 0) + " نقطة</small></span>" +
+    '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : "") + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + N.streakPill(p) + " " + (p.points | 0) + " نقطة" + N.badgeRow(p) + "</small></span>" +
     (p.me ? "" : '<a class="btn live" href="live.html?with=' + encodeURIComponent(p.uid) + '" aria-label="تحدّي لايف مع ' + esc(N.cleanName(p.name)) + '">🔴 لايف</a><button class="btn chal" type="button" data-uid="' + esc(p.uid) + '">⚔️ تحدّى</button><button class="rm" type="button" data-uid="' + esc(p.uid) + '" aria-label="شيل ' + esc(N.cleanName(p.name)) + ' من أصحابي">✕</button>') + "</li>";
 }
 
+function streakHtml() {
+  const s = N.streakNow(profile), best = Math.max(profile.bestStreak | 0, s), left = N.dayLeft(profile);
+  return '<p class="fstk"><span class="stkbig">🔥 <b>' + s + "</b> " + (s === 1 ? "يوم" : "أيام") + "</span> <small>ورا بعض · أطول سلسلة: <b>" + best + "</b></small><br><small>" +
+    (left ? "جاوب <b>" + left + "</b> " + (left === 1 ? "سؤال" : "أسئلة") + " كمان اليوم تا ينحسب النهار" + (s ? " وتكبر النار" : " وتبلّش سلسلة") + " 🔥" : "✅ اليوم انحسب! ارجع بكرا تا ما ترجع النار لصفر.") + "</small></p>";
+}
+function drawBadges() {
+  const el = document.getElementById("badges"); if (!el) return;
+  const b = profile.badges || {}, n = N.BADGES.filter(x => b[x.id]).length;
+  el.innerHTML = '<h2>🏅 أوسمتي <small>(' + n + " من " + N.BADGES.length + ')</small></h2><ul class="bgrid">' + N.BADGES.map(x => {
+    const on = !!b[x.id];
+    return '<li class="bdgc' + (on ? " on" : "") + '"><span class="be" aria-hidden="true">' + (on ? x.e : "🔒") + "</span><b>" + esc(x.n) + "</b><small>" + (on ? "✅ " + esc(b[x.id]) : esc(x.how)) + "</small></li>";
+  }).join("") + "</ul>";
+}
 function drawMe() {
   const el = document.getElementById("fmecard"); if (!el) return;
   const g = N.progress(profile.points);
@@ -295,7 +330,9 @@ function drawMe() {
     '<div class="fmei"><b><bdi>' + esc(profile.name) + '</bdi></b><span class="lvc big">Lv ' + g.level + "</span>" +
     '<div class="prog"><i style="width:' + g.pct + '%"></i></div>' +
     '<p class="small">' + g.points + " نقطة · باقي <b>" + g.left + "</b> نقطة لليفل " + (g.level + 1) + "</p>" +
+    streakHtml() +
     '<p class="small pu">✂️ حذف جواب غلط: معك <b>' + N.puAvail(profile) + '</b> <small>(واحد ببلاش كل يوم)</small> <button class="btn sm" id="pubuy" type="button"' + ((profile.points | 0) < N.PU_PRICE ? " disabled" : "") + ">اشتري واحد بـ " + N.PU_PRICE + ' نقاط</button><span id="pumsg" aria-live="polite"></span></p></div>';
+  drawBadges();
   const b = document.getElementById("pubuy");
   if (b) b.addEventListener("click", async () => {
     b.disabled = true; const m = document.getElementById("pumsg");
@@ -306,6 +343,7 @@ async function renderIn() {
   const share = "زيدني صاحب على nursin 🏆 وخلّينا نتسابق بالكويز! كودي: " + profile.friendCode + "\nhttps://nursin.store/friends.html?add=" + profile.friendCode;
   root.innerHTML =
     '<div class="qcard fme" id="fmecard"></div>' +
+    '<div class="qcard" id="badges"></div>' +
     '<div class="qcard"><h2>🔑 كود الصداقة تبعك</h2><p class="fcode" dir="ltr">' + esc(profile.friendCode) + "</p>" +
     '<p class="fbtns"><button class="btn" id="fcopy" type="button">📋 نسخ الكود</button> <a class="btn wa" id="fwa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(share) + '">🟢 ابعتو عالواتساب</a></p></div>' +
     '<div class="qcard"><h2>➕ زيد صاحب</h2><form id="fadd" class="fadd" autocomplete="off"><input id="fcodein" dir="ltr" maxlength="7" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود صاحبك"><button class="btn pri" type="submit">زيد</button></form><p id="faddmsg" class="small" aria-live="polite"></p></div>' +
@@ -417,7 +455,7 @@ const API = {
   db, auth, N, esc, MERGE,
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp },
   get user() { return user; }, get profile() { return profile; },
-  signInCard, profileWrite, profileFromPoints, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
+  signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
 };
 window.NursinFB = API;
 

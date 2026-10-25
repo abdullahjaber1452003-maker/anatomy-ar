@@ -72,18 +72,71 @@
   /* ---- 50/50 power-up: 1 free a day + bought ones ---- */
   function puAvail(d,dk){d=d||{};var b=Math.max(0,Math.min(PU_MAX,Math.floor(+d.powerups||0)));return b+(d.puDay===(dk||dayKey())?0:1);}
 
+
+  /* ---- 🔥 daily streak + 🏅 badges (stored on users/{uid}; the v4 rules already allow these fields) ---- */
+  var STREAK_MIN=5,ECG_T=['ecg','arythmies'],ECG_MIN=15,ECG_PCT=80;   // a day counts at 5+ answers (quiz, exam, challenge, live, class exam, سؤال اليوم)
+  var BADGES=[
+    {id:'s7',e:'🔥',n:'٧ أيام ورا بعض',how:'ادرس ٧ أيام ورا بعض (٥ أسئلة بالنهار)'},
+    {id:'q100',e:'💯',n:'١٠٠ سؤال',how:'جاوب على ١٠٠ سؤال'},
+    {id:'ecg',e:'💓',n:'ملك الـ ECG',how:'جاوب '+ECG_MIN+' سؤال ECG واضطراب النبض، ٨٠٪ منهن صح'},
+    {id:'champ',e:'👑',n:'بطل الأسبوع',how:'أعلى علامة بامتحان الصف بأسبوع'},
+    {id:'up',e:'📈',n:'أكثر واحد تحسّن',how:'أكبر تحسّن بامتحان الصف عن المرّة يلي قبلها'},
+    {id:'class1',e:'🏫',n:'أوّل امتحان صف',how:'قدّم أوّل امتحان صف'},
+    {id:'live1',e:'⚡',n:'ربحت لايف',how:'اربح تحدّي لايف'},
+    {id:'dq1',e:'🎯',n:'أسرع جواب',how:'كون أوّل واحد بيجاوب صح على «سؤال اليوم» بصفّك'}
+  ];
+  function badgeById(id){for(var i=0;i<BADGES.length;i++)if(BADGES[i].id===id)return BADGES[i];return null;}
+  function streakNow(d,dk){d=d||{};dk=dk||dayKey();return (d.sDay&&(d.sDay===dk||d.sDay===addDays(dk,-1)))?toInt(d.streak):0;}   // a missed day → 0
+  function dayLeft(d,dk){d=d||{};dk=dk||dayKey();return d.sDay===dk?0:Math.max(0,STREAK_MIN-(d.actDay===dk?toInt(d.actN):0));}
+  function ecgCount(qs,picks){var n=0,ok=0;(qs||[]).forEach(function(q,i){if(q&&ECG_T.indexOf(q.t)>=0){n++;if(picks&&picks[i]===q.a)ok++;}});return n?[ok,n]:null;}
+  // badges earned from the counters; event badges (champ, up, class1, live1, dq1) come in `extra`
+  function badgesFor(d,extra,dk){
+    d=d||{};var b={},had=d.badges&&typeof d.badges==='object'?d.badges:{},k;
+    for(k in had)if(badgeById(k))b[k]=String(had[k]).slice(0,10);
+    function give(id){if(badgeById(id)&&!b[id])b[id]=dk||dayKey();}
+    if(toInt(d.qTotal)>=100)give('q100');
+    if(Math.max(toInt(d.bestStreak),streakNow(d,dk))>=7)give('s7');
+    if(toInt(d.ecgN)>=ECG_MIN&&toInt(d.ecgOk)*100>=ECG_PCT*toInt(d.ecgN))give('ecg');
+    (extra||[]).forEach(give);
+    return b;
+  }
+  // fields to merge into users/{uid} after n more answers today (ecg = [right, total] on ECG questions)
+  function actWrite(d,n,ecg,extra,dk){
+    d=d||{};dk=dk||dayKey();n=Math.min(toInt(n),200);
+    var o={actDay:dk,actN:toInt((d.actDay===dk?toInt(d.actN):0)+n),qTotal:toInt(toInt(d.qTotal)+n)};
+    if(ecg){o.ecgN=toInt(toInt(d.ecgN)+toInt(ecg[1]));o.ecgOk=Math.min(o.ecgN,toInt(toInt(d.ecgOk)+toInt(ecg[0])));}
+    if(o.actN>=STREAK_MIN&&d.sDay!==dk){o.streak=(d.sDay===addDays(dk,-1)?toInt(d.streak):0)+1;o.sDay=dk;}
+    o.bestStreak=Math.max(toInt(d.bestStreak),o.streak||0,streakNow(d,dk));
+    var all={},k;for(k in d)all[k]=d[k];for(k in o)all[k]=o[k];
+    o.badges=badgesFor(all,extra,dk);
+    return o;
+  }
+  function newBadges(before,after){var b=(before&&before.badges)||{},out=[];for(var k in (after||{}))if(!b[k]&&badgeById(k))out.push(k);return out;}
+  function badgeRow(d,max){var b=(d&&d.badges)||{},h='',n=0;BADGES.forEach(function(x){if(b[x.id]&&n<(max||9)){h+='<i title="'+esc(x.n)+'">'+x.e+'</i>';n++;}});return h?'<span class="bdg" aria-label="أوسمة">'+h+'</span>':'';}
+  function streakPill(d,dk){var s=streakNow(d,dk);return s?'<span class="stk" title="سلسلة أيام">🔥'+s+'</span>':'';}
+
+  // one line under a result: the streak moved / how many answers are left today / new badges
+  function actLine(before,w,dk){
+    if(!w)return '';dk=dk||dayKey();var h='',nb=newBadges(before,w.badges);
+    if(w.sDay===dk&&(before||{}).sDay!==dk)h+=w.streak>1?'🔥 سلسلتك صارت <b>'+w.streak+'</b> يوم ورا بعض!':'🔥 بلّشت سلسلة أيام! ارجع بكرا تا تكبر.';
+    else if(w.sDay!==dk){var left=Math.max(0,STREAK_MIN-toInt(w.actN));if(left)h+='🔥 باقيلك <b>'+left+'</b> '+(left===1?'سؤال':'أسئلة')+' اليوم تا ينحسب النهار بسلسلتك.';}
+    nb.forEach(function(id){var x=badgeById(id);h+=(h?'<br>':'')+'🏅 وسام جديد: <b>'+x.e+' '+esc(x.n)+'</b>';});
+    if(nb.length)h+=' <a href="friends.html#badges">أوسمتي ←</a>';
+    return h?'<span class="qch act">'+h+'</span>':'';
+  }
   var N=w.Nursin=w.Nursin||{};
   N.RIGHT=RIGHT;N.WRONG=WRONG;N.BONUS=BONUS;N.PU_PRICE=PU_PRICE;N.PU_MAX=PU_MAX;N.LIVE=LIVE;N.SUBJECTS=SUBJECTS;N.DAYS=DAYS;
   N.quizDelta=quizDelta;N.pickQids=pickQids;N.winner=winner;N.level=level;N.levelStart=levelStart;N.progress=progress;N.addPoints=addPoints;N.cleanName=cleanName;N.newCode=newCode;N.normCode=normCode;N.esc=esc;N.MAXP=MAXP;N.hash=hash;
   N.dayKey=dayKey;N.monthKey=monthKey;N.monthField=monthField;N.prevMonth=prevMonth;N.addDays=addDays;N.weekday=weekday;N.monthWrite=monthWrite;
   N.examsFor=examsFor;N.weekOf=weekOf;N.examQids=examQids;N.examById=examById;N.roomTally=roomTally;N.roomWinner=roomWinner;N.roomPoints=roomPoints;N.puAvail=puAvail;
+  N.STREAK_MIN=STREAK_MIN;N.ECG_T=ECG_T;N.BADGES=BADGES;N.badgeById=badgeById;N.streakNow=streakNow;N.dayLeft=dayLeft;N.ecgCount=ecgCount;N.badgesFor=badgesFor;N.actWrite=actWrite;N.newBadges=newBadges;N.badgeRow=badgeRow;N.streakPill=streakPill;N.actLine=actLine;
   if(typeof document==='undefined'||!document.querySelector)return;
 
   var KEY='nursin_me_v1';
   function readMe(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
   N.me=readMe();
   N.queue=N.queue||[];
-  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||''}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
+  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||''}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
   N.avatar=function(photo,name,cls){return photo?'<img class="'+(cls||'av')+'" src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" loading="lazy">':'<span class="'+(cls||'av')+' avx" aria-hidden="true">'+esc(Array.from(name||'?')[0])+'</span>';};
   var slot=null;
   N.badge=function(){
@@ -91,8 +144,9 @@
     if(!me){slot.className='acct out';slot.innerHTML='<svg class="uic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>دخول</span>';slot.setAttribute('aria-label','تسجيل الدخول وأصحابي');return;}
     var g=progress(me.points);
     slot.className='acct in';
-    slot.setAttribute('aria-label','ليفلك '+g.level+' · '+g.points+' نقطة — أصحابي');
-    slot.innerHTML=N.avatar(me.photo,me.name,'av')+'<span class="lv"><b>Lv '+g.level+'</b><i class="lvbar"><i style="width:'+g.pct+'%"></i></i></span>';
+    slot.setAttribute('aria-label','ليفلك '+g.level+' · '+g.points+' نقطة'+(streakNow(me)?' · سلسلة '+streakNow(me)+' يوم':'')+' — أصحابي');
+    var sk=streakNow(me);
+    slot.innerHTML=N.avatar(me.photo,me.name,'av')+'<span class="lv"><b>Lv '+g.level+(sk?' <span class="stk">🔥'+sk+'</span>':'')+'</b><i class="lvbar"><i style="width:'+g.pct+'%"></i></i></span>';
   };
   var bar=document.querySelector('.topbar .bar');
   if(bar){slot=document.createElement('a');slot.href='friends.html';var mb=bar.querySelector('.menu-btn');bar.insertBefore(slot,mb||null);N.badge();}
@@ -102,7 +156,7 @@
     var d=e.detail||{},el=document.getElementById('qpts');
     if(!N.me){if(el)el.innerHTML='🏆 <a href="friends.html">سجّل دخول بغوغل</a> وكل جواب صح بيعطيك ٣ نقاط (والغلط −٥)، وبتطلع بالليفل وبتتسابق مع أصحابك.';return;}
     if(el)el.textContent='⏳ عم نحسبلك النقاط…';
-    N.queue.push({score:toInt(d.score),wrong:toInt(d.wrong!=null?d.wrong:toInt(d.total)-toInt(d.score)),total:toInt(d.total),challenge:d.challenge||null,exam:d.exam||null});
+    N.queue.push({score:toInt(d.score),wrong:toInt(d.wrong!=null?d.wrong:toInt(d.total)-toInt(d.score)),total:toInt(d.total),challenge:d.challenge||null,exam:d.exam||null,ecg:Array.isArray(d.ecg)?d.ecg:null});
     if(N.flush)N.flush();
   });
 

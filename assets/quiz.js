@@ -67,6 +67,7 @@
     var pr=root.querySelector('.p50row');if(pr)pr.remove();
     root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;if(kk===q.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
     if(ok)s.score++;else s.wrong.push(q);
+    if(q.t==='ecg'||q.t==='arythmies'){s.eN=(s.eN|0)+1;if(ok)s.eOk=(s.eOk|0)+1;}   // for the «ملك الـ ECG» badge
     var rec=W?W.record(q,ok):null;if(rec==='graduated')s.grad++;refresh();
     $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+q.x+'</div>'+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'');
     var nx=$('#next');nx.hidden=false;nx.textContent=s.i+1<s.qs.length?'التالي ←':'شوف النتيجة 🏁';nx.focus();
@@ -81,7 +82,7 @@
     h+=s.exam?'<p><a class="btn pri" href="exams.html">📅 رجوع للامتحانات</a></p></div>':s.challenge?'<p><a class="btn pri" href="friends.html">⚔️ رجوع لتحدّياتي</a></p></div>':'<p><button class="btn pri" id="again">جرّب مرّة تانية</button>'+(W&&W.count()&&s.sel!=='weak'?' <button class="btn" id="toweak" type="button">🎯 كويز من أخطائك</button>':'')+'</p></div>';
     if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':'cardio.html');h+='<div class="qcard"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+page+'#'+q.t+'">اقرا الدرس ←</a></p></div>';});}
     root.innerHTML=h;
-    try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,challenge:s.challenge||null,exam:s.exam||null}}));}catch(e){}
+    try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,challenge:s.challenge||null,exam:s.exam||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}
     var ag=$('#again');if(ag)ag.addEventListener('click',function(){start(s.sel,s.sel==='weak'?0:s.qs.length,true);});
     var tw=$('#toweak');if(tw)tw.addEventListener('click',function(){start('weak',0,true);});
   }

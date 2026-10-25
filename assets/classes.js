@@ -71,6 +71,47 @@ export function ranking(results, memberIds) {
   return Object.values(by).map(e => ({ ...e, pct: e.total ? Math.round(100 * e.score / e.total) : 0 })).sort((a, b) => b.pct - a.pct || b.weeks - a.weeks || b.score - a.score);
 }
 export const pct = (s, t) => t ? Math.round(100 * s / t) : 0;
+const addDays = (dk, n) => { const t = new Date(dk + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+export function prevWeek(dk) { return isoWeek(addDays(dk, -7)); }
+// 👑 بطل الأسبوع (top % that week; ties share it) and 📈 أكثر واحد تحسّن (biggest rise vs the student's previous class exam)
+export function weekAwards(results, wk, memberIds) {
+  const all = (results || []).filter(r => !memberIds || memberIds.includes(r.uid)), cur = all.filter(r => r.wk === wk);
+  const out = { wk, n: cur.length, top: 0, champ: [], gain: 0, up: [] };
+  if (!cur.length) return out;
+  out.top = Math.max(...cur.map(r => pct(r.score, r.total)));
+  out.champ = cur.filter(r => pct(r.score, r.total) === out.top).map(r => r.uid).sort();
+  cur.forEach(r => {
+    const prev = all.filter(x => x.uid === r.uid && x.wk < wk).sort((a, b) => (a.wk < b.wk ? 1 : -1))[0];
+    if (!prev) return;
+    const from = pct(prev.score, prev.total), to = pct(r.score, r.total), g = to - from;
+    if (g <= 0 || g < out.gain) return;
+    if (g > out.gain) { out.gain = g; out.up = []; }
+    out.up.push({ uid: r.uid, from, to });
+  });
+  out.up.sort((a, b) => (a.uid < b.uid ? -1 : 1));
+  return out;
+}
+// badges a student has earned from a class's past (finished) weeks: champ needs 2+ students that week
+export function classBadges(results, uid, curWk) {
+  const out = [], mine = (results || []).filter(r => r.uid === uid);
+  if (mine.length) out.push("class1");
+  const weeks = [...new Set(mine.map(r => r.wk))].filter(w => w < curWk);
+  weeks.forEach(w => { const a = weekAwards(results, w); if (a.n >= 2 && a.champ.includes(uid) && !out.includes("champ")) out.push("champ"); if (a.up.some(u => u.uid === uid) && !out.includes("up")) out.push("up"); });
+  return out;
+}
+// ❓ سؤال اليوم: the same question for the whole class all day (Beirut day), never the same as yesterday's
+export function dailyQid(cid, dk, quiz) {
+  const ids = (quiz || []).map(q => q.id).sort(); if (!ids.length) return null;
+  const at = d => hash(cid + ":dq:" + d) % ids.length;
+  let i = at(dk); if (ids.length > 1 && i === at(addDays(dk, -1))) i = (i + 1) % ids.length;
+  return ids[i];
+}
+// answers of the day → first right answer (by server time), how many right, how many answered
+export function dqSummary(answers) {
+  const ms = a => (a.at && typeof a.at.toMillis === "function" ? a.at.toMillis() : typeof a.at === "number" ? a.at : Infinity);
+  const right = (answers || []).filter(a => a.ok).sort((a, b) => ms(a) - ms(b) || (a.uid < b.uid ? -1 : 1));
+  return { first: right[0] || null, right: right.length, n: (answers || []).length };
+}
 
 /* ---------- page ---------- */
 let A, F, N, esc, $;
@@ -177,12 +218,92 @@ async function openClass(el, cid) {
   if (m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
   el.innerHTML = '<nav class="small"><a href="classes.html">← صفوفي</a></nav>' +
     '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(cls.ownerName)) + '</bdi></p><div id="ccode"></div></section>' +
+    '<section class="qcard cdq" id="cdq"><h2>❓ سؤال اليوم</h2><div id="cdqb"><p class="small">⏳ …</p></div></section>' +
     '<section class="qcard" id="cweek"><h2>📝 امتحان هالأسبوع</h2><div id="cexam"><p class="small">⏳ …</p></div></section>' +
+    '<section class="qcard"><h2>👑 أبطال الصف</h2><div id="cawards"></div></section>' +
     '<section class="qcard"><h2>📊 علامات هالأسبوع</h2><ol class="lb" id="cboard"></ol></section>' +
     '<section class="qcard"><h2>🏆 ترتيب الصف <small>(كل الأسابيع)</small></h2><ol class="lb" id="crank"></ol></section>' +
     '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p></section>';
-  drawCode(); drawBoard(); drawRank(); drawMembers();
-  weekCard();
+  C.prof = {};
+  drawCode(); drawBoard(); drawAwards(); drawRank(); drawMembers();
+  dqCard(); weekCard(); loadProfiles(); myClassBadges();
+}
+// 🔥 + 🏅 of every member (users/{uid} is readable by any signed-in student)
+async function loadProfiles() {
+  const ids = C.members.map(m => m.uid);
+  const snaps = await Promise.all(ids.map(id => F.getDoc(F.doc(A.db, "users", id)).catch(() => null)));
+  snaps.forEach((s, i) => { if (s && s.exists()) C.prof[ids[i]] = s.data(); });
+  if (A.profile) C.prof[A.user.uid] = A.profile;
+  drawMembers();
+}
+// 🏫 first class exam, 👑 champion and 📈 most improved of past weeks → my badges
+async function myClassBadges() {
+  const have = (A.profile && A.profile.badges) || {}, want = classBadges(C.results, A.user.uid, C.wk).filter(b => !have[b]);
+  if (!want.length || !A.logActivity) return;
+  const r = await A.logActivity(0, null, want);
+  if (r && r.html) { const m = document.createElement("div"); m.className = "finv cbnew"; m.innerHTML = r.html; const h = document.querySelector(".chead"); if (h) h.append(m); }
+  if (r) { C.prof[A.user.uid] = A.profile; drawMembers(); }
+}
+function nameOf(uid, fallback) { const m = C.members.find(x => x.uid === uid) || C.results.find(x => x.uid === uid) || { name: fallback }; return '<bdi>' + esc(N.cleanName(m.name)) + "</bdi>" + (uid === A.user.uid ? " <small>(إنت)</small>" : ""); }
+function drawAwards() {
+  const ids = C.members.map(m => m.uid), weeks = [[C.wk, "هالأسبوع <small>(لهلّق)</small>"], [prevWeek(N.dayKey()), "الأسبوع الماضي"]];
+  $("#cawards").innerHTML = weeks.map(([wk, label]) => {
+    const a = weekAwards(C.results, wk, ids);
+    return '<div class="caw"><p class="cawh">' + label + "</p>" +
+      (a.n ? '<p>👑 <b>بطل الأسبوع:</b> ' + a.champ.map(nameOf).join("، ") + ' <b dir="ltr">' + a.top + "%</b></p>" : '<p class="small">👑 لسّا ما حدا قدّم امتحان ' + (wk === C.wk ? "هالأسبوع" : "هيداك الأسبوع") + ".</p>") +
+      (a.up.length ? '<p>📈 <b>أكثر واحد تحسّن:</b> ' + a.up.map(u => nameOf(u.uid) + ' <span dir="ltr" class="cup">' + u.from + "% → " + u.to + "% (+" + (u.to - u.from) + ")</span>").join("، ") + "</p>"
+        : a.n ? '<p class="small">📈 «أكثر واحد تحسّن» بيطلع لما حدا يجيب أحسن من امتحانو يلي قبل.</p>' : "") + "</div>";
+  }).join("");
+}
+
+/* ---- ❓ سؤال اليوم: one question for the whole class per Beirut day; each student answers once ---- */
+const DQ_NOT_READY = "❓ سؤال اليوم بعدها عم يتجهّز (ناطرين تحديث صغير بإعدادات الموقع). جرّب كمان شوي 🙏";
+async function dqLoad(dk) {
+  const s = await F.getDocs(F.query(F.collection(A.db, "classes", C.cid, "dq"), F.where("day", "==", dk)));
+  return s.docs.map(d => d.data());
+}
+async function dqCard() {
+  const box = $("#cdqb"), dk = N.dayKey(), q = qById(dailyQid(C.cid, dk, window.QUIZ)), me = A.user.uid;
+  if (!q) { box.innerHTML = ""; return; }
+  let ans;
+  try { ans = await dqLoad(dk); }
+  catch (e) { if (!denied(e)) console.warn("nursin: daily question", e && e.code); box.innerHTML = '<p class="small">' + (denied(e) ? DQ_NOT_READY : "⚠️ ما قدرنا نجيب سؤال اليوم هلّق.") + "</p>"; return; }
+  dqDraw(box, q, ans, dk);
+  const mine = ans.find(a => a.uid === me), sum = dqSummary(ans);
+  if (mine && sum.first && sum.first.uid === me && !((A.profile && A.profile.badges) || {}).dq1 && A.logActivity) A.logActivity(0, null, ["dq1"]).then(() => { C.prof[me] = A.profile; drawMembers(); });
+}
+function dqDraw(box, q, ans, dk, note) {
+  const me = A.user.uid, mine = ans.find(a => a.uid === me), sum = dqSummary(ans);
+  const info = (sum.first ? '<p class="dqfirst">🥇 أول واحد جاوب صح: <b>' + nameOf(sum.first.uid, sum.first.name) + "</b></p>" : sum.n ? '<p class="small">لسّا ما حدا جاوب صح… كون إنت الأوّل 💪</p>' : '<p class="small">لسّا ما حدا جاوب. كون إنت الأوّل 💪</p>') +
+    '<p class="small">✅ <b>' + sum.right + "</b> جاوبو صح من أصل <b>" + sum.n + "</b></p>";
+  let h = '<span class="qtopic">' + esc(topicName(q.t)) + '</span><p class="qq">' + q.q + "</p>";
+  if (mine) {
+    h += q.o.map((o, k) => '<div class="opt' + (k === q.a ? " ok" : k === mine.pick ? " bad" : "") + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></div>").join("") +
+      '<div class="expl' + (mine.ok ? "" : " w") + '">' + (mine.ok ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + L[q.a] + "</b> — ") + q.x + "</div>" + (note || "") + info + '<p class="small">سؤال جديد بكرا ⏰</p>';
+  } else {
+    h += q.o.map((o, k) => '<button class="opt" type="button" data-k="' + k + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></button>").join("") + '<p class="small">جواب واحد بس، فكّر منيح 🤔</p><p id="dqmsg" class="small" aria-live="polite"></p>' + info;
+  }
+  box.innerHTML = h;
+  box.querySelectorAll("button.opt").forEach(b => b.addEventListener("click", () => dqAnswer(box, q, +b.dataset.k, dk)));
+}
+async function dqAnswer(box, q, k, dk) {
+  const me = A.user.uid, pb = profileBits(), ok = k === q.a, msg = $("#dqmsg");
+  box.querySelectorAll("button.opt").forEach(b => { b.disabled = true; });
+  if (msg) msg.textContent = "⏳ …";
+  try { await F.setDoc(F.doc(A.db, "classes", C.cid, "dq", dk + "_" + me), { uid: me, day: dk, qid: q.id, name: pb.name, photo: pb.photo, pick: k, ok, at: F.serverTimestamp() }); }
+  catch (e) {
+    let ans = null; try { ans = await dqLoad(dk); } catch (x) {}
+    if (ans && ans.some(a => a.uid === me)) return dqDraw(box, q, ans, dk);        // already answered (another tab)
+    if (!denied(e)) console.warn("nursin: daily answer", e && e.code);
+    if (msg) msg.textContent = denied(e) ? DQ_NOT_READY : "⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة.";
+    box.querySelectorAll("button.opt").forEach(b => { b.disabled = false; }); return;
+  }
+  try { if (window.Weak) window.Weak.record(q, ok); } catch (e) {}
+  let ans = []; try { ans = await dqLoad(dk); } catch (e) {}
+  const first = dqSummary(ans).first, iWon = !!(ok && first && first.uid === me);
+  const act = A.logActivity ? await A.logActivity(1, N.ecgCount([q], [k]), iWon ? ["dq1"] : []) : null;
+  if (act) { C.prof[me] = A.profile; drawMembers(); }
+  dqDraw(box, q, ans.length ? ans : [{ uid: me, pick: k, ok, at: Date.now() }], dk, (iWon ? '<p class="finv">🎯 إنت أوّل واحد جاوب صح اليوم!</p>' : "") + (act ? act.html : ""));
 }
 function drawCode() {
   const code = C.cls.code, link = "https://nursin.store/classes.html?join=" + code;
@@ -236,11 +357,11 @@ function drawRank() {
 function drawMembers() {
   const me = A.user.uid;
   $("#cmem").innerHTML = C.members.slice().sort((a, b) => (b.uid === C.cls.owner) - (a.uid === C.cls.owner) || (b.level | 0) - (a.level | 0)).map(m =>
-    row(m.uid === C.cls.owner ? "👑" : "🎓", m, '<span class="lvc">Lv ' + (m.level | 0 || 1) + "</span>", m.uid === me,
+    row(m.uid === C.cls.owner ? "👑" : "🎓", m, '<span class="lvc">Lv ' + (m.level | 0 || 1) + "</span> " + N.streakPill(C.prof[m.uid]) + N.badgeRow(C.prof[m.uid]), m.uid === me,
       C.owner && m.uid !== me ? '<button class="rm" type="button" data-uid="' + esc(m.uid) + '" aria-label="طلّع ' + esc(N.cleanName(m.name)) + ' من الصف">✖</button>' : "")).join("");
   document.querySelectorAll("#cmem .rm").forEach(b => b.addEventListener("click", async () => {
     const m = C.members.find(x => x.uid === b.dataset.uid); if (!m || !confirm("تطلّع " + N.cleanName(m.name) + " من الصف؟")) return;
-    try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
+    try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawAwards(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
     catch (e) { $("#cmmsg").textContent = failMsg(e); }
   }));
 }
@@ -325,8 +446,9 @@ async function submit(qs, p) {
   progSave(null);
   try { if (window.Weak) qs.forEach((q, i) => window.Weak.record(q, p.ans[i] === q.a)); } catch (e) {}
   C.mine = r; C.results.push(r);
-  $("#cexam").innerHTML = '<p class="cintro">🧑‍🏫 ' + esc(C.week.intro) + "</p>" + resultHtml(r, p, qs);
-  drawBoard(); drawRank(); $("#cweek").scrollIntoView({ block: "start" });
+  $("#cexam").innerHTML = '<p class="cintro">🧑‍🏫 ' + esc(C.week.intro) + "</p>" + resultHtml(r, p, qs) + '<p id="cact"></p>';
+  drawBoard(); drawAwards(); drawRank(); $("#cweek").scrollIntoView({ block: "start" });
+  if (A.logActivity) A.logActivity(qs.length, N.ecgCount(qs, p.ans), ["class1"]).then(a => { if (!a) return; const el = $("#cact"); if (el) el.innerHTML = a.html; C.prof[A.user.uid] = A.profile; drawMembers(); });
 }
 function resultHtml(r, p, qs) {
   const P = pct(r.score, r.total), adv = advice(r.wrongQ, window.QUIZ);

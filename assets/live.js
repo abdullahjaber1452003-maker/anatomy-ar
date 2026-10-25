@@ -281,7 +281,8 @@ function drawDone(S) {
   clearInterval(hb); hb = 0;
   if (S.paid === null) {
     S.paid = "busy";
-    new Promise(r => setTimeout(r, S.role === "guest" ? 1500 : 0)).then(() => pay(S)).then(p => { S.paid = p; if (p.points != null) A.profileFromPoints(p.points); drawDone(S); })
+    new Promise(r => setTimeout(r, S.role === "guest" ? 1500 : 0)).then(() => pay(S)).then(p => { S.paid = p; if (p.points != null) A.profileFromPoints(p.points); drawDone(S);
+        if (!p.already && A.logActivity) A.logActivity(p.tally.c + p.tally.w, null, p.won ? ["live1"] : []).then(a => { if (a && a.html) { S.act = a.html; drawDone(S); } }); })
       .catch(e => { console.warn("nursin: live points", e && e.code); S.paid = { err: true }; drawDone(S); });
   }
   const mine = r[S.role + "Score"] | 0, theirs = r[o + "Score"] | 0, oname = "<bdi>" + N.esc(N.cleanName(r[o + "Name"])) + "</bdi>";
@@ -292,7 +293,7 @@ function drawDone(S) {
   else if (p && p.tally) {
     const t = p.tally, net = t.c * N.RIGHT - t.w * N.WRONG;
     pts = '<span class="qnet">✅ ' + t.c + " صح <b>+" + t.c * N.RIGHT + "</b> · ❌ " + t.w + ' غلط <b dir="ltr">−' + t.w * N.WRONG + "</b>" + (t.skip ? " · ⏰ " + t.skip + " بلا جواب" : "") + (p.won ? ' · 🏆 <b dir="ltr">+' + N.BONUS + "</b> بونص" : "") + "</span>" +
-      (p.already ? "<br><small>النقاط انحسبت.</small>" : "<br>صار معك <b>" + p.points + "</b> نقطة · Lv " + N.level(p.points) + (net < 0 && p.points === 0 ? " <small>(النقاط ما بتنزل تحت الصفر)</small>" : ""));
+      (p.already ? "<br><small>النقاط انحسبت.</small>" : "<br>صار معك <b>" + p.points + "</b> نقطة · Lv " + N.level(p.points) + (net < 0 && p.points === 0 ? " <small>(النقاط ما بتنزل تحت الصفر)</small>" : "")) + (S.act || "");
   }
   const html = '<div class="qcard score lres"><p class="lhead">' + head + "</p>" +
     '<div class="seats">' + '<div class="seat me">' + N.avatar(r[S.role + "Photo"], r[S.role + "Name"], "av avl") + "<b>إنت</b><span class=\"big\">" + mine + "</span></div>" +

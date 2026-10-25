@@ -1,6 +1,6 @@
-/* شاشة البداية (~10 ثواني): لوغو nursin — قلب بينرسم، خط تخطيط القلب، شاشة مونيتور حيّة مع دقّات القلب، صليب التمريض، الاسم والشعار.
+/* شاشة البداية (~6 ثواني): لوغو nursin — قلب بينرسم، خط تخطيط القلب، شاشة مونيتور حيّة مع دقّات القلب، صليب التمريض، الاسم والشعار.
    بتبيّن مرّة وحدة بأوّل فتحة للموقع بكل جلسة (sessionStorage). ما بتخبّي المحتوى: الصفحة كلها تحت،
-   والشاشة بتختفي لحالها بالـ CSS (~10 ث) حتى لو وقف الـ JS. كبسة وحدة أو زر «تخطّي» بيسكّرها. */
+   والشاشة بتختفي لحالها بالـ CSS (~6 ث) حتى لو وقف الـ JS. كبسة وحدة أو زر «تخطّي» بيسكّرها. */
 (function(){
   try{
     var K='nursin_splash_v2';
@@ -53,5 +53,5 @@
   d.addEventListener('animationend',function(ev){if(ev.target===d)kill();});
   d.addEventListener('pointerdown',skip);d.addEventListener('click',skip);
   document.addEventListener('keydown',function k(){skip();document.removeEventListener('keydown',k);});
-  setTimeout(kill,reduce?1800:10500);
+  setTimeout(kill,reduce?1800:6500);
 })();
