@@ -147,7 +147,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025b/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025c/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -273,7 +273,7 @@ test('phase 3: month points reset with the month, live-room scoring, 50/50 count
   assert.strictEqual(N.puAvail({}, today), 1, 'one free a day');
   assert.strictEqual(N.puAvail({ puDay: today, powerups: 2 }, today), 2);
   assert.strictEqual(N.puAvail({ puDay: today, powerups: 99 }, today), 50, 'capped at 50');
-  assert.strictEqual(N.PU_PRICE, 10);
+  assert.strictEqual(N.PU_PRICE, 70, '50/50 costs 70 points (was 10)');
 });
 test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams / month / power-ups', () => {
   for (const p of pages) assert.ok(read(p).includes('<a href="exams.html"'), p + ' nav links exams.html');
@@ -300,7 +300,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025b') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025c') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -327,7 +327,7 @@ test('AI tutor page: nav on every page, chat shell, retry/busy/limit/voice logic
   assert.strictEqual(T.fmt('الـ *Troponine* و 2*3'), 'الـ Troponine و 2*3', 'single-star italics stripped');
   assert.strictEqual(T.speakable('**ECG** 🫀 تخطيط ✅'), 'ECG تخطيط');
   assert.ok(T.isBusy('صار في مشكلة: high demand') && T.isBusy('') && !T.isBusy('الجواب'));
-  assert.strictEqual(T.LIMIT, 30); assert.strictEqual(T.KEEP, 12);
+  assert.strictEqual(T.LIMIT, 15); assert.strictEqual(T.KEEP, 12);
   const hist = Array.from({ length: 20 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', text: 'm' + i }));
   assert.deepStrictEqual(T.trim(hist).map(m => m.text), hist.slice(-12).map(m => m.text));
   const mem = {}; const store = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
@@ -346,7 +346,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.ok(h.includes('class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"') && !h.includes('9892bba2f704f8ea66787de07f9f7be3'), 'top banner only');
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   assert.ok(!/adx|bauval/.test(js), 'no ads inside the class exam');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025b'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025c'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -489,4 +489,37 @@ test('tutor knows the site: date, the exams.html schedule (today, tomorrow, the 
   const js = read('assets/tutor.js'), ex = read('assets/exams.js'), cj = read('assets/classes.js');
   assert.ok(js.includes("api.mod('exams')") && js.includes("api.mod('classes')") && ex.includes('export async function tutorStatus') && cj.includes('export async function tutorSummary'), 'live data reuses the exams + classes modules');
   assert.ok(!/examsFor\s*\(dk\)\s*\{/.test(js), 'no second copy of the schedule in the tutor');
+});
+
+test('tutor: 15 free questions a day, then an ad screen gives +5, at most 3 times (30 a day)', () => {
+  const T = require(path.join(SITE, 'assets', 'tutor.js'));
+  assert.strictEqual(T.LIMIT, 15); assert.strictEqual(T.BONUS, 5); assert.strictEqual(T.MAX_UNLOCKS, 3); assert.strictEqual(T.AD_WAIT, 15);
+  assert.strictEqual(T.LIMIT + T.BONUS * T.MAX_UNLOCKS, 30, 'never more than 30 a day');
+  const mem = {}; const st = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } }; const day = '2026-10-25';
+  for (let i = 0; i < 15; i++) T.countAdd(st, day);
+  let q = T.quota(st, day); assert.deepStrictEqual([q.left, q.canUnlock, q.cap], [0, true, 15]);
+  for (let u = 1; u <= 3; u++) {
+    q = T.unlock(st, day); assert.strictEqual(q.left, 5, 'unlock ' + u + ' gives +5'); assert.strictEqual(q.unlocks, u);
+    for (let i = 0; i < 5; i++) T.countAdd(st, day);
+    assert.strictEqual(T.quota(st, day).left, 0);
+  }
+  q = T.quota(st, day); assert.deepStrictEqual([q.used, q.cap, q.canUnlock], [30, 30, false]);
+  assert.strictEqual(T.unlock(st, day).cap, 30, 'a 4th unlock gives nothing');
+  const t = T.quota(st, '2026-10-26'); assert.deepStrictEqual([t.left, t.unlocks, t.canUnlock], [15, 0, true], 'resets the next Beirut day');
+  mem.nursin_tutor_day_v1 = JSON.stringify({ d: day, n: 12 }); assert.strictEqual(T.quota(st, day).left, 3, 'old counters (no u) still read');
+  const js = read('assets/tutor.js'), h = read('tutor.html');
+  assert.ok(js.includes('🎬 شوف إعلان وخود ٥ أسئلة') && js.includes('خلصت أسئلة اليوم، رجاع بكرا 🙏') && js.includes('باقيلك'), 'Arabic texts');
+  assert.ok(js.includes('bauval.org/22/') && js.includes('9892bba2f704f8ea66787de07f9f7be3') && js.includes('>إعلان<'), 'Adsterra 300x250 labelled إعلان');
+  assert.ok(!/adsbygoogle|data-ad-slot/.test(js), 'no AdSense unit on the ad screen');
+  assert.ok(!h.includes('bauval.org') && !h.includes('class="adx'), 'no banner inside the chat page');
+});
+
+test('50/50 «حذف جواب غلط» costs 70 points: labels show the price, not-enough-points guard uses it', () => {
+  const vm = require('node:vm'); const ctx = { window: {} }; vm.createContext(ctx); vm.runInContext(read('assets/account.js'), ctx);
+  assert.strictEqual(ctx.window.Nursin.PU_PRICE, 70);
+  const fb = read('assets/fb.js'), qz = read('assets/quiz.js'), fr = read('friends.html');
+  assert.ok((fb.match(/before < N\.PU_PRICE|before >= N\.PU_PRICE/g) || []).length >= 2, 'buy + use check the balance against the price');
+  assert.ok(fb.includes('ما عندك نقاط كفاية (بدّك " + N.PU_PRICE'), 'not-enough-points message names the price');
+  assert.ok(qz.includes("<N.PU_PRICE?' disabled'") && fb.includes('< N.PU_PRICE ? " disabled"'), 'buy buttons disabled under 70 points');
+  assert.ok(fr.includes('بـ ٧٠ نقطة') && !fr.includes('بـ ١٠ نقاط'), 'friends page explains the new price');
 });
