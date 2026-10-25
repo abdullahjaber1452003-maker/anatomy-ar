@@ -71,6 +71,7 @@
         bSee.setAttribute('aria-pressed',on?'true':'false');bSee.classList.toggle('on',on);
       }
       if(bSee)bSee.addEventListener('click',function(){see(bSee.getAttribute('aria-pressed')!=='true');});
+      if(key==='heart'&&window.nursinFlow)window.nursinFlow({mv:mv,stage:stage,tools:tools,bRot:bRot,bSee:bSee,bVes:bVes,see:see});   // 🩸 مسار الدم (assets/flow.js, 3d.html)
       bReset.addEventListener('click',function(){mv.cameraTarget='auto auto auto';mv.cameraOrbit=c.orbit;mv.fieldOfView='auto';if(bSee)see(false);});
       bLab.addEventListener('click',function(){var on=stage.classList.toggle('showlabels');bLab.classList.toggle('on',on);bLab.setAttribute('aria-pressed',on?'true':'false');});
       bRot.addEventListener('click',function(){var on=!mv.hasAttribute('auto-rotate');if(on)mv.setAttribute('auto-rotate','');else mv.removeAttribute('auto-rotate');bRot.classList.toggle('on',on);bRot.setAttribute('aria-pressed',on?'true':'false');});
