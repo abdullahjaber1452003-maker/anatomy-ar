@@ -106,6 +106,18 @@ test('opening splash: on every page, once per session, reduced-motion aware, nev
   assert.ok(/addEventListener\('pointerdown',skip\)/.test(js), 'tap anywhere skips');
   for (const p of pages) { const h = read(p); assert.match(h, /<body[^>]*>\s*<script src="assets\/splash\.js\?v=/, p + ' splash'); assert.ok(h.includes('<main'), p + ' content stays in the HTML'); }
 });
+test('splash: Abdullah\'s round photo beside the heart logo (small, alt, fallback, timing unchanged)', () => {
+  const js = read('assets/splash.js'), css = read('assets/style.css');
+  assert.ok(/class="ns-row">'\+\s*'<svg class="ns-mark"/.test(js), 'logo and photo share one row');
+  assert.ok(js.indexOf('ns-mark') < js.indexOf('ns-me') && js.indexOf('ns-me') < js.indexOf('ns-word'), 'photo sits right after the heart logo, before the name');
+  assert.ok(js.includes('alt="عبدالله جابر"'), 'Arabic alt text');
+  assert.ok(js.includes('assets/abdullah.webp?v=') && js.includes('assets/abdullah.png?v='), 'webp + png fallback');
+  assert.ok(js.includes('onerror'), 'a missing photo removes itself, no broken icon');
+  for (const f of ['assets/abdullah.webp', 'assets/abdullah.png']) { const n = fs.statSync(path.join(SITE, f)).size; assert.ok(n > 1000 && n < 60000, f + ' small: ' + n); }
+  assert.ok(/\.ns-me\{[^}]*border-radius:50%/.test(css) && /\.ns-me img\{[^}]*border-radius:50%/.test(css), 'round');
+  assert.ok(/\.ns-me\{[^}]*animation:ns-me [^}]*forwards/.test(css) && /\.ns-static \.ns-me\{opacity:1\}/.test(css), 'fades in; visible with reduced motion');
+  assert.ok(/\.ns-row\{display:flex/.test(css), 'side by side');
+});
 test('Google Analytics (GA4) tag on every page exactly once, inside <head>', () => {
   for (const p of pages) {
     const h = read(p);
@@ -148,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025e/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025f/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -301,7 +313,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025e') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261025f') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -348,7 +360,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025e'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025f'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -579,7 +591,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025e" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025f" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
