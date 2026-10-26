@@ -666,3 +666,14 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .mt.hint{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 3px #bbf7d0}
 .mc.no{background:#fee2e2;border-color:var(--red)}.mc.hint{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 3px #bbf7d0}
 .gmiss{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:10px 0;text-align:start}.gmiss h3{margin:4px 0 6px;font-size:16px}.gmiss ol{margin:0;padding-inline-start:20px}.gmiss li{margin:0 0 8px;overflow-wrap:anywhere}.gmq{font-size:14px}
+
+/* 🔔 goal reminders switch at the bottom of «✅ أهدافك اليوم» (goals.js, Oct 26 9:56 PM) */
+.gosheet .gopush{margin:10px 2px 2px;padding:10px 12px;border:1.5px dashed #99d5cf;border-radius:14px;background:#f0fdfa}
+.gosheet .gopsw{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:0;font:inherit;font-weight:800;color:var(--ink);cursor:pointer;text-align:start;line-height:1.35}
+.gosheet .gopsw[disabled]{opacity:.6;cursor:wait}
+.gosheet .gopk{flex:none;width:44px;height:26px;border-radius:13px;background:#cbd5e1;position:relative;transition:background .2s}
+.gosheet .gopk::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:right .2s}
+.gosheet .gopsw[aria-checked="true"] .gopk{background:#0f766e}
+.gosheet .gopsw[aria-checked="true"] .gopk::after{right:21px}
+.gosheet .gopt{min-width:0;overflow-wrap:anywhere}
+.gosheet .gopm{display:block;margin-top:6px;color:var(--mut);line-height:1.5}

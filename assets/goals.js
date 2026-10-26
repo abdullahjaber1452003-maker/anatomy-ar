@@ -13,7 +13,13 @@
      📖 درس جديد: …           — on top, on the day a lesson is added and the next day (assets/lessons.js «added»); done when read
                                 (≈1 min on it / scrolled through it) or its lesson quiz finished (nursin_read_v1)
    Each row has a ✅ when done and goes straight to it. Badge "2/4". Done-state per Beirut day in localStorage (nursin_goals_v1).
-   Signed out: the pill shows 🔒 and the sheet only offers Google sign-in (assets/gate.js state). */
+   Signed out: the pill shows 🔒 and the sheet only offers Google sign-in (assets/gate.js state).
+   🔔 Goal reminders (Abdullah, Oct 26 9:56 PM): the switch «🔔 ذكّرني بأهدافي (4–10:30 المسا)» at the bottom of the sheet turns on
+   notifications (the same push subscription as chat, NursinPWA.enable) and sets goalPush on the student's own profile users/{uid}.
+   While it's on, this file mirrors today's goals there (fields the v10 rules already allow on your own profile):
+     goalsDay "YYYY-MM-DD", goalsList [{k, n, h}], goalsDone [k] — written only when they change (nursin_goals_mirror_v1).
+   The Cloudflare worker (v4, Cron Trigger) reads them at 16:00, 16:45, 17:30, 18:30, 19:30, 20:30, 21:30, 22:30 Beirut and sends ONE
+   push about the next unfinished goal (nothing once everything is done). */
 (function (w, d) {
   var K = "nursin_goals_v1", LK = "nursin_goals_live_v1", LIVE_MS = 10 * 60e3;
   function N() { return w.Nursin || {}; }
@@ -87,6 +93,68 @@
     return busy;
   }
 
+
+  /* ---- 🔔 goal reminders: switch + mirror of today's goals onto users/{uid} ---- */
+  var PK = "nursin_goalpush_v1", MK = "nursin_goals_mirror_v1", WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev";
+  var gpMsg = "", pst = null, mt = null, gpBusy = false;
+  function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db ? A : null; }
+  function pushOn() { var A = fbA(), o = lsGet(PK); return !!(A && o && o.u === A.user.uid && o.on); }
+  function setFlag(on) { var A = fbA(); if (A) lsSet(PK, { u: A.user.uid, on: !!on }); }
+  function cut(s, n) { return Array.from(String(s == null ? "" : s)).slice(0, n).join(""); }
+  function mirrorData(g) {
+    return { goalsDay: today(), goalsList: g.slice(0, 20).map(function (x) { return { k: cut(x.k, 80), n: cut(x.n, 80), h: cut(x.href, 160) }; }),
+      goalsDone: g.filter(function (x) { return x.done; }).slice(0, 20).map(function (x) { return cut(x.k, 80); }) };
+  }
+  function mirror(now) { if (!pushOn()) return; clearTimeout(mt); mt = setTimeout(doMirror, now ? 0 : 2500); }
+  function doMirror(extra) {
+    var A = fbA(); if (!A || (!pushOn() && !extra)) return Promise.resolve(false);
+    var m = mirrorData(goals()), j = JSON.stringify(m), last = lsGet(MK);
+    if (!extra && last && last.u === A.user.uid && last.j === j) return Promise.resolve(true);
+    if (extra) for (var k in extra) m[k] = extra[k];
+    return A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), m, { merge: true }).then(function () { lsSet(MK, { u: A.user.uid, j: j }); return true; }, function () { return false; });
+  }
+  // the switch's state comes from the profile (another device may have turned it on/off)
+  var synced = "";
+  function syncFlag() {
+    var A = fbA(); if (!A || synced === A.user.uid) return; synced = A.user.uid;
+    A.fs.getDoc(A.fs.doc(A.db, "users", A.user.uid)).then(function (s) { var v = s.exists() && s.data().goalPush === true; if (v !== pushOn()) { setFlag(v); fill(); } if (v) mirror(true); }, function () { synced = ""; });
+  }
+  function gpHtml() {
+    var on = pushOn();
+    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بأهدافي (4–10:30 المسا)</span></button>' +
+      '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: كل ٤٥–٦٠ دقيقة إشعار بهدف واحد ما خلّصتو، وبيوقف لمّا تخلّص الكل." : "إشعار بهدف واحد بكل مرّة، بس عن يلّي ما خلّصتو اليوم.")) + "</small></div>";
+  }
+  function hello(A) {        // worker v4: one push right now so the student sees it works (an older worker just answers without «goals»)
+    fetch(WORKER + "/push").then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.goals) return;
+      return A.user.getIdToken().then(function (t) { return fetch(WORKER + "/goals/hello", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: t }) }); });
+    }).catch(function () {});
+  }
+  function gpSay(m) { gpMsg = m; fill(); }
+  function toggle() {
+    var A = fbA(), P = w.NursinPWA; if (!A || gpBusy) return;
+    if (pushOn()) {
+      setFlag(false); gpBusy = true; gpSay("");
+      doMirror({ goalPush: false }).then(function () { gpBusy = false; gpSay("🔕 وقّفنا تذكير الأهداف. (إشعارات الرسائل بتضل متل ما هي)"); });
+      return;
+    }
+    var st = pst || (P && P.env ? (P.env().canPush ? "off" : (P.env().ios && !P.env().standalone ? "ios" : "none")) : "none");
+    if (st === "ios") return gpSay("عالآيفون: زيد Nursin عالشاشة الرئيسية (⬆️ مشاركة ← «إضافة إلى الشاشة الرئيسية») وافتحو من الأيقونة، بعدين شغّل التذكير من هون.");
+    if (st === "none" || !P) return gpSay("هالمتصفح ما بيدعم الإشعارات. جرّب Chrome عالأندرويد، أو Safari عالآيفون من الشاشة الرئيسية.");
+    if (st === "denied") return gpSay("🔕 الإشعارات مسكّرة لـ Nursin. فتّحها من إعدادات التلفون/المتصفح (الإشعارات ← Nursin)، ورجاع شغّل التذكير.");
+    gpBusy = true; gpSay("⏳ لحظة…");
+    var go = st === "on" ? Promise.resolve("on") : P.enable(A);
+    go.then(function (r) {
+      if (r !== "on") { gpBusy = false; return gpSay("ما وافقت عالإشعارات. كبوس مرّة تانية لمّا تكون جاهز."); }
+      pst = "on"; setFlag(true);
+      return doMirror({ goalPush: true, goalPushAt: A.fs.serverTimestamp() }).then(function (ok) {
+        gpBusy = false;
+        if (!ok) { setFlag(false); return gpSay("ما قدرنا نحفظ التذكير هلّق، جرّب بعد شوي."); }
+        gpSay("✅ تمام! من 4 لـ 10:30 المسا بيوصلك إشعار بهدف واحد كل شوي، لحد ما تخلّصن."); hello(A);
+      });
+    }, function () { gpBusy = false; gpSay("🔔 الإشعارات عم تتجهّز، جرّب بعد شوي."); });
+  }
+
   /* ---- UI ---- */
   var pill = null, sheet = null, scrim = null;
   function count() { var g = goals(), n = 0; g.forEach(function (x) { if (x.done) n++; }); return { g: g, n: n }; }
@@ -111,7 +179,7 @@
     return '<p class="small gonote">' + (c.n === c.g.length ? "🔥 خلصت كل أهدافك اليوم! برافو" : "خلصت " + c.n + " من " + c.g.length + " · كبسة على أي هدف بتاخدك عليه") + "</p>" +
       c.g.map(function (x) {
         return '<a class="gi goi' + (x.done ? " done" : "") + '" href="' + esc(x.href) + '" data-k="' + esc(x.k) + '"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b>" + (x.s ? "<small>" + esc(x.s) + "</small>" : "") + '</span><span class="gotick" aria-label="' + (x.done ? "خلص" : "لسّا") + '">' + (x.done ? "✅" : "⬜") + "</span></a>";
-      }).join("");
+      }).join("") + gpHtml();
   }
   function close() { if (sheet) sheet.remove(); if (scrim) scrim.remove(); sheet = scrim = null; if (pill) pill.setAttribute("aria-expanded", "false"); }
   function open() {
@@ -127,14 +195,16 @@
     }
     pill.setAttribute("aria-expanded", "true");
     if (signed()) fetchLive(!live || Date.now() - live.at > 5e3);   // re-read the real answers every time the sheet opens
+    if (signed() && fbA()) { syncFlag(); if (w.NursinPWA && w.NursinPWA.state) w.NursinPWA.state(fbA()).then(function (s) { pst = s; }, function () {}); }
   }
   function fill() {
     if (!sheet) return;
     sheet.innerHTML = '<div class="gsh"><b>✅ أهدافك اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { close(); pill.focus(); });
   }
-  function refresh() { paint(); fill(); }
+  function refresh() { paint(); fill(); mirror(); }
   function goTo(e) {
+    if (e.target.closest && e.target.closest(".gopsw")) { e.preventDefault(); toggle(); return; }
     var a = e.target.closest && e.target.closest("a.goi"); if (!a) return;
     var href = a.getAttribute("href"), page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     // already on quiz.html: start the quiz right here (no reload)
@@ -166,7 +236,7 @@
   d.addEventListener("nursin:goal-done", function (e) { var k = e.detail && e.detail.k; if (k) { mark(k); stale(); } });
   d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible" && signed() && pill && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
   d.addEventListener("nursin:gate", function () { refresh(); if (signed()) fetchLive(); });
-  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) fetchLive(); else refresh(); });
+  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) { fetchLive(); setTimeout(syncFlag, 1500); } else { synced = ""; refresh(); } });
   d.addEventListener("nursin:me", paint);
   d.addEventListener("nursin:study", refresh);         // a ⏱️ round / 🎮 round just counted (study.js)
   d.addEventListener("nursin:lesson-read", refresh);   // a 📖 new lesson was read (lessons.js)
@@ -175,7 +245,7 @@
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
 
-  w.NursinGoals = { build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale };
+  w.NursinGoals = { build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount); else mount();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
