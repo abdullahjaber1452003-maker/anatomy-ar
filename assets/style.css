@@ -242,6 +242,67 @@ html.g3on body{overflow:hidden}
 .pushcard h2{margin-top:0}.pushcard .pushmsg:empty{display:none}
 .pushstrip{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;padding:8px 12px;border:1px solid #99d5cf;background:#f0fdfa;border-radius:12px;font-size:.95em}.pushstrip .pstxt{flex:1 1 180px;min-width:0}.pushstrip .psx{background:none;border:0;font:inherit;color:#64748b;cursor:pointer;padding:4px 6px;line-height:1}
 .alab{display:block;font-weight:700;margin:10px 0 4px}.ain{resize:none;background:#fff}.achk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+/* 🧭 grouped navigation + 👋 welcome card + tidy home (assets/nav.js, Oct 26) — kept BEFORE .adx (ads test) */
+html.jsnav .nav{display:none!important}
+html.jsnav .menu-btn{display:inline-grid;place-items:center;flex:0 0 auto}
+.menu-btn.open{background:rgba(255,255,255,.18)}
+.gnav ul{list-style:none;margin:0;padding:0;display:flex}
+.gnav li{flex:1 1 0;min-width:0}
+.gt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:58px;padding:6px 2px 5px;background:none;border:0;color:inherit;font:inherit;font-size:12px;font-weight:600;line-height:1.25;text-decoration:none;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.gt .ge{font-size:21px;line-height:1.15}.gt .gn{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media(max-width:859px){
+ html.jsnav body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+ .gnav{position:fixed;left:0;right:0;bottom:0;z-index:46;background:#fff;color:#526170;border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom)}
+ .gt[aria-current],.gt.open{color:var(--pri)}
+ .gt[aria-current] .ge,.gt.open .ge{background:#ccfbf1;border-radius:999px;padding:0 14px}
+ .gsheet{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:48;max-height:70vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);padding:6px 12px 10px;animation:gup .18s ease-out}
+ html.jsnav .ltoast{bottom:calc(72px + env(safe-area-inset-bottom))}
+ html.jsnav .tlog{height:calc(100dvh - 480px);min-height:200px}
+ html.jsnav .tempty .tlog{height:calc(100dvh - 600px);min-height:160px}
+}
+@media(min-width:860px){
+ .gnav{background:var(--pri2);color:#fff}
+ .gnav ul{max-width:980px;margin:0 auto;padding:4px 12px 6px;gap:4px}
+ .gnav li{flex:0 0 auto}
+ .gt{flex-direction:row;gap:7px;min-height:0;padding:6px 14px;font-size:15.5px;border-radius:10px}
+ .gt .ge{font-size:17px}
+ .gt:hover,.gt[aria-current],.gt.open{background:rgba(255,255,255,.16)}
+ .gt .gcar::after{content:"▾";font-size:12px;opacity:.8}
+ .gsheet{position:fixed;z-index:48;background:#fff;border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.2);padding:6px 10px 8px;max-height:75vh;overflow:auto}
+}
+@keyframes gup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.gscrim{position:fixed;inset:0;z-index:47;background:rgba(15,23,42,.28)}
+@media(min-width:860px){.gscrim{background:transparent}}
+.gsh{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;color:var(--ink)}
+.gsh b{font-size:16px}.gx{background:none;border:0;font-size:18px;color:var(--mut);width:40px;height:36px;cursor:pointer;border-radius:10px}
+.gil{display:flex;flex-direction:column}
+.gi{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:12px;text-decoration:none;color:var(--ink);background:none;border:0;font:inherit;text-align:start;width:100%;cursor:pointer;line-height:1.35}
+.gi:hover,.gi:focus-visible{background:#f0fdfa}.gi[aria-current]{background:#ccfbf1}
+.gie{flex:0 0 40px;height:40px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:21px}
+.git{display:flex;flex-direction:column;min-width:0}.git b{font-size:16px}.git small{font-size:13px;color:var(--mut)}
+/* 👋 welcome card: a small card at the bottom (never a full-screen wall, never an ad inside) */
+.obx{position:fixed;left:10px;right:10px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:49;max-width:440px;margin:0 auto;background:#fff;color:var(--ink);border:1px solid #99d5cf;border-radius:18px;box-shadow:0 10px 36px rgba(0,0,0,.22);padding:14px 16px 10px;max-height:70vh;overflow:auto;animation:gup .25s ease-out;transition:opacity .25s,transform .25s}
+@media(min-width:860px){.obx{bottom:22px;right:22px;left:auto;width:400px}}
+.obx.obout{opacity:0;transform:translateY(14px)}
+.obx h2{margin:0 0 4px;font-size:19px}.obx p{margin:4px 0}
+.obstep{display:flex;gap:5px;margin:0 0 6px!important}.obstep i{display:block;width:22px;height:5px;border-radius:9px;background:#e2e8f0}.obstep i.on{background:var(--pri)}
+.obbtns{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:10px 0 2px}
+.obbtns .gbtn,.obbtns .btn.pri{justify-content:center;width:100%;font-size:16px;padding:11px 14px}
+.oblater{background:none;border:0;font:inherit;font-size:14px;color:var(--mut);padding:6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.obol{margin:6px 0;padding-inline-start:22px;line-height:1.8}
+.obx .gbtn{border:2px solid var(--pri);font-weight:700}.obmsg:empty{display:none}.obnote{color:var(--mut)}
+/* 🏠 tidy home */
+.hero.hsm{padding:16px 18px;margin-bottom:12px}.hero.hsm h1{font-size:21px}
+.hcont{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #99d5cf;border-radius:var(--r);padding:12px 14px;margin:0 0 12px;text-decoration:none;color:var(--ink);box-shadow:var(--sh)}
+.hcont .hci{font-size:24px}.hcont small{display:block;color:var(--mut);font-size:13px}.hcont b{display:block;line-height:1.4}
+.hg .hgh{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
+.hg .hgh .ic{flex:0 0 auto}.hg .hgh h2{margin:0}.hg .hgh p{margin:2px 0 0}
+.hg .chips{margin:10px 0 0}
+.hg .chip{font-size:14.5px;padding:6px 12px}
+.hg:hover{border-color:var(--pri)}
+details.hmist{display:block;margin-top:16px}details.hmist>summary{cursor:pointer;font-weight:700;list-style:none}details.hmist>summary::-webkit-details-marker{display:none}
+details.hmist>summary::after{content:" ▾";color:var(--mut)}details.hmist[open]>summary::after{content:" ▴"}
+.home #weak:has(.wempty){display:none}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}

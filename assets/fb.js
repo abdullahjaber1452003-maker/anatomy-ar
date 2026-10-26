@@ -259,14 +259,18 @@ const G = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><p
 const params = new URLSearchParams(location.search);
 let pendingAdd = N.normCode(params.get("add") || "");
 
-function showErr(e) {
-  const root = rootOverride || document.getElementById("friends-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
-  if (!root || !e) return;
-  const c = e.code || "";
+function errText(e) {
+  const c = (e && e.code) || "";
   let m = "⚠️ صار في مشكلة بتسجيل الدخول. جرّب مرّة تانية.";
   if (c === "auth/unauthorized-domain") m = "⚠️ تسجيل الدخول مش مفعّل لهالموقع بعد.";
   else if (c === "auth/network-request-failed") m = "⚠️ في مشكلة بالإنترنت. تأكّد من الاتصال وجرّب كمان مرّة.";
   else if (c === "auth/web-storage-unsupported" || c === "auth/operation-not-supported-in-this-environment") m = "⚠️ هالمتصفّح ما بيقبل تسجيل الدخول. افتح nursin.store بـ Chrome أو Safari.";
+  return m;
+}
+function showErr(e) {
+  const root = rootOverride || document.getElementById("friends-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
+  if (!root || !e) return;
+  const m = errText(e);
   let el = document.getElementById("ferr");
   if (!el) { el = document.createElement("p"); el.id = "ferr"; el.className = "ferr"; root.prepend(el); }
   el.textContent = m;
@@ -458,13 +462,14 @@ const API = {
   db, auth, N, esc, MERGE,
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
-  signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
+  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
 };
 window.NursinFB = API;
 
 /* ---------- wiring ---------- */
 onAuthStateChanged(auth, async u => {
   user = u;
+  try { document.dispatchEvent(new CustomEvent("nursin:auth", { detail: { signedIn: !!u } })); } catch (x) {}   // the welcome card (assets/nav.js) listens
   if (!u) {
     profile = null; N.setMe(null); ready = true;
     if (root) renderOut();

@@ -1,10 +1,10 @@
 /* nursin app mode (Oct 25 2026): service worker (/sw.js, push only, no caching), «📲 زيد عالشاشة الرئيسية» (Android prompt / iPhone sheet),
-   and 🔔 notifications (window.NursinPWA.pushCard / .ping, used by chat.js and the account page; a small strip on the home page). One subscription per device
+   and 🔔 notifications (window.NursinPWA.pushCard / .ping, used by chat.js and the account page; .enable/.state/.env used by the welcome card in assets/nav.js). One subscription per device
    covers both chat messages (worker /push) and the owner's 📢 news broadcasts (worker /broadcast, sent from admin.html). */
 (function (w, d) {
   var VAPID = "BKksGwxUoWgG0qt1_sqcByK659uqSu8G9KL-mZxjdvb_3l419B547XUStchY5b91fDnprBrg14R_Iki49kTpOpo";
   var WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev";
-  var FLAG = "nursin_push_on_v1", DEV = "nursin_push_dev_v1", OFF = "nursin_push_srv_off", HIDE = "nursin_push_strip_v1";
+  var FLAG = "nursin_push_on_v1", DEV = "nursin_push_dev_v1", OFF = "nursin_push_srv_off";
   var ua = navigator.userAgent || "";
   var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var android = /Android/.test(ua);
@@ -106,36 +106,8 @@
       if (!j || j.ok === undefined) { try { sessionStorage.setItem(OFF, "1"); } catch (e) {} }   // the worker isn't updated yet
     }).catch(function () {});
   }
-  /* ---------- 🔔 small strip on the home page (one line, ✕ hides it for good) ---------- */
-  async function homeStrip() {
-    var page = location.pathname.split("/").pop() || "index.html";
-    if (page !== "index.html" || ls(HIDE) || ls(FLAG)) return;
-    if (!canPush && !(ios && !standalone)) return;
-    if (canPush && Notification.permission !== "default" && Notification.permission !== "granted") return;
-    if (canPush) { try { var s0 = await getSub(); if (s0 && Notification.permission === "granted") return; } catch (e) {} }
-    var hero = d.querySelector("main .hero"); if (!hero || d.querySelector(".pushstrip")) return;
-    var el = d.createElement("div"); el.className = "pushstrip"; el.setAttribute("aria-live", "polite");
-    var iosOnly = !canPush;
-    el.innerHTML = '<span class="pstxt">🔔 بدّك يوصلك خبر لمّا ينزل درس جديد؟</span>' +
-      (iosOnly ? installBtn().replace(" hidden", "").replace("btn pwainst", "btn sm pwainst") : '<button class="btn sm pri psgo" type="button">فعّل الإشعارات</button>') +
-      '<button class="psx" type="button" aria-label="سكّر">✕</button>';
-    hero.parentNode.insertBefore(el, hero.nextSibling);
-    el.querySelector(".psx").addEventListener("click", function () { ls(HIDE, "1"); el.remove(); });
-    var go = el.querySelector(".psgo"); if (!go) return;
-    go.addEventListener("click", async function () {
-      go.disabled = true;
-      var API = w.NursinFB;
-      for (var i = 0; i < 40 && w.Nursin && w.Nursin.me && !(API && API.user); i++) { await new Promise(function (r) { setTimeout(r, 100); }); API = w.NursinFB; }
-      if (!(API && API.user)) { location.href = "friends.html#fpush"; return; }      // signed out: sign in on أصحابي, the 🔔 card is there
-      var t = el.querySelector(".pstxt");
-      try {
-        var r = await enable(API);
-        if (r === "on") { t.textContent = "✅ تفعّلت! رح يوصلك خبر بكل جديد، وبرسائل أصحابك."; go.remove(); setTimeout(function () { el.remove(); }, 5000); return; }
-        t.textContent = r === "default" ? "ما وافقت عالإشعارات. كبوس مرّة تانية لمّا تكون جاهز." : "🔕 الإشعارات مسكّرة من إعدادات المتصفح.";
-      } catch (e) { t.textContent = "🔔 الإشعارات عم تتجهّز، جرّب بعد شوي."; }
-      go.disabled = false;
-    });
-  }
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", homeStrip); else homeStrip();
-  w.NursinPWA = { pushCard: pushCard, ping: ping, install: install, installable: installable };
+  /* The old one-line 🔔 strip on the home page (Oct 25) is gone: the welcome card in assets/nav.js asks once per device instead,
+     using enable()/state() below, and «🔔 الإشعارات» lives in the ☰ menu. */
+  function env() { return { ios: ios, android: android, standalone: standalone, canPush: canPush, perm: canPush ? Notification.permission : "none", on: !!ls(FLAG) }; }
+  w.NursinPWA = { pushCard: pushCard, ping: ping, install: install, installable: installable, enable: enable, state: state, env: env };
 })(window, document);

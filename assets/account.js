@@ -162,8 +162,7 @@
 
   // load Firebase only where it is needed
   var page=(location.pathname.split('/').pop()||'index.html');
-  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'||page==='admin.html'||page==='chat.html'){
-    var me=document.currentScript&&document.currentScript.src,v=(me&&me.split('?')[1])||'';
-    var s=document.createElement('script');s.type='module';s.src='assets/fb.js'+(v?'?'+v:'');document.head.appendChild(s);
-  }
+  var me=document.currentScript&&document.currentScript.src,v=(me&&me.split('?')[1])||'',fbOn=false;
+  N.loadFB=function(){if(fbOn)return;fbOn=true;var s=document.createElement('script');s.type='module';s.src='assets/fb.js'+(v?'?'+v:'');document.head.appendChild(s);};   // also used by the welcome card (assets/nav.js)
+  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'||page==='admin.html'||page==='chat.html')N.loadFB();
 })(typeof window!=='undefined'?window:this);
