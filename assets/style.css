@@ -595,3 +595,15 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 .drug .dar{display:block;color:#334155}
 .drug .dpg{margin:8px 0 0;text-align:left}
 @media(min-width:860px){.drugs{grid-template-columns:1fr 1fr}}
+
+/* 📝 مادة ← دروسها (Oct 26): زر «كويز بكل مادة …» تحت العنوان + «كويز على هالدرس» تحت كل درس */
+.sqz{display:flex;flex-direction:column;gap:2px;margin:10px 0 12px;padding:13px 16px;border-radius:14px;background:var(--pri);color:#fff;text-decoration:none;box-shadow:0 4px 14px rgba(15,118,110,.25);max-width:100%}
+.sqz b{font-size:17px;line-height:1.4}.sqz small{font-size:13px;opacity:.9}
+.sqz:hover,.sqz:focus-visible{background:var(--pri2);color:#fff}
+.lqz{margin:-4px 0 14px;padding:0 4px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.lqz[hidden]{display:none!important}
+.lqz a{display:inline-block;border:1.5px solid var(--pri);color:var(--pri2);background:#f0fdfa;border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600;text-decoration:none}
+.lqz a:hover{background:#ccfbf1}.lqz small{color:var(--mut);font-size:12.5px}
+.prose .lqz{margin:14px 0 4px}
+html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
+.lqfew .lqbtns{display:flex;flex-wrap:wrap;gap:8px}

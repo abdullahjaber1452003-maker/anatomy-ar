@@ -4,11 +4,27 @@
   function refresh(){if(W&&panel)W.render(panel,{onStart:function(sel){start(sel,sel==='all'?20:0,true);}});}
   function $(s){return root.querySelector(s);}
   function params(){var p={};location.search.slice(1).split('&').forEach(function(kv){if(!kv)return;var a=kv.split('=');p[a[0]]=decodeURIComponent(a[1]||'');});return p;}
-  function pool(sel){
+  function pool(sel,les){
     if(sel==='all')return QUIZ.slice();
     if(sel==='weak')return W?W.questions():[];
-    if(QGROUPS[sel])return QUIZ.filter(function(q){return QGROUPS[sel].indexOf(q.t)>=0;});
+    if(QGROUPS[sel])return QUIZ.filter(function(q){return QGROUPS[sel].indexOf(q.t)>=0&&(!les||q.l===les);});
     return QUIZ.filter(function(q){return q.t===sel;});
+  }
+  // مادة ← دروسها: sel = مادة (QGROUPS) أو درس (q.t للقلب والأعصاب)، les = درس جوّا مادة (q.l)
+  var QS=window.QSUBJ||{},QL=window.QLES||{};
+  function subjOf(t){for(var k in QGROUPS)if(QGROUPS[k].indexOf(t)>=0&&QGROUPS[k].length>1)return k;return '';}
+  function isLesson(sel,les){return !!les||(sel!=='all'&&sel!=='weak'&&!QGROUPS[sel]&&!!QTOP[sel]);}
+  function lessonName(sel,les){return les?((QL[sel]||{})[les]||les):(QTOP[sel]||sel);}
+  function subjHref(sel,les){var s=les?sel:subjOf(sel);return s?'quiz.html?t='+s:'quiz.html';}
+  function subjName(sel,les){var s=les?sel:subjOf(sel);return QS[s]||'';}
+  function few(sel,les,qs,scroll){   // درس ما عندو أسئلة كفاية (أقل من ٣)
+    state=null;chips(les?'':sel);
+    var sn=subjName(sel,les),h='<div class="qcard lqfew"><p class="qq">📝 '+lessonName(sel,les)+'</p><p>ما في أسئلة كافية لهالدرس بعد'+(qs.length?' (بس '+(qs.length===1?'سؤال واحد':'سؤالين')+')':'')+'.</p><p class="lqbtns">';
+    if(qs.length)h+='<button class="btn" id="lqgo" type="button">جاوب '+(qs.length===1?'السؤال':'السؤالين')+'</button> ';
+    h+='<a class="btn pri" href="'+subjHref(sel,les)+'">📝 كويز بكل مادة '+(sn||'هالمادة')+'</a></p></div>';
+    root.innerHTML=h;
+    var g=$('#lqgo');if(g)g.addEventListener('click',function(){start(sel,0,true,les,true);});
+    if(scroll)root.scrollIntoView({block:'start'});
   }
   function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
   function chips(sel){document.querySelectorAll('#qsets .chip').forEach(function(c){c.classList.toggle('on',c.dataset.set===sel);});}
@@ -18,16 +34,18 @@
     $('#go20').addEventListener('click',function(){start('all',20,true);});
     if(scroll)root.scrollIntoView({block:'start'});
   }
-  function start(sel,n,scroll){
-    var qs=pool(sel);
-    if(!qs.length){if(sel==='weak')return emptyWeak(scroll);qs=QUIZ.slice();sel='all';}
+  function start(sel,n,scroll,les,force){
+    if(les&&!QGROUPS[sel])les='';
+    var qs=pool(sel,les);
+    if(qs.length<3&&isLesson(sel,les)&&!(force&&qs.length))return few(sel,les,qs,scroll);
+    if(!qs.length){if(sel==='weak')return emptyWeak(scroll);qs=QUIZ.slice();sel='all';les='';}
     qs=shuffle(qs.slice());if(n&&n<qs.length)qs=qs.slice(0,n);
-    state={sel:sel,qs:qs,i:0,score:0,wrong:[],grad:0};
-    chips(sel);
+    state={sel:sel,les:les||'',qs:qs,i:0,score:0,wrong:[],grad:0};
+    chips(les?'':sel);
     render();
     if(scroll)root.scrollIntoView({block:'start'});
   }
-  function label(sel){return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='cardio'?'القلب كلّو':sel==='neuro'?'الأعصاب كلّها':(QTOP[sel]||sel);}
+  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
   function render(){
     var s=state,q=s.qs[s.i];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
@@ -85,7 +103,7 @@
     root.innerHTML=h;
     try{if(s.sel==='weak'&&W&&W.ran)W.ran();}catch(e){}
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,challenge:s.challenge||null,exam:s.exam||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}
-    var ag=$('#again');if(ag)ag.addEventListener('click',function(){start(s.sel,s.sel==='weak'?0:s.qs.length,true);});
+    var ag=$('#again');if(ag)ag.addEventListener('click',function(){start(s.sel,s.sel==='weak'?0:s.qs.length,true,s.les,true);});
     var tw=$('#toweak');if(tw)tw.addEventListener('click',function(){start('weak',0,true);});
   }
   document.querySelectorAll('#qsets .chip').forEach(function(c){c.addEventListener('click',function(){start(c.dataset.set,c.dataset.set==='all'?20:0,true);});});
@@ -113,5 +131,5 @@
     if(!N||!N.me)window.NursinQuiz.message('<p class="qq">⚔️ صاحبك تحدّاك!</p><p><b><a href="friends.html">سجّل دخول بغوغل بصفحة أصحابي</a></b>، والتحدّي بيستنّاك هونيك تحت «تحدّيات إلك».</p>');
     else{root.innerHTML='<div class="qcard"><p>⏳ عم نحمّل التحدّي…</p></div>';chWait=setTimeout(function(){window.NursinQuiz.message('⚠️ ما قدرنا نحمّل التحدّي هلّق. تأكّد من الإنترنت وجرّب كمان مرّة، أو <a href="friends.html">روح لأصحابي</a>.');},20000);}
   }
-  else start(p.t||'all',p.n?+p.n:(p.t?0:20),!!p.t||location.hash==='#quiz');
+  else start(p.t||'all',p.n?+p.n:(p.t?0:20),!!p.t||location.hash==='#quiz',p.l||'');
 })();

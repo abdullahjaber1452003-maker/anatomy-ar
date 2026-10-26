@@ -1,5 +1,5 @@
 /* nursin 🧭 navigation + 👋 welcome (Oct 26 2026, Abdullah: "the site got crowded" + "ask first-time visitors to sign in with Google and turn on notifications").
-   1) Five groups instead of eleven links: 🏠 الرئيسية · 📚 الدروس · 📝 التمارين · 👥 أصحابي · 🤖 الأستاذ.
+   1) Five groups instead of eleven links: 🏠 الرئيسية · 📚 المواد · 📝 التمارين · 👥 أصحابي · 🤖 الأستاذ.
       Phones: a bottom tab bar; a group tab opens a small sheet with its pages. Desktop: the same row under the header, groups open a dropdown.
       ☰ opens «المزيد» (about, privacy, credits, 📲 install, 🔔 notifications, and the admin page for the owner only).
       The static <nav id="nav"> stays in every page's HTML (no-JS + search engines) and is only hidden once this script runs.
@@ -16,7 +16,7 @@
   if (!/\.html$/.test(page)) page = "index.html";
   var G = [
     { k: "home", e: "🏠", n: "الرئيسية", href: "index.html", pages: ["index.html"] },
-    { k: "learn", e: "📚", n: "الدروس", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "3d.html"], items: [
+    { k: "learn", e: "📚", n: "المواد", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "3d.html"], items: [
       ["cardio.html", "❤️", "القلب", "12 درس: الجلطة، ECG، القصور، الصدمة"],
       ["neuro.html", "🧠", "الأعصاب", "8 دروس: AVC، HTIC، Glasgow"],
       ["henderson.html", "📋", "Henderson", "الحاجات الـ ١٤ بالاسم مع NANDA"],
@@ -26,7 +26,7 @@
       ["pharma.html", "💊", "الأدوية", "55 دوا (TS2): العائلة، الدواعي، الموانع، المتابعة + بحث"],
       ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"]] },
     { k: "practice", e: "📝", n: "التمارين", pages: ["quiz.html", "exams.html", "live.html"], items: [
-      ["quiz.html", "📝", "الكويز", "185 سؤال بأسلوب الامتحان مع الشرح"],
+      ["quiz.html", "📝", "الكويز", "191 سؤال بأسلوب الامتحان مع الشرح"],
       ["quiz.html#weak", "🎯", "نقاط ضعفك", "كويز من الأسئلة يلي غلطت فيها"],
       ["quiz.html#blanks", "✍️", "عبّي الفراغ", "كمّل الكلمة الناقصة بكل المواد: اختيار أو كتابة"],
       ["law.html#classquiz", "⚖️", "كويز متل الصف (القانون)", "سؤال مفتوح، بتكتب، وبتشوف النقاط"],
@@ -199,7 +199,7 @@
   }
   function done(m) {
     if (!card) return;
-    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 الدروس · 📝 التمارين · 👥 أصحابي · 🤖 الأستاذ.</p>';
+    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 المواد · 📝 التمارين · 👥 أصحابي · 🤖 الأستاذ.</p>';
     setTimeout(closeCard, 3200);
   }
   function step2(need, total) {

@@ -1,6 +1,12 @@
 /* 💊 pharma.html: بطاقات الأدوية من window.PHARMA (assets/pharma-data.js) — مقسّمة بمجموعات، مع بحث (اسم تجاري، اسم علمي، عائلة، دواعي، عربي أو فرنسي). */
 (function (w, d) {
   var P = w.PHARMA || {}, G = P.groups || [], D = P.drugs || [];
+  // 📝 «كويز على هالدرس» تحت كل درس (مادة ← دروسها): أسئلة هالدرس بس (q.l)، وإذا أقل من ٣ الكويز بيقول «ما في أسئلة كافية» وبيعرض كويز المادة كلّها
+  function lq(t, k) {
+    var n = (w.QUIZ || []).filter(function (q) { return q.t === t && q.l === k; }).length;
+    var c = n === 1 ? "سؤال واحد" : n === 2 ? "سؤالين" : n <= 10 ? n + " أسئلة" : n + " سؤال";
+    return '<p class="lqz"><a href="quiz.html?t=' + t + '&amp;l=' + k + '">📝 كويز على هالدرس</a> <small>' + (n >= 3 ? c : n ? c + " · ما في أسئلة كافية بعد" : "ما في أسئلة كافية لهالدرس بعد") + '</small></p>';
+  }
   var box = d.getElementById("pharmalist");
   if (!box || !D.length) return;
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -23,7 +29,7 @@
   box.innerHTML = G.map(function (g, i) {
     var a = D.filter(function (x) { return x.g === g.k; });
     if (!a.length) return "";
-    return '<details class="topic phg" id="g-' + g.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + g.e + '</span><span class="t"><b>' + esc(g.n) + ' <span class="phn">(' + a.length + ')</span></b><span class="small" lang="fr" dir="ltr">' + esc(g.fr) + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody drugs">' + a.map(card).join("") + "</div></details>";
+    return '<details class="topic phg" id="g-' + g.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + g.e + '</span><span class="t"><b>' + esc(g.n) + ' <span class="phn">(' + a.length + ')</span></b><span class="small" lang="fr" dir="ltr">' + esc(g.fr) + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody drugs">' + a.map(card).join("") + "</div></details>" + lq("pharma", g.k);
   }).join("");
   var q = d.getElementById("phq"), cnt = d.getElementById("phcount"), chips = d.getElementById("phchips"), cur = "";
   if (chips) chips.innerHTML = '<button class="chip on" type="button" data-g="">الكل (' + D.length + ")</button>" + G.map(function (g) { var n = D.filter(function (x) { return x.g === g.k; }).length; return n ? '<button class="chip" type="button" data-g="' + g.k + '">' + g.e + " " + esc(g.n) + " (" + n + ")</button>" : ""; }).join("");
@@ -36,6 +42,7 @@
         c.hidden = !ok; if (ok) n++;
       });
       g.hidden = !n; shown += n;
+      var nx = g.nextElementSibling; if (nx && nx.classList.contains("lqz")) nx.hidden = !n;
       if ((words.length || cur) && n) g.open = true;
     });
     if (cnt) cnt.textContent = words.length || cur ? (shown ? "لقيت " + shown + " دوا" : "ما لقيت شي 🤔 جرّب اسم تاني (تجاري أو علمي)") : D.length + " دوا من الملف";
