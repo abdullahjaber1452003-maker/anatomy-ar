@@ -119,7 +119,7 @@ const NOT_READY = "🏫 الصفوف بعدها عم تتجهّز (ناطرين 
 const denied = e => e && e.code === "permission-denied";
 const L = "abc";
 function topicName(t) { return (window.QTOP || {})[t] || t; }
-function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : "cardio.html"; }
+function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : "cardio.html"; }
 function qById(id) { return (window.QUIZ || []).find(q => q.id === id); }
 function params() { return new URLSearchParams(location.search); }
 function failMsg(e) { return denied(e) ? NOT_READY : "⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة."; }

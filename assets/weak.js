@@ -28,7 +28,7 @@
       return Object.keys(by).map(function(k){return by[k];}).sort(function(a,b){return b.n-a.n||b.miss-a.miss;});
     },
     reset:function(){save({v:1,items:{}});},
-    page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':'cardio.html';},
+    page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':'cardio.html';},
     /* بيرسم قسم "نقاط ضعفك" جوّا el. opts.onStart(sel): شو يصير لما يكبس زر البدء (إذا ما في، الزر لينك عـ quiz.html) */
     render:function(el,opts){
       if(!el)return;opts=opts||{};
