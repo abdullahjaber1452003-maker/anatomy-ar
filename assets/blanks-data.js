@@ -1,4 +1,4 @@
-/* ✍️ «عبّي الفراغ» لأي مادة: {id, t (موضوع من QTOP), s (الجملة مع ___), a (الجواب), o (اختيارات → اختيار) أو alts (أجوبة مقبولة → كتابة)} */
+/* ✍️ «عبّي الفراغ» لأي مادة: {id, t (موضوع من QTOP), s (الجملة مع ___), a (الجواب), o (اختيارات → اختيار) أو alts (أجوبة مقبولة → كتابة)} — القانون + القلب + الأعصاب + Henderson + التشريح (heart/brain)، كلّو من دروس الموقع وشروحات الكويز */
 window.BLANKS=[
 {
 "id": "b01",
@@ -154,6 +154,341 @@ window.BLANKS=[
 "بريفيه",
 "بريفه",
 "brevet"
+]
+},
+{
+"id": "b16",
+"t": "infarctus",
+"s": "الـ ___ هيي الأدق لأذية خلايا القلب: بتطلع بعد ٢–٤ ساعات وبتضلّ لـ ٧ أيام.",
+"a": "Troponine",
+"alts": [
+"تروبونين",
+"troponin"
+]
+},
+{
+"id": "b17",
+"t": "ic",
+"s": "Digoxine (ديجوكسين): إذا النبض أقل من ___ ما منعطيها ومنخبّر الحكيم.",
+"a": "٦٠",
+"o": [
+"٦٠",
+"٨٠",
+"١٠٠"
+]
+},
+{
+"id": "b18",
+"t": "endomyo",
+"s": "تشخيص الـ Endocardite (التهاب بطانة القلب) = Hémocultures (زرع دم) + ___ (إيكو عن طريق المري) لنشوف الـ végétations.",
+"a": "ETO",
+"alts": [
+"échographie trans-œsophagienne",
+"echographie trans oesophagienne",
+"إيكو عن طريق المري",
+"ايكو عن طريق المري"
+]
+},
+{
+"id": "b19",
+"t": "embolie",
+"s": "بالـ Embolie artérielle (جلطة شريانية) ما منرفع الإجر، منخلّيها ممدودة أو نازلة شوي. رفع الإجر هوّي للـ ___ (جلطة الوريد).",
+"a": "TVP",
+"o": [
+"TVP",
+"Embolie artérielle",
+"Choc cardiogénique"
+]
+},
+{
+"id": "b20",
+"t": "embolie",
+"s": "ترياق الـ héparine (الهيبارين) هوّي الـ ___، وللـ warfarine منعطي Vitamine K.",
+"a": "Protamine",
+"alts": [
+"بروتامين",
+"protamin"
+]
+},
+{
+"id": "b21",
+"t": "pericarde",
+"s": "Triade de Beck: hypotension + bruits du cœur assourdis + JVD (انتفاخ عروق الرقبة) = ___ (دكّ القلب).",
+"a": "Tamponnade",
+"o": [
+"Tamponnade",
+"Péricardite",
+"Infarctus"
+]
+},
+{
+"id": "b22",
+"t": "ecg",
+"s": "بالـ ECG: P = انقباض الأذينين، QRS = ___، و T = ارتخاء البطينات (repolarisation).",
+"a": "البطينات (ventricules)",
+"o": [
+"البطينات (ventricules)",
+"الأذينين (oreillettes)",
+"الصمامات (valves)"
+]
+},
+{
+"id": "b23",
+"t": "choc",
+"s": "Choc cardiogénique (صدمة قلبية): الضغط الـ systolique أقل من ___ mmHg + بول أقل من ٣٠ ml/h + جلد بارد ورطب.",
+"a": "٩٠",
+"alts": [
+"90"
+]
+},
+{
+"id": "b24",
+"t": "examens",
+"s": "الـ ponction lombaire (البزل القطني) منعملها بين ___، تحت آخر النخاع الشوكي (L1–L2).",
+"a": "L3–L4 أو L4–L5",
+"o": [
+"L3–L4 أو L4–L5",
+"L1–L2",
+"C5–C6"
+]
+},
+{
+"id": "b25",
+"t": "glasgow",
+"s": "Glasgow من ٣ لـ ١٥، و___ وما دون = coma (غيبوبة).",
+"a": "٨",
+"alts": [
+"8",
+"تمانية",
+"ثمانية"
+]
+},
+{
+"id": "b26",
+"t": "htic",
+"s": "œdème papillaire بالـ fond d'œil (فحص قاع العين) = HTIC، والـ HTIC ___ للـ PL (البزل القطني): خطر انحشار الدماغ.",
+"a": "contre-indication (ممنوعة)",
+"o": [
+"contre-indication (ممنوعة)",
+"indication (لازمة)",
+"ما إلها علاقة"
+]
+},
+{
+"id": "b27",
+"t": "evaluation",
+"s": "Aphasie = فقدان القدرة عالكلام، و___ = ازدواج الرؤية.",
+"a": "Diplopie",
+"alts": [
+"diplopia",
+"ازدواج الرؤية",
+"ازدواج رؤية"
+]
+},
+{
+"id": "b28",
+"t": "laminectomie",
+"s": "بعد الـ Laminectomie منقلّب المريض بالـ ___: الكتف والحوض سوا بلا ما يلوي الضهر.",
+"a": "Logrolling (كلّو قطعة وحدة)",
+"o": [
+"Logrolling (كلّو قطعة وحدة)",
+"Semi-Fowler (نص جلوس)",
+"يقعد لحالو دغري"
+]
+},
+{
+"id": "b29",
+"t": "craniotomie",
+"s": "الـ Craniotomie قريبة من الغدة النخامية (ADH)، فمن مضاعفاتها ___ (السكري الكاذب).",
+"a": "Diabète insipide",
+"alts": [
+"diabete insipide",
+"السكري الكاذب",
+"سكري كاذب",
+"diabetes insipidus"
+]
+},
+{
+"id": "b30",
+"t": "avc",
+"s": "بالـ AVC ما منعطي ___ إذا في نزيف، لهيك الـ CT ضروري قبل.",
+"a": "Héparine (مميّع)",
+"o": [
+"Héparine (مميّع)",
+"Mannitol (مدرّ)",
+"O₂ (أوكسجين)"
+]
+},
+{
+"id": "b31",
+"t": "examens",
+"s": "ممنوع ___ (الرنين المغناطيسي) مع pacemaker أو clips معدنية، ومنشيل كل المعادن.",
+"a": "IRM",
+"alts": [
+"MRI",
+"رنين مغناطيسي",
+"الرنين المغناطيسي"
+]
+},
+{
+"id": "b32",
+"t": "henderson",
+"s": "Virginia Henderson قالت إنو كل إنسان عندو ___ حاجة.",
+"a": "١٤",
+"o": [
+"١٤",
+"١٠",
+"١٢"
+]
+},
+{
+"id": "b33",
+"t": "henderson",
+"s": "دور الممرّض يساعد المريض بالحاجة يلي ما بيقدر يعملها لحاله، لحد ما يرجع ___ (مستقل).",
+"a": "autonome",
+"alts": [
+"مستقل",
+"autonomous"
+]
+},
+{
+"id": "b34",
+"t": "henderson",
+"s": "الحاجة ١: ___ (يتنفّس) ← NANDA: Mode de respiration inefficace (نمط تنفّس غير فعّال).",
+"a": "Respirer",
+"o": [
+"Respirer",
+"Éliminer",
+"Communiquer"
+]
+},
+{
+"id": "b35",
+"t": "henderson",
+"s": "الحاجة ٣: Éliminer (يخرّج) ← NANDA: Constipation، و___ urinaire (احتباس بول).",
+"a": "Rétention",
+"alts": [
+"retention",
+"احتباس"
+]
+},
+{
+"id": "b36",
+"t": "henderson",
+"s": "مريض MI بيتعب بس يمشي ← الحاجة ٤ Se mouvoir (يتحرّك) ← NANDA: ___ (عدم تحمّل النشاط).",
+"a": "Intolérance à l'activité",
+"o": [
+"Intolérance à l'activité",
+"Manque de connaissances",
+"Détresse spirituelle"
+]
+},
+{
+"id": "b37",
+"t": "henderson",
+"s": "الحاجة ١٤: Apprendre (يتعلّم) ← NANDA: ___ de connaissances (نقص معرفة).",
+"a": "Manque",
+"alts": [
+"نقص"
+]
+},
+{
+"id": "b38",
+"t": "henderson",
+"s": "الحاجة ١١: Agir selon ses croyances et valeurs (يعيش حسب دينه وقيمه) ← NANDA: ___ (ضيق روحي).",
+"a": "Détresse spirituelle",
+"o": [
+"Détresse spirituelle",
+"Isolement social",
+"Anxiété"
+]
+},
+{
+"id": "b39",
+"t": "heart",
+"s": "القلب فيه ٤ حجرات: فوق ٢ oreillettes (أذينين) بيستقبلوا الدم، وتحت ٢ ___ (بطينين) بيضخّوه.",
+"a": "ventricules",
+"o": [
+"ventricules",
+"valves",
+"artères"
+]
+},
+{
+"id": "b40",
+"t": "heart",
+"s": "Ventricule gauche (البطين الأيسر) جدارو هوّي الأسمك لأنو بيضخّ لكل الجسم عبر الـ ___ (الأبهر).",
+"a": "Aorte",
+"alts": [
+"الأبهر",
+"ابهر",
+"aorta"
+]
+},
+{
+"id": "b41",
+"t": "heart",
+"s": "بين الـ Oreillette gauche (الأذين الأيسر) والـ Ventricule gauche (البطين الأيسر) في الـ ___.",
+"a": "Valve mitrale (الصمام التاجي)",
+"o": [
+"Valve mitrale (الصمام التاجي)",
+"Valve tricuspide (الصمام ثلاثي الشرف)",
+"Valve pulmonaire (الصمام الرئوي)"
+]
+},
+{
+"id": "b42",
+"t": "heart",
+"s": "القلب نفسو بياخد دمّو من الـ Artères ___ (الشرايين التاجية).",
+"a": "coronaires",
+"alts": [
+"التاجية",
+"تاجية",
+"coronary"
+]
+},
+{
+"id": "b43",
+"t": "heart",
+"s": "طبقات القلب من برّا لجوّا: Péricarde (التامور) ← Myocarde (عضلة القلب) ← ___ (البطانة، ومعها الصمامات).",
+"a": "Endocarde",
+"alts": [
+"البطانة",
+"بطانة",
+"endocardium"
+]
+},
+{
+"id": "b44",
+"t": "brain",
+"s": "Lobe ___ (الفص القذالي)، لورا: النظر.",
+"a": "occipital",
+"o": [
+"occipital",
+"frontal",
+"temporal"
+]
+},
+{
+"id": "b45",
+"t": "brain",
+"s": "الـ ___ (المخيخ)، تحت ولورا: التوازن والتنسيق؛ مشكلتو بتعطي ataxie (ترنّح بالمشي).",
+"a": "Cervelet",
+"alts": [
+"المخيخ",
+"مخيخ",
+"cerebellum"
+]
+},
+{
+"id": "b46",
+"t": "brain",
+"s": "الـ Moelle épinière (النخاع الشوكي) بيخلص تقريباً عند ___، وتحت بيكمّل LCR وأعصاب بس.",
+"a": "L1–L2",
+"o": [
+"L1–L2",
+"L4–L5",
+"C7"
 ]
 }
 ];

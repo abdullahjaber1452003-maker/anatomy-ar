@@ -549,3 +549,6 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 .obcc{margin:8px 0 0}.obccin{display:block;width:100%;box-sizing:border-box;font:700 20px/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:3px;text-transform:uppercase;border:2px solid var(--line);border-radius:10px;padding:9px 10px;text-align:center;background:#fff;color:var(--ink)}
 .obccin:focus{border-color:var(--pri);outline:none}
 .obccno{background:none;border:0;font:inherit;font-size:14px;color:var(--mut);padding:6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ✍️ عبّي الفراغ لكل المواد (Oct 26): لائحة المواد */
+.bpicks{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}.bpicks .bsub{margin:4px 0;align-items:center;gap:4px;min-width:0;white-space:nowrap}.bpicks .bmix{grid-column:1/-1;justify-content:center;border-color:var(--pri);background:#f0fdfa;font-weight:700}

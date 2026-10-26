@@ -1,5 +1,5 @@
 /* ✍️ «عبّي الفراغ» + 📝 «كويز متل الصف» (Oct 26). بيشتغلوا بأي عنصر:
-   <div data-practice="blanks" data-t="law|all"></div>  ← من window.BLANKS
+   <div data-practice="blanks" data-t="law|cardio|neuro|henderson|anatomy|all|pick"></div>  ← من window.BLANKS («pick» = لائحة المواد + 🎲 كل المواد)
    <div data-practice="class" data-lesson="l1"></div>   ← من window.LAW.lessons[k].cq
    وأزرار [data-pm="blanks"|"class"] بتفتح المود بـ #pmode (صفحة الكويز). ما في إعلانات جوّا. */
 (function (w, d) {
@@ -8,7 +8,8 @@
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   /* تطبيع عربي: بلا تشكيل/تطويل، أ إ آ ← ا، ة ← ه، ى ← ي، ؤ ئ ← و ي، أرقام هندية ← عادية، بلا «ال» بالأول، بلا مسافات وعلامات */
   function norm(s) {
-    s = String(s || "").toLowerCase().trim()
+    s = String(s || "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").trim()
+      .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i").replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
       .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
       .replace(/[أإآٱ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي")
       .replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 1632); })
@@ -23,14 +24,44 @@
   function blankHtml(s, fill) { return esc(s).replace("___", fill); }
 
   /* ---------- ✍️ عبّي الفراغ ---------- */
-  function blanks(el, t) {
-    var all = (w.BLANKS || []).filter(function (b) { return !t || t === "all" || b.t === t; });
+  /* المواد: كل موضوع (QTOP) بينتمي لمادة من QGROUPS؛ «heart»/«brain» = 🧊 التشريح لحالن */
+  var SUBJ = [["cardio", "❤️", "القلب"], ["neuro", "🧠", "الأعصاب"], ["henderson", "📋", "Henderson"], ["anatomy", "🧊", "التشريح"], ["law", "⚖️", "القانون"]], MIX_N = 15;
+  function subjOf(t) {
+    if (t === "heart" || t === "brain") return "anatomy";
+    var G = w.QGROUPS || {}; for (var k in G) if (G.hasOwnProperty(k) && (G[k] || []).indexOf(t) >= 0) return k;
+    return t;
+  }
+  function subjects() {   // [[key, icon, name, count]] لكل مادة فيها أسئلة، بالترتيب
+    var c = {}, out = [];
+    (w.BLANKS || []).forEach(function (b) { var s = subjOf(b.t); c[s] = (c[s] || 0) + 1; });
+    SUBJ.forEach(function (s) { if (c[s[0]]) out.push([s[0], s[1], s[2], c[s[0]]]); delete c[s[0]]; });
+    Object.keys(c).forEach(function (k) { out.push([k, "📘", (w.QTOP || {})[k] || k, c[k]]); });
+    return out;
+  }
+  function pickFor(t) {
+    var B = w.BLANKS || [];
+    if (!t || t === "all") return shuffle(B).slice(0, MIX_N);                       // 🎲 كل المواد: مخلوط
+    var bySubj = B.filter(function (b) { return subjOf(b.t) === t; });
+    return bySubj.length ? bySubj : B.filter(function (b) { return b.t === t; });  // مادة، أو موضوع واحد
+  }
+  function picker(el) {
+    var S = subjects(), total = (w.BLANKS || []).length;
+    el.innerHTML = '<div class="qcard pcard bpick"><p class="qq">✍️ عبّي الفراغ: اختار المادة</p><div class="bpicks">' +
+      S.map(function (s) { return '<button class="opt bsub" type="button" data-bs="' + esc(s[0]) + '">' + s[1] + ' ' + esc(s[2]) + ' <span class="small">(' + s[3] + ')</span></button>'; }).join("") +
+      '<button class="opt bsub bmix" type="button" data-bs="all">🎲 كل المواد <span class="small">(' + Math.min(MIX_N, total) + ' مخلوط)</span></button></div></div>';
+    el.querySelectorAll("[data-bs]").forEach(function (b) { b.onclick = function () { blanks(el, b.getAttribute("data-bs"), true); }; });
+  }
+  function blanks(el, t, fromPick) {
+    if (t === "pick") return picker(el);
+    var all = pickFor(t);
     if (!all.length) { el.innerHTML = '<p class="small">ما في أسئلة «عبّي الفراغ» لهالمادة لهلّق.</p>'; return; }
     var st = { qs: shuffle(all), i: 0, ok: 0 };
     function draw() {
       if (st.i >= st.qs.length) {
-        el.innerHTML = '<div class="qcard pcard"><p class="qq">✍️ خلصت! جبت <b>' + st.ok + '/' + st.qs.length + '</b></p><p><button class="btn pri" type="button" data-again>🔁 كمان مرّة</button></p></div>';
-        el.querySelector("[data-again]").onclick = function () { blanks(el, t); }; return;
+        el.innerHTML = '<div class="qcard pcard"><p class="qq">✍️ خلصت! جبت <b>' + st.ok + '/' + st.qs.length + '</b></p><p><button class="btn pri" type="button" data-again>🔁 كمان مرّة</button>' + (fromPick ? ' <button class="btn" type="button" data-pick>📚 مادة تانية</button>' : '') + '</p></div>';
+        el.querySelector("[data-again]").onclick = function () { blanks(el, t, fromPick); };
+        var pk = el.querySelector("[data-pick]"); if (pk) pk.onclick = function () { picker(el); };
+        return;
       }
       var q = st.qs[st.i], T = w.QTOP || {};
       var h = '<div class="qcard pcard"><span class="qtopic">✍️ عبّي الفراغ · ' + esc(T[q.t] || q.t) + ' · ' + (st.i + 1) + '/' + st.qs.length + '</span>';
@@ -107,7 +138,7 @@
       else classQuiz(el, el.getAttribute("data-lesson") || "l1");
     });
   }
-  w.NursinPractice = { blanks: blanks, classQuiz: classQuiz, norm: norm, okTyped: okTyped, mount: mount };
+  w.NursinPractice = { blanks: blanks, picker: picker, subjects: subjects, subjOf: subjOf, pickFor: pickFor, classQuiz: classQuiz, norm: norm, okTyped: okTyped, mount: mount };
   function init() {
     mount();
     var pm = d.getElementById("pmode");
