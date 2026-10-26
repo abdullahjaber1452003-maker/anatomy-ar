@@ -10,7 +10,7 @@
       signed-in visitors without notifications every 7 days (4 times max); signed in with notifications on, denied or unsupported: never. */
 (function (w, d) {
   var OWNER = "abdullahjaber1452003@gmail.com";
-  var LAST = "nursin_last_v1", OB = "nursin_onboard_v1";
+  var LAST = "nursin_last_v1", OB = "nursin_onboard_v1", CC = "nursin_classcode_v1";
   var DAY = 864e5, OUT_GAP = 4 * DAY, OUT_MAX = 6, IN_GAP = 7 * DAY, IN_MAX = 4;
   var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   if (!/\.html$/.test(page)) page = "index.html";
@@ -191,7 +191,7 @@
       if (!u) { go.disabled = false; return; }                             // closed Google's window: stay on step 1
       mark(1);
       var need = pushNeed();
-      if (need) step2(need, total); else done("✅ تمام! سجّلت دخول.");
+      classStep(function () { if (need) step2(need, total); else done("✅ تمام! سجّلت دخول."); });
     });
   }
   function done(m) {
@@ -228,11 +228,55 @@
       }
     });
   }
+  /* 🏫 «عندك كود صف؟» — right after a new Google sign-in, or for any signed-in student in no class who hasn't said «ما عندي / بعدين».
+     One card at a time (it takes the welcome card's place, then the 🔔 step follows). Joins with the class page's own join (classes.js joinWithCode), any class code. No ads. */
+  function ccState() { return lsGet(CC) || {}; }
+  function ccEligible() {                                // → Promise<bool>
+    if (!(w.NursinFB && w.NursinFB.user) && signedIn()) {               // signed in, Firebase not loaded on this page yet
+      if (w.Nursin && w.Nursin.loadFB) w.Nursin.loadFB();
+      return waitUser(6000).then(function (A) { return A ? ccEligible() : false; });
+    }
+    var A = w.NursinFB, s = ccState();
+    if (!A || !A.user || page === "classes.html" || /[?&](join|c)=/.test(location.search)) return Promise.resolve(false);
+    if (s.off || s.has === A.user.uid) return Promise.resolve(false);
+    return A.mod("classes").then(function (m) { return m && m.myClassCount ? m.myClassCount(A) : null; }).then(function (k) {
+      if (k > 0) { var t = ccState(); t.has = A.user.uid; lsSet(CC, t); }
+      return k === 0;
+    }, function () { return false; });
+  }
+  function classCard(next) {
+    var c = shell(1, 1, '<h2 id="obt">🏫 عندك كود صف؟</h2><p>إذا أستاذك أو رفيقك عطاك كود صفّك، حطّو هون وبتفوت عالصف دغري: امتحان الصف، سؤال اليوم، وعلامات رفقاتك.</p>' +
+      '<form class="obcc" autocomplete="off"><input class="obccin" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود الصف">' +
+      '<div class="obbtns"><button class="btn pri obgo" type="submit">فوت عالصف</button><button class="obccno" type="button">ما عندي / بعدين</button></div></form>' +
+      '<p class="small obnote">الدروس مفتوحة إلك بكل الأحوال. فيك تفوت على صف بعدين من 👥 أصحابي ← 🏫 صفّي.</p>');
+    var f = c.querySelector(".obcc"), inp = c.querySelector(".obccin"), go = c.querySelector(".obgo");
+    inp.addEventListener("input", function () { say(""); });
+    c.querySelector(".obccno").addEventListener("click", function () { var s = ccState(); s.off = Date.now(); lsSet(CC, s); closeCard(); if (next) setTimeout(next, 300); });
+    f.addEventListener("submit", function (e) {
+      e.preventDefault(); var A = w.NursinFB; if (!A || !A.user) { say("⚠️ لازم تسجّل دخول أوّل."); return; }
+      go.disabled = true; say("⏳ …");
+      A.mod("classes").then(function (m) { return m && m.joinWithCode ? m.joinWithCode(A, inp.value) : { err: "⚠️ ما زبط، جرّب كمان مرّة." }; }).then(function (r) {
+        if (r.err) { say(r.err); go.disabled = false; return; }
+        var s = ccState(); s.has = A.user.uid; lsSet(CC, s);
+        say("✅ " + (r.already ? "إنت أصلاً بصف «" : "فتت على صف «") + r.name + "»");
+        setTimeout(function () { location.href = "classes.html?c=" + encodeURIComponent(r.cid); }, 700);
+      }, function () { say("⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة."); go.disabled = false; });
+    });
+    setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (x) {} }, 350);
+  }
+  function classStep(next) {                             // show the class card if it applies, else go straight on
+    ccEligible().then(function (ok) { if (ok) classCard(next); else if (next) next(); });
+  }
   function startWelcome() {
     if (OB_PAGES.indexOf(page) < 0 || /[?&](challenge|exam|room)=/.test(location.search)) return;
-    var step = due(); if (!step) return;
-    if (step === 1) step1(pushNeed() ? 2 : 1);
-    else step2(pushNeed(), 1);
+    var step = due();
+    if (step === 1) return step1(pushNeed() ? 2 : 1);
+    if (!signedIn()) return;
+    var fromSignIn = step === 2 && (lsGet(OB) || {}).p === 2;      // came back from Google's redirect: class card, then 🔔
+    ccEligible().then(function (ok) {
+      if (ok) return classCard(fromSignIn ? function () { step2(pushNeed(), 1); } : null);
+      if (step === 2) step2(pushNeed(), 1);
+    });
   }
   function whenQuiet(fn) {                                // after the splash and the 3D page's ad screen, never on top of them
     var t0 = Date.now();
@@ -251,6 +295,6 @@
     buildNav(); remember(); continueCard();
     whenQuiet(startWelcome);
   }
-  w.NursinNav = { groups: G, due: due, open: openSheet, close: closeSheet };
+  w.NursinNav = { groups: G, due: due, open: openSheet, close: closeSheet, classCard: classCard };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(window, document);

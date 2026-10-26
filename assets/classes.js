@@ -221,7 +221,8 @@ export async function deleteClass(cid, cls, api) {
   await F3.deleteDoc(F3.doc(db, "users", me, "myClasses", cid)).catch(() => {});
   return refs.length;
 }
-function profileBits() { const p = A.profile || {}; return { name: N.cleanName(p.name || A.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, N.level(p.points))) }; }
+function bitsOf(api) { const p = api.profile || {}; return { name: api.N.cleanName(p.name || api.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, api.N.level(p.points))) }; }
+function profileBits() { return bitsOf(A); }
 async function createClass(raw) {
   const name = String(raw || "").replace(/\s+/g, " ").trim().slice(0, 40), msg = $("#cnmsg");
   if (!name) { msg.textContent = "اكتب اسم الصف (مثلاً LT2)."; return; }
@@ -243,23 +244,38 @@ async function createClass(raw) {
   }
   msg.textContent = "⚠️ ما زبط، جرّب كمان مرّة."; btn.disabled = false;
 }
-async function joinByCode(raw, fromLink) {
-  const code = N.normCode(raw), msg = $("#cjmsg");
-  if (code.length !== 6) { msg.textContent = "الكود ٦ حروف/أرقام."; return; }
-  msg.textContent = "⏳ …";
+// join by code — shared by «🔑 فوت على صف بالكود» here and the «🏫 عندك كود صف؟» card after sign-in (assets/nav.js). Works for any class code.
+// → { cid, name } joined · { cid, name, already: true } · { cancel: true } · { err: "words" }
+export async function joinWithCode(api, raw, ask) {
+  const F2 = api.fs, db = api.db, code = api.N.normCode(raw || "");
+  if (!api.user) return { err: "لازم تسجّل دخول أوّل." };
+  if (code.length !== 6) return { err: "الكود ٦ حروف/أرقام." };
   try {
-    const c = await F.getDoc(F.doc(A.db, "classCodes", code));
-    if (!c.exists()) { msg.textContent = "❌ ما في صف بهالكود. تأكّد منو (يمكن صاحب الصف غيّرو)."; return; }
-    const { cid, name } = c.data(), me = A.user.uid;
-    const mine = await F.getDoc(F.doc(A.db, "users", me, "myClasses", cid));
-    if (mine.exists()) { location.href = "classes.html?c=" + encodeURIComponent(cid); return; }
-    if (fromLink && !confirm("بدّك تفوت على صف «" + name + "»؟")) { msg.textContent = ""; return; }
-    await F.runTransaction(A.db, async tx => {
-      tx.set(F.doc(A.db, "classes", cid, "members", me), { ...profileBits(), code, joinedAt: F.serverTimestamp() });
-      tx.set(F.doc(A.db, "users", me, "myClasses", cid), { name, owner: false, at: F.serverTimestamp() });
+    const c = await F2.getDoc(F2.doc(db, "classCodes", code));
+    if (!c.exists()) return { err: "❌ ما في صف بهالكود. تأكّد منو (يمكن صاحب الصف غيّرو)." };
+    const { cid, name } = c.data(), me = api.user.uid;
+    const mine = await F2.getDoc(F2.doc(db, "users", me, "myClasses", cid));
+    if (mine.exists()) return { cid, name, already: true };
+    if (ask && !ask(name)) return { cancel: true };
+    await F2.runTransaction(db, async tx => {
+      tx.set(F2.doc(db, "classes", cid, "members", me), { ...bitsOf(api), code, joinedAt: F2.serverTimestamp() });
+      tx.set(F2.doc(db, "users", me, "myClasses", cid), { name, owner: false, at: F2.serverTimestamp() });
     });
-    location.href = "classes.html?c=" + encodeURIComponent(cid);
-  } catch (e) { if (!denied(e)) console.warn("nursin: class join", e && e.code); msg.textContent = failMsg(e); }
+    return { cid, name };
+  } catch (e) { if (!denied(e)) console.warn("nursin: class join", e && e.code); return { err: failMsg(e) }; }
+}
+// how many classes am I in (the «عندك كود صف؟» card shows only at 0); null = couldn't tell
+export async function myClassCount(api) {
+  if (!api.user) return null;
+  try { return ((await api.fs.getDocs(api.fs.collection(api.db, "users", api.user.uid, "myClasses"))).docs || []).length; } catch (e) { return null; }
+}
+async function joinByCode(raw, fromLink) {
+  const msg = $("#cjmsg");
+  msg.textContent = "⏳ …";
+  const r = await joinWithCode(A, raw, fromLink ? name => confirm("بدّك تفوت على صف «" + name + "»؟") : null);
+  if (r.err) { msg.textContent = r.err; return; }
+  if (r.cancel) { msg.textContent = ""; return; }
+  location.href = "classes.html?c=" + encodeURIComponent(r.cid);
 }
 
 /* ---- one class ---- */
