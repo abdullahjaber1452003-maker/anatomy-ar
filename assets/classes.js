@@ -117,6 +117,15 @@ export function dqSummary(answers) {
 let A, F, N, esc, $;
 const NOT_READY = "🏫 الصفوف بعدها عم تتجهّز (ناطرين تحديث صغير بإعدادات الموقع). جرّب كمان شوي 🙏";
 const denied = e => e && e.code === "permission-denied";
+// 🗑️ deleting a class: the site admin (verified Gmail, same check as admin page / chat) can delete ANY class; the owner his own
+export const ADMIN_EMAIL = "abdullahjaber1452003@gmail.com";
+export const isAdminUser = u => !!(u && u.email === ADMIN_EMAIL && u.emailVerified);
+export const canDeleteClass = (u, cls) => !!(u && cls && (isAdminUser(u) || cls.owner === u.uid));
+export const DEL_CONFIRM = "متأكد؟ رح ينحذف الصف لكل الأعضاء";
+export const RULES_MSG = "⚠️ لازم تنشر القواعد الجديدة (v10) بـ Firebase تا يزبط الحذف.";
+export const DEL_SUBS = ["weeks", "starts", "results", "dq", "members"];   // members last
+// split refs into batches (Firestore allows 500 writes per batch; we stay well under)
+export function chunks(a, n = 200) { const out = []; for (let i = 0; i < (a || []).length; i += n) out.push(a.slice(i, i + n)); return out; }
 const L = "abc";
 function topicName(t) { return (window.QTOP || {})[t] || t; }
 function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : "cardio.html"; }
@@ -139,18 +148,78 @@ export function page(api) {
 async function home(el, note) {
   const join = N.normCode(params().get("join") || "");
   el.innerHTML = (note ? '<p class="finv">' + note + "</p>" : "") +
-    '<section class="qcard"><h2>📚 صفوفي</h2><div id="clist"><p class="small">⏳ …</p></div></section>' +
+    '<section class="qcard" id="cmine"><h2>📚 صفوفي</h2><div id="clist"><p class="small">⏳ …</p></div><p id="clmsg" class="small" aria-live="polite"></p></section>' +
     '<section class="qcard"><h2>🔑 فوت على صف بالكود</h2><form id="cjoin" class="fadd" autocomplete="off"><input id="cjcode" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود الصف" value="' + esc(join) + '"><button class="btn pri" type="submit">فوت</button></form><p id="cjmsg" class="small" aria-live="polite"></p></section>' +
     '<section class="qcard"><h2>➕ اعمل صف جديد</h2><form id="cnew" class="fadd" autocomplete="off"><input id="cname" maxlength="40" placeholder="مثلاً LT2" aria-label="اسم الصف"><button class="btn pri" type="submit">اعمل</button></form><p class="small">بتاخد كود من ٦ حروف، بتبعتو لرفقاتك بالصف وبيفوتو فيه.</p><p id="cnmsg" class="small" aria-live="polite"></p></section>';
   $("#cjoin").addEventListener("submit", e => { e.preventDefault(); joinByCode($("#cjcode").value); });
   $("#cnew").addEventListener("submit", e => { e.preventDefault(); createClass($("#cname").value); });
   try {
     const s = await F.getDocs(F.collection(A.db, "users", A.user.uid, "myClasses"));
-    const list = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    $("#clist").innerHTML = list.length ? '<div class="excards">' + list.map(c => '<a class="excard ccard" href="classes.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>🏫 ' + esc(c.name) + "</bdi></b><small>" + (c.owner ? "إنت صاحب الصف" : "طالب بالصف") + '</small><span class="btn pri">فوت ←</span></a>').join("") + "</div>"
+    let list = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    // a class that was deleted (or I was removed from) leaves my list quietly — only on a clear "gone"/"not allowed", never on a network error
+    const gone = await Promise.all(list.map(c => F.getDoc(F.doc(A.db, "classes", c.id)).then(x => !x.exists(), e => denied(e))));
+    list = list.filter((c, i) => { if (!gone[i]) return true; F.deleteDoc(F.doc(A.db, "users", A.user.uid, "myClasses", c.id)).catch(() => {}); return false; });
+    $("#clist").innerHTML = list.length ? '<div class="excards">' + list.map(c => '<div class="ccw"><a class="excard ccard" href="classes.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>🏫 ' + esc(c.name) + "</bdi></b><small>" + (c.owner ? "إنت صاحب الصف" : "طالب بالصف") + '</small><span class="btn pri">فوت ←</span></a>' +
+      (c.owner || isAdminUser(A.user) ? '<button class="cdelx" type="button" data-cid="' + esc(c.id) + '" aria-label="احذف الصف ' + esc(c.name) + '" title="🗑️ احذف الصف">🗑️</button>' : "") + "</div>").join("") + "</div>"
       : '<p class="small fempty">لسّا مش بأي صف. فوت بكود من رفيقك أو اعمل صف جديد 👇</p>';
+    $("#clist").querySelectorAll(".cdelx").forEach(b => b.addEventListener("click", () => { const c = list.find(x => x.id === b.dataset.cid); askDelete(c.id, null, c.name, $("#cmine")); }));
   } catch (e) { if (!denied(e)) console.warn("nursin: classes list", e && e.code); $("#clist").innerHTML = '<p class="small">' + failMsg(e) + "</p>"; }
+  if (isAdminUser(A.user)) adminList();
   if (join) joinByCode(join, true);
+}
+// 🛡️ admin only: every class on the site, each with «🗑️ احذف الصف»
+async function adminList() {
+  const sec = document.createElement("section"); sec.className = "qcard cadm"; sec.id = "cadm";
+  sec.innerHTML = '<h2>🛡️ كل الصفوف <small>(أدمن)</small></h2><div id="cadml"><p class="small">⏳ …</p></div><p id="cadmmsg" class="small" aria-live="polite"></p>';
+  const host = document.getElementById("classes-app"); if (!host) return; host.appendChild(sec);
+  const box = sec.querySelector("#cadml");
+  try {
+    const s = await F.getDocs(F.query(F.collection(A.db, "classes"), F.limit(300)));
+    const all = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    box.innerHTML = all.length ? '<ol class="lb cadmlist">' + all.map(c => '<li class="cadmrow"><a href="classes.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>🏫 ' + esc(c.name) + '</bdi></b> <small>· <bdi>' + esc(N.cleanName(c.ownerName)) + '</bdi> · <span dir="ltr">' + esc(c.code || "") + '</span></small></a> <button class="btn clsdel" type="button" data-cid="' + esc(c.id) + '">🗑️ احذف الصف</button></li>').join("") + "</ol>"
+      : '<p class="small">ما في ولا صف عالموقع.</p>';
+    box.querySelectorAll(".clsdel").forEach(b => b.addEventListener("click", () => { const c = all.find(x => x.id === b.dataset.cid); askDelete(c.id, c, c.name, sec); }));
+  } catch (e) {
+    if (!denied(e)) console.warn("nursin: admin classes", e && e.code);
+    box.innerHTML = '<p class="small">' + (denied(e) ? RULES_MSG + " (هلّق بتقدر تحذف بس الصفوف يلي إنت صاحبها.)" : "⚠️ ما قدرنا نجيب الصفوف. جرّب كمان شوي.") + "</p>";
+  }
+}
+// confirm → delete → the class disappears for everyone
+async function askDelete(cid, cls, name, scope) {
+  if (!confirm(DEL_CONFIRM + "\n«" + (name || "") + "»")) return;
+  const msgEl = (scope && scope.querySelector("[aria-live]")) || null, say = t => { if (msgEl) msgEl.textContent = t; };
+  scope && scope.querySelectorAll(".clsdel,.cdelx").forEach(b => { b.disabled = true; });
+  say("⏳ عم ينحذف الصف…");
+  try {
+    if (!cls) { const x = await F.getDoc(F.doc(A.db, "classes", cid)); if (!x.exists()) throw { code: "not-found" }; cls = x.data(); }
+    await deleteClass(cid, cls);
+    try { sessionStorage.removeItem("nursin_goals_live_v1"); } catch (e) {}
+    history.replaceState(null, "", "classes.html");
+    home(document.getElementById("classes-app"), "🗑️ انحذف الصف «" + esc(name || cls.name || "") + "» لكل الأعضاء.");
+  } catch (e) {
+    scope && scope.querySelectorAll(".clsdel,.cdelx").forEach(b => { b.disabled = false; });
+    if (e && e.code === "not-found") { F.deleteDoc(F.doc(A.db, "users", A.user.uid, "myClasses", cid)).catch(() => {}); history.replaceState(null, "", "classes.html"); return home(document.getElementById("classes-app"), "🗑️ هالصف منحذف من قبل."); }
+    if (!denied(e)) console.warn("nursin: class delete", e && e.code);
+    say(denied(e) ? (isAdminUser(A.user) ? RULES_MSG : "🗑️ الحذف بعدو مش جاهز (ناطرين تحديث صغير بإعدادات الموقع). جرّب بعد شوي 🙏") : "⚠️ ما زبط الحذف، تأكّد من الإنترنت وجرّب كمان مرّة.");
+  }
+}
+// deletes everything the client can reach: weeks, starts, results, dq answers, members, the class code, the class doc and my own list entry.
+// Other members' users/{uid}/myClasses entries are theirs to write; their pages drop the missing class by themselves (home(), goalsStatus, tutorSummary).
+export async function deleteClass(cid, cls, api) {
+  const a = api || A, F3 = a.fs, db = a.db, me = a.user.uid;
+  const refs = [];
+  for (const s of DEL_SUBS) (await F3.getDocs(F3.collection(db, "classes", cid, s))).docs.forEach(d => refs.push(d.ref));
+  refs.sort((x, y) => (x.parent.id === "members") - (y.parent.id === "members") || (x.id === me) - (y.id === me));   // members last, my own member doc very last
+  for (const part of chunks(refs)) { const b = F3.writeBatch(db); part.forEach(r => b.delete(r)); await b.commit(); }
+  const b = F3.writeBatch(db);
+  if (cls && cls.code) {
+    const cd = await F3.getDoc(F3.doc(db, "classCodes", cls.code)).catch(() => null);
+    if (cd && cd.exists() && (cd.data() || {}).cid === cid) b.delete(F3.doc(db, "classCodes", cls.code));
+  }
+  b.delete(F3.doc(db, "classes", cid));
+  await b.commit();
+  await F3.deleteDoc(F3.doc(db, "users", me, "myClasses", cid)).catch(() => {});
+  return refs.length;
 }
 function profileBits() { const p = A.profile || {}; return { name: N.cleanName(p.name || A.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, N.level(p.points))) }; }
 async function createClass(raw) {
@@ -206,12 +275,13 @@ async function openClass(el, cid) {
   } catch (e) {
     if (denied(e) || (e && e.code === "not-found")) {
       // not a member (removed, or the class is gone) — tidy my list
-      try { if ((await F.getDoc(F.doc(A.db, "users", me, "myClasses", cid))).exists()) { await F.deleteDoc(F.doc(A.db, "users", me, "myClasses", cid)); return home(el, "🚪 ما عدت بهالصف (يمكن صاحب الصف طلّعك). فيك تفوت من جديد بكود."); } } catch (x) {}
+      try { if ((await F.getDoc(F.doc(A.db, "users", me, "myClasses", cid))).exists()) { await F.deleteDoc(F.doc(A.db, "users", me, "myClasses", cid)); return home(el, "🚪 ما عدت بهالصف (يمكن انحذف، أو صاحب الصف طلّعك). فيك تفوت من جديد بكود."); } } catch (x) {}
+      if (!isAdminUser(A.user)) { history.replaceState(null, "", "classes.html"); return home(el, "❌ هالصف مش موجود (يمكن انحذف) أو إنت مش فيه. فيك تفوت على صف بالكود."); }
     }
     if (!denied(e)) console.warn("nursin: class open", e && e.code);
-    el.innerHTML = '<div class="qcard"><p>' + (denied(e) ? NOT_READY : "⚠️ ما قدرنا نفتح الصف. تأكّد من الإنترنت وجرّب بعد شوي.") + '</p><p><a href="classes.html">← صفوفي</a></p></div>'; return;
+    el.innerHTML = '<div class="qcard"><p>' + (denied(e) ? (isAdminUser(A.user) ? RULES_MSG : NOT_READY) : "⚠️ ما قدرنا نفتح الصف. تأكّد من الإنترنت وجرّب بعد شوي.") + '</p><p><a href="classes.html">← صفوفي</a></p></div>'; return;
   }
-  C = { cid, cls, members, results, wk, owner: cls.owner === me };
+  C = { cid, cls, members, results, wk, owner: cls.owner === me, member: members.some(x => x.uid === me), canDel: canDeleteClass(A.user, cls) };
   C.mine = results.find(r => r.uid === me && r.wk === wk) || null;
   // keep my name/level fresh on the member list
   const pb = profileBits(), m0 = members.find(x => x.uid === me);
@@ -223,9 +293,15 @@ async function openClass(el, cid) {
     '<section class="qcard"><h2>👑 أبطال الصف</h2><div id="cawards"></div></section>' +
     '<section class="qcard"><h2>📊 علامات هالأسبوع</h2><ol class="lb" id="cboard"></ol></section>' +
     '<section class="qcard"><h2>🏆 ترتيب الصف <small>(كل الأسابيع)</small></h2><ol class="lb" id="crank"></ol></section>' +
-    '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p></section>';
+    '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p></section>' +
+    (C.canDel ? '<section class="qcard cdanger" id="cdelsec"><h2>🗑️ حذف الصف</h2><p class="small">' + (C.owner ? "إنت صاحب الصف." : "🛡️ إنت أدمن الموقع.") + ' الحذف بيشيل الصف وعلاماتو وأسئلتو لكل الأعضاء، وما بيرجع.</p><p><button class="btn clsdel" id="cdel" type="button">🗑️ احذف الصف</button></p><p id="cdelmsg" class="small" aria-live="polite"></p></section>' : "");
   C.prof = {};
   drawCode(); drawBoard(); drawAwards(); drawRank(); drawMembers();
+  if (C.canDel) $("#cdel").addEventListener("click", () => askDelete(cid, cls, cls.name, $("#cdelsec")));
+  if (!C.member) {   // the admin looking at a class he isn't in: read-only, nothing gets written in his name
+    const ro = '<p class="small">👀 إنت فاتح هالصف كأدمن (مش عضو فيه).</p>';
+    $("#cdqb").innerHTML = ro; $("#cexam").innerHTML = ro; loadProfiles(); return;
+  }
   dqCard(); weekCard(); loadProfiles(); myClassBadges();
 }
 // 🔥 + 🏅 of every member (users/{uid} is readable by any signed-in student)
@@ -310,7 +386,7 @@ function drawCode() {
   const code = C.cls.code, link = "https://nursin.store/classes.html?join=" + code;
   const share = "https://wa.me/?text=" + encodeURIComponent("فوت على صفّنا «" + C.cls.name + "» على nursin 🏫\nالكود: " + code + "\n" + link);
   $("#ccode").innerHTML = '<p class="finv">🔑 كود الصف: <b dir="ltr" class="ccodev">' + esc(code) + '</b></p><p class="fbtns"><a class="btn pri" href="' + esc(share) + '" target="_blank" rel="noopener">📲 ابعت الكود عالواتساب</a>' +
-    (C.owner ? ' <button class="btn" id="cregen" type="button">🔄 كود جديد</button>' : ' <button class="btn" id="cleave" type="button">🚪 طلاع من الصف</button>') + '</p><p id="ccmsg" class="small" aria-live="polite"></p>';
+    (C.owner ? ' <button class="btn" id="cregen" type="button">🔄 كود جديد</button>' : C.member === false ? "" : ' <button class="btn" id="cleave" type="button">🚪 اطلع من الصف</button>') + '</p><p id="ccmsg" class="small" aria-live="polite"></p>';
   const rg = $("#cregen"); if (rg) rg.addEventListener("click", regenCode);
   const lv = $("#cleave"); if (lv) lv.addEventListener("click", leave);
 }
