@@ -30,7 +30,7 @@
     reset:function(){save({v:1,items:{}});},
     ran:function(){var d=load();d.ran=Date.now();save(d);},          /* a weak-points quiz finished (✅ أهدافك اليوم reads it) */
     ranAt:function(){return +load().ran||0;},
-    page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':'cardio.html';},
+    page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':t==='mgmt'?'mgmt.html':'cardio.html';},
     /* بيرسم قسم "نقاط ضعفك" جوّا el. opts.onStart(sel): شو يصير لما يكبس (إذا ما في، بيروح عـ quiz.html?t=weak).
        Abdullah (Oct 26, 12:34–12:35 PM): اللائحة بتضل ظاهرة (شو نقاط ضعفك وقدّيش)، بس أي كبسة على القسم أو على
        «🎯 ابدأ كويز نقاط ضعفي» بتبلّش كويز نقاط الضعف دغري. ما في محي ولا اختيار. السؤال بيطلع بعد صح مرّتين ورا بعض. */

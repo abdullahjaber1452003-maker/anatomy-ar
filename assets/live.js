@@ -17,8 +17,8 @@ function qById(id) { const b = bank(); for (let i = 0; i < b.length; i++) if (b[
 function topics() {
   const G = window.QGROUPS || {}, T = window.QTOP || {}, b = bank(), cnt = {};
   b.forEach(q => { cnt[q.t] = (cnt[q.t] || 0) + 1; });
-  const main = [["all", "🔀 كل الدروس"], ["cardio", "❤️ القلب كلّو"], ["neuro", "🧠 الأعصاب كلّها"], ["henderson", "📋 Henderson"], ["law", "⚖️ القانون"]].filter(t => t[0] === "all" || G[t[0]]);
-  const sub = Object.keys(cnt).filter(k => cnt[k] >= 5 && k !== "henderson" && k !== "law").map(k => [k, T[k] || k]);
+  const main = [["all", "🔀 كل الدروس"], ["cardio", "❤️ القلب كلّو"], ["neuro", "🧠 الأعصاب كلّها"], ["henderson", "📋 Henderson"], ["law", "⚖️ القانون"], ["mgmt", "🏢 الإدارة"]].filter(t => t[0] === "all" || G[t[0]]);
+  const sub = Object.keys(cnt).filter(k => cnt[k] >= 5 && k !== "henderson" && k !== "law" && k !== "mgmt").map(k => [k, T[k] || k]);
   return { main, sub };
 }
 function topicLabel(k) { const t = topics(); for (const x of t.main.concat(t.sub)) if (x[0] === k) return x[1].replace(/^[^\wÀ-ɏ\u0600-\u06FF(]+/, ""); return k; }

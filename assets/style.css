@@ -552,3 +552,23 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 
 /* ✍️ عبّي الفراغ لكل المواد (Oct 26): لائحة المواد */
 .bpicks{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}.bpicks .bsub{margin:4px 0;align-items:center;gap:4px;min-width:0;white-space:nowrap}.bpicks .bmix{grid-column:1/-1;justify-content:center;border-color:var(--pri);background:#f0fdfa;font-weight:700}
+
+/* 🏢 الإدارة (Oct 26): هرم Maslow + الهيكل التنظيمي (شجرة للموبايل) */
+.mlist{padding-right:22px;margin:6px 0}.mlist li{margin:4px 0}
+.mpyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:12px 0 4px}
+.mpl{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;line-height:1.35;padding:8px 10% 7px;min-height:58px;clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);max-width:100%}
+.mpl b{font-size:15px}.mpl .mpe{font-size:11.5px;opacity:.92}.mpl .mpx{font-size:12.5px;opacity:.95}
+.mpl5{width:52%;clip-path:polygon(16% 0,84% 0,100% 100%,0 100%);padding:8px 9% 7px;background:#7c3aed}
+.mpl4{width:64%;background:#2563eb}.mpl3{width:76%;background:#0891b2}.mpl2{width:88%;background:#0f766e}.mpl1{width:100%;background:#c2410c}
+.mpyrn{text-align:center;margin:2px 0 10px}
+.otree{margin:10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.otree ul{list-style:none;margin:0;padding:0 12px 0 0}.otree>ul{padding:0}
+.otree li{position:relative;padding:3px 12px 3px 0}.otree>ul>li{padding-right:0}
+.otree ul ul>li::before{content:"";position:absolute;right:0;top:0;bottom:0;border-right:2px solid #99c9c3}
+.otree ul ul>li:last-child::before{bottom:auto;height:22px}
+.otree ul ul>li::after{content:"";position:absolute;right:0;top:22px;width:10px;border-top:2px solid #99c9c3}
+.obx2{display:inline-flex;flex-direction:column;border:1.5px solid var(--line);border-radius:10px;padding:3px 10px;background:#fff;line-height:1.4;font-size:14.5px;max-width:100%}
+.obx2 small{font-size:11px;color:var(--mut)}
+.obx2.top{background:var(--pri);color:#fff;border-color:var(--pri)}.obx2.top small{color:#d1fae5}
+.obx2.dir{background:#e6f4f2;border-color:var(--pri)}.obx2.nur{border-color:#f59e0b;background:#fffbeb}.obx2.fin{border-color:#2563eb;background:#eff6ff}
+.orel{display:inline-block;margin-right:6px;font-size:12.5px;color:var(--acc);font-weight:700;vertical-align:middle}

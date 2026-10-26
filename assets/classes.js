@@ -29,6 +29,7 @@ export function autoTopics(wk, weak, quiz) {
   const all = examTopics(quiz), out = (weak || []).map(x => x.t).filter(t => all.includes(t)).slice(0, 3);
   const n = +String(wk).slice(-2) || 0, want = out.length ? 5 : 4;
   for (let i = 0; out.length < want && i < all.length; i++) { const t = all[(n * 3 + i * 7) % all.length]; if (!out.includes(t)) out.push(t); }
+  for (let i = 0; out.length < want && i < all.length; i++) { const t = all[(n * 3 + i) % all.length]; if (!out.includes(t)) out.push(t); } // step 7 repeats when the topic count is a multiple of 7
   return out;
 }
 // questions for the class exam: round-robin across the chosen topics, same for everyone (seeded by class + week)
@@ -128,7 +129,7 @@ export const DEL_SUBS = ["weeks", "starts", "results", "dq", "members"];   // me
 export function chunks(a, n = 200) { const out = []; for (let i = 0; i < (a || []).length; i += n) out.push(a.slice(i, i + n)); return out; }
 const L = "abc";
 function topicName(t) { return (window.QTOP || {})[t] || t; }
-function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : "cardio.html"; }
+function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : t === "mgmt" ? "mgmt.html" : "cardio.html"; }
 function qById(id) { return (window.QUIZ || []).find(q => q.id === id); }
 function params() { return new URLSearchParams(location.search); }
 function failMsg(e) { return denied(e) ? NOT_READY : "⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة."; }
