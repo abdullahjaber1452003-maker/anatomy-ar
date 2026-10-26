@@ -657,3 +657,12 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .sq{font-size:16px;margin:4px 0 2px;overflow-wrap:anywhere}.sfb{color:var(--red);font-weight:700}
 .sbreak{text-align:center;padding:8px 0}.sbreak h2{margin:6px 0}.sbreak .sbtns{justify-content:center}
 @media (prefers-reduced-motion:reduce){.shp.shit{animation:none}.stbar i{transition:none}}
+
+/* ❌/✅ instant correction + 📋 mistakes in the games (Oct 26, 9:05 PM) */
+.gfb{border:1px solid #fecaca;background:#fff7f7;border-radius:12px;padding:8px 10px;margin:8px 0;overflow-wrap:anywhere;text-align:start}.gfb p{margin:2px 0}.gfb .sbtns{margin-top:6px}
+.gy{color:var(--red)}.gr{color:#15803d}
+.btn.gok{background:#dcfce7;border-color:#16a34a;color:#166534}.btn.gbad{background:#fee2e2;border-color:var(--red);color:#991b1b}
+.finp.gbad{border-color:var(--red);background:#fef2f2}.finp.gok{border-color:#16a34a;background:#f0fdf4}
+.mt.hint{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 3px #bbf7d0}
+.mc.no{background:#fee2e2;border-color:var(--red)}.mc.hint{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 3px #bbf7d0}
+.gmiss{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:10px 0;text-align:start}.gmiss h3{margin:4px 0 6px;font-size:16px}.gmiss ol{margin:0;padding-inline-start:20px}.gmiss li{margin:0 0 8px;overflow-wrap:anywhere}.gmq{font-size:14px}

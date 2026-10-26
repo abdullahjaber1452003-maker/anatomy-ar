@@ -11,7 +11,13 @@
                          3 ❤️ for the whole run (wrong or timeout = −1), «🎉 المرحلة X خلصت!» between levels, game over at 0 ❤️,
                          win after level 5. Pays 4 points per level cleared (≤ ROUND_MAX, ≤ GAME_CAP a day), counts as a game round
                          for the daily 🎮 goal, best = most levels cleared (localStorage nursin_games_v1 «stage»). Own difficulty
-                         (the timer), so the سهل/وسط/صعب picker doesn't change it. */
+                         (the timer), so the سهل/وسط/صعب picker doesn't change it.
+   ❌/✅ تصحيح فوري + 📋 أخطاءك — added Oct 26 9:05 PM (Abdullah: «بس أغلط دغري يكون مبيّن الحل»): in every game a wrong answer
+                         shows right away «❌ إنت اخترت: X — ✅ الصح: Y» (+ the quiz item's own explanation when it has one), the
+                         player's pick in red and the right one in green; ٦٠ ثانية / عبّي بسرعة / سلّم المراحل pause their clock
+                         while it shows (≈2 s, 3.5 s with an explanation, or tap «كمّل»); وصّل / الذاكرة flash the right partner of
+                         the wrong match. Each round ends with «📋 أخطاءك» (question/term → your answer → right answer) and
+                         «🎯 راجع أخطاءك», which replays only those items: untimed, no points, no best score, not a game round. */
 (function (w, d) {
   var BEST = "nursin_games_v1", ROUND_MAX = 20;
   var GN = { match: "🧩 وصّل", tf: "⚡ تحدّي ٦٠ ثانية", mem: "🃏 لعبة الذاكرة", fill: "⌨️ عبّي بسرعة", stage: "🪜 سلّم المراحل" };
@@ -69,7 +75,7 @@
       if (!inS(q, s) || !q.o || q.o.length < 2) return; var qq = strip(q.q); if (/^نفس /.test(qq) || qq.length > 220) return;
       var ok = Math.random() < 0.5, wrong = q.o.map(function (o, i) { return i; }).filter(function (i) { return i !== q.a; });
       var pick = ok ? q.a : wrong[Math.floor(Math.random() * wrong.length)];
-      out.push({ q: qq, o: strip(q.o[pick]), ok: ok, right: strip(q.o[q.a]), s: subjOf(q.t) });
+      out.push({ q: qq, o: strip(q.o[pick]), ok: ok, right: strip(q.o[q.a]), s: subjOf(q.t), src: q });
     });
     return shuffle(out);
   }
@@ -101,36 +107,107 @@
     var pts = Math.min(ROUND_MAX, g === "stage" ? (score | 0) * STAGE.pts : lvPts(score | 0)), nb = saveBest(g, score | 0);
     area.innerHTML = '<h2>' + GN[g] + ' — خلصت الجولة!</h2><p class="gres">' + extra + "</p>" +
       (nb && score ? '<p>🏆 <b>أحسن نتيجة إلك!</b></p>' : (g === "stage" ? '<p class="small">أحسن نتيجة إلك: <b>' + (best().stage | 0) + "/" + STAGE.levels + "</b> مراحل</p>" : '<p class="small">أحسن نتيجة إلك: <b>' + (best()[bk(g)] | 0) + "</b> (" + LV[lv].n + ")</p>")) +
-      '<p class="small" id="gpts"></p><div class="sbtns"><button class="btn on" type="button" data-again="' + g + '">🔁 جولة جديدة</button><button class="btn" type="button" data-back="1">🎮 لعبة تانية</button></div>';
+      '<p class="small" id="gpts"></p>' + missHtml(lastMiss = miss.slice()) + '<div class="sbtns"><button class="btn on" type="button" data-again="' + g + '">🔁 جولة جديدة</button><button class="btn" type="button" data-back="1">🎮 لعبة تانية</button></div>';
     var S = w.NursinStudy;
     if (S) { var o = S.activity("game", pts, GN[g].replace(/^\S+\s/, ""), d.getElementById("gpts")); if (o && o.paid < pts && w.Nursin && w.Nursin.me) d.getElementById("gpts").insertAdjacentHTML("afterend", '<p class="small">وصلت لحدّ نقاط الألعاب اليوم (' + S.GAME_CAP + ")، بس بتضل تلعب وتتمرّن 💪</p>"); }
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
   function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
 
+  /* ---- ❌/✅ instant correction + 📋 this round's mistakes + 🎯 replay (no points) ---- */
+  var miss = [], lastMiss = [], lastG = "", replaying = false, FB_MS = 2000, FB_X_MS = 3500;
+  function fbLine(yours, right, x, btn) {
+    return '<div class="gfb" role="status"><p>❌ إنت اخترت: <b class="gy">' + yours + '</b> — ✅ الصح: <b class="gr">' + right + "</b></p>" +
+      (x ? '<p class="small">💡 ' + x + "</p>" : "") + (btn ? '<div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div>' : "") + "</div>";
+  }
+  // wait on the feedback: «كمّل» goes on at once, else after ms (0 = only on tap)
+  function hold(ms, go) {
+    var done = false, t = 0, bs = area.querySelectorAll(".gkm"), b = bs[bs.length - 1];
+    function fire() { if (done) return; done = true; clearTimeout(t); go(); }
+    if (b) b.addEventListener("click", fire);
+    if (ms) t = setTimeout(fire, ms);
+  }
+  function addMiss(m) { if (replaying) return; for (var j = 0; j < miss.length; j++) if (miss[j].k === m.k) { miss[j].y = m.y; return; } miss.push(m); }
+  function missHtml(list, again) {
+    if (!list.length) return '<p class="small gmok">👌 ولا غلطة بهالجولة!</p>';
+    return '<div class="gmiss"><h3>📋 أخطاءك (' + list.length + ")</h3><ol>" + list.map(function (m) {
+      return '<li><div class="gmq">' + m.q + '</div><div class="small">❌ إنت: <span class="gy">' + m.y + '</span> ← ✅ الصح: <b class="gr">' + m.r + "</b></div></li>"; }).join("") +
+      '</ol><div class="sbtns"><button class="btn on" type="button" data-review="1">🎯 ' + (again ? "راجعن مرّة تانية" : "راجع أخطاءك") + '</button></div><p class="small">المراجعة بلا وقت وبلا نقاط.</p></div>';
+  }
+  // replay only the mistakes: multiple choice (quiz questions, terms) or the fill-in sentence again
+  function review(list, g) {
+    replaying = true; clearInterval(timer);
+    var i = 0, ok = 0, again = [];
+    function ask() {
+      if (i >= list.length) return done();
+      var m = list[i], rv = m.rv, typed = rv.t === "fill" && !(rv.b.o && rv.b.o.length);
+      area.innerHTML = head(g, ' <span class="gsc">🎯 ' + (i + 1) + "/" + list.length + "</span>") + '<p class="small">🎯 مراجعة أخطاءك — بلا وقت وبلا نقاط.</p><div id="rvq"></div>';
+      var box = d.getElementById("rvq");
+      if (typed) {
+        box.innerHTML = '<p class="sq">' + esc(rv.b.s).replace("___", '<span class="fgap">____</span>') + '</p><form class="fform" autocomplete="off"><input class="finp" type="text" aria-label="الكلمة الناقصة" placeholder="اكتب الكلمة الناقصة"><button class="btn tok" type="submit">✔️</button></form><div class="sbtns"><button class="btn" type="button" data-rskip="1">⏭️ ما بعرف</button></div>';
+        var lockT = false, sub = function (v) { if (lockT) return; lockT = true; var good = v != null && fillOk(rv.b, v), inp = box.querySelector(".finp"); inp.disabled = true; box.querySelector("form button").disabled = true;
+          if (good) { ok++; inp.classList.add("gok"); return setTimeout(function () { i++; ask(); }, 700); }
+          again.push(m); inp.classList.add("gbad"); box.insertAdjacentHTML("beforeend", fbLine(v == null ? "⏭️ ما جاوبت" : esc(v), esc(rv.b.a), "", 1)); hold(0, function () { i++; ask(); }); };
+        box.querySelector("form").addEventListener("submit", function (e) { e.preventDefault(); var v = box.querySelector(".finp").value; if (v.trim()) sub(v); });
+        box.querySelector("[data-rskip]").addEventListener("click", function () { sub(null); });
+        return;
+      }
+      var o = rv.t === "fill" ? rv.b.o : rv.o, a = rv.t === "fill" ? rv.b.o.indexOf(rv.b.a) : rv.a, q = rv.t === "fill" ? esc(rv.b.s).replace("___", '<span class="fgap">____</span>') : rv.q;
+      var order = shuffle(o.map(function (x, k) { return k; }));
+      box.innerHTML = '<p class="sq">' + q + '</p><div id="ropts">' + order.map(function (k, j) { return '<button class="opt" type="button" data-ro="' + k + '"><span class="l" dir="ltr">' + "abcd"[j] + "</span><span>" + (rv.t === "fill" ? esc(o[k]) : o[k]) + "</span></button>"; }).join("") + "</div>";
+      var lk = false;
+      box.querySelector("#ropts").addEventListener("click", function (e) {
+        var b = e.target.closest && e.target.closest("[data-ro]"); if (!b || lk) return; lk = true;
+        var k = +b.getAttribute("data-ro"), good = k === a;
+        [].forEach.call(box.querySelectorAll("[data-ro]"), function (x) { var kk = +x.getAttribute("data-ro"); x.disabled = true; if (kk === a) x.classList.add("ok"); else if (kk === k) x.classList.add("bad"); });
+        if (good) { ok++; return setTimeout(function () { i++; ask(); }, 700); }
+        again.push(m); box.insertAdjacentHTML("beforeend", fbLine(esc(strip(o[k])), esc(strip(o[a])), rv.x || "", 1)); hold(0, function () { i++; ask(); });
+      });
+    }
+    function done() {
+      replaying = false; lastMiss = again;
+      area.innerHTML = "<h2>🎯 خلصت المراجعة</h2><p class=\"gres\">✅ صحّحت <b>" + ok + "</b> من " + list.length + (ok === list.length ? " 💪" : "") + '</p><p class="small">المراجعة ما إلها نقاط 🙂</p>' +
+        (again.length ? missHtml(again, 1) : "") + '<div class="sbtns"><button class="btn on" type="button" data-again="' + g + '">🔁 جولة جديدة</button><button class="btn" type="button" data-back="1">🎮 لعبة تانية</button></div>';
+      area.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+    ask();
+    area.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
   /* ---- 🧩 وصّل: 5 pairs a round ---- */
   function match() {
     var P = shuffle(pairs(sel)).slice(0, LV[lv].match), L = shuffle(P.map(function (p, i) { return i; })), Rr = shuffle(P.map(function (p, i) { return i; }));
     var pick = null, done = 0, ok = 0, miss = {};
-    area.innerHTML = head("match", ' <span class="gsc" id="gsc">0/' + P.length + '</span>') + '<p class="small">دوس عالمصطلح، بعدين عالمعنى تبعو.</p><div class="mgrid"><div class="mcol">' +
+    area.innerHTML = head("match", ' <span class="gsc" id="gsc">0/' + P.length + '</span>') + '<p class="small">دوس عالمصطلح، بعدين عالمعنى تبعو.</p><div id="gfbm"></div><div class="mgrid"><div class="mcol">' +
       L.map(function (i) { return '<button type="button" class="mt" data-i="' + i + '" data-s="a">' + txt(P[i], 0) + "</button>"; }).join("") + '</div><div class="mcol">' +
       Rr.map(function (i) { return '<button type="button" class="mt" data-i="' + i + '" data-s="b">' + txt(P[i], 1) + "</button>"; }).join("") + "</div></div>";
     area.querySelector(".mgrid").addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".mt"); if (!b || b.disabled) return;
       if (!pick || pick.getAttribute("data-s") === b.getAttribute("data-s")) { if (pick) pick.classList.remove("sel"); pick = b; b.classList.add("sel"); return; }
-      var ai = pick.getAttribute("data-s") === "a" ? pick : b, bi = ai === pick ? b : pick, i = ai.getAttribute("data-i");
+      var first = pick, ai = pick.getAttribute("data-s") === "a" ? pick : b, bi = ai === pick ? b : pick, i = ai.getAttribute("data-i");
       pick.classList.remove("sel"); pick = null;
       if (i === bi.getAttribute("data-i")) {
         ai.disabled = bi.disabled = true; ai.classList.add("ok"); bi.classList.add("ok"); done++; if (!miss[i]) ok++;
         d.getElementById("gsc").textContent = done + "/" + P.length;
         if (done === P.length) setTimeout(function () { finish("match", ok, "✅ <b>" + ok + "</b> من " + P.length + " صح من أوّل مرّة"); }, 500);
-      } else { miss[i] = 1; [ai, bi].forEach(function (x) { x.classList.add("no"); setTimeout(function () { x.classList.remove("no"); }, 450); }); }
+        var fb0 = d.getElementById("gfbm"); if (fb0) fb0.innerHTML = "";
+      } else {
+        // ❌ wrong match: the first tap is the question; show its right partner in green for a moment
+        miss[i] = 1;
+        var side = first.getAttribute("data-s") === "a" ? 0 : 1, qi = +first.getAttribute("data-i"), wi = +(first === ai ? bi : ai).getAttribute("data-i");
+        var rb = area.querySelector('.mt[data-s="' + (side ? "a" : "b") + '"][data-i="' + qi + '"]');
+        [ai, bi].forEach(function (x) { x.classList.add("no"); }); if (rb) rb.classList.add("hint");
+        var others = shuffle(P.filter(function (p, k) { return k !== qi; })).slice(0, 2).map(function (p) { return txt(p, 1 - side); });
+        addMiss({ k: "m:" + P[qi].a + "|" + P[qi].b, q: txt(P[qi], side), y: txt(P[wi], 1 - side), r: txt(P[qi], 1 - side), rv: { t: "mcq", q: txt(P[qi], side), o: [txt(P[qi], 1 - side)].concat(others), a: 0 } });
+        var fb = d.getElementById("gfbm"); if (fb) fb.innerHTML = fbLine(txt(P[qi], side) + " ↔ " + txt(P[wi], 1 - side), txt(P[qi], side) + " ↔ " + txt(P[qi], 1 - side));
+        setTimeout(function () { [ai, bi].forEach(function (x) { x.classList.remove("no"); }); if (rb) rb.classList.remove("hint"); }, 1800);
+      }
     });
   }
 
   /* ---- ⚡ ٦٠ ثانية صح ولا غلط ---- */
   function tfGame() {
-    var T = LV[lv].tf, items = tf(sel), i = 0, ok = 0, bad = 0, end = Date.now() + T * 1e3, lock = false;
+    var T = LV[lv].tf, items = tf(sel), i = 0, ok = 0, bad = 0, end = Date.now() + T * 1e3, lock = false, pz = 0;
     area.innerHTML = head("tf", ' <span class="gsc" id="gt" dir="ltr">' + T + '</span>') + (lv === 3 ? '<p class="small">صعب: كل غلطة −١ 😬</p>' : "") + '<div class="tfq" id="tfq"></div><div class="sbtns tfb"><button class="btn tok" type="button" data-a="1">✅ صح</button><button class="btn tno" type="button" data-a="0">❌ غلط</button></div><p class="small">صح: <b id="tfok">0</b> · غلط: <b id="tfbad">0</b></p>';
     function show() { if (!d.getElementById("tfq")) return; if (i >= items.length) { items = items.concat(tf(sel)); } var it = items[i]; d.getElementById("tfq").innerHTML = '<p class="tfs">' + esc(it.q) + '</p><p class="tfo">الجواب: <b>' + esc(it.o) + "</b></p><p class=\"small\">صح ولا غلط؟</p>"; }
     show();
@@ -140,10 +217,20 @@
       if (good) ok++; else bad++;
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq " + (good ? "ok" : "no");
-      if (!good) box.insertAdjacentHTML("beforeend", '<p class="small">الجواب الصح: <b>' + esc(it.right) + "</b></p>");
-      lock = true; setTimeout(function () { lock = false; if (!d.getElementById("tfq")) return; box.className = "tfq"; i++; show(); }, good ? 350 : 1300);
+      lock = true;
+      function nx() { lock = false; if (!d.getElementById("tfq")) return; [].forEach.call(area.querySelectorAll(".tfb [data-a]"), function (x) { x.classList.remove("gok", "gbad"); }); box.className = "tfq"; i++; show(); }
+      if (good) return setTimeout(nx, 350);
+      // ❌ pause the clock, red on the pick, green on the right button, the line + the question's right answer + its explanation
+      pz = Date.now();
+      var said = b.getAttribute("data-a") === "1", rb = area.querySelector('.tfb [data-a="' + (said ? "0" : "1") + '"]'), q0 = it.src || {};
+      b.classList.add("gbad"); if (rb) rb.classList.add("gok");
+      box.insertAdjacentHTML("beforeend", '<p class="small">الجواب الصح للسؤال: <b>' + esc(it.right) + "</b></p>" + fbLine(said ? "صح" : "غلط", said ? "غلط" : "صح", q0.x || "", 1));
+      addMiss({ k: "t:" + (q0.id || it.q) + "|" + it.o, q: esc(it.q) + '<br><span class="small">الجواب المعروض: ' + esc(it.o) + "</span>", y: said ? "صح" : "غلط", r: (said ? "غلط" : "صح") + " — الجواب: " + esc(it.right),
+        rv: q0.o ? { t: "mcq", q: q0.q, o: q0.o, a: q0.a, x: q0.x } : { t: "mcq", q: esc(it.q) + "<br>" + esc(it.o), o: ["صح", "غلط"], a: it.ok ? 0 : 1 } });
+      hold(q0.x ? FB_X_MS : FB_MS, function () { end += Date.now() - pz; pz = 0; nx(); });
     });
     timer = setInterval(function () {
+      if (pz) return;   // ⏸️ paused while a correction shows
       var l = Math.max(0, Math.ceil((end - Date.now()) / 1000)), t = d.getElementById("gt"); if (t) t.textContent = l;
       if (l <= 0) { var sc = lv === 3 ? Math.max(0, ok - bad) : ok; finish("tf", sc, "⚡ جاوبت <b>" + ok + "</b> صح" + (bad ? " و" + bad + " غلط" : "") + " بـ " + T + " ثانية" + (lv === 3 && bad ? " → النتيجة <b>" + sc + "</b>" : "")); }
     }, 250);
@@ -152,10 +239,10 @@
   /* ---- 🃏 الذاكرة: 6 pairs, 12 cards ---- */
   function mem() {
     var P = shuffle(memPairs(sel)).slice(0, LV[lv].mem), cards = [];
-    P.forEach(function (p, i) { cards.push({ i: i, h: txt(p, 0) }); cards.push({ i: i, h: txt(p, 1) }); });
+    P.forEach(function (p, i) { cards.push({ i: i, s: 0, h: txt(p, 0) }); cards.push({ i: i, s: 1, h: txt(p, 1) }); });
     cards = shuffle(cards);
     var open = [], found = 0, moves = 0, busy = false;
-    area.innerHTML = head("mem", ' <span class="gsc" id="gmv">0 محاولة</span>') + '<p class="small">' + (P[0] && P[0].drug ? "لاقي كل دوا مع شو بيستعمل." : "لاقي كل مصطلح مع معناه.") + '</p><div class="memg' + (cards.length > 12 ? " m4" : "") + '">' +
+    area.innerHTML = head("mem", ' <span class="gsc" id="gmv">0 محاولة</span>') + '<p class="small">' + (P[0] && P[0].drug ? "لاقي كل دوا مع شو بيستعمل." : "لاقي كل مصطلح مع معناه.") + '</p><div id="gfbm"></div><div class="memg' + (cards.length > 12 ? " m4" : "") + '">' +
       cards.map(function (c, k) { return '<button type="button" class="mc" data-k="' + k + '" aria-label="كرت"><span class="mf">❓</span><span class="mb">' + c.h + "</span></button>"; }).join("") + "</div>";
     area.querySelector(".memg").addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".mc"); if (!b || busy || b.classList.contains("up") || b.classList.contains("ok")) return;
@@ -166,13 +253,24 @@
       if (cards[x.getAttribute("data-k")].i === cards[y.getAttribute("data-k")].i) {
         x.classList.add("ok"); y.classList.add("ok"); found++;
         if (found === P.length) setTimeout(function () { var sc = P.length + (moves <= P.length + 4 ? 4 : moves <= P.length + 8 ? 2 : 0); finish("mem", sc, "🃏 لقيت الـ " + P.length + " أزواج بـ <b>" + moves + "</b> محاولة"); }, 600);
-      } else { busy = true; setTimeout(function () { x.classList.remove("up"); y.classList.remove("up"); busy = false; }, 900); }
+        var fb0 = d.getElementById("gfbm"); if (fb0) fb0.innerHTML = "";
+      } else {
+        // ❌ not a pair: red on both, flip the first card's real partner up in green for a moment
+        busy = true;
+        var cx = cards[x.getAttribute("data-k")], cy = cards[y.getAttribute("data-k")], z = null;
+        [].forEach.call(area.querySelectorAll(".mc"), function (c) { var cc = cards[c.getAttribute("data-k")]; if (c !== x && cc.i === cx.i) z = c; });
+        x.classList.add("no"); y.classList.add("no"); if (z) z.classList.add("up", "hint");
+        var pz = P[cx.i], others = shuffle(P.filter(function (p, k) { return k !== cx.i; })).slice(0, 2).map(function (p) { return txt(p, 1 - cx.s); });
+        addMiss({ k: "c:" + pz.a + "|" + pz.b, q: cx.h, y: cy.h, r: txt(pz, 1 - cx.s), rv: { t: "mcq", q: cx.h, o: [txt(pz, 1 - cx.s)].concat(others), a: 0 } });
+        var fb = d.getElementById("gfbm"); if (fb) fb.innerHTML = fbLine(cx.h + " + " + cy.h, cx.h + " + " + txt(pz, 1 - cx.s));
+        setTimeout(function () { x.classList.remove("up", "no"); y.classList.remove("up", "no"); if (z) z.classList.remove("up", "hint"); busy = false; }, 1700);
+      }
     });
   }
 
   /* ---- ⌨️ عبّي بسرعة: 60 s, type the missing word (tap a choice on سهل/وسط when the sentence has choices) ---- */
   function fillGame() {
-    var items = blanks(sel), i = 0, ok = 0, bad = 0, end = Date.now() + 60e3, lock = false;
+    var items = blanks(sel), i = 0, ok = 0, bad = 0, end = Date.now() + 60e3, lock = false, pz = 0;
     area.innerHTML = head("fill", ' <span class="gsc" id="gt" dir="ltr">60</span>') + '<div class="tfq fq" id="fq"></div><p class="small">صح: <b id="tfok">0</b> · غلط/تخطّي: <b id="tfbad">0</b></p>';
     function show() {
       var box = d.getElementById("fq"); if (!box) return; if (i >= items.length) { items = items.concat(blanks(sel)); }
@@ -189,8 +287,15 @@
       if (good) ok++; else bad++;
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq fq " + (good ? "ok" : "no");
-      if (!good) box.insertAdjacentHTML("beforeend", '<p class="small">الجواب: <b>' + esc(b.a) + "</b></p>");
-      lock = true; setTimeout(function () { lock = false; i++; show(); }, good ? 450 : 1500);
+      lock = true;
+      if (good) return setTimeout(function () { lock = false; i++; show(); }, 450);
+      // ❌ pause the clock; the pick in red, the right word in green, the line
+      pz = Date.now();
+      [].forEach.call(box.querySelectorAll("[data-fo]"), function (x) { x.disabled = true; var v = x.getAttribute("data-fo"); if (v === b.a) x.classList.add("gok"); else if (v === typed) x.classList.add("gbad"); });
+      var inp = box.querySelector(".finp"); if (inp) { inp.disabled = true; if (typed != null) inp.classList.add("gbad"); }
+      box.insertAdjacentHTML("beforeend", fbLine(typed == null ? "⏭️ تخطّيت" : esc(typed), esc(b.a), "", 1));
+      addMiss({ k: "f:" + (b.id || b.s), q: esc(b.s).replace("___", '<span class="fgap">____</span>'), y: typed == null ? "⏭️ تخطّيت" : esc(typed), r: esc(b.a), rv: { t: "fill", b: b } });
+      hold(FB_MS, function () { end += Date.now() - pz; pz = 0; lock = false; i++; show(); });
     }
     show();
     area.querySelector("#fq").addEventListener("click", function (e) {
@@ -199,6 +304,7 @@
     });
     area.querySelector("#fq").addEventListener("submit", function (e) { e.preventDefault(); var inp = area.querySelector(".finp"); if (inp && inp.value.trim()) answer(inp.value); });
     timer = setInterval(function () {
+      if (pz) return;   // ⏸️ paused while a correction shows
       var l = Math.max(0, Math.ceil((end - Date.now()) / 1000)), t = d.getElementById("gt"); if (t) t.textContent = l;
       if (l <= 0) finish("fill", ok, "⌨️ عبّيت <b>" + ok + "</b> صح" + (bad ? " و" + bad + " غلط/تخطّي" : "") + " بـ ٦٠ ثانية");
     }, 250);
@@ -232,8 +338,7 @@
       if (lock || !d.getElementById("sopts")) return; lock = true; clearInterval(timer);
       var good = k === cur.a;
       [].forEach.call(area.querySelectorAll("[data-so]"), function (b) { var kk = +b.getAttribute("data-so"); b.disabled = true; if (kk === cur.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
-      if (!good) { lives--; var hp = d.getElementById("shp"); if (hp) { hp.textContent = hearts(); hp.classList.add("shit"); } area.querySelector("#sopts").insertAdjacentHTML("afterend", '<p class="small sfb">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ ") + "−١ ❤️</p>"); }
-      setTimeout(function () {
+      var after = function () {
         if (!d.getElementById("sopts")) return;
         if (lives <= 0) return finish("stage", cleared, "💔 خلصو القلوب بالمرحلة <b>" + lvl + "</b> — خلّصت <b>" + cleared + "</b> من " + STAGE.levels + " مراحل");
         qi++;
@@ -244,7 +349,14 @@
         frame('<div class="sbreak"><h2>🎉 المرحلة ' + cleared + " خلصت!</h2><p>بقيلك " + hearts() + "</p><p>المرحلة <b>" + lvl + "</b>: " + STAGE.per + " أسئلة، <b>" + STAGE.secs[lvl - 1] + '</b> ثانية لكل سؤال ⏱️</p><div class="sbtns"><button class="btn on" type="button" data-snext="1">يلّا عالمرحلة ' + lvl + " ⬅️</button></div></div>");
         area.querySelector("[data-snext]").addEventListener("click", ask);
         area.scrollIntoView({ block: "start", behavior: "smooth" });
-      }, good ? 700 : 1600);
+      };
+      if (good) return setTimeout(after, 700);
+      // ❌ / ⏰ −1 ❤️, the clock is already stopped: the line + the question's own explanation, then on (or «كمّل»)
+      lives--; var hp = d.getElementById("shp"); if (hp) { hp.textContent = hearts(); hp.classList.add("shit"); }
+      var yours = k < 0 ? "⏰ ما جاوبت (خلص الوقت)" : esc(strip(cur.o[k])), right = esc(strip(cur.o[cur.a]));
+      area.querySelector("#sopts").insertAdjacentHTML("afterend", '<p class="small sfb">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ ") + "−١ ❤️</p>" + fbLine(yours, right, cur.x || "", 1));
+      addMiss({ k: "s:" + (cur.id || cur.q), q: cur.q, y: yours, r: right, rv: { t: "mcq", q: cur.q, o: cur.o, a: cur.a, x: cur.x } });
+      hold(cur.x ? FB_X_MS : FB_MS, after);
     }
     ask();
   }
@@ -252,6 +364,7 @@
   function start(g) {
     clearInterval(timer);
     if (!enough(g, sel)) { area.hidden = false; area.innerHTML = head(g) + "<p>ما في محتوى كافي لهاللعبة بهالمادة بعد. جرّب «🎲 كل المواد» أو مادة تانية.</p>"; return; }
+    miss = []; replaying = false; lastG = g;
     area.hidden = false; (g === "match" ? match : g === "tf" ? tfGame : g === "fill" ? fillGame : g === "stage" ? stageGame : mem)();
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
@@ -269,12 +382,13 @@
     }
     marks();
     d.addEventListener("click", function (e) {
-      var t = e.target.closest && e.target.closest("[data-g],[data-again],[data-back]"); if (!t) return;
-      if (t.hasAttribute("data-back")) { clearInterval(timer); area.hidden = true; area.innerHTML = ""; marks(); d.getElementById("gcards").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+      var t = e.target.closest && e.target.closest("[data-g],[data-again],[data-back],[data-review]"); if (!t) return;
+      if (t.hasAttribute("data-review")) { clearInterval(timer); if (lastMiss.length) review(lastMiss.slice(), lastG); return; }
+      if (t.hasAttribute("data-back")) { clearInterval(timer); replaying = false; area.hidden = true; area.innerHTML = ""; marks(); d.getElementById("gcards").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
       start(t.getAttribute("data-g") || t.getAttribute("data-again"));
     });
   }
-  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX };
+  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, fbLine: fbLine, missHtml: missHtml, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
