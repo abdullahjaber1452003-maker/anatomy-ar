@@ -1,5 +1,7 @@
 rules_version = '2';
 // nursin.store — Firestore rules v8, built on rules v5 (friends, levels, challenges, live rooms, weekly exams, monthly ranking, 50/50, classes, «سؤال اليوم»)
+// v10 = v9 + 🗑️ deleting a class: the site admin (isAnnOwner, verified Gmail) may read/list and delete any class and its
+//       members/weeks/starts/results/dq + its code; the class owner may delete his own class, its code and its sub-docs.
 // v9 = v8 + 📢 the site owner (isAnnOwner) may list pushSubs and remove gone devices from d (for the «إشعار للكل» broadcast).
 // v8 = v7 + 🔔 pushSubs/{uid} (sealed chat-notification subscriptions; owner writes, signed-in get, no list).
 // v7 = v6 (v5 + 📢 announcements) + 💬 chats/{cid} and chats/{cid}/messages (friends' 1:1 chats and groups).
@@ -121,11 +123,13 @@ service cloud.firestore {
         && getAfter(classPath(request.resource.data.cid)).data.owner == request.auth.uid
         && getAfter(classPath(request.resource.data.cid)).data.code == code;
       allow update: if false;
-      allow delete: if signedIn() && getAfter(classPath(resource.data.cid)).data.owner == request.auth.uid
-        && getAfter(classPath(resource.data.cid)).data.code != code;   // only an old code, after the owner made a new one
+      allow delete: if (signedIn() && getAfter(classPath(resource.data.cid)).data.owner == request.auth.uid
+        && getAfter(classPath(resource.data.cid)).data.code != code)   // only an old code, after the owner made a new one
+        || isAnnOwner()                                              // v10: the admin removes any class's code
+        || (isClassOwner(resource.data.cid) && !existsAfter(classPath(resource.data.cid)));   // v10: the owner, together with deleting the class
     }
     match /classes/{cid} {
-      allow read: if isMember(cid) || (signedIn() && resource.data.owner == request.auth.uid);
+      allow read: if isMember(cid) || (signedIn() && resource.data.owner == request.auth.uid) || isAnnOwner();   // v10: + admin (list all classes)
       allow create: if signedIn() && request.resource.data.owner == request.auth.uid
         && request.resource.data.keys().hasOnly(['name', 'owner', 'ownerName', 'code', 'createdAt'])
         && nameOk(request.resource.data.name) && codeOk(request.resource.data.code)
@@ -135,12 +139,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'code'])
         && nameOk(request.resource.data.name) && codeOk(request.resource.data.code)
         && getAfter(codePath(request.resource.data.code)).data.cid == cid;
-      allow delete: if false;
+      allow delete: if isAnnOwner() || (signedIn() && resource.data.owner == request.auth.uid);   // v10: admin any class, owner his own
 
       match /members/{uid} {
         function memberOk(d) { return d.name is string && d.name.size() < 40 && d.photo is string && d.photo.size() <= 500
           && d.level is int && d.level >= 1 && d.level <= 1000; }
-        allow read: if isMember(cid);
+        allow read: if isMember(cid) || isAnnOwner();
         allow create: if signedIn() && request.auth.uid == uid
           && request.resource.data.keys().hasOnly(['name', 'photo', 'level', 'code', 'joinedAt'])
           && memberOk(request.resource.data) && codeOk(request.resource.data.code)
@@ -148,10 +152,10 @@ service cloud.firestore {
         allow update: if signedIn() && request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photo', 'level'])
           && memberOk(request.resource.data);
-        allow delete: if signedIn() && (request.auth.uid == uid || isClassOwner(cid));   // leave, or the owner removes
+        allow delete: if isAnnOwner() || (signedIn() && (request.auth.uid == uid || isClassOwner(cid)));   // leave, or the owner removes (v10: + admin)
       }
       match /weeks/{wk} {
-        allow read: if isMember(cid);
+        allow read: if isMember(cid) || isAnnOwner();
         allow create: if isMember(cid) && wk.matches('^[0-9]{4}-W[0-9]{2}$')
           && request.resource.data.keys().hasOnly(['wk', 'qids', 'topics', 'intro', 'src', 'by', 'createdAt'])
           && request.resource.data.wk == wk && request.resource.data.by == request.auth.uid
@@ -159,18 +163,20 @@ service cloud.firestore {
           && request.resource.data.topics is list && request.resource.data.topics.size() <= 8
           && request.resource.data.intro is string && request.resource.data.intro.size() <= 400
           && request.resource.data.src in ['ai', 'auto'];
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAnnOwner() || isClassOwner(cid);   // v10: only when deleting the class
       }
       match /starts/{key} {
-        allow read: if isMember(cid);
+        allow read: if isMember(cid) || isAnnOwner();
         allow create: if isMember(cid) && request.resource.data.uid == request.auth.uid
           && key == request.resource.data.wk + '_' + request.auth.uid
           && request.resource.data.keys().hasOnly(['uid', 'wk', 'at']) && request.resource.data.at == request.time
           && exists(/databases/$(database)/documents/classes/$(cid)/weeks/$(request.resource.data.wk));
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAnnOwner() || isClassOwner(cid);   // v10: only when deleting the class
       }
       match /results/{key} {
-        allow read: if isMember(cid);
+        allow read: if isMember(cid) || isAnnOwner();
         allow create: if isMember(cid) && request.resource.data.uid == request.auth.uid
           && key == request.resource.data.wk + '_' + request.auth.uid
           && exists(/databases/$(database)/documents/classes/$(cid)/starts/$(key))
@@ -182,11 +188,12 @@ service cloud.firestore {
           && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= request.resource.data.total
           && request.resource.data.wrongQ is list && request.resource.data.wrongQ.size() <= 20
           && request.resource.data.wrongT is list && request.resource.data.wrongT.size() <= 20;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAnnOwner() || isClassOwner(cid);   // v10: only when deleting the class
       }
       // v5 ❓ «سؤال اليوم»: members only; one answer per student per Beirut day (key day_uid), today only, never edited or deleted
       match /dq/{key} {
-        allow read: if isMember(cid);
+        allow read: if isMember(cid) || isAnnOwner();
         allow create: if isMember(cid) && request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasOnly(['uid', 'day', 'qid', 'name', 'photo', 'pick', 'ok', 'at'])
           && request.resource.data.day is string && request.resource.data.day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
@@ -198,7 +205,8 @@ service cloud.firestore {
           && request.resource.data.ok is bool
           && request.resource.data.name is string && request.resource.data.name.size() < 40
           && request.resource.data.photo is string && request.resource.data.photo.size() <= 500;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAnnOwner() || isClassOwner(cid);   // v10: only when deleting the class
       }
     }
     // v6 📢 announcements: everyone reads (signed out too); only the site owner (verified Google email) writes; text ≤ 500 chars
