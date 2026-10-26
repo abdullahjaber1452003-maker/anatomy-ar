@@ -225,11 +225,13 @@
       return liveInfo().catch(function(){return null;}).then(post);
     }
     function post(lv){
+      if(!signedIn())return Promise.reject(new Error('signed-out'));   // 🔒 the endpoint is only called when signed in (Abdullah 12:28 PM)
       var ctl=('AbortController' in w)?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort();},TIMEOUT);
       return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-KEEP),context:context(lv)}),signal:ctl?ctl.signal:undefined})
         .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
         .then(function(j){clearTimeout(timer);var t=j&&j.text;if(isBusy(t))throw new Error('busy');return t;},function(e){clearTimeout(timer);throw e;});
     }
+    function signedIn(){var G=w.NursinGate;return G?!!G.signedIn:!!((w.Nursin||{}).me||(w.NursinFB&&w.NursinFB.user));}
     function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
     function setBusy(b){busy=b;sendBtn.disabled=b;inp.setAttribute('aria-busy',b?'true':'false');}
 
@@ -249,6 +251,7 @@
     }
     function send(text){
       text=String(text||'').trim().slice(0,1000);if(!text||busy)return;
+      if(!signedIn()){var lc=document.querySelector('#main .glk-card');if(lc)lc.scrollIntoView({block:'center'});return;}   // 🔒 tutor locked while signed out (assets/gate.js)
       var st=lsafe(),day=today();
       var q=quota(st,day);
       if(!q.left){

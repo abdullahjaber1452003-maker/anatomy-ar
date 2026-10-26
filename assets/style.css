@@ -510,3 +510,27 @@ html.gl-lock .glk-card .glk-adn{margin:6px 0 0;color:var(--mut)}
 .glk-adgate .tlink{background:none;border:0;font:inherit;color:var(--mut);text-decoration:underline;cursor:pointer;padding:6px}
 /* small 🔒 on locked items in the nav sheets and the home cards */
 html.gl-out .gsheet a.gi[href^="cardio.html"] .git b::after,html.gl-out .gsheet a.gi[href^="neuro.html"] .git b::after,html.gl-out .gsheet a.gi[href^="henderson.html"] .git b::after,html.gl-out .gsheet a.gi[href^="law.html"] .git b::after,html.gl-out .gsheet a.gi[href^="3d.html"] .git b::after,html.gl-out .gsheet a.gi[href^="quiz.html"] .git b::after,html.gl-out .gsheet a.gi[href^="exams.html"] .git b::after,html.gl-out .gsheet a.gi[href^="live.html"] .git b::after,html.gl-out .gsheet a.gi[href^="classes.html#cdq"] .git b::after,html.gl-out .hg a.chip[href^="cardio.html"]::after,html.gl-out .hg a.chip[href^="neuro.html"]::after,html.gl-out .hg a.chip[href^="henderson.html"]::after,html.gl-out .hg a.chip[href^="law.html"]::after,html.gl-out .hg a.chip[href^="3d.html"]::after,html.gl-out .hg a.chip[href^="quiz.html"]::after,html.gl-out .hg a.chip[href^="exams.html"]::after,html.gl-out .hg a.chip[href^="live.html"]::after,html.gl-out .hg a.chip[href^="classes.html#cdq"]::after{content:" 🔒";font-size:.85em}
+
+/* 🔒 tutor lock (gate.js, Oct 26 12:28 PM): no chat while signed out; 🤖 tab + home card show 🔒 */
+html.gl-lock .tchat{display:none!important}
+html.gl-out .gnav a.gt[href="tutor.html"] .gn::after{content:" 🔒";font-size:.85em}
+html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85em}
+/* 🎯 weak points: the whole section is one tap into the weak quiz (weak.js, Oct 26) */
+.weak.wtap{cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.weak.wtap:hover,.weak.wtap:focus-visible{border-color:var(--pri);box-shadow:0 0 0 3px rgba(15,118,110,.15)}
+.wlist .wtop{min-width:0;overflow-wrap:anywhere}
+.weak .wgo{width:100%;justify-content:center;text-align:center}
+/* ✅ أهدافك اليوم (goals.js, Oct 26 12:36 PM): pill in the header corner + sheet */
+.gopill{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:3px 8px;font:700 12.5px/1.2 system-ui,sans-serif;min-height:34px;white-space:nowrap;cursor:pointer}
+.gopill .gob{background:#fff;color:var(--pri);border-radius:999px;padding:1px 6px;font-size:11.5px;font-weight:800}
+.gopill.all .gob{background:#fde68a;color:#92400e}
+.gopill[aria-expanded="true"]{background:rgba(255,255,255,.28)}
+@media(max-width:400px){.gopill{padding:3px 6px;gap:3px;font-size:11.5px}}
+.gosheet .gonote{margin:2px 4px 6px;color:var(--mut)}
+.goi .gotick{margin-inline-start:auto;flex:0 0 auto;font-size:19px}
+.goi.done .git b{color:var(--mut);text-decoration:line-through}
+.goi.done .gie{background:#dcfce7}
+.gosheet .glk-card{display:block;margin:6px 0 4px;padding:14px 12px;border-radius:14px;background:linear-gradient(180deg,#fff7ed,#fff);border:1.5px solid #fdba74;text-align:center}
+.gosheet .glk-h{font-weight:800;margin:0 0 6px}
+.gosheet .glk-card .gbtn{margin:6px auto;max-width:100%}
+.gosheet .glk-err{color:#b91c1c}

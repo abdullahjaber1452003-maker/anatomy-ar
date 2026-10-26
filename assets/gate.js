@@ -9,6 +9,9 @@
    - ADD-ON (Abdullah 12:12 PM): «📺 شوف إعلان وافتح» on the lock card — a signed-out visitor can open THIS page for 1 hour (sessionStorage)
      by viewing an Adsterra 300x250 unit (never AdSense) in a box labelled «إعلان» with a 15 s countdown, same as the tutor's ad unlock.
      Only viewing + the timer count, never a click; if the ad doesn't load the button still comes after the timer. Sign-in stays the main button.
+   - TUTOR LOCK (Abdullah 12:28 PM): tutor.html «الأستاذ المساعد» is locked for signed-out visitors too: no chat box, no questions, a lock card
+     «🔒 الأستاذ المساعد مقفول — سجّل دخول بغوغل لتحكي معه» with the Google button ONLY (no ad unlock: every answer costs). assets/tutor.js
+     also refuses to call its endpoint while signed out. The 🤖 bottom-bar tab and the home card show 🔒 (CSS on html.gl-out).
    html.gl-out = signed out (nav 🔒); html.gl-lock = this page's content locked (signed out and no ad unlock).
    Loaded synchronously in <head> so the locked state is there before the first paint. */
 (function (w, d) {
@@ -17,6 +20,7 @@
   if (!/\.html$/.test(page)) page = "index.html";
   var LESSON = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "3d.html": 1 };
   var QUIZ = { "quiz.html": 1 };
+  var TUTOR = { "tutor.html": 1 };
   var G = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
   var hint = false; try { hint = !!JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
   var authKnown = false, signed = hint, built = false;
@@ -26,6 +30,13 @@
 
   function card(kind) {
     var c = d.createElement("div");
+    if (kind === "t") {                     // tutor: Google only, no ad unlock
+      c.className = "glk-card glk-tut"; c.setAttribute("role", "region"); c.setAttribute("aria-label", "مقفول");
+      c.innerHTML = '<p class="glk-h">🔒 الأستاذ المساعد مقفول — سجّل دخول بغوغل لتحكي معه</p>' +
+        '<p class="small">الأستاذ المساعد بس للي عندن حساب. سجّل دخول بغوغل (ببلاش، بثانية) وبيفتحلك الأستاذ وكل الدروس والكويزات.</p>' +
+        '<button class="gbtn glk-go" type="button">' + G + '<span>تسجيل الدخول بغوغل</span></button><p class="glk-err small" hidden></p>';
+      return c;
+    }
     c.className = "glk-card" + (kind === "q" ? " glk-q" : "");
     c.setAttribute("role", "region"); c.setAttribute("aria-label", "مقفول");
     c.innerHTML = '<p class="glk-h">' + (kind === "q" ? "🔒 الكويز مقفول — سجّل دخول بغوغل لتكمّل" : "🔒 الدرس مقفول — سجّل دخول بغوغل لتكمّل") + "</p>" +
@@ -127,6 +138,11 @@
       var s = d.getElementById(id); if (s && !s.querySelector(".glk-card")) { var h = s.querySelector("h2"); (h || s).insertAdjacentElement(h ? "afterend" : "afterbegin", card("q")); }
     });
   }
+  function buildTutor() {
+    var main = d.getElementById("main"); if (!main) return;
+    var lead = main.querySelector(".lead") || main.querySelector("h1");
+    if (lead) lead.insertAdjacentElement("afterend", card("t"));
+  }
   function buildQuiz() {
     var main = d.getElementById("main"); if (!main) return;
     var lead = main.querySelector(".lead") || main.querySelector("h1");
@@ -151,10 +167,10 @@
 
   function build() {
     if (built) return; built = true;
-    try { if (LESSON[page]) buildLesson(); else if (QUIZ[page]) buildQuiz(); } catch (x) { console.warn("nursin: gate", x && x.message); }
+    try { if (LESSON[page]) buildLesson(); else if (QUIZ[page]) buildQuiz(); else if (TUTOR[page]) buildTutor(); } catch (x) { console.warn("nursin: gate", x && x.message); }
   }
   function apply() {
-    var gated = !!(LESSON[page] || QUIZ[page]), until = !signed && gated ? adUntil() : 0;
+    var gated = !!(LESSON[page] || QUIZ[page] || TUTOR[page]), until = !signed && gated && !TUTOR[page] ? adUntil() : 0;   // the tutor has no ad unlock
     html.classList.toggle("gl-out", !signed);
     html.classList.toggle("gl-lock", !signed && gated && !until);
     clearTimeout(adTimer);
@@ -162,14 +178,16 @@
     if (!signed && gated) {
       if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", build, { once: true }); else build();
     }
+    if (signed !== lastSent) { lastSent = signed; try { d.dispatchEvent(new CustomEvent("nursin:gate", { detail: { signedIn: signed } })); } catch (x) {} }   // assets/tutor.js + goals.js listen
   }
+  var lastSent = null;
   d.addEventListener("nursin:auth", function (e) { authKnown = true; signed = !!(e.detail && e.detail.signedIn); apply(); });
   d.addEventListener("nursin:me", function () { var me = w.Nursin && w.Nursin.me; if (me) signed = true; else if (!authKnown) signed = false; apply(); });
   apply();
   // signed-out on a locked page: load Firebase so the sign-in button is ready (and a stale local hint gets checked)
-  if (!signed && (LESSON[page] || QUIZ[page])) {
+  if (!signed && (LESSON[page] || QUIZ[page] || TUTOR[page])) {
     var go = function () { if (w.Nursin && w.Nursin.loadFB) w.Nursin.loadFB(); };
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", go, { once: true }); else go();
   }
-  w.NursinGate = { get signedIn() { return signed; }, get adUntil() { return adUntil(); }, LESSON: LESSON, QUIZ: QUIZ, previewCut: previewCut, AD_WAIT: AD_WAIT, AD_HOURS: AD_HOURS };
+  w.NursinGate = { get signedIn() { return signed; }, get adUntil() { return adUntil(); }, LESSON: LESSON, QUIZ: QUIZ, TUTOR: TUTOR, previewCut: previewCut, AD_WAIT: AD_WAIT, AD_HOURS: AD_HOURS };
 })(window, document);

@@ -58,6 +58,7 @@
   function fixesLeft() { var day = new Date().toISOString().slice(0, 10), o = {}; try { o = JSON.parse(localStorage.getItem(FIX_K) || "{}"); } catch (e) {} return o.d === day ? Math.max(0, FIX_MAX - (o.n || 0)) : FIX_MAX; }
   function useFix() { var day = new Date().toISOString().slice(0, 10), o = {}; try { o = JSON.parse(localStorage.getItem(FIX_K) || "{}"); } catch (e) {} o = o.d === day ? o : { d: day, n: 0 }; o.n++; try { localStorage.setItem(FIX_K, JSON.stringify(o)); } catch (e) {} }
   function aiFix(q, pts, ans) {
+    if (w.NursinGate && !w.NursinGate.signedIn) return Promise.reject(new Error("signed-out"));   // 🔒 tutor endpoint only when signed in
     var text = "صحّح جواب طالب تمريض على سؤال بالقانون التطبيقي. السؤال: «" + q + "». النقاط المطلوبة (من دفتر الصف): " + pts.join(" | ") + ". جواب الطالب: «" + ans + "». قلّو بالعربي اللبناني بـ ٣-٤ أسطر: شو صح، شو ناقص من النقاط، وعلامة من 10. ما تزيد معلومات من برّا النقاط.";
     var ctl = ("AbortController" in w) ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 40000);
     return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", text: text }], context: "" }), signal: ctl ? ctl.signal : undefined })

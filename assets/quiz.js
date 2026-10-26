@@ -90,6 +90,7 @@
   document.querySelectorAll('#qsets .chip').forEach(function(c){c.addEventListener('click',function(){start(c.dataset.set,c.dataset.set==='all'?20:0,true);});});
   // friend challenge «تحدّي»: assets/fb.js loads the challenge and calls NursinQuiz.startChallenge
   window.NursinQuiz={
+    start:function(sel,n){start(sel,n||0,true);},   // used by «✅ أهدافك اليوم» (assets/goals.js) when already on quiz.html
     startChallenge:function(c){
       var qs=(c.qids||[]).map(function(id){for(var i=0;i<QUIZ.length;i++)if(QUIZ[i].id===id)return QUIZ[i];return null;}).filter(Boolean);
       if(!qs.length)return this.message('⚠️ ما قدرنا نحمّل أسئلة التحدّي.');

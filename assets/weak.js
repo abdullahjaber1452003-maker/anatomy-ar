@@ -29,24 +29,34 @@
     },
     reset:function(){save({v:1,items:{}});},
     page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':'cardio.html';},
-    /* بيرسم قسم "نقاط ضعفك" جوّا el. opts.onStart(sel): شو يصير لما يكبس زر البدء (إذا ما في، الزر لينك عـ quiz.html) */
+    /* بيرسم قسم "نقاط ضعفك" جوّا el. opts.onStart(sel): شو يصير لما يكبس (إذا ما في، بيروح عـ quiz.html?t=weak).
+       Abdullah (Oct 26, 12:34–12:35 PM): اللائحة بتضل ظاهرة (شو نقاط ضعفك وقدّيش)، بس أي كبسة على القسم أو على
+       «🎯 ابدأ كويز نقاط ضعفي» بتبلّش كويز نقاط الضعف دغري. ما في محي ولا اختيار. السؤال بيطلع بعد صح مرّتين ورا بعض. */
     render:function(el,opts){
       if(!el)return;opts=opts||{};
       var T=window.QTOP||{},tops=Weak.topics(),n=0;tops.forEach(function(t){n+=t.n;});
       var h='<h2>🎯 نقاط ضعفك <small>· كويز من أخطائك</small></h2>';
+      el.classList.toggle('wtap',!!n);
       if(!n){
+        el.removeAttribute('role');el.removeAttribute('tabindex');el.removeAttribute('aria-label');
         h+='<p class="wempty">✨ ما في أخطاء لهلّق. <b>اعمل الكويز أول، وأخطاؤك بتطلع هون.</b></p><p class="small wnote">كل سؤال بتغلط فيه بينحفظ هون (بمتصفّحك بس). بس تجاوبو صح مرّتين ورا بعض، بيطلع من القائمة.</p>';
         h+='<div class="wact"><a class="btn pri" href="quiz.html" data-start="all">🔀 ابدأ كويز ٢٠ سؤال</a></div>';
       }else{
-        h+='<p class="small wnote">هيدي الأسئلة يلي غلطت فيها، مجمّعة حسب الدرس. جاوب كل سؤال صح مرّتين ورا بعض وبيطلع من هون.</p><ul class="wlist">';
-        tops.forEach(function(t){h+='<li><a href="'+Weak.page(t.t)+'#'+t.t+'">'+(T[t.t]||t.t)+'</a><span class="wcount">'+t.n+(t.n===1?' سؤال':' أسئلة')+'</span></li>';});
-        h+='</ul><div class="wact"><a class="btn pri" href="quiz.html?t=weak" data-start="weak">🎯 كويز من أخطائك ('+n+')</a><button class="btn" type="button" data-reset>🗑 امحي نقاط ضعفي</button></div>';
+        el.setAttribute('role','link');el.setAttribute('tabindex','0');el.setAttribute('aria-label','ابدأ كويز نقاط ضعفي ('+n+' سؤال)');
+        h+='<p class="small wnote">هيدي نقاط ضعفك (الأسئلة يلي غلطت فيها، حسب الدرس). كبسة وحدة وبيبلّش الكويز عليهن. كل سؤال بتجاوبو صح مرّتين ورا بعض بيطلع من هون.</p><ul class="wlist">';
+        tops.forEach(function(t){h+='<li><span class="wtop">'+(T[t.t]||t.t)+'</span><span class="wcount">'+t.n+(t.n===1?' سؤال':' أسئلة')+'</span></li>';});
+        h+='</ul><div class="wact"><a class="btn pri wgo" href="quiz.html?t=weak" data-start="weak">🎯 ابدأ كويز نقاط ضعفي ('+n+')</a></div>';
       }
       el.innerHTML=h;
-      var b=el.querySelector('[data-start]');
-      if(b&&opts.onStart)b.addEventListener('click',function(e){e.preventDefault();opts.onStart(b.getAttribute('data-start'));});
-      var r=el.querySelector('[data-reset]');
-      if(r)r.addEventListener('click',function(){if(window.confirm('أكيد بدّك تمحي كل نقاط ضعفك؟')){Weak.reset();Weak.render(el,opts);if(opts.onReset)opts.onReset();}});
+      function go(sel,e){if(e)e.preventDefault();if(opts.onStart)opts.onStart(sel);else location.href=sel==='weak'?'quiz.html?t=weak':'quiz.html';}
+      if(el._wtap){el.removeEventListener('click',el._wtap);el.removeEventListener('keydown',el._wkey);}
+      el._wtap=function(e){
+        var b=e.target.closest&&e.target.closest('[data-start]');
+        if(b)return go(b.getAttribute('data-start'),e);
+        if(Weak.count())go('weak',e);                 // anywhere on the section → the weak quiz
+      };
+      el._wkey=function(e){if((e.key==='Enter'||e.key===' ')&&e.target===el&&Weak.count())go('weak',e);};
+      el.addEventListener('click',el._wtap);el.addEventListener('keydown',el._wkey);
     }
   };
   window.Weak=Weak;
