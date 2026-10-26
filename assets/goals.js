@@ -1,10 +1,12 @@
 /* ✅ أهدافك اليوم (Abdullah, Oct 26 2026 12:36 PM: "a button at the top side with the goals you have to finish: your weak points,
    today's exams, your class's exams…"). A small pill in the header's top corner on every page (never over the content or the ads).
    Signed in: tap → a sheet with today's goals, built only from data the site already has (no new backend):
-     🎯 كويز نقاط ضعفك      — when Weak.count() > 0; done when a weak-points quiz is finished today
-     📅 امتحان اليوم: …      — each weekly exam scheduled today (Nursin.examsFor); done when taken (examResults, or finished here today)
-     🏫 امتحان صفّك: …        — each class the student is in (classes.js tutorSummary); done when this week's class exam is submitted
-     ❓ سؤال اليوم            — when they're in a class; done when answered today
+     🎯 كويز نقاط ضعفك      — when Weak.count() > 0; done when a weak-points quiz is finished today (weak store's ranAt, nursin_weak_v1.ran)
+     📅 امتحان اليوم: …      — each weekly exam scheduled today (Nursin.examsFor); done when taken (examResults / examStarts via exams.js tutorStatus, or finished here today)
+     🏫 امتحان صفّك: …        — each class the student is in (classes.js goalsStatus); done when this week's result doc classes/{cid}/results/{wk}_{uid} exists
+     ❓ سؤال اليوم            — when they're in a class; done when the answer doc classes/{cid}/dq/{day}_{uid} exists in ANY of their classes
+   Fix Oct 26 12:55 PM (Abdullah: «سؤال اليوم» stayed ⬜ after answering): done comes from those real docs, re-read every time the
+   sheet opens; classes.html also marks dq / cls:{cid} the moment the answer/result is saved or shown.
      📝 كويز ١٠ أسئلة         — only when nothing else is on the list
    Each row has a ✅ when done and goes straight to it. Badge "2/4". Done-state per Beirut day in localStorage (nursin_goals_v1).
    Signed out: the pill shows 🔒 and the sheet only offers Google sign-in (assets/gate.js state). */
@@ -21,29 +23,36 @@
     if (w.Weak && w.Weak.count) return w.Weak.count();
     var x = lsGet("nursin_weak_v1"); return x && x.items ? Object.keys(x.items).length : 0;
   }
+  // the weak store itself remembers when a weak-points quiz was last finished (weak.js ran/ranAt)
+  function dayOf(ts) { try { return new Date(ts).toLocaleDateString("en-CA", { timeZone: "Asia/Beirut" }); } catch (e) { return new Date(ts + 3 * 36e5).toISOString().slice(0, 10); } }
+  function weakRanToday() { var t = 0; try { t = w.Weak && w.Weak.ranAt ? w.Weak.ranAt() : ((lsGet("nursin_weak_v1") || {}).ran || 0); } catch (e) {} return !!t && dayOf(t) === today(); }
   function signed() { var G = w.NursinGate; return G ? !!G.signedIn : !!N().me; }
   function todayExams() { var n = N(); try { return n.examsFor ? n.examsFor(today()) : []; } catch (e) { return []; } }
 
   /* the list itself: a pure function (tests run it) */
   function build(o) {
     var D = o.done || {}, g = [], st = o.st || {}, cl = (o.classes && o.classes.list) || [];
-    if ((o.weak | 0) > 0 || D.weak) g.push({ k: "weak", e: "🎯", n: "كويز نقاط ضعفك", s: o.weak ? o.weak + (o.weak === 1 ? " سؤال غلطت فيه" : " أسئلة غلطت فيها") : "خلصتو اليوم", href: "quiz.html?t=weak", done: !!D.weak });
+    var wdone = !!(D.weak || o.weakRan);
+    if ((o.weak | 0) > 0 || wdone) g.push({ k: "weak", e: "🎯", n: "كويز نقاط ضعفك", s: o.weak ? o.weak + (o.weak === 1 ? " سؤال غلطت فيه" : " أسئلة غلطت فيها") : "خلصتو اليوم", href: "quiz.html?t=weak", done: wdone });
     (o.exams || []).forEach(function (ex) {
       var s = (st[ex.id] || {}).s;
       g.push({ k: "ex:" + ex.id, e: "📅", n: "امتحان اليوم: " + ex.n, s: ex.ar || "", href: "quiz.html?exam=" + encodeURIComponent(ex.id), done: !!(D["ex:" + ex.id] || s === "done" || s === "started") });
     });
     cl.forEach(function (c) {
-      g.push({ k: "cls:" + (c.name || ""), e: "🏫", n: "امتحان صفّك" + (c.name ? ": " + c.name : ""), s: c.mine ? "قدّمتو: " + c.mine.score + "/" + c.mine.total : (c.week && c.week.n ? c.week.n + " سؤال هالأسبوع" : "امتحان الأسبوع"), href: "classes.html", done: !!c.mine });
+      var ck = "cls:" + (c.cid || c.name || "");
+      g.push({ k: ck, e: "🏫", n: "امتحان صفّك" + (c.name ? ": " + c.name : ""), s: c.mine ? "قدّمتو: " + c.mine.score + "/" + c.mine.total : (c.week && c.week.n ? c.week.n + " سؤال هالأسبوع" : "امتحان الأسبوع"), href: c.cid ? "classes.html?c=" + encodeURIComponent(c.cid) : "classes.html", done: !!(c.mine || D[ck]) });
     });
     var dq = cl.filter(function (c) { return c.dq && typeof c.dq === "object"; });
-    if (dq.length) g.push({ k: "dq", e: "❓", n: "سؤال اليوم", s: "نفس السؤال لكل الصف", href: "classes.html#cdq", done: !!D.dq || dq.every(function (c) { return !!c.dq.mine; }) });
+    // done = answered today in ANY of my classes (the real answer doc), or answered on this device today
+    var dqMine = dq.filter(function (c) { return !!c.dq.mine; })[0], dqDone = !!(D.dq || dqMine), dqTo = dq.filter(function (c) { return !c.dq.mine && c.cid; })[0];
+    if (dq.length || D.dq) g.push({ k: "dq", e: "❓", n: "سؤال اليوم", s: dqMine ? (dqMine.dq.mine === "ok" ? "✅ جاوبت صح اليوم" : "جاوبت اليوم") : D.dq ? "جاوبت اليوم" : "نفس السؤال لكل الصف", href: dqDone ? ((dqMine && dqMine.cid) ? "classes.html?c=" + encodeURIComponent(dqMine.cid) + "#cdq" : "classes.html#cdq") : (dqTo ? "classes.html?c=" + encodeURIComponent(dqTo.cid) + "#cdq" : "classes.html#cdq"), done: dqDone });
     if (!g.length) g.push({ k: "quiz10", e: "📝", n: "كويز ١٠ أسئلة", s: "أسئلة مخلوطة من كل الدروس", href: "quiz.html?t=all&n=10", done: !!D.quiz10 });
     return g;
   }
   if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build }; return; }   // node tests
   function goals() {
     var L = live && live.dk === today() ? live : {};
-    return build({ weak: weakCount(), exams: todayExams(), st: L.st, classes: L.classes, done: state().done });
+    return build({ weak: weakCount(), weakRan: weakRanToday(), exams: todayExams(), st: L.st, classes: L.classes, done: state().done });
   }
 
   /* exam status + classes from Firebase (the same reads the tutor makes), cached 10 min per tab */
@@ -55,7 +64,7 @@
     var exs = todayExams();
     busy = Promise.all([
       A.mod("exams").then(function (m) { return m && m.tutorStatus ? m.tutorStatus(A, exs) : null; }).catch(function () { return null; }),
-      A.mod("classes").then(function (m) { return m && m.tutorSummary ? m.tutorSummary(A) : null; }).catch(function () { return null; })
+      A.mod("classes").then(function (m) { return m && m.goalsStatus ? m.goalsStatus(A) : m && m.tutorSummary ? m.tutorSummary(A) : null; }).catch(function () { return null; })
     ]).then(function (r) {
       busy = null; if (!A.user) return null;
       live = { uid: A.user.uid, dk: today(), at: Date.now(), st: r[0] || {}, classes: r[1] && r[1].list ? { list: r[1].list } : null };
@@ -103,7 +112,7 @@
       sheet.style.left = Math.round(Math.max(12, Math.min(innerWidth - wd - 12, r.left))) + "px";
     }
     pill.setAttribute("aria-expanded", "true");
-    if (signed()) fetchLive(live && Date.now() - live.at > 60e3);
+    if (signed()) fetchLive(!live || Date.now() - live.at > 5e3);   // re-read the real answers every time the sheet opens
   }
   function fill() {
     if (!sheet) return;
@@ -137,15 +146,20 @@
     if (x.exam) mark("ex:" + x.exam);
     else if (x.set === "weak") mark("weak");
     else if (!x.challenge) mark("quiz10");
-    if (x.exam) { live = null; lsSet(LK, null, true); }
+    if (x.exam) stale();
   });
+  // classes.html: «سؤال اليوم» answered / class exam submitted (or opened already done)
+  d.addEventListener("nursin:goal-done", function (e) { var k = e.detail && e.detail.k; if (k) { mark(k); stale(); } });
+  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible" && signed() && pill && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
   d.addEventListener("nursin:gate", function () { refresh(); if (signed()) fetchLive(); });
   d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) fetchLive(); else refresh(); });
   d.addEventListener("nursin:me", paint);
   w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1") refresh(); });
-  w.addEventListener("pageshow", function (e) { if (e.persisted) refresh(); });
+  w.addEventListener("pageshow", function (e) { if (e.persisted) { refresh(); if (signed()) fetchLive(true); } });
+  // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
+  function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
 
-  w.NursinGoals = { build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open };
+  w.NursinGoals = { build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount); else mount();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

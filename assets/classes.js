@@ -278,6 +278,7 @@ function dqDraw(box, q, ans, dk, note) {
     '<p class="small">✅ <b>' + sum.right + "</b> جاوبو صح من أصل <b>" + sum.n + "</b></p>";
   let h = '<span class="qtopic">' + esc(topicName(q.t)) + '</span><p class="qq">' + q.q + "</p>";
   if (mine) {
+    goalDone("dq");
     h += q.o.map((o, k) => '<div class="opt' + (k === q.a ? " ok" : k === mine.pick ? " bad" : "") + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></div>").join("") +
       '<div class="expl' + (mine.ok ? "" : " w") + '">' + (mine.ok ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + L[q.a] + "</b> — ") + q.x + "</div>" + (note || "") + info + '<p class="small">سؤال جديد بكرا ⏰</p>';
   } else {
@@ -400,7 +401,7 @@ async function weekCard() {
   catch (e) { if (!denied(e)) console.warn("nursin: class week", e && e.code); box.innerHTML = "<p>" + failMsg(e) + "</p>"; return; }
   const w = C.week, chips = '<p class="exchips cchips">' + w.topics.map(t => '<i lang="fr" dir="ltr">' + esc(topicName(t)) + "</i>").join("") + "</p>";
   const intro = '<p class="cintro">🧑‍🏫 ' + esc(w.intro) + "</p>" + chips;
-  if (C.mine) { box.innerHTML = intro + resultHtml(C.mine); return; }
+  if (C.mine) { goalDone("cls:" + C.cid); box.innerHTML = intro + resultHtml(C.mine); return; }
   let started = false;
   try { started = (await F.getDoc(F.doc(A.db, "classes", C.cid, "starts", C.wk + "_" + A.user.uid))).exists(); } catch (e) {}
   const prog = progRead();
@@ -446,6 +447,7 @@ async function submit(qs, p) {
   progSave(null);
   try { if (window.Weak) qs.forEach((q, i) => window.Weak.record(q, p.ans[i] === q.a)); } catch (e) {}
   C.mine = r; C.results.push(r);
+  goalDone("cls:" + C.cid);
   $("#cexam").innerHTML = '<p class="cintro">🧑‍🏫 ' + esc(C.week.intro) + "</p>" + resultHtml(r, p, qs) + '<p id="cact"></p>';
   drawBoard(); drawAwards(); drawRank(); $("#cweek").scrollIntoView({ block: "start" });
   if (A.logActivity) A.logActivity(qs.length, N.ecgCount(qs, p.ans), ["class1"]).then(a => { if (!a) return; const el = $("#cact"); if (el) el.innerHTML = a.html; C.prof[A.user.uid] = A.profile; drawMembers(); });
@@ -466,6 +468,38 @@ function resultHtml(r, p, qs) {
   return h;
 }
 
+
+
+/* ---- ✅ أهدافك اليوم: the goals sheet reads the REAL answers (Oct 26 fix: «سؤال اليوم» stayed un-ticked after answering) ---- */
+// tell goals.js a goal is done right now (event + a direct write of the same per-day mark, in case goals.js isn't there)
+function goalDone(k) {
+  try { if (window.NursinGoals && window.NursinGoals.mark) { window.NursinGoals.mark(k); window.NursinGoals.stale && window.NursinGoals.stale(); return; } } catch (e) {}
+  try {
+    const K = "nursin_goals_v1", dk = N.dayKey(); let o = JSON.parse(localStorage.getItem(K) || "null");
+    if (!o || o.d !== dk || !o.done || typeof o.done !== "object") o = { d: dk, done: {} };
+    if (!o.done[k]) { o.done[k] = Date.now(); localStorage.setItem(K, JSON.stringify(o)); }
+    sessionStorage.removeItem("nursin_goals_live_v1");
+  } catch (e) {}
+}
+// my classes → for each: did I answer today's «سؤال اليوم» (classes/{cid}/dq/{day}_{uid}) and submit this week's exam (results/{wk}_{uid})
+export async function goalsStatus(api, max = 8) {
+  const { db, fs: F2, user } = api; if (!user) return null;
+  const uid = user.uid, dk = api.N.dayKey(), wk = isoWeek(dk);
+  let list;
+  try { list = (await F2.getDocs(F2.collection(db, "users", uid, "myClasses"))).docs.map(d => ({ cid: d.id, name: String((d.data() || {}).name || "").slice(0, 30) })).slice(0, max); }
+  catch (e) { return { err: denied(e) ? "notready" : "err" }; }
+  const one = async c => {
+    const [dq, r, w] = await Promise.all([
+      F2.getDoc(F2.doc(db, "classes", c.cid, "dq", dk + "_" + uid)).then(x => x.exists() ? x.data() : null, e => (denied(e) ? "x" : "err")),
+      F2.getDoc(F2.doc(db, "classes", c.cid, "results", wk + "_" + uid)).then(x => x.exists() ? x.data() : null, e => (denied(e) ? "x" : "err")),
+      F2.getDoc(F2.doc(db, "classes", c.cid, "weeks", wk)).then(x => x.exists() ? x.data() : null, () => null)
+    ]);
+    if (dq === "x" && r === "x") return null;                     // not a member any more
+    const mine = r && typeof r === "object" ? { score: r.score, total: r.total } : null;
+    return { cid: c.cid, name: c.name, mine, week: w && w.qids ? { n: w.qids.length } : null, dq: dq === "err" || dq === "x" ? null : { mine: dq ? (dq.ok ? "ok" : "wrong") : null } };
+  };
+  return { list: (await Promise.all(list.map(one))).filter(Boolean) };
+}
 
 /* ---- 🧑‍🏫 for the tutor: a short, plain summary of my classes (reads only what the class page already reads) ---- */
 // one class → plain data the tutor context turns into words (pure, tested)
