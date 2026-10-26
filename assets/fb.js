@@ -58,7 +58,7 @@ async function ensureProfile(u) {
   const prof = { name: N.cleanName(u.displayName), photo: String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
   if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
     await setDoc(ref, { ...prof, updatedAt: serverTimestamp() }, { merge: true });
-  profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, ...actFields(d) };
+  profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
 }
 
@@ -66,13 +66,14 @@ async function ensureProfile(u) {
 const ACT_KEYS = ["streak", "sDay", "bestStreak", "actDay", "actN", "qTotal", "ecgN", "ecgOk", "badges"];
 function actFields(d) { const o = {}; ACT_KEYS.forEach(k => { if (d && d[k] != null) o[k] = d[k]; }); return o; }
 // n more answers today (ecg = [right, total] on ECG questions; extra = event badges like "live1") → {before, w, html}
-async function logActivity(n, ecg, extra) {
+// force = the day counts even under 5 answers (finished quiz, game round, pomodoro round)
+async function logActivity(n, ecg, extra, force) {
   if (!user || !profile) return null;
   const ref = doc(db, "users", user.uid), dk = N.dayKey();
   try {
     const r = await runTransaction(db, async tx => {
       const s = await tx.get(ref); const d = s.exists() ? s.data() : {};
-      const w = N.actWrite(d, n, ecg, extra, dk);
+      const w = N.actWrite({ ...d, points: d.points | 0 }, n, ecg, extra, dk, !!force);
       tx.set(ref, { ...w, updatedAt: serverTimestamp() }, MERGE);
       return { before: actFields(d), w };
     });
@@ -88,7 +89,7 @@ async function logActivity(n, ecg, extra) {
 function profileWrite(d, points, before) {
   if (before == null) before = N.addPoints(d.points || 0, 0, 0);
   return { name: N.cleanName(d.name || profile.name), photo: d.photo || profile.photo || "", points, level: N.level(points), friendCode: d.friendCode || profile.friendCode,
-    ...N.monthWrite(d, before, points, new Date()), updatedAt: serverTimestamp() };
+    ...N.monthWrite(d, before, points, new Date()), ...N.weekWrite(d, before, points), updatedAt: serverTimestamp() };
 }
 const MERGE = { merge: true };
 const denied = e => e && e.code === "permission-denied";
@@ -100,11 +101,12 @@ async function award(q) {
     if (eref) { const e = await tx.get(eref); if (e.exists()) throw { ar: "هالامتحان قدّمتو من قبل، بس أوّل محاولة بتنحسب.", dup: true }; }
     const d = s.exists() ? s.data() : {};
     const before = N.addPoints(d.points || 0, 0, 0);
-    const points = N.addPoints(before, q.score, q.wrong);
+    // ⏱️ pomodoro rounds and 🎮 game rounds bring a small positive bonus (q.bonus); quizzes keep +3 right / −5 wrong
+    const points = q.bonus != null ? N.addPoints(before + Math.max(0, Math.min(50, q.bonus | 0)), 0, 0) : N.addPoints(before, q.score, q.wrong);
     const w = profileWrite(d, points, before);
     if (eref) tx.set(eref, { uid: user.uid, exam: q.exam, score: q.score, total: q.total, at: serverTimestamp() });
     tx.set(ref, w, MERGE);
-    return { before, points, month: w.monthPoints };
+    return { before, points, month: w.monthPoints, weekKey: w.weekKey, week: w.weekPoints };
   });
 }
 
@@ -203,11 +205,25 @@ N.flush = async function () {
   if (!ready) return;
   while (N.queue.length) {
     const q = N.queue.shift(), el = document.getElementById("qpts");
-    if (!user) { if (el) el.innerHTML = '🏆 <a href="friends.html">سجّل دخول بغوغل</a> تا تنحسبلك النقاط.'; continue; }
+    if (!user) { const o = q.el || el; if (o) o.innerHTML = '🏆 <a href="friends.html">سجّل دخول بغوغل</a> تا تنحسبلك النقاط.'; continue; }
     let html = "";
+    if (q.bonus != null) {                                          // ⏱️ / 🎮 bonus points (assets/study.js, assets/games.js)
+      const out = q.el || el;
+      try {
+        const r = await award(q);
+        profileFromPoints(r.points); if (profile) { profile.weekKey = r.weekKey; profile.weekPoints = r.week; N.setMe(profile); }
+        const g = N.progress(r.points), up = N.level(r.points) > N.level(r.before);
+        html = '<span class="qnet">⭐ <b>+' + (r.points - r.before) + "</b> نقطة" + (q.why ? " (" + esc(q.why) + ")" : "") + "</span><br>صار معك <b>" + r.points + "</b> نقطة · هالأسبوع <b>" + (r.week | 0) + "</b>" + (up ? " · 🆙 <b>طلعت عالليفل " + g.level + "!</b>" : "");
+      } catch (e) { console.warn("nursin: bonus", e && e.code); html = "⚠️ ما قدرنا نزيد النقاط هلّق (الإنترنت؟)."; }
+      const act = await logActivity(q.n | 0, null, q.badges || [], true);
+      if (act) html += act.html;
+      if (out) out.innerHTML = html;
+      try { document.dispatchEvent(new CustomEvent("nursin:points", { detail: { html } })); } catch (x) {}
+      continue;
+    }
     try {
       const r = await award(q);
-      profileFromPoints(r.points);
+      profileFromPoints(r.points); if (profile) { profile.weekKey = r.weekKey; profile.weekPoints = r.week; }
       const g = N.progress(r.points), up = N.level(r.points) > N.level(r.before), net = r.points - r.before;
       html = '<span class="qnet">✅ ' + q.score + " صح <b>+" + q.score * N.RIGHT + "</b> · ❌ " + q.wrong + ' غلط <b dir="ltr">−' + q.wrong * N.WRONG + "</b> = <b class=\"" + (net < 0 ? "neg" : "pos") + '" dir="ltr">' + (net > 0 ? "+" : net < 0 ? "−" : "") + Math.abs(net) + "</b> نقطة</span>" +
         (r.points === 0 && net === 0 && q.wrong ? ' <small>(النقاط ما بتنزل تحت الصفر)</small>' : "") + "<br>صار معك <b>" + r.points + "</b> نقطة · " + (up ? "🆙 <b>طلعت عالليفل " + g.level + "!</b>" : "ليفل " + g.level + " · باقي " + g.left + " لليفل " + (g.level + 1));
@@ -226,7 +242,7 @@ N.flush = async function () {
           (r.w == null && r.me === "from" ? '<br><a class="btn wa" target="_blank" rel="noopener" href="' + chalShare(r.c.id) + '">🟢 قلّو عالواتساب</a>' : "") + "</span>";
       } catch (e) { console.warn("nursin: challenge score", e && e.code); html += '<span class="qch">⚠️ ما قدرنا نسجّل نتيجة التحدّي. جرّب تفتح صفحة أصحابي.</span>'; }
     }
-    const act = await logActivity((q.score | 0) + (q.wrong | 0), q.ecg);
+    const act = await logActivity((q.score | 0) + (q.wrong | 0), q.ecg, ["fq1"], true);   // a finished quiz counts the day (Oct 26)
     if (act) html += act.html;
     if (el) el.innerHTML = html + ' <a href="friends.html">ترتيب أصحابي ←</a>';
   }
@@ -462,7 +478,7 @@ const API = {
   db, auth, N, esc, MERGE,
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
-  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), mod
+  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod
 };
 window.NursinFB = API;
 

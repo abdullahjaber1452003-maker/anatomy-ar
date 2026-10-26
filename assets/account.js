@@ -32,6 +32,13 @@
     var mk=monthKey(now),cur=(d&&d.monthKey===mk)?toInt(d.monthPoints):0,mp=toInt(cur+(toInt(after)-toInt(before))),o={monthKey:mk,monthPoints:mp};
     o[monthField(mk)]=mp;return o;
   }
+  // ⚔️ تحدّي الأسبوع: this week's points (week = Monday → Sunday, Beirut day); resets on the first points write of a new week
+  function weekStart(dk){dk=dk||dayKey();return addDays(dk,-weekday(dk));}
+  function weekWrite(d,before,after,dk){
+    var wk=weekStart(dk),cur=(d&&d.weekKey===wk)?toInt(d.weekPoints):0;
+    return {weekKey:wk,weekPoints:toInt(cur+(toInt(after)-toInt(before)))};
+  }
+  function weekPts(p,dk){return p&&p.weekKey===weekStart(dk)?toInt(p.weekPoints):0;}
 
   /* ---- weekly exams: Mon–Sat, 2 subjects a day, rotating; Sunday off ---- */
   var SUBJECTS=[
@@ -83,7 +90,12 @@
     {id:'up',e:'📈',n:'أكثر واحد تحسّن',how:'أكبر تحسّن بامتحان الصف عن المرّة يلي قبلها'},
     {id:'class1',e:'🏫',n:'أوّل امتحان صف',how:'قدّم أوّل امتحان صف'},
     {id:'live1',e:'⚡',n:'ربحت لايف',how:'اربح تحدّي لايف'},
-    {id:'dq1',e:'🎯',n:'أسرع جواب',how:'كون أوّل واحد بيجاوب صح على «سؤال اليوم» بصفّك'}
+    {id:'dq1',e:'🎯',n:'أسرع جواب',how:'كون أوّل واحد بيجاوب صح على «سؤال اليوم» بصفّك'},
+    {id:'fq1',e:'📝',n:'أوّل كويز',how:'خلّص أوّل كويز'},
+    {id:'s3',e:'🌱',n:'٣ أيام ورا بعض',how:'ادرس ٣ أيام ورا بعض (كويز، لعبة أو جولة بومودورو بالنهار)'},
+    {id:'p100',e:'⭐',n:'١٠٠ نقطة',how:'جمّع ١٠٠ نقطة'},
+    {id:'pomo1',e:'⏱️',n:'أوّل بومودورو',how:'خلّص أوّل جولة تركيز ٢٥ دقيقة'},
+    {id:'gchamp',e:'🎮',n:'بطل الألعاب',how:'العب ١٠ جولات بصفحة الألعاب'}
   ];
   function badgeById(id){for(var i=0;i<BADGES.length;i++)if(BADGES[i].id===id)return BADGES[i];return null;}
   function streakNow(d,dk){d=d||{};dk=dk||dayKey();return (d.sDay&&(d.sDay===dk||d.sDay===addDays(dk,-1)))?toInt(d.streak):0;}   // a missed day → 0
@@ -96,16 +108,19 @@
     function give(id){if(badgeById(id)&&!b[id])b[id]=dk||dayKey();}
     if(toInt(d.qTotal)>=100)give('q100');
     if(Math.max(toInt(d.bestStreak),streakNow(d,dk))>=7)give('s7');
+    if(Math.max(toInt(d.bestStreak),streakNow(d,dk))>=3)give('s3');
+    if(toInt(d.points)>=100)give('p100');
     if(toInt(d.ecgN)>=ECG_MIN&&toInt(d.ecgOk)*100>=ECG_PCT*toInt(d.ecgN))give('ecg');
     (extra||[]).forEach(give);
     return b;
   }
   // fields to merge into users/{uid} after n more answers today (ecg = [right, total] on ECG questions)
-  function actWrite(d,n,ecg,extra,dk){
+  // force = the day counts even under 5 answers (a finished quiz, a game round or a pomodoro focus round — Abdullah, Oct 26 2026)
+  function actWrite(d,n,ecg,extra,dk,force){
     d=d||{};dk=dk||dayKey();n=Math.min(toInt(n),200);
     var o={actDay:dk,actN:toInt((d.actDay===dk?toInt(d.actN):0)+n),qTotal:toInt(toInt(d.qTotal)+n)};
     if(ecg){o.ecgN=toInt(toInt(d.ecgN)+toInt(ecg[1]));o.ecgOk=Math.min(o.ecgN,toInt(toInt(d.ecgOk)+toInt(ecg[0])));}
-    if(o.actN>=STREAK_MIN&&d.sDay!==dk){o.streak=(d.sDay===addDays(dk,-1)?toInt(d.streak):0)+1;o.sDay=dk;}
+    if((o.actN>=STREAK_MIN||force)&&d.sDay!==dk){o.streak=(d.sDay===addDays(dk,-1)?toInt(d.streak):0)+1;o.sDay=dk;}
     o.bestStreak=Math.max(toInt(d.bestStreak),o.streak||0,streakNow(d,dk));
     var all={},k;for(k in d)all[k]=d[k];for(k in o)all[k]=o[k];
     o.badges=badgesFor(all,extra,dk);
@@ -128,7 +143,7 @@
   N.RIGHT=RIGHT;N.WRONG=WRONG;N.BONUS=BONUS;N.PU_PRICE=PU_PRICE;N.PU_MAX=PU_MAX;N.LIVE=LIVE;N.SUBJECTS=SUBJECTS;N.DAYS=DAYS;
   N.quizDelta=quizDelta;N.pickQids=pickQids;N.winner=winner;N.level=level;N.levelStart=levelStart;N.progress=progress;N.addPoints=addPoints;N.cleanName=cleanName;N.newCode=newCode;N.normCode=normCode;N.esc=esc;N.MAXP=MAXP;N.hash=hash;
   N.dayKey=dayKey;N.monthKey=monthKey;N.monthField=monthField;N.prevMonth=prevMonth;N.addDays=addDays;N.weekday=weekday;N.monthWrite=monthWrite;
-  N.examsFor=examsFor;N.weekOf=weekOf;N.examQids=examQids;N.examById=examById;N.roomTally=roomTally;N.roomWinner=roomWinner;N.roomPoints=roomPoints;N.puAvail=puAvail;
+  N.weekStart=weekStart;N.weekWrite=weekWrite;N.weekPts=weekPts;N.examsFor=examsFor;N.weekOf=weekOf;N.examQids=examQids;N.examById=examById;N.roomTally=roomTally;N.roomWinner=roomWinner;N.roomPoints=roomPoints;N.puAvail=puAvail;
   N.STREAK_MIN=STREAK_MIN;N.ECG_T=ECG_T;N.BADGES=BADGES;N.badgeById=badgeById;N.streakNow=streakNow;N.dayLeft=dayLeft;N.ecgCount=ecgCount;N.badgesFor=badgesFor;N.actWrite=actWrite;N.newBadges=newBadges;N.badgeRow=badgeRow;N.streakPill=streakPill;N.actLine=actLine;
   if(typeof document==='undefined'||!document.querySelector)return;
 
@@ -136,7 +151,7 @@
   function readMe(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
   N.me=readMe();
   N.queue=N.queue||[];
-  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||''}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
+  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||'',weekKey:me.weekKey||'',weekPoints:me.weekPoints|0}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
   N.avatar=function(photo,name,cls){return photo?'<img class="'+(cls||'av')+'" src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" loading="lazy">':'<span class="'+(cls||'av')+' avx" aria-hidden="true">'+esc(Array.from(name||'?')[0])+'</span>';};
   var slot=null;
   N.badge=function(){
