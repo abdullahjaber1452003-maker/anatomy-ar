@@ -160,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261025l/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261026a/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -313,7 +313,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261025l') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261026a') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -360,7 +360,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261025l'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261026a'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -591,7 +591,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261025l" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261026a" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
@@ -633,7 +633,7 @@ test('💬 chats (Oct 25): friends 1:1 + groups ≤ 15, text ≤ 500, members-on
 
 test('🩸 blood flow on the 3D heart (Oct 25): «مسار الدم» particles blue → red at the lungs, Ar–Fr step captions, small/big circulation, play/pause + step', () => {
   const f = read('assets/flow.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/flow.js?v=20261025l') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
+  assert.ok(h.indexOf('assets/flow.js?v=20261026a') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
   assert.ok(v.includes("key==='heart'&&window.nursinFlow"), 'viewer hands the heart to the flow');
   assert.ok(f.includes('🩸 مسار الدم') && f.includes('التالي ▶') && f.includes('⏸ وقّف') && f.includes('▶ كمّل'), 'button, play/pause, next');
   const order = ['Veines caves','Oreillette droite','Valve tricuspide','Ventricule droit','Valve pulmonaire','Artère pulmonaire','Poumons','Veines pulmonaires','Oreillette gauche','Valve mitrale','Ventricule gauche','Valve aortique','Aorte','Organes'];
@@ -653,7 +653,7 @@ test('💧 liquid blood flow (Oct 25): flowing stream instead of dots on the 3D 
   assert.ok(f.includes('🐢 السرعة') && /min="0\.25" max="1\.5"/.test(f) && f.includes('spd=0.5') && f.includes('nursin_flow_speed'), 'speed 0.25×–1.5×, default 0.5×, remembered');
   assert.ok(f.includes('beat') && f.includes("'class':'fov fdyn'") && css.includes('.fdyn{will-change:transform}'), 'heartbeat pulse; moving layer kept apart so static vessels are not repainted');
   assert.ok(/@media \(min-width:860px\)\{[^@]*\.viewer\.flowon>\.fbody\{grid-column:2/.test(css), 'beside the heart on desktop, below on phones');
-  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261025l'), '3d.html mentions it, fresh cache tag');
+  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261026a'), '3d.html mentions it, fresh cache tag');
 });
 
 test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service worker, 📲 install, opt-in, worker ping, rules v8', () => {
@@ -667,7 +667,7 @@ test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service w
   for (const p of pages.concat('admin.html', 'chat.html')) {
     const h = read(p);
     assert.ok(h.includes('<link rel="manifest" href="/manifest.json">') && h.includes('<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'), p + ' manifest + apple icon');
-    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261025l" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
+    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261026a" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
   }
   const sw = read('sw.js');
   assert.ok(sw.includes('"push"') && sw.includes('showNotification') && sw.includes('"notificationclick"') && sw.includes('/chat.html?c='), 'push + tap opens the chat');
@@ -699,12 +699,65 @@ test('📢 broadcast notifications (Oct 25): owner-only «إشعار للكل» 
   assert.ok(sw.includes('m.url') && sw.includes('dt.u') && sw.includes('n.origin === self.location.origin'), 'news notification opens a page of this site only');
   assert.ok(sw.includes('/chat.html?c=') && sw.includes('"chat-" + c'), 'chat notifications unchanged');
   const pw = read('assets/pwa.js');
-  assert.ok(pw.includes('function homeStrip') && pw.includes('page !== "index.html"') && pw.includes('nursin_push_strip_v1') && pw.includes('class="psx"'), 'home strip only on the home page, ✕ hides it for good');
+  assert.ok(pw.includes('enable: enable') && pw.includes('state: state') && pw.includes('env: env'), 'opt-in exposed to the welcome card (the old home strip is replaced by it, Oct 26)');
   assert.ok(pw.includes('رسائل + أخبار') && pw.includes('درس'), 'opt-in says messages + news');
   assert.equal((pw.match(/requestPermission/g) || []).length, 1, 'permission still asked only inside enable() (on tap)');
   const r = read('firestore.rules');
   assert.ok(r.includes('allow list: if isAnnOwner();') && r.includes("affectedKeys().hasOnly(['d'])") && r.includes('addedKeys().size() == 0') && r.includes('changedKeys().size() == 0'), 'v9: owner lists + only removes devices');
   assert.ok(r.includes("hasOnly(['d', 'updatedAt'])") && r.includes('match /chats/{cid}') && r.includes('match /announcements/{id}'), 'v9 keeps v8');
   assert.ok(read('privacy.html').includes('يزيد شي جديد'), 'privacy mentions news notifications');
-  assert.ok(read('index.html').includes('assets/pwa.js?v=20261025l'), 'fresh cache tag');
+  assert.ok(read('index.html').includes('assets/pwa.js?v=20261026a'), 'fresh cache tag');
+});
+
+test('🧭 tidy navigation + 👋 welcome card (Oct 26): five groups, every page reachable, sign-in then notifications once per device, «بعدين» on each step, no ads inside', () => {
+  const all = fs.readdirSync(SITE).filter(f => f.endsWith('.html'));
+  for (const p of all) {
+    const h = read(p);
+    assert.equal((h.match(/<script src="assets\/nav\.js\?v=20261026a" defer><\/script>/g) || []).length, 1, p + ' nav.js once with cache tag');
+    assert.ok(h.indexOf('assets/account.js?v=') < h.indexOf('assets/nav.js?v='), p + ' nav.js after account.js (uses Nursin.loadFB)');
+    assert.ok(!h.includes('20261025l'), p + ' old cache tag gone');
+  }
+  for (const p of pages) assert.ok(read(p).includes('<nav id="nav" class="nav"'), p + ' static nav kept for no-JS + search engines');
+  const n = read('assets/nav.js');
+  const vm = require('node:vm'); const ctx = { window: {}, document: { readyState: 'loading', addEventListener() {} }, location: { pathname: '/index.html', search: '' } };
+  ctx.window = ctx; vm.createContext(ctx); vm.runInContext(n, ctx);
+  const G = ctx.NursinNav.groups;
+  assert.equal(G.length, 5, 'five tabs'); assert.deepEqual(G.map(g => g.n), ['الرئيسية', 'الدروس', 'التمارين', 'أصحابي', 'الأستاذ']);
+  const linked = new Set(); G.forEach(g => { if (g.href) linked.add(g.href); (g.items || []).forEach(i => linked.add(i[0].split('#')[0])); });
+  for (const p of ['about.html', 'privacy.html', 'credits.html']) assert.ok(n.includes('"' + p + '"'), p + ' in the ☰ sheet');
+  for (const p of pages.filter(p => !['about.html', 'privacy.html', 'credits.html', '404.html'].includes(p)).concat('chat.html')) assert.ok(linked.has(p), p + ' reachable from the 5 groups');
+  for (const [l, f] of G.filter(g => g.items).flatMap(g => g.items.map(i => [i[0], g]))) assert.ok(fs.existsSync(path.join(SITE, l.split('#')[0])), l);
+  assert.ok(n.includes('"admin" + ".html"') && n.includes('u.email === OWNER && u.emailVerified'), 'admin link only for the owner, built at run time');
+  assert.ok(n.includes('html.jsnav') || n.includes('"jsnav"'), 'static nav hidden only when JS runs');
+  // welcome card
+  assert.ok(n.includes('سجّل دخول بغوغل') && n.includes('🔔 فعّل الإشعارات') && n.includes('📲 زيد عالشاشة الرئيسية') && n.includes('إضافة إلى الشاشة الرئيسية'), 'step 1 Google, step 2 notifications, iPhone install steps');
+  assert.equal((n.match(/class="oblater"/g) || []).length, 3, '«بعدين» on every step');
+  assert.ok(n.includes('A.signIn()') && n.includes('P.enable(A)') && !n.includes('requestPermission'), 'uses the existing sign-in and opt-in (permission only on tap, inside pwa.js)');
+  assert.ok(n.includes('".nsplash"') && n.includes('"g3on"'), 'waits for the splash and the 3D ad screen');
+  assert.ok(!/bauval|adsbygoogle|class="adx/.test(n), 'no ads inside the flow');
+  assert.ok(n.includes('OUT_GAP = 4 * DAY') && n.includes('IN_GAP = 7 * DAY') && n.includes('nursin_onboard_v1'), 'once per device, re-asked gently');
+  // scheduling logic (pure): fresh visitor → step 1; asked yesterday → nothing; 5 days later → step 1 again; signed in + push on → nothing
+  const store = {};
+  ctx.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+  ctx.Nursin = { me: null }; ctx.NursinPWA = { env: () => ({ ios: false, standalone: false, canPush: true, perm: 'default', on: false }) };
+  const due = ctx.NursinNav.due;
+  assert.equal(due(), 1, 'first visit: sign in');
+  store.nursin_onboard_v1 = JSON.stringify({ t: Date.now() - 864e5, n: 1 }); assert.equal(due(), 0, 'not again the next day');
+  store.nursin_onboard_v1 = JSON.stringify({ t: Date.now() - 5 * 864e5, n: 1 }); assert.equal(due(), 1, 'gently again after a few days');
+  store.nursin_onboard_v1 = JSON.stringify({ t: Date.now() - 50 * 864e5, n: 6 }); assert.equal(due(), 0, 'max 6 asks');
+  ctx.Nursin.me = { name: 'x' }; delete store.nursin_onboard_v1; assert.equal(due(), 2, 'signed in, no push: notifications step');
+  store.nursin_onboard_v1 = JSON.stringify({ t: Date.now() - 864e5, p: 2 }); assert.equal(due(), 2, 'back from the Google redirect: step 2');
+  ctx.NursinPWA.env = () => ({ ios: false, standalone: false, canPush: true, perm: 'granted', on: true }); assert.equal(due(), 0, 'signed in + push on: never');
+  ctx.NursinPWA.env = () => ({ ios: true, standalone: false, canPush: false, perm: 'none', on: false }); delete store.nursin_onboard_v1; assert.equal(due(), 2, 'iPhone not installed: install steps');
+  ctx.NursinPWA.env = () => ({ ios: false, standalone: false, canPush: true, perm: 'denied', on: false }); assert.equal(due(), 0, 'denied: never');
+  const fb = read('assets/fb.js');
+  assert.ok(fb.includes('signIn, errText, signInCard') && fb.includes('"nursin:auth"'), 'fb.js exposes sign-in + auth event');
+  assert.ok(read('assets/account.js').includes('N.loadFB=function'), 'Firebase can be loaded on demand');
+  // tidy home
+  const h = read('index.html');
+  assert.ok(h.includes('id="homecont"') && h.includes('class="card hg"') && h.includes('details class="box warn hmist"'), 'home: continue + group cards + folded tips');
+  assert.equal((h.match(/class="card hg"/g) || []).length, 4, 'one card per group (home is the 5th)');
+  const css = read('assets/style.css');
+  const adx = css.indexOf('.adx{');
+  assert.ok(css.indexOf('.gnav{position:fixed') > -1 && css.indexOf('.gnav{position:fixed') < adx && css.indexOf('.obx{position:fixed') < adx, 'new fixed elements before .adx');
 });
