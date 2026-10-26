@@ -5,17 +5,24 @@
                          question ↔ right-answer pairs from the same bank.
    ⚡ تحدّي ٦٠ ثانية   — true/false: a quiz question with its right option (صح) or one of its wrong options (غلط).
    ⌨️ عبّي بسرعة       — 60 s fill-in on the site's own «عبّي الفراغ» sentences (assets/blanks-data.js); added Oct 26 7:42 PM.
-   🃏 لعبة الذاكرة      — flip cards to find pairs: drug ↔ what it's for (pharma), term ↔ meaning elsewhere. */
+   🃏 لعبة الذاكرة      — flip cards to find pairs: drug ↔ what it's for (pharma), term ↔ meaning elsewhere.
+   🪜 سلّم المراحل      — added Oct 26 7:44 PM (Abdullah: several stages back to back, not one round): levels 1→5 in a row, each =
+                         4 multiple-choice questions from the quiz bank of the chosen subject, time per question 20/17/14/11/8 s,
+                         3 ❤️ for the whole run (wrong or timeout = −1), «🎉 المرحلة X خلصت!» between levels, game over at 0 ❤️,
+                         win after level 5. Pays 4 points per level cleared (≤ ROUND_MAX, ≤ GAME_CAP a day), counts as a game round
+                         for the daily 🎮 goal, best = most levels cleared (localStorage nursin_games_v1 «stage»). Own difficulty
+                         (the timer), so the سهل/وسط/صعب picker doesn't change it. */
 (function (w, d) {
   var BEST = "nursin_games_v1", ROUND_MAX = 20;
-  var GN = { match: "🧩 وصّل", tf: "⚡ تحدّي ٦٠ ثانية", mem: "🃏 لعبة الذاكرة", fill: "⌨️ عبّي بسرعة" };
+  var GN = { match: "🧩 وصّل", tf: "⚡ تحدّي ٦٠ ثانية", mem: "🃏 لعبة الذاكرة", fill: "⌨️ عبّي بسرعة", stage: "🪜 سلّم المراحل" };
   /* 🎚️ سهل / وسط / صعب (Abdullah, Oct 26 7:42 PM: harder, more varied): وصّل 5/7/9 pairs · ٦٠ ثانية 60/45/30 s (صعب: −1 لكل غلط)
      · الذاكرة 6/8/10 pairs · عبّي بسرعة: سهل/وسط = اختيارات لما الجملة إلها اختيارات، صعب = كلّو كتابة. Points ×1 / ×1.5 / ×2
      (still ≤ ROUND_MAX a round and GAME_CAP a day). */
   var LV = [null, { n: "سهل", m: 1, match: 5, tf: 60, mem: 6 }, { n: "وسط", m: 1.5, match: 7, tf: 45, mem: 8 }, { n: "صعب", m: 2, match: 9, tf: 30, mem: 10 }], lv = 1;
   try { lv = Math.min(3, Math.max(1, +localStorage.getItem("nursin_games_lv") || 1)); } catch (e) {}
   function lvPts(n) { return Math.round(Math.max(0, n) * LV[lv].m); }
-  function bk(g) { return lv > 1 ? g + lv : g; }   // best score per game and level (easy keeps the old key)
+  function bk(g) { return lv > 1 && g !== "stage" ? g + lv : g; }   // best score per game and level (easy keeps the old key; 🪜 has one)
+  var STAGE = { levels: 5, per: 4, lives: 3, secs: [20, 17, 14, 11, 8], pts: 4 };   // 🪜 سلّم المراحل
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function strip(h) { return String(h || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(); }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -80,7 +87,9 @@
     c.forEach(function (x) { var n = fnorm(x); if (n) out[n] = 1; }); return out;
   }
   function fillOk(b, typed) { var n = fnorm(typed); return !!n && !!accepts(b)[n]; }
-  function enough(g, s) { return g === "tf" ? tf(s).length >= 6 : g === "fill" ? blanks(s).length >= 4 : (g === "mem" ? memPairs(s) : pairs(s)).length >= (g === "mem" ? 6 : 5); }
+  // 🪜 multiple-choice questions of a subject (skip «نفس …» ones that lean on the question before)
+  function mcq(s) { return quiz().filter(function (q) { return inS(q, s) && q.o && q.o.length >= 2 && q.a >= 0 && q.a < q.o.length && !/^نفس /.test(strip(q.q)); }); }
+  function enough(g, s) { return g === "stage" ? mcq(s).length >= 8 : g === "tf" ? tf(s).length >= 6 : g === "fill" ? blanks(s).length >= 4 : (g === "mem" ? memPairs(s) : pairs(s)).length >= (g === "mem" ? 6 : 5); }
 
   /* ---- shared bits ---- */
   var sel = "all", area = null, timer = 0;
@@ -89,15 +98,15 @@
   function txt(p, side) { var v = side ? p.b : p.a; return p.fr && !side ? '<span dir="ltr" lang="fr">' + esc(v) + "</span>" : esc(v); }
   function finish(g, score, extra) {
     clearInterval(timer);
-    var pts = Math.min(ROUND_MAX, lvPts(score | 0)), nb = saveBest(g, score | 0);
+    var pts = Math.min(ROUND_MAX, g === "stage" ? (score | 0) * STAGE.pts : lvPts(score | 0)), nb = saveBest(g, score | 0);
     area.innerHTML = '<h2>' + GN[g] + ' — خلصت الجولة!</h2><p class="gres">' + extra + "</p>" +
-      (nb && score ? '<p>🏆 <b>أحسن نتيجة إلك!</b></p>' : '<p class="small">أحسن نتيجة إلك: <b>' + (best()[bk(g)] | 0) + "</b> (" + LV[lv].n + ")</p>") +
+      (nb && score ? '<p>🏆 <b>أحسن نتيجة إلك!</b></p>' : (g === "stage" ? '<p class="small">أحسن نتيجة إلك: <b>' + (best().stage | 0) + "/" + STAGE.levels + "</b> مراحل</p>" : '<p class="small">أحسن نتيجة إلك: <b>' + (best()[bk(g)] | 0) + "</b> (" + LV[lv].n + ")</p>")) +
       '<p class="small" id="gpts"></p><div class="sbtns"><button class="btn on" type="button" data-again="' + g + '">🔁 جولة جديدة</button><button class="btn" type="button" data-back="1">🎮 لعبة تانية</button></div>';
     var S = w.NursinStudy;
     if (S) { var o = S.activity("game", pts, GN[g].replace(/^\S+\s/, ""), d.getElementById("gpts")); if (o && o.paid < pts && w.Nursin && w.Nursin.me) d.getElementById("gpts").insertAdjacentHTML("afterend", '<p class="small">وصلت لحدّ نقاط الألعاب اليوم (' + S.GAME_CAP + ")، بس بتضل تلعب وتتمرّن 💪</p>"); }
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
-  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + LV[lv].n + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
+  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
 
   /* ---- 🧩 وصّل: 5 pairs a round ---- */
   function match() {
@@ -195,10 +204,55 @@
     }, 250);
   }
 
+  /* ---- 🪜 سلّم المراحل: 5 levels × 4 questions, 3 ❤️ for the whole run ---- */
+  function stageGame() {
+    var bag = [], lvl = 1, qi = 0, lives = STAGE.lives, cleared = 0, lock = false, cur = null, end = 0;
+    function next() { if (!bag.length) bag = shuffle(mcq(sel)); return bag.pop(); }
+    function ladder() {
+      var h = '<ol class="sladder" aria-label="المراحل">';
+      for (var k = 1; k <= STAGE.levels; k++) h += '<li class="' + (k <= cleared ? "done" : k === lvl ? "now" : "") + '"><b>' + (k <= cleared ? "✅" : k) + "</b><small>" + STAGE.secs[k - 1] + "ث</small></li>";
+      return h + "</ol>";
+    }
+    function hearts() { var h = ""; for (var k = 0; k < STAGE.lives; k++) h += k < lives ? "❤️" : "🤍"; return h; }
+    function frame(body) { area.innerHTML = head("stage", ' <span class="gsc shp" id="shp" aria-label="قلوب">' + hearts() + "</span>") + ladder() + body; }
+    function ask() {
+      cur = next(); var T = STAGE.secs[lvl - 1], order = shuffle(cur.o.map(function (o, k) { return k; }));
+      end = Date.now() + T * 1e3; lock = false;
+      frame('<p class="small sinfo">المرحلة <b>' + lvl + "</b> · سؤال <b>" + (qi + 1) + "/" + STAGE.per + '</b> · <b id="gt" dir="ltr">' + T + '</b> ثانية</p><div class="stbar"><i id="stbar"></i></div>' +
+        '<p class="sq">' + cur.q + '</p><div id="sopts">' + order.map(function (k, j) { return '<button class="opt" type="button" data-so="' + k + '"><span class="l" dir="ltr">' + "abcd"[j] + "</span><span>" + cur.o[k] + "</span></button>"; }).join("") + "</div>");
+      area.querySelector("#sopts").addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-so]"); if (b) answer(+b.getAttribute("data-so")); });
+      clearInterval(timer);
+      timer = setInterval(function () {
+        var ms = Math.max(0, end - Date.now()), t = d.getElementById("gt"), bar = d.getElementById("stbar");
+        if (t) t.textContent = Math.ceil(ms / 1000); if (bar) bar.style.width = (100 * ms / (T * 1e3)) + "%";
+        if (ms <= 0) answer(-1);
+      }, 200);
+    }
+    function answer(k) {
+      if (lock || !d.getElementById("sopts")) return; lock = true; clearInterval(timer);
+      var good = k === cur.a;
+      [].forEach.call(area.querySelectorAll("[data-so]"), function (b) { var kk = +b.getAttribute("data-so"); b.disabled = true; if (kk === cur.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
+      if (!good) { lives--; var hp = d.getElementById("shp"); if (hp) { hp.textContent = hearts(); hp.classList.add("shit"); } area.querySelector("#sopts").insertAdjacentHTML("afterend", '<p class="small sfb">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ ") + "−١ ❤️</p>"); }
+      setTimeout(function () {
+        if (!d.getElementById("sopts")) return;
+        if (lives <= 0) return finish("stage", cleared, "💔 خلصو القلوب بالمرحلة <b>" + lvl + "</b> — خلّصت <b>" + cleared + "</b> من " + STAGE.levels + " مراحل");
+        qi++;
+        if (qi < STAGE.per) return ask();
+        cleared = lvl; qi = 0;
+        if (cleared >= STAGE.levels) return finish("stage", cleared, "🏆 <b>طلعت السلّم كلّو!</b> خلّصت الـ " + STAGE.levels + " مراحل وبقيلك " + hearts());
+        lvl++;
+        frame('<div class="sbreak"><h2>🎉 المرحلة ' + cleared + " خلصت!</h2><p>بقيلك " + hearts() + "</p><p>المرحلة <b>" + lvl + "</b>: " + STAGE.per + " أسئلة، <b>" + STAGE.secs[lvl - 1] + '</b> ثانية لكل سؤال ⏱️</p><div class="sbtns"><button class="btn on" type="button" data-snext="1">يلّا عالمرحلة ' + lvl + " ⬅️</button></div></div>");
+        area.querySelector("[data-snext]").addEventListener("click", ask);
+        area.scrollIntoView({ block: "start", behavior: "smooth" });
+      }, good ? 700 : 1600);
+    }
+    ask();
+  }
+
   function start(g) {
     clearInterval(timer);
     if (!enough(g, sel)) { area.hidden = false; area.innerHTML = head(g) + "<p>ما في محتوى كافي لهاللعبة بهالمادة بعد. جرّب «🎲 كل المواد» أو مادة تانية.</p>"; return; }
-    area.hidden = false; (g === "match" ? match : g === "tf" ? tfGame : g === "fill" ? fillGame : mem)();
+    area.hidden = false; (g === "match" ? match : g === "tf" ? tfGame : g === "fill" ? fillGame : g === "stage" ? stageGame : mem)();
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
   function init() {
@@ -207,7 +261,7 @@
     for (var k in S) h += '<button type="button" class="chip" data-s="' + k + '">' + esc(S[k]) + "</button>";
     pk.innerHTML = h;
     pk.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-s]"); if (!b) return; sel = b.getAttribute("data-s"); [].forEach.call(pk.children, function (c) { c.classList.toggle("on", c === b); }); marks(); });
-    function marks() { [].forEach.call(d.querySelectorAll("[data-g]"), function (c) { var ok = enough(c.getAttribute("data-g"), sel); c.classList.toggle("off", !ok); var bb = c.querySelector(".gbest"); if (bb) bb.textContent = "أحسن نتيجة (" + LV[lv].n + "): " + (best()[bk(c.getAttribute("data-g"))] | 0); }); }
+    function marks() { [].forEach.call(d.querySelectorAll("[data-g]"), function (c) { var ok = enough(c.getAttribute("data-g"), sel); c.classList.toggle("off", !ok); var bb = c.querySelector(".gbest"); if (bb) bb.textContent = c.getAttribute("data-g") === "stage" ? "أحسن نتيجة: " + (best().stage | 0) + "/" + STAGE.levels + " مراحل" : "أحسن نتيجة (" + LV[lv].n + "): " + (best()[bk(c.getAttribute("data-g"))] | 0); }); }
     var lp = d.getElementById("glv");
     if (lp) {
       lp.innerHTML = LV.slice(1).map(function (x, k) { return '<button type="button" class="chip' + (k + 1 === lv ? " on" : "") + '" data-lv="' + (k + 1) + '">' + ["🟢", "🟡", "🔴"][k] + " " + x.n + "</button>"; }).join("");
@@ -220,7 +274,7 @@
       start(t.getAttribute("data-g") || t.getAttribute("data-again"));
     });
   }
-  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, LV: LV, ROUND_MAX: ROUND_MAX };
+  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

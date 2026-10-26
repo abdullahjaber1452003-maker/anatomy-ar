@@ -644,3 +644,16 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 .prose .lqz{margin:14px 0 4px}
 html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .lqfew .lqbtns{display:flex;flex-wrap:wrap;gap:8px}
+
+/* 🪜 سلّم المراحل (games.html) */
+.sladder{list-style:none;display:flex;gap:6px;margin:6px 0 10px;padding:0;align-items:flex-end}
+.sladder li{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px solid var(--line);border-radius:10px;padding:5px 2px;background:#fff;color:var(--mut)}
+.sladder li:nth-child(1){min-height:44px}.sladder li:nth-child(2){min-height:52px}.sladder li:nth-child(3){min-height:60px}.sladder li:nth-child(4){min-height:68px}.sladder li:nth-child(5){min-height:76px}
+.sladder li b{font:700 16px system-ui}.sladder li small{font-size:11.5px}
+.sladder li.now{border-color:var(--pri);background:#ccfbf1;color:var(--pri2)}.sladder li.done{border-color:#16a34a;background:#f0fdf4;color:#166534}
+.shp{letter-spacing:1px;background:#fff1f2}.shp.shit{animation:shk .4s}
+@keyframes shk{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.sinfo{margin:0 0 4px}.stbar{height:6px;border-radius:99px;background:#eef2f4;overflow:hidden;margin:0 0 8px}.stbar i{display:block;height:100%;width:100%;background:var(--pri);transition:width .2s linear}
+.sq{font-size:16px;margin:4px 0 2px;overflow-wrap:anywhere}.sfb{color:var(--red);font-weight:700}
+.sbreak{text-align:center;padding:8px 0}.sbreak h2{margin:6px 0}.sbreak .sbtns{justify-content:center}
+@media (prefers-reduced-motion:reduce){.shp.shit{animation:none}.stbar i{transition:none}}
