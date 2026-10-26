@@ -15,7 +15,7 @@
   function dk() { var n = N(); return n.dayKey ? n.dayKey() : new Date(Date.now() + 3 * 36e5).toISOString().slice(0, 10); }
   function addDays(k, n) { var t = new Date(k + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
   function get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
-  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} if (k === K && d && d.dispatchEvent) try { d.dispatchEvent(new CustomEvent("nursin:study")); } catch (e) {} }   // ✅ goals.js re-counts ⏱️/🎮
 
   /* ---- the local record (pure helpers, tests run them) ---- */
   function fresh(o) { o = o && typeof o === "object" ? o : {}; o.badges = o.badges && typeof o.badges === "object" ? o.badges : {}; o.streak = o.streak | 0; o.best = o.best | 0; o.games = o.games | 0; o.quizzes = o.quizzes | 0; o.pomos = o.pomos | 0; return o; }

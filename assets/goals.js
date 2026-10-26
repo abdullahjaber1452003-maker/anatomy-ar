@@ -7,7 +7,11 @@
      ❓ سؤال اليوم            — when they're in a class; done when the answer doc classes/{cid}/dq/{day}_{uid} exists in ANY of their classes
    Fix Oct 26 12:55 PM (Abdullah: «سؤال اليوم» stayed ⬜ after answering): done comes from those real docs, re-read every time the
    sheet opens; classes.html also marks dq / cls:{cid} the moment the answer/result is saved or shown.
-     📝 كويز ١٠ أسئلة         — only when nothing else is on the list
+     📝 كويز ١٠ أسئلة         — only when none of the rows above is on the list
+     ⏱️ جولة بومودورو وحدة    — every day; done when ≥1 pomodoro focus round finished today (nursin_study_v1 tp, assets/study.js)
+     🎮 العب لعبة وحدة         — every day; done when ≥1 round of ANY game finished today (nursin_study_v1 tg) — one game, not all of them
+     📖 درس جديد: …           — on top, on the day a lesson is added and the next day (assets/lessons.js «added»); done when read
+                                (≈1 min on it / scrolled through it) or its lesson quiz finished (nursin_read_v1)
    Each row has a ✅ when done and goes straight to it. Badge "2/4". Done-state per Beirut day in localStorage (nursin_goals_v1).
    Signed out: the pill shows 🔒 and the sheet only offers Google sign-in (assets/gate.js state). */
 (function (w, d) {
@@ -26,6 +30,8 @@
   // the weak store itself remembers when a weak-points quiz was last finished (weak.js ran/ranAt)
   function dayOf(ts) { try { return new Date(ts).toLocaleDateString("en-CA", { timeZone: "Asia/Beirut" }); } catch (e) { return new Date(ts + 3 * 36e5).toISOString().slice(0, 10); } }
   function weakRanToday() { var t = 0; try { t = w.Weak && w.Weak.ranAt ? w.Weak.ranAt() : ((lsGet("nursin_weak_v1") || {}).ran || 0); } catch (e) {} return !!t && dayOf(t) === today(); }
+  // ⏱️/🎮 today's counts from the record assets/study.js keeps (works on pages that don't load study.js too)
+  function studyToday() { var o = lsGet("nursin_study_v1"); return o && o.td === today() ? { p: o.tp | 0, g: o.tg | 0 } : { p: 0, g: 0 }; }
   function signed() { var G = w.NursinGate; return G ? !!G.signedIn : !!N().me; }
   function todayExams() { var n = N(); try { return n.examsFor ? n.examsFor(today()) : []; } catch (e) { return []; } }
 
@@ -47,12 +53,20 @@
     var dqMine = dq.filter(function (c) { return !!c.dq.mine; })[0], dqDone = !!(D.dq || dqMine), dqTo = dq.filter(function (c) { return !c.dq.mine && c.cid; })[0];
     if (dq.length || D.dq) g.push({ k: "dq", e: "❓", n: "سؤال اليوم", s: dqMine ? (dqMine.dq.mine === "ok" ? "✅ جاوبت صح اليوم" : "جاوبت اليوم") : D.dq ? "جاوبت اليوم" : "نفس السؤال لكل الصف", href: dqDone ? ((dqMine && dqMine.cid) ? "classes.html?c=" + encodeURIComponent(dqMine.cid) + "#cdq" : "classes.html#cdq") : (dqTo ? "classes.html?c=" + encodeURIComponent(dqTo.cid) + "#cdq" : "classes.html#cdq"), done: dqDone });
     if (!g.length) g.push({ k: "quiz10", e: "📝", n: "كويز ١٠ أسئلة", s: "أسئلة مخلوطة من كل الدروس", href: "quiz.html?t=all&n=10", done: !!D.quiz10 });
-    return g;
+    // ⏱️ + 🎮 every day (Oct 26 7:41 PM + 7:42 PM): one pomodoro focus round and ONE game round (any of the games, not all of them),
+    // both read from the real local record that study.js keeps (nursin_study_v1: tp = pomodoro rounds today, tg = game rounds today)
+    var P = o.pomo | 0, G = o.game | 0;
+    g.push({ k: "pomo", e: "⏱️", n: "جولة بومودورو وحدة (٢٥ دقيقة)", s: P ? "✅ خلصت " + P + (P === 1 ? " جولة" : " جولات") + " اليوم" : "٢٥ دقيقة تركيز، بعدها بريك", href: "index.html#study", done: P >= 1 });
+    g.push({ k: "game", e: "🎮", n: "العب لعبة وحدة", s: G ? "✅ لعبت " + G + (G === 1 ? " جولة" : " جولات") + " اليوم" : "جولة وحدة من أي لعبة بتكفي", href: "games.html", done: G >= 1 });
+    // 📖 new lessons (assets/lessons.js «added» date): on the day they're added and the next day, on top of the list
+    return (o.newL || []).concat(g);
   }
   if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build }; return; }   // node tests
   function goals() {
     var L = live && live.dk === today() ? live : {};
-    return build({ weak: weakCount(), weakRan: weakRanToday(), exams: todayExams(), st: L.st, classes: L.classes, done: state().done });
+    var L2 = w.NursinLessons, nl = [];
+    try { nl = L2 ? L2.goals(today(), L2.readMap()) : []; } catch (e) {}
+    return build({ weak: weakCount(), weakRan: weakRanToday(), exams: todayExams(), st: L.st, classes: L.classes, done: state().done, pomo: studyToday().p, game: studyToday().g, newL: nl });
   }
 
   /* exam status + classes from Firebase (the same reads the tutor makes), cached 10 min per tab */
@@ -90,7 +104,7 @@
   function sheetHtml() {
     if (!signed()) {
       var G = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
-      return '<div class="glk-card gocard"><p class="glk-h">🔒 أهدافك اليوم مقفولة — سجّل دخول بغوغل</p><p class="small">بعد ما تسجّل، كل يوم بتلاقي هون شو لازم تخلّص: نقاط ضعفك، امتحانات اليوم، وامتحانات صفّك.</p>' +
+      return '<div class="glk-card gocard"><p class="glk-h">🔒 أهدافك اليوم مقفولة — سجّل دخول بغوغل</p><p class="small">بعد ما تسجّل، كل يوم بتلاقي هون شو لازم تخلّص: نقاط ضعفك، امتحانات اليوم وصفّك، جولة ⏱️ بومودورو، 🎮 لعبة، و📖 الدروس الجديدة.</p>' +
         '<button class="gbtn glk-go" type="button">' + G + '<span>تسجيل الدخول بغوغل</span></button><p class="glk-err small" hidden></p></div>';
     }
     var c = count();
@@ -154,7 +168,9 @@
   d.addEventListener("nursin:gate", function () { refresh(); if (signed()) fetchLive(); });
   d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) fetchLive(); else refresh(); });
   d.addEventListener("nursin:me", paint);
-  w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1") refresh(); });
+  d.addEventListener("nursin:study", refresh);         // a ⏱️ round / 🎮 round just counted (study.js)
+  d.addEventListener("nursin:lesson-read", refresh);   // a 📖 new lesson was read (lessons.js)
+  w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1" || e.key === "nursin_study_v1" || e.key === "nursin_read_v1") refresh(); });
   w.addEventListener("pageshow", function (e) { if (e.persisted) { refresh(); if (signed()) fetchLive(true); } });
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }

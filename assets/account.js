@@ -53,14 +53,48 @@
     {k:'chir',n:'Pacemaker + Chirurgie + Embolie',ar:'جراحة القلب والبطارية',t:['pacemaker','chirurgie','embolie']}
   ];
   var EPOCH='2026-10-19',DAYS=['الاتنين','التلاتا','الأربعا','الخميس','الجمعة','السبت','الأحد'];
-  function examsFor(dk){
-    var wd=weekday(dk);if(wd===6)return [];
-    var days=Math.round((Date.parse(dk+'T12:00:00Z')-Date.parse(EPOCH+'T12:00:00Z'))/864e5),wk=Math.floor(days/7),out=[];
-    for(var j=0;j<2;j++){var i=((wk*12+wd*2+j)%SUBJECTS.length+SUBJECTS.length)%SUBJECTS.length,s=SUBJECTS[i];out.push({id:dk+'-'+s.k,day:dk,k:s.k,n:s.n,ar:s.ar,t:s.t});}
+  /* 📅 dynamic from 2026-10-27 (Abdullah, Oct 26 7:41 PM: "when new lessons are added, the weekly exams should update"):
+     the units = the 9 above + one unit for every lesson the 9 don't cover, read from the lesson registry (assets/lessons.js,
+     window.NLESSONS) — a subject with QLES lessons (law, mgmt, quality, pharma…) gets ONE exam over all its lessons, new topics of
+     cardio/neuro go together in an «x<subject>» exam. A lesson joins the day AFTER its «added» day, so a day's exams (and their
+     questions) never change once that day has started; days before 2026-10-27 keep the old 9-unit rotation. No registry on the page
+     (tests) = the old 9. */
+  var DYN_FROM='2026-10-27';
+  function reg(){var R=(typeof window!=='undefined'&&window.NLESSONS)||null;return R&&R.list?R:null;}
+  function lessonOn(x,dk){return !x.added||x.added<dk;}
+  function examUnits(dk){
+    var R=reg();if(!R||!dk||dk<DYN_FROM)return SUBJECTS;
+    var cov={},out=SUBJECTS.slice(),by={};
+    SUBJECTS.forEach(function(s){s.t.forEach(function(t){cov[t]=1;});});
+    R.list.forEach(function(x){
+      if(!lessonOn(x,dk)||cov[x.t])return;
+      var k=x.l?x.s:'x'+x.s,S=R.subjects[x.s]||{},u=by[k];
+      if(!u){u=by[k]={k:k,n:x.l?(S.fr||x.s):'',ar:x.l?(S.ar||x.s):'دروس '+(S.ar||x.s),t:[],ns:[]};out.push(u);}
+      if(u.t.indexOf(x.t)<0){u.t.push(x.t);if(!x.l)u.ns.push(x.n);}
+    });
+    out.forEach(function(u){if(u.ns){if(!u.n)u.n=u.ns.join(' + ');delete u.ns;}});
     return out;
   }
+  function examsFor(dk){
+    var wd=weekday(dk);if(wd===6)return [];
+    var U=examUnits(dk),days=Math.round((Date.parse(dk+'T12:00:00Z')-Date.parse(EPOCH+'T12:00:00Z'))/864e5),wk=Math.floor(days/7),out=[];
+    for(var j=0;j<2;j++){var i=((wk*12+wd*2+j)%U.length+U.length)%U.length,s=U[i];out.push({id:dk+'-'+s.k,day:dk,k:s.k,n:s.n,ar:s.ar,t:s.t});}
+    return out;
+  }
+  // every question of the exam's topics whose lesson was already live the day before (registry «added»); the exam picks 10 of these
+  function examPool(ex,quiz){
+    var R=reg(),on={};if(R)R.list.forEach(function(x){on[x.t+'|'+(x.l||'')]=lessonOn(x,ex.day||'9999');});
+    return (quiz||[]).filter(function(q){if(ex.t.indexOf(q.t)<0)return false;var k=q.t+'|'+(q.l||'');return !(k in on)||on[k];}).map(function(q){return q.id;});
+  }
   function weekOf(dk){var mon=addDays(dk,-weekday(dk)),out=[];for(var i=0;i<6;i++){var d=addDays(mon,i);out.push({day:d,name:DAYS[i],exams:examsFor(d)});}return out;}
-  function examQids(ex,quiz){var ids=(quiz||[]).filter(function(q){return ex.t.indexOf(q.t)>=0;}).map(function(q){return q.id;});return pickQids(hash(ex.id),ids,10);}
+  function examQids(ex,quiz){
+    var own=examPool(ex,quiz),R=reg(),k=String(ex.k||'');
+    if(own.length>=10||!R||k.charAt(0)!=='x')return pickQids(hash(ex.id),own,10);
+    // an «x» exam of new topics with few questions: all of them + the rest from the same مادة (review)
+    var s=k.slice(1),ts=R.list.filter(function(x){return x.s===s&&lessonOn(x,ex.day||'9999');}).map(function(x){return x.t;});
+    var more=examPool({t:ts,day:ex.day},quiz).filter(function(id){return own.indexOf(id)<0;});
+    return pickQids(hash(ex.id),own.concat(pickQids(hash(ex.id+':more'),more,10-own.length)),10);
+  }
   function examById(id){var m=/^(\d{4}-\d{2}-\d{2})-([a-z]+)$/.exec(String(id||''));if(!m)return null;var l=examsFor(m[1]);for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null;}
 
   /* ---- live rooms ---- */
@@ -143,7 +177,7 @@
   N.RIGHT=RIGHT;N.WRONG=WRONG;N.BONUS=BONUS;N.PU_PRICE=PU_PRICE;N.PU_MAX=PU_MAX;N.LIVE=LIVE;N.SUBJECTS=SUBJECTS;N.DAYS=DAYS;
   N.quizDelta=quizDelta;N.pickQids=pickQids;N.winner=winner;N.level=level;N.levelStart=levelStart;N.progress=progress;N.addPoints=addPoints;N.cleanName=cleanName;N.newCode=newCode;N.normCode=normCode;N.esc=esc;N.MAXP=MAXP;N.hash=hash;
   N.dayKey=dayKey;N.monthKey=monthKey;N.monthField=monthField;N.prevMonth=prevMonth;N.addDays=addDays;N.weekday=weekday;N.monthWrite=monthWrite;
-  N.weekStart=weekStart;N.weekWrite=weekWrite;N.weekPts=weekPts;N.examsFor=examsFor;N.weekOf=weekOf;N.examQids=examQids;N.examById=examById;N.roomTally=roomTally;N.roomWinner=roomWinner;N.roomPoints=roomPoints;N.puAvail=puAvail;
+  N.weekStart=weekStart;N.weekWrite=weekWrite;N.weekPts=weekPts;N.examsFor=examsFor;N.weekOf=weekOf;N.examQids=examQids;N.examPool=examPool;N.examUnits=examUnits;N.examById=examById;N.roomTally=roomTally;N.roomWinner=roomWinner;N.roomPoints=roomPoints;N.puAvail=puAvail;
   N.STREAK_MIN=STREAK_MIN;N.ECG_T=ECG_T;N.BADGES=BADGES;N.badgeById=badgeById;N.streakNow=streakNow;N.dayLeft=dayLeft;N.ecgCount=ecgCount;N.badgesFor=badgesFor;N.actWrite=actWrite;N.newBadges=newBadges;N.badgeRow=badgeRow;N.streakPill=streakPill;N.actLine=actLine;
   if(typeof document==='undefined'||!document.querySelector)return;
 
