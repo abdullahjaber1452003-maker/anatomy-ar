@@ -278,7 +278,7 @@ function showErr(e) {
 
 function signInCard(el, intro) {
   el.innerHTML = '<div class="qcard fcard fout">' + intro + '<button class="gbtn" type="button">' + G + "<span>تسجيل الدخول بغوغل</span></button>" +
-    '<p class="small">ما في داعي تسجّل لتستعمل الدروس والكويز. بس بتسجّل منحفظ اسمك وصورتك ونقاطك (<a href="privacy.html">الخصوصية</a>).</p></div>';
+    '<p class="small">بتسجّل بغوغل بيفتحلك كل الدروس والكويزات، ومنحفظ اسمك وصورتك ونقاطك (<a href="privacy.html">الخصوصية</a>).</p></div>';
   const b = el.querySelector(".gbtn");
   b.addEventListener("click", async () => {
     b.disabled = true;
@@ -297,7 +297,7 @@ function renderOut() {
     '<ul class="fsteps"><li>✅ كل جواب صح = <b>+٣ نقاط</b></li><li>❌ كل جواب غلط = <b>−٥</b> (النقاط ما بتنزل تحت الصفر)</li><li>🆙 النقاط بتطلّعك بالليفل: ليفل 2 بـ 15 نقطة، ليفل 3 بـ 60، ليفل 4 بـ 135…</li><li>🤝 زيد أصحابك بالكود وتحدّوا بعض ⚔️ أو لايف 🔴</li><li>📅 امتحان كل يوم والأوائل كل شهر 🏆</li></ul>' +
     (pendingAdd ? '<p class="finv">👋 صاحبك بعتلك كودو <b dir="ltr">' + esc(pendingAdd) + '</b>. سجّل دخول وبينضاف لأصحابك.</p>' : "") +
     '<button class="gbtn" id="gsign" type="button">' + G + "<span>تسجيل الدخول بغوغل</span></button>" +
-    '<p class="small">ما في داعي تسجّل لتستعمل الموقع، الدروس والكويز شغّالين متل ما هنّي. بس بتسجّل، منحفظ اسمك وصورتك ونقاطك تا يشوفوك أصحابك (<a href="privacy.html">الخصوصية</a>).</p>' +
+    '<p class="small">بتسجّل بغوغل بيفتحلك كل الدروس والكويزات، ومنحفظ اسمك وصورتك ونقاطك تا يشوفوك أصحابك (<a href="privacy.html">الخصوصية</a>).</p>' +
     "</div>";
   const b = document.getElementById("gsign");
   b.addEventListener("click", async () => {

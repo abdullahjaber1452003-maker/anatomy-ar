@@ -483,3 +483,30 @@ details.hmist>summary::after{content:" ▾";color:var(--mut)}details.hmist[open]
 .pchk input{margin-top:6px;flex:0 0 auto;width:18px;height:18px}
 .ptotal:empty{display:none}
 .pmodes{margin:4px 0 8px}
+
+/* 🔒 sign-in gate (assets/gate.js, Oct 26) — everything keyed on html.gl-lock; signed-in visitors see no change */
+.glk-card{display:none}
+html.gl-lock .glk-card{display:block;margin:14px 0;padding:16px 14px;border-radius:16px;background:linear-gradient(180deg,#fff7ed,#fff);border:1.5px solid #fdba74;text-align:center;box-shadow:0 6px 18px rgba(234,88,12,.12)}
+html.gl-lock .glk-card .glk-h{font-weight:800;font-size:1.05rem;margin:0 0 6px}
+html.gl-lock .glk-card .small{margin:4px 0 10px}
+html.gl-lock .glk-card .gbtn{margin:4px auto;max-width:100%}
+html.gl-lock .glk-card .glk-err{color:#b91c1c;margin-top:8px}
+html.gl-lock .glk-ping{animation:glkping .9s ease 2}
+@keyframes glkping{50%{box-shadow:0 0 0 6px rgba(234,88,12,.35)}}
+html.gl-lock .glk-x{display:none!important}
+html.gl-lock .glk-tz{max-height:110px;overflow:hidden;filter:blur(4px);opacity:.75;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)}
+html.gl-lock details.glk-t>summary{opacity:.72}
+html.gl-lock details.glk-t>summary .t b::after{content:" 🔒";font-size:.9em}
+html.gl-lock details.glk-t>:not(summary){display:none!important}
+html.gl-lock .glk-v{position:relative;filter:blur(5px);pointer-events:auto;user-select:none}
+html.gl-lock .glk-v *{pointer-events:none!important}
+html.gl-lock .flowbtn::after{content:" 🔒"}
+/* quizzes: nothing to answer while signed out */
+html.gl-lock #qsets,html.gl-lock .pmodes,html.gl-lock #pmode,html.gl-lock #quiz,html.gl-lock #weak[data-manual],html.gl-lock .psec>:not(h2):not(.glk-card){display:none!important}
+html.gl-lock .psec .glk-card{margin-top:8px}
+html.gl-lock .glk-card .glk-or{margin:2px 0;color:var(--mut)}
+html.gl-lock .glk-card .glk-ad{min-height:44px;font-size:15px;font-weight:700}
+html.gl-lock .glk-card .glk-adn{margin:6px 0 0;color:var(--mut)}
+.glk-adgate .tlink{background:none;border:0;font:inherit;color:var(--mut);text-decoration:underline;cursor:pointer;padding:6px}
+/* small 🔒 on locked items in the nav sheets and the home cards */
+html.gl-out .gsheet a.gi[href^="cardio.html"] .git b::after,html.gl-out .gsheet a.gi[href^="neuro.html"] .git b::after,html.gl-out .gsheet a.gi[href^="henderson.html"] .git b::after,html.gl-out .gsheet a.gi[href^="law.html"] .git b::after,html.gl-out .gsheet a.gi[href^="3d.html"] .git b::after,html.gl-out .gsheet a.gi[href^="quiz.html"] .git b::after,html.gl-out .gsheet a.gi[href^="exams.html"] .git b::after,html.gl-out .gsheet a.gi[href^="live.html"] .git b::after,html.gl-out .gsheet a.gi[href^="classes.html#cdq"] .git b::after,html.gl-out .hg a.chip[href^="cardio.html"]::after,html.gl-out .hg a.chip[href^="neuro.html"]::after,html.gl-out .hg a.chip[href^="henderson.html"]::after,html.gl-out .hg a.chip[href^="law.html"]::after,html.gl-out .hg a.chip[href^="3d.html"]::after,html.gl-out .hg a.chip[href^="quiz.html"]::after,html.gl-out .hg a.chip[href^="exams.html"]::after,html.gl-out .hg a.chip[href^="live.html"]::after,html.gl-out .hg a.chip[href^="classes.html#cdq"]::after{content:" 🔒";font-size:.85em}

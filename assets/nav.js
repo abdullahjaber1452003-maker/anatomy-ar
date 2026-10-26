@@ -178,7 +178,7 @@
     if (w.Nursin && w.Nursin.loadFB) w.Nursin.loadFB();               // Firebase starts loading now, so the tap opens Google's window right away
     var c = shell(1, total, '<h2 id="obt">👋 أهلا فيك بـ Nursin!</h2><p>سجّل دخول بغوغل تا تنحفظ نقاطك وتطلع بالليفل، وتحكي مع أصحابك وصفّك.</p>' +
       '<div class="obbtns"><button class="gbtn obgo" type="button">' + GSVG + '<span>سجّل دخول بغوغل</span></button><button class="oblater" type="button">بعدين</button></div>' +
-      '<p class="small obnote">الدروس والكويز شغّالين بلا تسجيل. <a href="privacy.html">الخصوصية</a></p>');
+      '<p class="small obnote">الدروس كاملة والكويزات بتفتح بس تسجّل. <a href="privacy.html">الخصوصية</a></p>');
     var go = c.querySelector(".obgo");
     go.addEventListener("click", async function () {
       go.disabled = true; say("");
