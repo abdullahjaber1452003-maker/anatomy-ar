@@ -129,7 +129,7 @@ export const DEL_SUBS = ["weeks", "starts", "results", "dq", "members"];   // me
 export function chunks(a, n = 200) { const out = []; for (let i = 0; i < (a || []).length; i += n) out.push(a.slice(i, i + n)); return out; }
 const L = "abc";
 function topicName(t) { return (window.QTOP || {})[t] || t; }
-function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : t === "mgmt" ? "mgmt.html" : "cardio.html"; }
+function lessonPage(t) { const G = window.QGROUPS || {}; return (G.neuro || []).includes(t) ? "neuro.html" : t === "henderson" ? "henderson.html" : t === "law" ? "law.html" : t === "mgmt" ? "mgmt.html" : t === "quality" ? "quality.html" : t === "pharma" ? "pharma.html" : "cardio.html"; }
 function qById(id) { return (window.QUIZ || []).find(q => q.id === id); }
 function params() { return new URLSearchParams(location.search); }
 function failMsg(e) { return denied(e) ? NOT_READY : "⚠️ ما زبط، تأكّد من الإنترنت وجرّب كمان مرّة."; }

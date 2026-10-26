@@ -25,7 +25,7 @@
 
   /* ---------- ✍️ عبّي الفراغ ---------- */
   /* المواد: كل موضوع (QTOP) بينتمي لمادة من QGROUPS؛ «heart»/«brain» = 🧊 التشريح لحالن */
-  var SUBJ = [["cardio", "❤️", "القلب"], ["neuro", "🧠", "الأعصاب"], ["henderson", "📋", "Henderson"], ["anatomy", "🧊", "التشريح"], ["law", "⚖️", "القانون"], ["mgmt", "🏢", "الإدارة"]], MIX_N = 15;
+  var SUBJ = [["cardio", "❤️", "القلب"], ["neuro", "🧠", "الأعصاب"], ["henderson", "📋", "Henderson"], ["anatomy", "🧊", "التشريح"], ["law", "⚖️", "القانون"], ["mgmt", "🏢", "الإدارة"], ["quality", "✅", "الجودة"], ["pharma", "💊", "الأدوية"]], MIX_N = 15;
   function subjOf(t) {
     if (t === "heart" || t === "brain") return "anatomy";
     var G = w.QGROUPS || {}; for (var k in G) if (G.hasOwnProperty(k) && (G[k] || []).indexOf(t) >= 0) return k;

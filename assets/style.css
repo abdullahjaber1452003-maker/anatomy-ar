@@ -572,3 +572,26 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 .obx2.top{background:var(--pri);color:#fff;border-color:var(--pri)}.obx2.top small{color:#d1fae5}
 .obx2.dir{background:#e6f4f2;border-color:var(--pri)}.obx2.nur{border-color:#f59e0b;background:#fffbeb}.obx2.fin{border-color:#2563eb;background:#eff6ff}
 .orel{display:inline-block;margin-right:6px;font-size:12.5px;color:var(--acc);font-weight:700;vertical-align:middle}
+
+/* ✅ الجودة والاعتماد + 💊 الأدوية (Oct 26) */
+.prose .qlab{margin:12px 0 2px;color:var(--pri2)}
+.mlist.sub{list-style:circle;padding-right:38px}
+.phsearch{margin:10px 0 4px}
+.phsearch input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.phsearch input:focus{border-color:var(--pri);outline:none}
+.phsearch p{margin:4px 2px 0}
+.phchips .chip{font-size:13px}
+.phn{color:var(--mut);font-weight:400;font-size:.9em}
+.drugs{display:grid;gap:10px}
+.drug{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;min-width:0;overflow-wrap:anywhere}
+.drug .dh h3{margin:0;border:0;padding:0;font-size:17px;text-align:left;color:var(--pri2)}
+.drug .dsub{margin:2px 0 0;font-size:13px;color:var(--mut);text-align:left}
+.drug .dnote{font-size:14px;background:#f0fdfa;border-radius:8px;padding:6px 10px;margin:8px 0 0}
+.drug .dsec h4{font-size:14px;margin:10px 0 2px;color:#7c2d12}
+.drug .dsec h4 small{color:var(--mut);font-weight:400}
+.drug .dl{margin:0;padding-right:18px;font-size:14px}
+.drug .dl li{margin:3px 0}
+.drug .dfr{display:block;direction:ltr;text-align:right;unicode-bidi:plaintext;font-weight:600}
+.drug .dar{display:block;color:#334155}
+.drug .dpg{margin:8px 0 0;text-align:left}
+@media(min-width:860px){.drugs{grid-template-columns:1fr 1fr}}
