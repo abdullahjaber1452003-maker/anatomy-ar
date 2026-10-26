@@ -160,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261026d/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261026e/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -313,7 +313,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261026d') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261026e') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -360,7 +360,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261026d'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261026e'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -591,7 +591,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261026d" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261026e" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
@@ -633,7 +633,7 @@ test('💬 chats (Oct 25): friends 1:1 + groups ≤ 15, text ≤ 500, members-on
 
 test('🩸 blood flow on the 3D heart (Oct 25): «مسار الدم» particles blue → red at the lungs, Ar–Fr step captions, small/big circulation, play/pause + step', () => {
   const f = read('assets/flow.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/flow.js?v=20261026d') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
+  assert.ok(h.indexOf('assets/flow.js?v=20261026e') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
   assert.ok(v.includes("key==='heart'&&window.nursinFlow"), 'viewer hands the heart to the flow');
   assert.ok(f.includes('🩸 مسار الدم') && f.includes('التالي ▶') && f.includes('⏸ وقّف') && f.includes('▶ كمّل'), 'button, play/pause, next');
   const order = ['Veines caves','Oreillette droite','Valve tricuspide','Ventricule droit','Valve pulmonaire','Artère pulmonaire','Poumons','Veines pulmonaires','Oreillette gauche','Valve mitrale','Ventricule gauche','Valve aortique','Aorte','Organes'];
@@ -653,7 +653,7 @@ test('💧 liquid blood flow (Oct 25): flowing stream instead of dots on the 3D 
   assert.ok(f.includes('🐢 السرعة') && /min="0\.25" max="1\.5"/.test(f) && f.includes('spd=0.5') && f.includes('nursin_flow_speed'), 'speed 0.25×–1.5×, default 0.5×, remembered');
   assert.ok(f.includes('beat') && f.includes("'class':'fov fdyn'") && css.includes('.fdyn{will-change:transform}'), 'heartbeat pulse; moving layer kept apart so static vessels are not repainted');
   assert.ok(/@media \(min-width:860px\)\{[^@]*\.viewer\.flowon>\.fbody\{grid-column:2/.test(css), 'beside the heart on desktop, below on phones');
-  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261026d'), '3d.html mentions it, fresh cache tag');
+  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261026e'), '3d.html mentions it, fresh cache tag');
 });
 
 test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service worker, 📲 install, opt-in, worker ping, rules v8', () => {
@@ -667,7 +667,7 @@ test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service w
   for (const p of pages.concat('admin.html', 'chat.html')) {
     const h = read(p);
     assert.ok(h.includes('<link rel="manifest" href="/manifest.json">') && h.includes('<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'), p + ' manifest + apple icon');
-    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261026d" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
+    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261026e" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
   }
   const sw = read('sw.js');
   assert.ok(sw.includes('"push"') && sw.includes('showNotification') && sw.includes('"notificationclick"') && sw.includes('/chat.html?c='), 'push + tap opens the chat');
@@ -706,14 +706,14 @@ test('📢 broadcast notifications (Oct 25): owner-only «إشعار للكل» 
   assert.ok(r.includes('allow list: if isAnnOwner();') && r.includes("affectedKeys().hasOnly(['d'])") && r.includes('addedKeys().size() == 0') && r.includes('changedKeys().size() == 0'), 'v9: owner lists + only removes devices');
   assert.ok(r.includes("hasOnly(['d', 'updatedAt'])") && r.includes('match /chats/{cid}') && r.includes('match /announcements/{id}'), 'v9 keeps v8');
   assert.ok(read('privacy.html').includes('يزيد شي جديد'), 'privacy mentions news notifications');
-  assert.ok(read('index.html').includes('assets/pwa.js?v=20261026d'), 'fresh cache tag');
+  assert.ok(read('index.html').includes('assets/pwa.js?v=20261026e'), 'fresh cache tag');
 });
 
 test('🧭 tidy navigation + 👋 welcome card (Oct 26): five groups, every page reachable, sign-in then notifications once per device, «بعدين» on each step, no ads inside', () => {
   const all = fs.readdirSync(SITE).filter(f => f.endsWith('.html'));
   for (const p of all) {
     const h = read(p);
-    assert.equal((h.match(/<script src="assets\/nav\.js\?v=20261026d" defer><\/script>/g) || []).length, 1, p + ' nav.js once with cache tag');
+    assert.equal((h.match(/<script src="assets\/nav\.js\?v=20261026e" defer><\/script>/g) || []).length, 1, p + ' nav.js once with cache tag');
     assert.ok(h.indexOf('assets/account.js?v=') < h.indexOf('assets/nav.js?v='), p + ' nav.js after account.js (uses Nursin.loadFB)');
     assert.ok(!h.includes('20261025l'), p + ' old cache tag gone');
   }
@@ -765,7 +765,7 @@ test('🧭 tidy navigation + 👋 welcome card (Oct 26): five groups, every page
 test('⚖️ law lessons (Oct 26): lessons from a data list (his notes only), 4-grade table, licence conditions, «قريباً» placeholder, 10 law quiz questions, listed in nav/home/quiz/live/tutor/admin', () => {
   const h = read('law.html');
   assert.ok(h.includes('id="lawlessons"') && h.includes('data-practice="class"') && h.includes('data-practice="blanks" data-t="law"') && h.includes('quiz.html?t=law'));
-  for (const s of ['law-data.js', 'blanks-data.js', 'law.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261026d'), s);
+  for (const s of ['law-data.js', 'blanks-data.js', 'law.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261026e'), s);
   assert.ok(h.indexOf('assets/law.js') < h.indexOf('assets/practice.js'), 'lessons render before practice mounts');
   assert.ok(h.indexOf('class="adx adx-box"') > h.indexOf('id="blanks"') && h.indexOf('class="adx adx-top"') < h.indexOf('id="lessons"'), 'ads only above/below, none inside lessons or quizzes');
   const w = {}; new Function('window', read('assets/law-data.js'))(w);
@@ -818,7 +818,7 @@ test('✍️ «عبّي الفراغ» + 📝 «كويز متل الصف» (Oct 
   assert.ok(js.includes('summer-forest-fd40') && js.includes('FIX_MAX'), '✨ صحّحلي uses the existing tutor worker, small daily cap');
   assert.ok(!/adsbygoogle|adx/.test(js), 'no ads inside practice');
   const q = read('quiz.html'), qs = q.indexOf('id="qsets"'), pm = q.indexOf('data-pm="blanks"');
-  assert.ok(pm > -1 && q.includes('id="pmode"') && q.includes('assets/practice.js?v=20261026d'));
+  assert.ok(pm > -1 && q.includes('id="pmode"') && q.includes('assets/practice.js?v=20261026e'));
   const qsEnd = q.indexOf('<div id="quiz"'); assert.ok(pm > qsEnd - 400 && !q.slice(qs, q.indexOf('class="chips pmodes"')).includes('data-pm'), 'mode chips are outside #qsets');
   assert.ok(read('assets/nav.js').includes('quiz.html#blanks') && js.includes('"#blanks"'));
 });
@@ -827,4 +827,45 @@ test('law wording: «الشهادة المتوسطة» (his page 4), never «ا�
   for (const f of ['assets/law-data.js', 'assets/quiz-data.js', 'assets/blanks-data.js']) assert.ok(!read(f).includes('الإفادة'), f);
   const l = read('assets/law-data.js');
   assert.ok(l.includes('الشهادة المتوسطة الرسمية') && l.includes('الشهادة المتوسطة اللبنانية'));
+});
+
+test('🔒 sign-in gate (Oct 26): lessons show a preview then a lock card, quizzes fully locked for signed-out visitors, 📺 ad unlock for one page/hour, unlock on sign-in without reload', () => {
+  const g = read('assets/gate.js'), css = read('assets/style.css');
+  for (const p of pages.concat(['admin.html', 'chat.html'])) {
+    const h = read(p), head = h.slice(0, h.indexOf('</head>'));
+    assert.ok(head.includes('<script src="assets/gate.js?v=20261026e"></script>'), p + ': gate.js in <head>, synchronous (locked before first paint)');
+  }
+  for (const p of ['cardio.html', 'neuro.html', 'henderson.html', 'law.html', '3d.html']) assert.ok(g.includes('"' + p + '": 1'), p + ' is a lesson page');
+  assert.ok(g.includes('"quiz.html": 1'));
+  assert.ok(g.includes('🔒 الدرس مقفول — سجّل دخول بغوغل لتكمّل') && g.includes('🔒 الكويز مقفول'));
+  assert.ok(g.includes('nursin:auth') && g.includes('nursin:me') && g.includes('nursin_me_v1'), 'follows the existing auth state');
+  assert.ok(g.includes('Nursin.loadFB') && g.includes('NursinFB.signIn'), 'Google sign-in through fb.js');
+  assert.ok(g.includes('.adx,.ad-slot'), 'ad slots are never hidden or moved by the gate');
+  assert.ok(!/adsbygoogle|googlesyndication/.test(g), 'no AdSense in the gate');
+  // 📺 ad unlock: Adsterra 300x250, labelled, 15 s timer, sessionStorage per page for 1 hour, unlock even if the ad fails
+  assert.ok(g.includes('📺 شوف إعلان وافتح') && g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('bauval.org') && g.includes('<small class="g3lab">إعلان</small>'));
+  assert.ok(/AD_WAIT = 15/.test(g) && /AD_HOURS = 1/.test(g) && g.includes('sessionStorage') && g.includes('m[page] = now + AD_HOURS * 36e5'));
+  assert.ok(g.includes('the countdown runs even when the ad is blocked') && !/addEventListener\("blur"|onclick.*iframe/.test(g), 'reward by timer, never by clicking the ad');
+  // CSS: everything keyed on html classes, so signing in unlocks at once and signed-in visitors see nothing new
+  assert.ok(css.includes('.glk-card{display:none}') && css.includes('html.gl-lock .glk-x{display:none!important}') && css.includes('html.gl-lock details.glk-t>:not(summary){display:none!important}'));
+  for (const s of ['#qsets', '.pmodes', '#pmode', '#quiz', '#weak[data-manual]', '.psec>:not(h2):not(.glk-card)']) assert.ok(css.includes('html.gl-lock ' + s), 'quiz part hidden: ' + s);
+  assert.ok(css.includes('html.gl-out .gsheet a.gi[href^="quiz.html"] .git b::after') && css.includes('html.gl-out .hg a.chip[href^="cardio.html"]::after'), '🔒 in nav sheets + home cards');
+  // logic: run gate.js with a fake DOM, signed out → locked; auth event → unlocked; ad unlock → page open, nav still 🔒
+  function run(me, ad) {
+    const cls = new Set(), L = {}, ev = {}, ss = {};
+    if (me) L.nursin_me_v1 = JSON.stringify({ name: 'x' });
+    if (ad) ss.nursin_adunlock_v1 = JSON.stringify({ 'cardio.html': Date.now() + 1e6 });
+    const html = { classList: { toggle: (c, on) => on ? cls.add(c) : cls.delete(c), contains: c => cls.has(c), add: c => cls.add(c), remove: c => cls.delete(c) } };
+    const doc = { documentElement: html, readyState: 'loading', addEventListener: (n, f) => { (ev[n] = ev[n] || []).push(f); }, getElementById: () => null, querySelector: () => null };
+    const store = o => ({ getItem: k => o[k] || null, setItem: (k, v) => { o[k] = v; } });
+    new Function('window', 'document', 'location', 'localStorage', 'sessionStorage', 'setTimeout', 'clearTimeout', g)({ Nursin: {} }, doc, { pathname: '/cardio.html' }, store(L), store(ss), () => 0, () => 0);
+    return { cls, fire: (n, detail) => (ev[n] || []).forEach(f => f({ detail })) };
+  }
+  const out = run(false); assert.ok(out.cls.has('gl-out') && out.cls.has('gl-lock'), 'signed out: locked');
+  out.fire('nursin:auth', { signedIn: true }); assert.ok(!out.cls.has('gl-out') && !out.cls.has('gl-lock'), 'sign-in unlocks without reload');
+  const inn = run(true); assert.ok(!inn.cls.has('gl-out') && !inn.cls.has('gl-lock'), 'signed in: no change');
+  inn.fire('nursin:auth', { signedIn: false }); assert.ok(inn.cls.has('gl-lock'), 'stale local sign-in hint: locks once Firebase says signed out');
+  const ad = run(false, true); assert.ok(ad.cls.has('gl-out') && !ad.cls.has('gl-lock'), 'ad unlock opens this page, nav still shows 🔒');
+  // texts that promised free access are gone
+  assert.ok(!read('assets/fb.js').includes('ما في داعي تسجّل') && !read('assets/nav.js').includes('شغّالين بلا تسجيل'));
 });
