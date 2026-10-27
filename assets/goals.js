@@ -67,12 +67,89 @@
     // 📖 new lessons (assets/lessons.js «added» date): on the day they're added and the next day, on top of the list
     return (o.newL || []).concat(g);
   }
-  if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build }; return; }   // node tests
+  if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build, gsMerge: gsMerge, gsApply: gsApply }; return; }   // node tests
   function goals() {
     var L = live && live.dk === today() ? live : {};
-    var L2 = w.NursinLessons, nl = [];
+    var L2 = w.NursinLessons, nl = [], R = gsToday(), D = {}, st = studyToday(), k;
     try { nl = L2 ? L2.goals(today(), L2.readMap()) : []; } catch (e) {}
-    return build({ weak: weakCount(), weakRan: weakRanToday(), exams: todayExams(), st: L.st, classes: L.classes, done: state().done, pomo: studyToday().p, game: studyToday().g, newL: nl });
+    for (k in R.done) D[k] = R.done[k];
+    var loc = state().done; for (k in loc) D[k] = loc[k];
+    var list = build({ weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), newL: nl });
+    return gsApply(list, R);
+  }
+
+  /* ☁️ same account, same goals on every device (Abdullah, Oct 27 1:46 PM: iMac showed 5 done, phone 4).
+     Signed in, today's goal state also lives in the student's own users/{uid} doc as goalsSync {d, done{k:ts}, p, g, wr, rows[], at}
+     (rules v10 let the owner merge any field; points/name stay). Pulled on sign-in, page focus/visible and when the sheet opens;
+     merged with this device (same day: union of done + max of every counter + union of rows; newer day wins) and written back
+     (read → merge → write, debounced, only when this device has something new). Signed out / offline: localStorage as before. */
+  var SK = "nursin_goals_sync_v1", SWK = "nursin_goals_sync_w_v1", gsAt = 0, gsT = 0;
+  function gsMerge(a, b) {
+    var ok = function (s) { return s && typeof s === "object" && typeof s.d === "string" && s.d; };
+    if (!ok(a)) return ok(b) ? gsMerge(b, b) : null;
+    if (!ok(b)) b = a;
+    if (a.d !== b.d) return gsMerge(a.d > b.d ? a : b, a.d > b.d ? a : b);
+    var o = { d: a.d, done: {}, p: Math.max(a.p | 0, b.p | 0), g: Math.max(a.g | 0, b.g | 0), wr: Math.max(+a.wr || 0, +b.wr || 0), rows: [] }, seen = {};
+    [a, b].forEach(function (s) {
+      var dn = s.done && typeof s.done === "object" ? s.done : {};
+      for (var k in dn) { var v = +dn[k] || 1; o.done[k] = o.done[k] ? Math.min(o.done[k], v) : v; }
+      (Array.isArray(s.rows) ? s.rows : []).forEach(function (r) { if (r && r.k && !seen[r.k]) { seen[r.k] = 1; o.rows.push({ k: cut(r.k, 80), e: cut(r.e, 8), n: cut(r.n, 80), s: cut(r.s, 80), h: cut(r.h, 160) }); } });
+    });
+    var dk = Object.keys(o.done).sort(), dd = {};
+    dk.forEach(function (k) { dd[k] = o.done[k]; }); o.done = dd;          // one canonical order → equal states compare equal
+    o.rows.sort(function (x, y) { return x.k < y.k ? -1 : x.k > y.k ? 1 : 0; }); o.rows = o.rows.slice(0, 20);
+    return o;
+  }
+  // the merged remote state for today (only this account's)
+  function gsToday() {
+    var A = fbA(), x = lsGet(SK), e = { done: {}, rows: [], p: 0, g: 0, wr: 0 };
+    if (!A || !x || x.u !== A.user.uid || !x.s || x.s.d !== today()) return e;
+    return x.s;
+  }
+  // rows another device has (e.g. 🎯 weak points there) join this list, and anything done there is done here
+  function gsApply(list, R) {
+    var have = {};
+    list.forEach(function (x) { have[x.k] = 1; if (R.done && R.done[x.k]) x.done = true; });
+    (R.rows || []).forEach(function (r) { if (r && r.k && !have[r.k]) { have[r.k] = 1; list.push({ k: r.k, e: r.e || "✅", n: r.n || "", s: r.s || "", href: r.h || "index.html", done: !!(R.done && R.done[r.k]) }); } });
+    return list;
+  }
+  function gsSnap() {
+    var list = goals(), dn = {}, loc = state().done, st = studyToday(), R = gsToday(), now = Date.now(), k;
+    for (k in R.done) dn[k] = R.done[k];
+    for (k in loc) dn[k] = Math.min(dn[k] || loc[k], loc[k]);
+    list.forEach(function (x) { if (x.done && !dn[x.k]) dn[x.k] = now; });
+    return gsMerge({ d: today(), done: dn, p: Math.max(st.p, R.p | 0), g: Math.max(st.g, R.g | 0), wr: weakRanToday() ? (R.wr || now) : (R.wr || 0),
+      rows: list.slice(0, 20).map(function (x) { return { k: x.k, e: x.e, n: x.n, s: x.s, h: x.href }; }) }, null);
+  }
+  function gsKeep(A, s) { lsSet(SK, { u: A.user.uid, s: s }); }
+  function gsPull(force) {
+    var A = fbA(); if (!A || (!force && Date.now() - gsAt < 15e3)) return;
+    gsAt = Date.now();
+    A.fs.getDoc(A.fs.doc(A.db, "users", A.user.uid)).then(function (s) {
+      var r = s.exists() ? s.data().goalsSync : null, cur = lsGet(SK);
+      var m = gsMerge(cur && cur.u === A.user.uid ? cur.s : null, r);
+      if (m) gsKeep(A, m);
+      paint(); fill(); gsPush();
+    }, function () { gsAt = 0; });
+  }
+  function gsPush(now) {
+    if (!fbA()) return;
+    clearTimeout(gsT);
+    gsT = setTimeout(function () {
+      var A = fbA(); if (!A) return;
+      var me = gsSnap(), j = JSON.stringify(me), last = lsGet(SWK);
+      if (last && last.u === A.user.uid && last.j === j) return;              // nothing new on this device
+      var ref = A.fs.doc(A.db, "users", A.user.uid);
+      A.fs.getDoc(ref).then(function (s) {
+        var r = s.exists() ? s.data().goalsSync : null, m = gsMerge(me, r);
+        gsKeep(A, m);
+        var same = r && JSON.stringify(gsMerge(r, null)) === JSON.stringify(m);
+        var done = function () { lsSet(SWK, { u: A.user.uid, j: j }); };
+        if (same) { done(); return; }
+        m.at = Date.now();
+        return A.fs.setDoc(ref, { goalsSync: m }, { merge: true }).then(done);
+      }).then(function () { paint(); fill(); }, function () {});
+    }, now ? 0 : 2500);
   }
 
   /* exam status + classes from Firebase (the same reads the tutor makes), cached 10 min per tab */
@@ -195,6 +272,7 @@
     }
     pill.setAttribute("aria-expanded", "true");
     if (signed()) fetchLive(!live || Date.now() - live.at > 5e3);   // re-read the real answers every time the sheet opens
+    gsPull();
     if (signed() && fbA()) { syncFlag(); if (w.NursinPWA && w.NursinPWA.state) w.NursinPWA.state(fbA()).then(function (s) { pst = s; }, function () {}); }
   }
   function fill() {
@@ -202,7 +280,7 @@
     sheet.innerHTML = '<div class="gsh"><b>✅ أهدافك اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { close(); pill.focus(); });
   }
-  function refresh() { paint(); fill(); mirror(); }
+  function refresh() { paint(); fill(); mirror(); gsPush(); }
   function goTo(e) {
     if (e.target.closest && e.target.closest(".gopsw")) { e.preventDefault(); toggle(); return; }
     var a = e.target.closest && e.target.closest("a.goi"); if (!a) return;
@@ -234,9 +312,10 @@
   });
   // classes.html: «سؤال اليوم» answered / class exam submitted (or opened already done)
   d.addEventListener("nursin:goal-done", function (e) { var k = e.detail && e.detail.k; if (k) { mark(k); stale(); } });
-  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible" && signed() && pill && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
+  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible") gsPull(); if (d.visibilityState === "visible" && signed() && pill && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
+  w.addEventListener("focus", function () { gsPull(); });
   d.addEventListener("nursin:gate", function () { refresh(); if (signed()) fetchLive(); });
-  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) { fetchLive(); setTimeout(syncFlag, 1500); } else { synced = ""; refresh(); } });
+  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) { fetchLive(); setTimeout(syncFlag, 1500); setTimeout(function () { gsPull(true); }, 1200); } else { synced = ""; refresh(); } });
   d.addEventListener("nursin:me", paint);
   d.addEventListener("nursin:study", refresh);         // a ⏱️ round / 🎮 round just counted (study.js)
   d.addEventListener("nursin:lesson-read", refresh);   // a 📖 new lesson was read (lessons.js)
@@ -245,7 +324,7 @@
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
 
-  w.NursinGoals = { build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
+  w.NursinGoals = { gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount); else mount();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
