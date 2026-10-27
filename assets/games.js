@@ -17,10 +17,11 @@
                          player's pick in red and the right one in green; ٦٠ ثانية / عبّي بسرعة / سلّم المراحل pause their clock
                          while it shows (≈2 s, 3.5 s with an explanation, or tap «كمّل»); وصّل / الذاكرة flash the right partner of
                          the wrong match. Each round ends with «📋 أخطاءك» (question/term → your answer → right answer) and
-                         «🎯 راجع أخطاءك», which replays only those items: untimed, no points, no best score, not a game round. */
+                         «🎯 راجع أخطاءك», which replays only those items: untimed, no points, no best score, not a game round.
+   🚑 ناوبة بالطوارئ   — added Oct 27 2026 (Abdullah): ER nursing sim from his réa notes (assets/ersim-data.js), see erGame below. */
 (function (w, d) {
   var BEST = "nursin_games_v1", ROUND_MAX = 20;
-  var GN = { match: "🧩 وصّل", tf: "⚡ تحدّي ٦٠ ثانية", mem: "🃏 لعبة الذاكرة", fill: "⌨️ عبّي بسرعة", stage: "🪜 سلّم المراحل" };
+  var GN = { match: "🧩 وصّل", tf: "⚡ تحدّي ٦٠ ثانية", mem: "🃏 لعبة الذاكرة", fill: "⌨️ عبّي بسرعة", stage: "🪜 سلّم المراحل", er: "🚑 ناوبة بالطوارئ" };
   /* 🎚️ سهل / وسط / صعب (Abdullah, Oct 26 7:42 PM: harder, more varied): وصّل 5/7/9 pairs · ٦٠ ثانية 60/45/30 s (صعب: −1 لكل غلط)
      · الذاكرة 6/8/10 pairs · عبّي بسرعة: سهل/وسط = اختيارات لما الجملة إلها اختيارات، صعب = كلّو كتابة. Points ×1 / ×1.5 / ×2
      (still ≤ ROUND_MAX a round and GAME_CAP a day). */
@@ -95,7 +96,7 @@
   function fillOk(b, typed) { var n = fnorm(typed); return !!n && !!accepts(b)[n]; }
   // 🪜 multiple-choice questions of a subject (skip «نفس …» ones that lean on the question before)
   function mcq(s) { return quiz().filter(function (q) { return inS(q, s) && q.o && q.o.length >= 2 && q.a >= 0 && q.a < q.o.length && !/^نفس /.test(strip(q.q)); }); }
-  function enough(g, s) { return g === "stage" ? mcq(s).length >= 8 : g === "tf" ? tf(s).length >= 6 : g === "fill" ? blanks(s).length >= 4 : (g === "mem" ? memPairs(s) : pairs(s)).length >= (g === "mem" ? 6 : 5); }
+  function enough(g, s) { return g === "er" ? erCases().length > 0 : g === "stage" ? mcq(s).length >= 8 : g === "tf" ? tf(s).length >= 6 : g === "fill" ? blanks(s).length >= 4 : (g === "mem" ? memPairs(s) : pairs(s)).length >= (g === "mem" ? 6 : 5); }
 
   /* ---- shared bits ---- */
   var sel = "all", area = null, timer = 0;
@@ -112,7 +113,7 @@
     if (S) { var o = S.activity("game", pts, GN[g].replace(/^\S+\s/, ""), d.getElementById("gpts")); if (o && o.paid < pts && w.Nursin && w.Nursin.me) d.getElementById("gpts").insertAdjacentHTML("afterend", '<p class="small">وصلت لحدّ نقاط الألعاب اليوم (' + S.GAME_CAP + ")، بس بتضل تلعب وتتمرّن 💪</p>"); }
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
-  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
+  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (g === "er" ? "حالات من درس الـ réa" : sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : g === "er" ? LV[lv].n + " · " + (lv + 2) + " خطوات" : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
 
   /* ---- ❌/✅ instant correction + 📋 this round's mistakes + 🎯 replay (no points) ---- */
   var miss = [], lastMiss = [], lastG = "", replaying = false, FB_MS = 2000, FB_X_MS = 3500;
@@ -365,7 +366,7 @@
     clearInterval(timer);
     if (!enough(g, sel)) { area.hidden = false; area.innerHTML = head(g) + "<p>ما في محتوى كافي لهاللعبة بهالمادة بعد. جرّب «🎲 كل المواد» أو مادة تانية.</p>"; return; }
     miss = []; replaying = false; lastG = g;
-    area.hidden = false; (g === "match" ? match : g === "tf" ? tfGame : g === "fill" ? fillGame : g === "stage" ? stageGame : mem)();
+    area.hidden = false; (g === "match" ? match : g === "tf" ? tfGame : g === "fill" ? fillGame : g === "stage" ? stageGame : g === "er" ? erGame : mem)();
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
   function init() {
@@ -388,7 +389,84 @@
       start(t.getAttribute("data-g") || t.getAttribute("data-again"));
     });
   }
-  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, fbLine: fbLine, missHtml: missHtml, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX };
+
+  /* ---- 🚑 ناوبة بالطوارئ (Abdullah, Oct 27 2026 12:25 AM; cases from his réa notebook — assets/ersim-data.js): the player is the
+     nurse; an ambulance brings a patient (arrival card: age/history, symptoms, constantes, labs/ECG) → 3/4/5 decision steps
+     (سهل/وسط/صعب), each 3 options with one best. A patient status bar reacts to every choice (📈/📉); a wrong pick shows the usual
+     «❌ إنت اخترت … ✅ الصح …» + the note's one-line explanation (tap «كمّل»). سهل = 💡 hint, no clock · وسط = 40 s a step · صعب = 25 s.
+     Score = steps right; points ×1/×1.5/×2 through the shared finish() (≤ ROUND_MAX a round, GAME_CAP a day, counts the 🎮 goal);
+     end = «📋 أخطاءك» + «🎯 راجع أخطاءك». No ads in here. ---- */
+  var ER = { secs: [0, 0, 40, 25], hp0: 55, up: 15, down: 20 };
+  function erCases() { return w.ERSIM || []; }
+  function erSteps(c, l) { return (c.steps || []).filter(function (s) { return (s.lv || 1) <= (l || lv); }); }
+  function fr(s) {   // escape, and keep French/medical runs left-to-right inside the Arabic line
+    return String(s == null ? "" : s).split(/([A-Za-zÀ-ÿŒœ][A-Za-zÀ-ÿŒœ0-9+\-'’ .\/]*[A-Za-zÀ-ÿŒœ0-9+\-]|[A-Za-zÀ-ÿŒœ])/).map(function (p, k) { return k % 2 ? '<bdi dir="ltr" lang="fr">' + esc(p) + "</bdi>" : esc(p); }).join("");
+  }
+  function erv(s) { return '<span class="erv" dir="auto">' + esc(s) + "</span>"; }
+  function erState(hp) { return hp >= 70 ? ["🟢", "مستقر، عم يتحسّن", "ok"] : hp >= 40 ? ["🟡", "مش مستقر", "mid"] : ["🔴", "عم يتدهور", "bad"]; }
+  function erGame() {
+    var cs = erCases();
+    area.innerHTML = head("er") + '<p class="small">🚑 وصلت سيارة إسعاف! اختار الحالة، أو خلّيها عشوائية. إنت الممرّض: قيّم واختار الخطوة الصح.</p><div class="erpick">' +
+      cs.map(function (c, i) { return '<button type="button" class="btn erc" data-erc="' + i + '"><span>' + c.ic + "</span> " + fr(c.t) + "</button>"; }).join("") +
+      '<button type="button" class="btn on erc" data-erc="-1">🎲 حالة عشوائية</button></div>';
+    area.querySelector(".erpick").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-erc]"); if (!b) return; var i = +b.getAttribute("data-erc");
+      erCase(cs[i >= 0 ? i : Math.floor(Math.random() * cs.length)]);
+    });
+  }
+  function erCase(c) {
+    var steps = erSteps(c), si = 0, ok = 0, hp = ER.hp0, lock = false, end = 0, T = ER.secs[lv] || 0;
+    function card() {
+      return '<div class="ercard"><p class="erwho">🚑 ' + fr(c.who) + "</p>" +
+        (c.sx && c.sx.length ? '<p><b>الأعراض:</b> ' + c.sx.map(erv).join(" ") + "</p>" : "") +
+        (c.vit && c.vit.length ? '<p><b><bdi dir="ltr" lang="fr">Constantes</bdi> (العلامات الحيوية):</b> ' + c.vit.map(erv).join(" ") + "</p>" : "") +
+        (c.lab ? '<div class="erlab">' + c.lab.split(" · ").map(function (x) { return '<div dir="auto">' + esc(x) + "</div>"; }).join("") + "</div>" : "") + "</div>";
+    }
+    function bar(delta) {
+      var s = erState(hp);
+      return '<div class="erst ' + s[2] + (delta ? (delta > 0 ? " up" : " dn") : "") + '" id="erst"><span>❤️ المريض: <b>' + s[0] + " " + s[1] + "</b>" + (delta ? (delta > 0 ? " 📈" : " 📉") : "") + '</span><div class="erbar"><i style="width:' + hp + '%"></i></div></div>';
+    }
+    function paintBar(delta) { var el = d.getElementById("erst"); if (el) el.outerHTML = bar(delta); }
+    function ask() {
+      var st = steps[si], order = shuffle(st.o.map(function (o, k) { return k; })); lock = false;
+      area.innerHTML = head("er", ' <span class="gsc">' + (si + 1) + "/" + steps.length + "</span>") + bar(0) + card() +
+        (T ? '<p class="small sinfo"><b id="gt" dir="ltr">' + T + '</b> ثانية</p><div class="stbar"><i id="stbar"></i></div>' : "") +
+        '<p class="sq">' + fr(st.q) + "</p>" + (lv === 1 && st.h ? '<p class="small erh">💡 ' + fr(st.h) + "</p>" : "") +
+        '<div id="eopts">' + order.map(function (k, j) { return '<button class="opt" type="button" data-eo="' + k + '"><span class="l" dir="ltr">' + "abc"[j] + "</span><span>" + fr(st.o[k]) + "</span></button>"; }).join("") + "</div>";
+      area.querySelector("#eopts").addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-eo]"); if (b) answer(+b.getAttribute("data-eo")); });
+      clearInterval(timer);
+      if (T) { end = Date.now() + T * 1e3; timer = setInterval(function () {
+        var ms = Math.max(0, end - Date.now()), t = d.getElementById("gt"), br = d.getElementById("stbar");
+        if (t) t.textContent = Math.ceil(ms / 1000); if (br) br.style.width = (100 * ms / (T * 1e3)) + "%";
+        if (ms <= 0) answer(-1);
+      }, 200); }
+    }
+    function answer(k) {
+      if (lock || !d.getElementById("eopts")) return; lock = true; clearInterval(timer);
+      var st = steps[si], good = k === st.a, right = fr(st.o[st.a]);
+      [].forEach.call(area.querySelectorAll("[data-eo]"), function (b) { var kk = +b.getAttribute("data-eo"); b.disabled = true; if (kk === st.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
+      var next = function () { if (!d.getElementById("eopts")) return; si++; if (si < steps.length) return ask(); done(); };
+      var box = area.querySelector("#eopts");
+      if (good) {
+        ok++; hp = Math.min(100, hp + ER.up); paintBar(1);
+        box.insertAdjacentHTML("afterend", '<div class="gfb erok" role="status"><p>✅ صح! المريض تحسّن 📈</p><p class="small">💡 ' + fr(st.x) + '</p><div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div></div>');
+        erSee(); return hold(FB_X_MS, next);
+      }
+      hp = Math.max(0, hp - ER.down); paintBar(-1);
+      var yours = k < 0 ? "⏰ ما جاوبت (خلص الوقت)" : fr(st.o[k]);
+      box.insertAdjacentHTML("afterend", '<p class="small sfb">' + (k < 0 ? "⏰ خلص الوقت! " : "") + "📉 حالة المريض تدهورت</p>" + fbLine(yours, right, fr(st.x), 1));
+      addMiss({ k: "er:" + c.id + ":" + si, q: c.ic + " " + fr(c.t) + " — " + fr(st.q), y: yours, r: right, rv: { t: "mcq", q: c.ic + " " + fr(c.who) + (c.lab ? "<br>🧪 " + fr(c.lab) : "") + "<br>" + fr(st.q), o: st.o.map(fr), a: st.a, x: fr(st.x) } });
+      erSee(); hold(0, next);
+    }
+    function erSee() { var f = area.querySelectorAll(".gfb"); f = f[f.length - 1]; if (f && f.scrollIntoView) f.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    function done() {
+      var s = erState(hp), out = hp >= 70 ? "🎉 المريض استقرّ وانتقل عالقسم. شغل نظيف!" : hp >= 40 ? "🟡 المريض بعدو مش مستقر، الدكتور كمّل معو." : "🔴 المريض تدهور. راجع أخطاءك تحت 👇";
+      finish("er", ok, c.ic + " " + fr(c.t) + "<br>✅ <b>" + ok + "</b> من " + steps.length + " خطوات صح · ❤️ " + s[0] + " " + s[1] + "<br>" + out);
+    }
+    ask();
+    area.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, fbLine: fbLine, missHtml: missHtml, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX, ER: ER, erCases: erCases, erSteps: erSteps, fr: fr };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

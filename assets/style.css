@@ -677,3 +677,14 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .gosheet .gopsw[aria-checked="true"] .gopk::after{right:21px}
 .gosheet .gopt{min-width:0;overflow-wrap:anywhere}
 .gosheet .gopm{display:block;margin-top:6px;color:var(--mut);line-height:1.5}
+
+/* 🚑 ناوبة بالطوارئ — ER sim (games.js erGame, assets/ersim-data.js, Oct 27 2026) */
+.erpick{display:flex;flex-direction:column;gap:8px;margin:8px 0}.erpick .erc{width:100%;text-align:start;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+.ercard{border:1.5px solid #fca5a5;background:#fff7ed;border-radius:14px;padding:8px 12px;margin:8px 0;overflow-wrap:anywhere;font-size:14.5px;line-height:1.55}.ercard p{margin:3px 0}.erwho{font-weight:800}.erlab{background:#fff;border-radius:8px;padding:4px 8px;margin-top:4px;font-weight:700}.erlab>div{margin:2px 0;unicode-bidi:plaintext;text-align:start}.erlab>div::before{content:"🧪 "}
+.erv{display:inline-block;background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:0 6px;margin:2px 0 2px 4px}
+.erst{border:1px solid var(--line);border-radius:12px;padding:6px 10px;margin:6px 0;font-size:14px;transition:background .3s}.erst .erbar{height:8px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:4px}.erst .erbar i{display:block;height:100%;transition:width .4s}
+.erst.ok .erbar i{background:#16a34a}.erst.mid .erbar i{background:#f59e0b}.erst.bad .erbar i{background:var(--red)}
+.erst.up{background:#f0fdf4;border-color:#86efac}.erst.dn{background:#fef2f2;border-color:#fca5a5}
+.gfb.erok{border-color:#86efac;background:#f0fdf4}.erh{color:#0f766e}
+.ercard bdi,.opt bdi,.sq bdi,.gfb bdi,.gmiss bdi{overflow-wrap:anywhere}
+@media (prefers-reduced-motion:reduce){.erst,.erst .erbar i{transition:none}}
