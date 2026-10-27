@@ -826,3 +826,6 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .gfb.erok{border-color:#86efac;background:#f0fdf4}.erh{color:#0f766e}
 .ercard bdi,.opt bdi,.sq bdi,.gfb bdi,.gmiss bdi{overflow-wrap:anywhere}
 @media (prefers-reduced-motion:reduce){.erst,.erst .erbar i{transition:none}}
+
+/* 🔔 admin «مين مفعّل الإشعارات» (Oct 27) */
+.pwho .pwl{max-height:320px}.pwho .pwl li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}.pwon{color:#047857;font-weight:600}.pwoff{color:#b91c1c}.pwho .ain{width:100%;box-sizing:border-box}.wkwin{background:rgba(15,118,110,.07);border-radius:8px;padding:6px 8px}

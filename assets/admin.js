@@ -1,6 +1,7 @@
 // nursin 📢 admin: only the site owner (verified Google email) can post or clear the announcement everyone sees,
 // and send a 🔔 phone notification to every device that turned notifications on (worker /broadcast; rules v9 let only him list pushSubs).
 // Loaded by fb.js on admin.html.
+// 🔔 «مين مفعّل الإشعارات» (Oct 27): every student (users/) with ✅/❌ from pushSubs/{uid}.d (≥1 device = on) — admin-only reads, no rules change.
 const OWNER = "abdullahjaber1452003@gmail.com";
 const WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev", CHUNK = 25;
 const PAGES = [["/", "🏠 الرئيسية"], ["/cardio.html", "❤️ القلب"], ["/neuro.html", "🧠 الأعصاب"], ["/3d.html", "🧊 المجسّمات 3D"], ["/quiz.html", "📝 الكويز"], ["/henderson.html", "📋 Henderson"], ["/law.html", "⚖️ القانون"], ["/mgmt.html", "🏢 الإدارة"], ["/quality.html", "✅ الجودة والاعتماد"], ["/pharma.html", "💊 الأدوية"], ["/exams.html", "📅 الامتحانات"], ["/classes.html", "🏫 الصفوف"], ["/tutor.html", "👨‍🏫 الأستاذ عثمان"], ["/chat.html", "💬 المحادثات"]];
@@ -87,6 +88,7 @@ export function page(API) {
     $("psend").disabled = false;
   });
   count();
+  pushWho(API, el, loadSubs);
   $("adel").addEventListener("click", async () => {
     try { await deleteDoc(ref); msg("🗑️ انمحى الإعلان."); show(); window.NursinAnn && window.NursinAnn.refresh(); } catch (e) { err(e); }
   });
@@ -104,7 +106,7 @@ function weekPicker(API, el) {
   const box = document.createElement("div"); box.className = "qcard wkpick"; box.id = "wkpick";
   const subs = Object.keys(L.CLASSDAY);
   const draw = cur => {
-    box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. أهداف اليوم عندن بتوزّع الأجزاء غير المقروءة عالأيام لقبل يوم الحصّة (اليوم يلي قبلها أخفّ، للمراجعة). مادة ما فيها شي معلّم = ما في درس إلها بالأهداف.</p>' +
+    box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. أهداف اليوم عندن بتوزّع الأجزاء غير المقروءة بالتساوي على أيام الدرس، وأيام الصف (خميس، جمعة، سبت) أخفّ. مادة ما فيها شي معلّم = ما في درس إلها بالأهداف.</p><p class="small wkwin">🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة</p>' +
       subs.map(s => { const S = L.subjects[s] || {}, dn = L.classDayOf(s), ls = L.list.filter(x => x.s === s);
         return '<details class="wks"' + ((cur[s] || []).length ? " open" : "") + '><summary><b>' + esc(S.ar || s) + "</b> <small>· حصّة " + dn[0] + " · " + (cur[s] || []).length + "/" + ls.length + "</small></summary><ul class=\"cpick\">" +
           ls.map(x => { const k = L.base(x), n = L.parts.filter(p => L.base(p) === k).length; return '<li><label><input type="checkbox" data-s="' + esc(s) + '" value="' + esc(k) + '"' + ((cur[s] || []).includes(k) ? " checked" : "") + "> <bdi>" + esc(x.n) + "</bdi>" + (n > 1 ? " <small>(" + n + " أجزاء)</small>" : "") + "</label></li>"; }).join("") + "</ul></details>"; }).join("") +
@@ -118,4 +120,39 @@ function weekPicker(API, el) {
   };
   el.appendChild(box); draw(L.weekLes());
   getDoc(ref).then(s => { if (s.exists()) { const v = s.data().subj || {}; L.weekLes(v); draw(L.weekLes()); } }, () => {});
+}
+
+/* 🔔 «مين مفعّل الإشعارات» (Abdullah, Oct 27 5:20 PM): which students turned phone notifications on.
+   users/ (signed-in read, rules v1+) × pushSubs/{uid}.d (only the admin may list it, rules v9); a doc with ≥1 device = on.
+   pushRows is pure (tested): enabled first, then by name; a subscriber with no profile still shows. */
+export function pushRows(users, docs) {
+  const rows = [], seen = {};
+  for (const x of users || []) { if (!x || !x.id || seen[x.id]) continue; seen[x.id] = 1; const d = (docs || {})[x.id] || {}; const n = Object.keys(d).filter(k => typeof d[k] === "string").length; rows.push({ id: x.id, name: String(x.name || "").trim() || "؟", code: x.code || "", n, on: n > 0 }); }
+  for (const id of Object.keys(docs || {})) { if (seen[id]) continue; const d = docs[id] || {}; const n = Object.keys(d).filter(k => typeof d[k] === "string").length; if (n) rows.push({ id, name: "؟", code: "", n, on: true }); }
+  rows.sort((p, q) => (q.on - p.on) || p.name.localeCompare(q.name, "ar"));
+  return { rows, on: rows.filter(r => r.on).length, total: rows.length };
+}
+export const devTxt = n => n === 1 ? "(جهاز واحد)" : n === 2 ? "(جهازين)" : "(" + n + " أجهزة)";
+async function pushWho(API, el, loadSubs) {
+  const { collection, getDocs, query, limit } = API.fs, esc = API.esc || (s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";"));
+  const box = document.createElement("div"); box.className = "qcard pwho"; box.id = "pwho";
+  box.innerHTML = '<h2>🔔 مين مفعّل الإشعارات</h2><p id="pwsum" class="fbig">⏳ …</p>' +
+    '<p class="fbtns pwf"><button class="btn pri" type="button" data-f="all">الكل</button> <button class="btn" type="button" data-f="on">✅ مفعّل</button> <button class="btn" type="button" data-f="off">❌ مش مفعّل</button></p>' +
+    '<input id="pwq" class="atext ain" type="search" placeholder="🔍 دوّر على اسم…" aria-label="دوّر على اسم"><ul id="pwl" class="cmemb pwl"></ul>';
+  const cards = el.querySelectorAll(":scope > .qcard"); if (cards.length > 1) cards[1].after(box); else el.appendChild(box);
+  const $ = s => box.querySelector(s); let all = { rows: [] }, f = "all";
+  const draw = () => {
+    const q = $("#pwq").value.trim().toLowerCase();
+    const list = all.rows.filter(r => (f === "all" || (f === "on") === r.on) && (!q || r.name.toLowerCase().includes(q) || String(r.code).toLowerCase().includes(q)));
+    $("#pwl").innerHTML = list.length ? list.map(r => '<li><bdi>' + esc(r.name) + '</bdi>' + (r.code ? ' <small dir="ltr">' + esc(r.code) + '</small>' : "") + ' — <span class="' + (r.on ? "pwon" : "pwoff") + '">' + (r.on ? "✅ مفعّل " + devTxt(r.n) : "❌ مش مفعّل") + '</span></li>').join("") : '<li class="small">ما في حدا.</li>';
+  };
+  box.querySelectorAll(".pwf button").forEach(b => b.addEventListener("click", () => { f = b.dataset.f; box.querySelectorAll(".pwf button").forEach(x => x.classList.toggle("pri", x === b)); draw(); }));
+  $("#pwq").addEventListener("input", draw);
+  try {
+    const [us, subs] = await Promise.all([getDocs(query(collection(API.db, "users"), limit(2000))), loadSubs()]);
+    const users = []; us.forEach(d => { const v = d.data() || {}; users.push({ id: d.id, name: v.name, code: v.friendCode }); });
+    all = pushRows(users, subs.docs);
+    $("#pwsum").textContent = "✅ " + all.on + " من " + all.total + " مفعّلين";
+    draw();
+  } catch (e) { $("#pwsum").textContent = e && e.code === "permission-denied" ? "⚠️ ما قدرنا نقرا اللائحة (قوانين Firestore)." : "⚠️ ما زبط، اعمل refresh وجرّب كمان مرّة."; }
 }

@@ -291,6 +291,7 @@
     [4, 5, 6].forEach(function (dd) { var n = L2.classDayOf(Object.keys(L2.CLASSDAY).filter(function (k) { return L2.CLASSDAY[k] === dd; })[0]); if (by[dd]) out.push("<b>" + (fr ? n[1] : n[0]) + "</b> " + by[dd].join("، ")); });
     var none = !Object.keys(L2.weekLes()).length;
     return '<p class="gosl" data-nofr>📅 ' + (fr ? "Les leçons du jour suivent l'emploi du temps : " : "دروس اليوم ماشية حسب برنامج الصف: ") + out.join(" · ") +
+      "<br><small>" + (fr ? "🗓️ Matières du jeudi : samedi→mercredi • vendredi : dimanche→jeudi • samedi : dimanche→vendredi (jours de cours plus légers)" : "🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة (أيام الصف أخفّ)") + "</small>" +
       (none ? "<br><small>" + (fr ? "📌 Pas encore de leçons choisies pour cette semaine." : "📌 لسّا ما في دروس محدّدة لهالأسبوع.") + "</small>" : "") + "</p>";
   }
 

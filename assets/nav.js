@@ -66,7 +66,7 @@
     a.push(row(["friends.html#fpush", "🔔", "الإشعارات", "رسائل أصحابك + الدروس الجديدة"]));
     a.push(langRow());   // 👨‍🏫 Osman is always on now (no switch, Oct 27 2:48 PM)
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
-    if (owner()) a.push(row(["admin" + ".html", "🛠", "لوحة الإدارة", "إعلانات + إشعار للكل"]));
+    if (owner()) a.push(row(["admin" + ".html", "⚙️", "لوحة الأدمن", "إعلانات + إشعارات + دروس هالأسبوع"]));
     return a.join("");
   }
   // 👨‍🏫 «تعليقات الأستاذ عثمان» switch (assets/osman.js, localStorage nursin_osman_v1, default on)

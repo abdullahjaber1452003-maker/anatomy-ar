@@ -151,8 +151,7 @@
      Class days: Thursday = réa, ⚖️ law, 🏢 management · Friday = case study, cardio / neuro / henderson, surgical ·
      Saturday = community health, 💊 pharma, gerontology, psych, ✅ quality. Only the lessons Abdullah pins as «📌 هالأسبوع»
      on admin.html count (Firestore config/weekLessons {subj:{s:[lesson keys]}}, public read, admin write — rules v11); a subject
-     with nothing pinned gives no lesson goal. Each subject's unread pinned parts are spread evenly over the days from today
-     to the day before its class (that last day = the lightest, review); nothing for a subject on its own class day. */
+     with nothing pinned gives no lesson goal. How they are spread: the 🗓️ study windows below. */
   var CLASSDAY = { law: 4, mgmt: 4, cardio: 5, neuro: 5, henderson: 5, pharma: 6, quality: 6 };       // Thu 4 · Fri 5 · Sat 6
   var DAYN = { 4: ["الخميس", "jeudi"], 5: ["الجمعة", "vendredi"], 6: ["السبت", "samedi"] }, WK = "nursin_weekles_v1";
   function dow(day) { return new Date(Date.parse(day + "T12:00:00Z")).getUTCDay(); }
@@ -165,18 +164,28 @@
     if (v !== undefined) { try { localStorage.setItem(WK, JSON.stringify({ subj: cleanAsg(v), t: Date.now() })); } catch (e) {} return; }
     try { var o = JSON.parse(localStorage.getItem(WK) || "null"); return cleanAsg(o && o.subj); } catch (e) { return {}; }
   }
+  /* 🗓️ fixed study windows (Abdullah, Oct 27 5:28 PM): Thursday subjects are read Saturday→Wednesday, Friday subjects
+     Sunday→Thursday, Saturday subjects Sunday→Friday; each window restarts after the class. Class days (Thu/Fri/Sat, at the
+     institute 7:30–2:30) weigh half a free day, so they carry the least. Pinned unread parts of a class day's subjects are
+     spread evenly over what is left of its window (taken in turn from each subject); a student who fell behind carries the
+     rest forward, at most CAP parts a day for that class day, except on the window's last day (everything left). */
+  var WIN = { 4: [6, 0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] }, CAP = 3;
+  function dayW(wd) { return wd >= 4 ? 0.5 : 1; }             // Thu 4, Fri 5, Sat 6 = class days
   function plan(day, m, asg) {                                // pure (tests run it): today's parts, every subject
-    day = day || dk(); m = m || {}; asg = cleanAsg(asg); var out = [], wd = dow(day), s;
-    for (s in CLASSDAY) {
-      var ks = asg[s]; if (!ks) continue;
-      var left = (CLASSDAY[s] - wd + 7) % 7; if (!left) continue;                    // its class is today
-      var un = P.filter(function (x) { return x.s === s && ks.indexOf(base(x)) >= 0 && !isRead(x, m); });
-      if (!un.length) continue;
-      var n = Math.ceil(un.length / (left === 1 ? 1 : left - 0.5) - 1e-9);            // the day before the class counts half
+    day = day || dk(); m = m || {}; asg = cleanAsg(asg); var out = [], wd = dow(day);
+    [4, 5, 6].forEach(function (cd) {
+      var win = WIN[cd], at = win.indexOf(wd); if (at < 0) return;                     // outside this class day's window
+      var lists = [], s;
+      for (s in CLASSDAY) if (CLASSDAY[s] === cd && asg[s]) (function (ks, s) { var un = P.filter(function (x) { return x.s === s && ks.indexOf(base(x)) >= 0 && !isRead(x, m); }); if (un.length) lists.push(un); })(asg[s], s);
+      var un = [], i; for (i = 0; lists.some(function (l) { return i < l.length; }); i++) lists.forEach(function (l) { if (i < l.length) un.push(l[i]); });   // in turn from each subject
+      if (!un.length) return;
+      var rest = win.slice(at), last = rest.length === 1, sum = rest.reduce(function (a, d) { return a + dayW(d); }, 0);
+      var n = last ? un.length : Math.min(CAP, Math.ceil(un.length * dayW(wd) / sum - 1e-9));
       out = out.concat(un.slice(0, n));
-    }
+    });
     return out;
   }
+  function windowOf(s) { var c = CLASSDAY[s]; return c ? WIN[c].slice() : null; }
   function hashAsg(a) { return JSON.stringify(cleanAsg(a)); }
   // today's list, kept for the whole day (reading ahead doesn't pull more in); `seen` = lesson keys another device put on today's synced list
   function todayPlan(seen, doneMap) {
@@ -190,7 +199,7 @@
   function classDayOf(s) { var c = CLASSDAY[s]; return c ? DAYN[c] : null; }
   w.NursinLessons = { list: R.list, parts: P, subjects: R.subjects, SPLIT: SPLIT, fresh: fresh, goals: goals, pick: pick, today: today, row: row, label: label, key: key, base: base,
     isRead: isRead, markRead: markRead, readMap: readMap, subject: subject, splitPage: splitPage, KEY: RK, PKEY: PK,
-    CLASSDAY: CLASSDAY, plan: plan, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
+    CLASSDAY: CLASSDAY, WIN: WIN, CAP: CAP, windowOf: windowOf, plan: plan, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
   if (!d || !d.addEventListener) return;
 
   /* ✂️ cut a drawn lesson into its parts (idempotent). el = the lesson's <details>; its body = .tbody */
