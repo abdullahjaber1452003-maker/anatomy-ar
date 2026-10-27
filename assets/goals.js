@@ -67,17 +67,31 @@
     // 📖 new lessons (assets/lessons.js «added» date): on the day they're added and the next day, on top of the list
     return (o.newL || []).concat(g);
   }
-  if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build, gsMerge: gsMerge, gsApply: gsApply }; return; }   // node tests
+  /* ⚖️ light days (Oct 27 6:24 PM): ≈ MAXG (6) goals in all — the lesson parts get the room the other goals leave, at least one,
+     never more than the day's cap (3 free day / 2 class day, assets/lessons.js); pure (tests run it) */
+  function lessonRoom(others, cap, max) { return Math.max(1, Math.min(cap == null ? 3 : cap, (max || 6) - (others | 0))); }
+  if (!d) { if (typeof module !== "undefined" && module.exports) module.exports = { build: build, gsMerge: gsMerge, gsApply: gsApply, lessonRoom: lessonRoom }; return; }   // node tests
   function goals() {
     var L = live && live.dk === today() ? live : {};
     var L2 = w.NursinLessons, nl = [], R = gsToday(), D = {}, st = studyToday(), k;
-    try {   // 📅 today's small lessons from the class timetable + «📌 هالأسبوع» (assets/lessons.js todayPlan): another device's list for today wins, read → ✅
-      if (L2 && L2.todayPlan) { var seen = (R.rows || []).filter(function (r) { return r && /^les:/.test(r.k); }).map(function (r) { return r.k.slice(4); }), rm = L2.readMap(); nl = L2.todayPlan(seen, R.done).map(function (x) { return L2.row(x, rm); }); }
-    } catch (e) {}
     for (k in R.done) D[k] = R.done[k];
     var loc = state().done; for (k in loc) D[k] = loc[k];
-    var list = build({ weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), newL: nl });
+    var o = { weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), newL: [] };
+    try {   // 📅 today's small lessons from the class timetable + «📌 هالأسبوع» (assets/lessons.js todayPlan), capped; parts done today stay ✅
+      if (L2 && L2.todayPlan) {
+        var seen = (R.rows || []).filter(function (r) { return r && /^les:/.test(r.k); }).map(function (r) { return r.k.slice(4); }), rm = L2.readMap();
+        var room = lessonRoom(build(o).length, L2.dayCap ? L2.dayCap() : 3, L2.MAXG);
+        nl = L2.todayPlan(seen, D, room).map(function (x) { return L2.row(x, rm); });
+      }
+    } catch (e) {}
+    o.newL = nl;
+    var list = build(o);
     return gsApply(list, R);
+  }
+  // 📚 the optional «إضافي (إذا عندك وقت)» row — shown under the list, never counted, never mirrored/synced
+  function xtra(list) {
+    var L2 = w.NursinLessons; if (!L2 || !L2.extraRow) return null;
+    try { return L2.extraRow((list || []).filter(function (x) { return /^les:/.test(x.k); }).map(function (x) { return x.k.slice(4); })); } catch (e) { return null; }
   }
 
   /* ☁️ same account, same goals on every device (Abdullah, Oct 27 1:46 PM: iMac showed 5 done, phone 4).
@@ -259,7 +273,7 @@
     return '<p class="small gonote">' + (c.n === c.g.length ? "🔥 خلصت كل أهدافك اليوم! برافو" : "خلصت " + c.n + " من " + c.g.length + " · كبسة على أي هدف بتاخدك عليه") + "</p>" +
       c.g.map(function (x) {
         return '<a class="gi goi' + (x.done ? " done" : "") + '" href="' + esc(x.href) + '" data-k="' + esc(x.k) + '"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b>" + (x.s ? "<small>" + esc(x.s) + "</small>" : "") + '</span><span class="gotick" aria-label="' + (x.done ? "خلص" : "لسّا") + '">' + (x.done ? "✅" : "⬜") + "</span></a>";
-      }).join("") + gpHtml();
+      }).join("") + (function (x) { return x ? '<a class="gi goi goopt" href="' + esc(x.href) + '" data-k="xtra"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b><small>" + esc(x.s) + '</small></span><span class="gotick" aria-hidden="true">➕</span></a>' : ""; })(xtra(c.g)) + gpHtml();
   }
   function close() { if (sheet) sheet.remove(); if (scrim) scrim.remove(); sheet = scrim = null; if (pill) pill.setAttribute("aria-expanded", "false"); }
   function open() {
@@ -292,6 +306,7 @@
     var none = !Object.keys(L2.weekLes()).length;
     return '<p class="gosl" data-nofr>📅 ' + (fr ? "Les leçons du jour suivent l'emploi du temps : " : "دروس اليوم ماشية حسب برنامج الصف: ") + out.join(" · ") +
       "<br><small>" + (fr ? "🗓️ Matières du jeudi : samedi→mercredi • vendredi : dimanche→jeudi • samedi : dimanche→vendredi (jours de cours plus légers)" : "🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة (أيام الصف أخفّ)") + "</small>" +
+      "<br><small>" + (fr ? "⚖️ Au plus 3 parties par jour (2 les jours de cours) ; le reste = 📚 en plus, pas compté." : "⚖️ بالكتير 3 أجزاء باليوم (2 بأيام المعهد)، والباقي 📚 إضافي مش محسوب.") + "</small>" +
       (none ? "<br><small>" + (fr ? "📌 Pas encore de leçons choisies pour cette semaine." : "📌 لسّا ما في دروس محدّدة لهالأسبوع.") + "</small>" : "") + "</p>";
   }
 

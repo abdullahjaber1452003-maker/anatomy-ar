@@ -49,6 +49,13 @@ async function claimCode(uid) {
   }
   throw new Error("no free friend code");
 }
+/* 🆕 Abdullah, Oct 27 6:31 PM: a push to the admin's phone when a NEW student signs up — worker v6 /admin/newuser verifies the
+   ID token itself (name from the token, one push per account ever). LOGIN_PING = "all" (+ NOTIFY_LOGINS=all on the worker) = every sign-in. */
+const LOGIN_PING = "new", ADMIN_PING_URL = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/admin/newuser";
+function pingAdmin(u, first) {
+  fetch(ADMIN_PING_URL).then(r => r.json()).then(j => j && j.newuser ? u.getIdToken() : null)          // only a worker v6+ answers newuser:true
+    .then(t => t && fetch(ADMIN_PING_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, first: !!first }) })).catch(() => {});
+}
 async function ensureProfile(u) {
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
@@ -57,7 +64,8 @@ async function ensureProfile(u) {
   const points = N.addPoints(d.points || 0, 0);
   const prof = { name: N.cleanName(u.displayName), photo: String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
   if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
-    await setDoc(ref, { ...prof, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(ref, { ...prof, updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
+  if (!snap.exists() || LOGIN_PING === "all") pingAdmin(u, !snap.exists());
   profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
 }

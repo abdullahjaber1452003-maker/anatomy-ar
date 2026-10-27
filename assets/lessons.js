@@ -167,39 +167,63 @@
   /* 🗓️ fixed study windows (Abdullah, Oct 27 5:28 PM): Thursday subjects are read Saturday→Wednesday, Friday subjects
      Sunday→Thursday, Saturday subjects Sunday→Friday; each window restarts after the class. Class days (Thu/Fri/Sat, at the
      institute 7:30–2:30) weigh half a free day, so they carry the least. Pinned unread parts of a class day's subjects are
-     spread evenly over what is left of its window (taken in turn from each subject); a student who fell behind carries the
-     rest forward, at most CAP parts a day for that class day, except on the window's last day (everything left). */
-  var WIN = { 4: [6, 0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] }, CAP = 3;
+     spread evenly over what is left of its window (taken in turn from each subject).
+     ⚖️ light days (Abdullah, Oct 27 6:24 PM — «أهدافك اليوم 4/17», pins saved on a Tuesday crammed the whole week in): ONE cap for
+     the whole day across all subjects — at most TOT[free] = 3 parts on a free day, TOT[class] = 2 on Thu/Fri/Sat — nearest class
+     day first; no «last day gets everything» dump. What doesn't fit is never forced in: it shows as one optional row
+     «📚 إضافي (إذا عندك وقت)» outside the count (extra()), and simply rolls on to the next days / the next window. */
+  var WIN = { 4: [6, 0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] }, CAP = 3, TOT = { free: 3, cls: 2 }, MAXG = 6, PV = 2;
   function dayW(wd) { return wd >= 4 ? 0.5 : 1; }             // Thu 4, Fri 5, Sat 6 = class days
-  function plan(day, m, asg) {                                // pure (tests run it): today's parts, every subject
-    day = day || dk(); m = m || {}; asg = cleanAsg(asg); var out = [], wd = dow(day);
+  function dayCap(day) { return dow(day || dk()) >= 4 ? TOT.cls : TOT.free; }
+  // every class day whose window holds today, nearest class first: [{cd, un: unread pinned parts (in turn from each subject), share}]
+  function groups(day, m, asg) {
+    var wd = dow(day), gs = [];
     [4, 5, 6].forEach(function (cd) {
       var win = WIN[cd], at = win.indexOf(wd); if (at < 0) return;                     // outside this class day's window
       var lists = [], s;
       for (s in CLASSDAY) if (CLASSDAY[s] === cd && asg[s]) (function (ks, s) { var un = P.filter(function (x) { return x.s === s && ks.indexOf(base(x)) >= 0 && !isRead(x, m); }); if (un.length) lists.push(un); })(asg[s], s);
-      var un = [], i; for (i = 0; lists.some(function (l) { return i < l.length; }); i++) lists.forEach(function (l) { if (i < l.length) un.push(l[i]); });   // in turn from each subject
+      var un = [], i; for (i = 0; lists.some(function (l) { return i < l.length; }); i++) lists.forEach(function (l) { if (i < l.length) un.push(l[i]); });
       if (!un.length) return;
-      var rest = win.slice(at), last = rest.length === 1, sum = rest.reduce(function (a, d) { return a + dayW(d); }, 0);
-      var n = last ? un.length : Math.min(CAP, Math.ceil(un.length * dayW(wd) / sum - 1e-9));
-      out = out.concat(un.slice(0, n));
+      var sum = win.slice(at).reduce(function (a, d) { return a + dayW(d); }, 0);
+      gs.push({ cd: cd, dist: (cd - wd + 7) % 7, un: un, share: Math.min(CAP, Math.ceil(un.length * dayW(wd) / sum - 1e-9)) });
     });
+    return gs.sort(function (a, b) { return a.dist - b.dist; });
+  }
+  function plan(day, m, asg) {                                // pure (tests run it): today's counted parts, all subjects, ≤ dayCap
+    day = day || dk(); m = m || {}; asg = cleanAsg(asg); var out = [], cap = dayCap(day);
+    groups(day, m, asg).forEach(function (g) { out = out.concat(g.un.slice(0, g.share)); });
+    return out.slice(0, cap);
+  }
+  function extra(day, m, asg, not) {                          // pure: the optional rest («📚 إضافي»), nearest class first, never counted
+    day = day || dk(); m = m || {}; asg = cleanAsg(asg); not = not || []; var out = [];
+    groups(day, m, asg).forEach(function (g) { g.un.forEach(function (x) { if (not.indexOf(key(x)) < 0) out.push(x); }); });
     return out;
   }
   function windowOf(s) { var c = CLASSDAY[s]; return c ? WIN[c].slice() : null; }
   function hashAsg(a) { return JSON.stringify(cleanAsg(a)); }
-  // today's list, kept for the whole day (reading ahead doesn't pull more in); `seen` = lesson keys another device put on today's synced list
-  function todayPlan(seen, doneMap) {
-    var day = dk(), o = prefs(), asg = weekLes(), h = hashAsg(asg), ks;
-    if (o.d === day && o.h === h && Array.isArray(o.ks)) ks = o.ks.filter(byKey);
-    else if (seen && seen.length && seen.every(byKey)) ks = seen.slice();
-    else ks = plan(day, readMap(), asg).map(key);
-    if (o.d !== day || o.h !== h || JSON.stringify(o.ks) !== JSON.stringify(ks)) { o.d = day; o.h = h; o.ks = ks; delete o.k; savePrefs(o); }
-    return ks.map(byKey).filter(Boolean);
+  /* today's list, kept for the whole day (reading ahead doesn't pull more in). `seen` = lesson keys another device put on today's
+     synced list, `doneMap` = today's synced done map, `room` = how many lesson parts fit today (goals.js: total ≈ MAXG goals).
+     Parts already finished today (on this device's list or another device's) always stay on it and count as ✅, even past the cap. */
+  function todayPlan(seen, doneMap, room) {
+    var day = dk(), o = prefs(), asg = weekLes(), h = hashAsg(asg), m = readMap(), ks;
+    function dn(k) { var x = byKey(k); return !!x && (!!(doneMap && doneMap["les:" + k]) || isRead(x, m)); }
+    var prev = (o.d === day && Array.isArray(o.ks) ? o.ks : []).concat(seen || []).filter(function (k, i, a) { return a.indexOf(k) === i && dn(k); });
+    if (o.v === PV && o.d === day && o.h === h && Array.isArray(o.ks)) ks = o.ks.filter(byKey);
+    else ks = plan(day, m, asg).map(key);
+    prev.forEach(function (k) { if (ks.indexOf(k) < 0) ks.unshift(k); });
+    if (o.v !== PV || o.d !== day || o.h !== h || JSON.stringify(o.ks) !== JSON.stringify(ks)) { o.v = PV; o.d = day; o.h = h; o.ks = ks; delete o.k; savePrefs(o); }
+    var r = room == null ? dayCap(day) : Math.min(room, dayCap(day)), left = Math.max(0, r - ks.filter(dn).length);
+    return ks.filter(function (k) { return dn(k) || left-- > 0; }).map(byKey).filter(Boolean);
+  }
+  // the optional row: the rest of the pinned parts that don't fit today (null when nothing is left)
+  function extraRow(not) {
+    var fr = frOn({}), x = extra(dk(), readMap(), weekLes(), not || []); if (!x.length) return null;
+    return { k: "xtra", e: "📚", opt: true, n: fr ? "En plus (si tu as le temps)" : "إضافي (إذا عندك وقت)", s: (fr ? x.length + " partie" + (x.length > 1 ? "s" : "") + " · " : x.length + (x.length === 1 ? " جزء" : x.length === 2 ? " جزئين" : " أجزاء") + " · ") + label(x[0]) + (fr ? " · pas compté" : " · مش محسوب"), href: x[0].href, done: false };
   }
   function classDayOf(s) { var c = CLASSDAY[s]; return c ? DAYN[c] : null; }
   w.NursinLessons = { list: R.list, parts: P, subjects: R.subjects, SPLIT: SPLIT, fresh: fresh, goals: goals, pick: pick, today: today, row: row, label: label, key: key, base: base,
     isRead: isRead, markRead: markRead, readMap: readMap, subject: subject, splitPage: splitPage, KEY: RK, PKEY: PK,
-    CLASSDAY: CLASSDAY, WIN: WIN, CAP: CAP, windowOf: windowOf, plan: plan, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
+    CLASSDAY: CLASSDAY, WIN: WIN, CAP: CAP, TOT: TOT, MAXG: MAXG, dayCap: dayCap, windowOf: windowOf, plan: plan, extra: extra, extraRow: extraRow, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
   if (!d || !d.addEventListener) return;
 
   /* ✂️ cut a drawn lesson into its parts (idempotent). el = the lesson's <details>; its body = .tbody */

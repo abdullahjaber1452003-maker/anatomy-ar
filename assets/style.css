@@ -705,6 +705,7 @@ html.gl-out .hg a.hgh[href="tutor.html"] h2::after{content:" 🔒";font-size:.85
 .goi .gotick{margin-inline-start:auto;flex:0 0 auto;font-size:19px}
 .goi.done .git b{color:var(--mut);text-decoration:line-through}
 .goi.done .gie{background:#dcfce7}
+.goi.goopt{border-style:dashed;opacity:.85;margin-top:10px}.goi.goopt .gotick{font-size:15px}
 .gosheet .glk-card{display:block;margin:6px 0 4px;padding:14px 12px;border-radius:14px;background:linear-gradient(180deg,#fff7ed,#fff);border:1.5px solid #fdba74;text-align:center}
 .gosheet .glk-h{font-weight:800;margin:0 0 6px}
 .gosheet .glk-card .gbtn{margin:6px auto;max-width:100%}
