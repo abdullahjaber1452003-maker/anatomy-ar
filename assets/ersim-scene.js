@@ -126,7 +126,7 @@
     function place() {
       var W = el.clientWidth, H = el.clientHeight, s = Math.max(W / IW, H / IH), ox = (W - IW * s) * (POSX[sc] == null ? 0.5 : POSX[sc]), oy = (H - IH * s) / 2;
       [].forEach.call(el.querySelectorAll(".ers-fx i[data-x]"), function (b) { b.style.left = (ox + IW * s * b.getAttribute("data-x") / 100) + "px"; b.style.top = (oy + IH * s * b.getAttribute("data-y") / 100) + "px"; });
-      [].forEach.call(spotsEl.children, function (b) { var p = SPOTS[b.getAttribute("data-spot")]; var lx = Math.max(30, Math.min(W - 30, ox + IW * s * p.x / 100)); b.style.left = lx + "px"; b.classList.toggle("el", lx < 75); b.classList.toggle("er", lx > W - 75); b.style.top = Math.max(SIM ? 290 : 150, Math.min(H - (SIM ? simBottom() : 90), oy + IH * s * p.y / 100)) + "px"; });
+      [].forEach.call(spotsEl.children, function (b) { var p = SPOTS[b.getAttribute("data-spot")]; var lx = Math.max(30, Math.min(W - 30, ox + IW * s * p.x / 100)); b.style.left = lx + "px"; b.classList.toggle("el", lx < 75); b.classList.toggle("er", lx > W - 75); var k = b.getAttribute("data-spot"); b.style.top = Math.max(SIM ? (lx > W - 180 ? monBottom() + (k === "lab" ? 100 : 30) : 290) : 150, Math.min(H - (SIM ? simBottom() : 90), oy + IH * s * p.y / 100)) + "px"; });
     }
     w.addEventListener("resize", place);
 
@@ -236,7 +236,8 @@
 
     /* ---- v3: the living case (o.sim) ---- */
     var E = w.ERSTORY, st = SIM && SIM.st, loop = 0, paused = false, lastSave = 0, simIv = "", GL = { iv: "💧 المصل", cart: "💊 الدوا", tx: "🩹 تدخّل" };
-    function simBottom() { var p = $(".ers-tasks"); return p && p.offsetHeight ? p.offsetHeight + 34 : 330; }
+    function monBottom() { var m = $(".ers-mon"); return m && !m.hidden && m.offsetHeight ? m.getBoundingClientRect().bottom : 290; }
+    function simBottom() { var p = $(".ers-tasks"); return p && p.offsetHeight ? p.offsetHeight + 56 : 330; }
     function clock(t) { t = Math.round(t); return (t / 60 | 0) + ":" + ("0" + t % 60).slice(-2); }
     function hsh(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
     function grpOf(a) { return (a.k === "tx" || a.k === "bad") ? (a.g === "iv" || a.g === "cart" ? a.g : "tx") : ""; }
@@ -289,6 +290,7 @@
       m.className = "ers-mon glass " + (any ? S.c : "") + (keep ? " " + keep[1] : "") + (st.scope ? " live" : "");
       var ec = $(".ers-ecgt"); if (ec) ec.innerHTML = st.ecgTxt ? fr(st.ecgTxt) : (st.scope ? "" : "📟 الـ monitor مش موصول: ركّبو لتشوف النبض والـ ECG عطول");
       el.classList.toggle("ers-red", red);
+      var mh = m.offsetHeight; if (mh !== refresh.mh) { refresh.mh = mh; place(); }
     }
     function save(force) { var n = Date.now(); if (force || n - lastSave > 2000) { lastSave = n; if (SIM.save) SIM.save(st); } }
     function step() {
