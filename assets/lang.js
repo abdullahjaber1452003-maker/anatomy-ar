@@ -11,7 +11,7 @@
      Anything without a confident translation keeps the bilingual text (fallback by design).
    Keys: FNV-1a of the whitespace-normalised string (blocks: of the element's innerHTML). */
 (function (w, d) {
-  var K = "nursin_lang_v1", V = "20261027j", AR = /[\u0600-\u06FF]/;
+  var K = "nursin_lang_v1", V = "20261027k", AR = /[\u0600-\u06FF]/;
   var mode = "ar"; try { mode = localStorage.getItem(K) === "fr" ? "fr" : "ar"; } catch (e) {}
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html?$/, "") || "index";
   /* ⚖️ القانون stays Arabic ALWAYS (Abdullah, Oct 27 2:47 PM): the law page and a law-only quiz are drawn exactly as before (bilingual,

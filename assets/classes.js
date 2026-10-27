@@ -457,7 +457,7 @@ async function leave() {
   catch (e) { $("#ccmsg").textContent = failMsg(e); }
 }
 function row(rk, p, sub, me, extra) {
-  return '<li class="lbr' + (me ? " me" : "") + '"><span class="rk">' + rk + "</span>" + N.avatar(p.photo, p.name, "av") + '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (me ? " <small>(إنت)</small>" : "") + "</b><small>" + sub + "</small></span>" + (extra || "") + "</li>";
+  return '<li class="lbr' + (me ? " me" : "") + '"><span class="rk">' + rk + "</span>" + N.avatar(p.photo, p.name, "av") + '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (me ? " <small>(إنت)</small>" : (A.pdot ? A.pdot(p.uid) : "")) + "</b><small>" + sub + "</small></span>" + (extra || "") + "</li>";
 }
 function drawBoard() {
   const me = A.user.uid, wkr = C.results.filter(r => r.wk === C.wk), done = {};

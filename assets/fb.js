@@ -280,6 +280,12 @@ async function classmates() {                        // uid → [class names]
   } catch (e) {}
   return out;
 }
+// 🟢 online dot next to a name (assets/presence.js lights it up for classmates + friends seen in the last 2 min)
+function pdot(uid) { return uid ? ' <i class="pdot" data-puid="' + esc(uid) + '" hidden></i>' : ""; }
+async function scopeIds() {                          // 🟢 who may appear online for me: friends + classmates (ids only, no profile reads)
+  const [fs, cm] = await Promise.all([getDocs(query(collection(db, "users", user.uid, "friends"), limit(200))), classmates()]);
+  return [...new Set([...fs.docs.map(f => f.id), ...Object.keys(cm)])].slice(0, 400);
+}
 async function loadBoard() {
   const [fs, cm] = await Promise.all([getDocs(query(collection(db, "users", user.uid, "friends"), limit(200))), classmates()]);
   const fr = new Set(fs.docs.map(f => f.id)), ids = [...fr, ...Object.keys(cm).filter(u => !fr.has(u))].slice(0, 300);
@@ -364,7 +370,7 @@ function rowHtml(p, i) {
 function rowHtml0(p, i) {
   const medal = ["🥇", "🥈", "🥉"][i] || String(i + 1);
   return '<li class="lbr' + (p.me ? " me" : "") + '"><span class="rk">' + medal + "</span>" + N.avatar(p.photo, p.name, "av") +
-    '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : "") + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + N.streakPill(p) + " " + (p.points | 0) + " نقطة" + N.badgeRow(p) + "</small></span>" +
+    '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : pdot(p.uid)) + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + N.streakPill(p) + " " + (p.points | 0) + " نقطة" + N.badgeRow(p) + "</small></span>" +
     (p.me ? "" : '<a class="btn chat" href="chat.html?with=' + encodeURIComponent(p.uid) + '" aria-label="حكي مع ' + esc(N.cleanName(p.name)) + '">💬 حكي</a><a class="btn live" href="live.html?with=' + encodeURIComponent(p.uid) + '" aria-label="تحدّي لايف مع ' + esc(N.cleanName(p.name)) + '">🔴 لايف</a><button class="btn chal" type="button" data-uid="' + esc(p.uid) + '">⚔️ تحدّى</button><button class="rm" type="button" data-uid="' + esc(p.uid) + '" aria-label="شيل ' + esc(N.cleanName(p.name)) + ' من أصحابي">✕</button>') + "</li>";
 }
 
@@ -520,7 +526,8 @@ const API = {
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
   signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
-  addFriend: raw => addFriend(raw)          // 🏫 classmates «➕ أضف صديق» (classes.js)
+  addFriend: raw => addFriend(raw),         // 🏫 classmates «➕ أضف صديق» (classes.js)
+  pdot, scopeIds                            // 🟢 online dots (classes.js, chat.js) + presence scope (presence.js)
 };
 window.NursinFB = API;
 
@@ -564,6 +571,7 @@ onAuthStateChanged(auth, async u => {
   if (exId && window.NursinQuiz) { const m = await mod("exams"); if (m) await m.openOnQuiz(API, exId); }
   if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
   if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
+  mod("presence").then(m => m && m.start(API));                  // 🟢 heartbeat while visible + dots/chip where names show
   const lm = await mod("live");
   if (lm) { if (page === "live.html") lm.page(API); lm.toast(API); }
   N.flush();

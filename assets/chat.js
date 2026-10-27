@@ -50,7 +50,8 @@ async function drawList() {
   el.innerHTML = '<p class="fbtns"><button class="btn pri" id="cnew" type="button">➕ مجموعة جديدة</button> <a class="btn" href="friends.html">🏆 أصحابي</a></p>' +
     (list.length ? '<ul class="clist">' + list.map(c => {
       const l = c.last, unread = l && l.by !== me && ms(l.at) > (s[c.id] || 0);
-      return '<li><a class="crow" href="chat.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>' + API.esc(title(c)) + "</bdi></b>" + (unread ? '<i class="cdot" aria-label="جديد"></i>' : "") +
+      const peer = c.type === "dm" ? (c.members || []).find(u => u !== me) : "";   // 🟢 online dot on a DM row
+      return '<li><a class="crow" href="chat.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>' + API.esc(title(c)) + "</bdi>" + (peer && API.pdot ? API.pdot(peer) : "") + "</b>" + (unread ? '<i class="cdot" aria-label="جديد"></i>' : "") +
         '<small>' + (l ? (c.type === "group" ? "<bdi>" + API.esc(l.name) + "</bdi>: " : "") + API.esc(l.text.slice(0, 70)) : "…") + "</small></a></li>";
     }).join("") + "</ul>" : '<p class="small">لسّا ما في محادثات. كبوس «💬 حكي» حدّ أي صاحب بصفحة أصحابي، أو اعمل مجموعة تدرسو فيها سوا.</p>') +
     '<div id="cpush"></div>';
@@ -85,7 +86,7 @@ async function openRoom(cid) {
   try { const s = await getDoc(doc(API.db, "chats", cid)); if (!s.exists() || !s.data().members.includes(me)) throw { code: "gone" }; c = s.data(); }
   catch (e) { if (e && e.code === "permission-denied" && !(await rulesUp())) return soon(e); el.innerHTML = '<div class="qcard"><p>💬 هالمحادثة مش موجودة أو ما عدت فيها.</p><p><a class="btn" href="chat.html">← المحادثات</a></p></div>'; return; }
   const group = c.type === "group" || c.type === "class", owner = c.type === "group" && c.owner === me;
-  el.innerHTML = '<div class="chead"><a class="btn sm" href="chat.html" id="cback">→</a><b><bdi>' + API.esc(title(c)) + "</bdi></b>" +
+  el.innerHTML = '<div class="chead"><a class="btn sm" href="chat.html" id="cback">→</a><b><bdi>' + API.esc(title(c)) + "</bdi>" + (c.type === "dm" && API.pdot ? API.pdot((c.members || []).find(u => u !== me)) : "") + "</b>" +
     (group ? '<button class="btn sm" id="cmem" type="button">👥 ' + c.members.length + "</button>" : "") + "</div>" +
     '<div id="cpanel" hidden></div><ol class="cmsgs" id="cmsgs" aria-live="polite"><li class="small">⏳ …</li></ol>' +
     '<form class="cform" id="cform"><textarea id="ctext" maxlength="500" rows="1" placeholder="اكتب رسالة…" aria-label="رسالة"></textarea><button class="btn pri" type="submit">ابعت</button></form><p class="small" id="cmsg" aria-live="polite"></p>';

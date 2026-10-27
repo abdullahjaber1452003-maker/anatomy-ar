@@ -478,6 +478,14 @@ html.fr .gi.osmsw{text-align:left}
 .pwasteps{padding-inline-start:1.2rem;line-height:1.7}
 .wkpick details{border-top:1px solid rgba(0,0,0,.08);padding:.35rem 0}
 .wkpick summary{cursor:pointer}
+/* 🟢 who's online (assets/presence.js, Oct 27 2026) */
+.pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #fff,0 0 6px rgba(34,197,94,.7);vertical-align:middle;margin:0 4px}.pdot[hidden]{display:none}
+.onl{margin:10px 0 4px}.onlchip{font:inherit;font-size:16px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:6px 16px;box-shadow:var(--sh);cursor:pointer}
+.onlchip.on{background:#ecfdf5;border-color:#86efac;color:#166534}
+.onlsheet{position:fixed;inset:0;z-index:80;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center}.onlsheet[hidden]{display:none}
+.onlbox{background:var(--card);width:100%;max-width:520px;max-height:80vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px 22px;box-shadow:0 -6px 24px rgba(0,0,0,.18)}
+.onlhd{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:18px}
+.onll{list-style:none;margin:6px 0 0;padding:0}.onlr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.onlr .nm{flex:1;min-width:0}.onlr:last-child{border-bottom:0}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}
