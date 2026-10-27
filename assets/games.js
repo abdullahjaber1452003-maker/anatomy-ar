@@ -122,8 +122,8 @@
       (x ? '<p class="small">💡 ' + x + "</p>" : "") + (btn ? '<div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div>' : "") + "</div>";
   }
   // wait on the feedback: «كمّل» goes on at once, else after ms (0 = only on tap)
-  function hold(ms, go) {
-    var done = false, t = 0, bs = area.querySelectorAll(".gkm"), b = bs[bs.length - 1];
+  function hold(ms, go, root) {
+    var done = false, t = 0, bs = (root || area).querySelectorAll(".gkm"), b = bs[bs.length - 1];
     function fire() { if (done) return; done = true; clearTimeout(t); go(); }
     if (b) b.addEventListener("click", fire);
     if (ms) t = setTimeout(fire, ms);
@@ -415,7 +415,11 @@
     });
   }
   function erCase(c) {
-    var steps = erSteps(c), si = 0, ok = 0, hp = ER.hp0, lock = false, end = 0, T = ER.secs[lv] || 0;
+    var steps = erSteps(c), si = 0, ok = 0, hp = ER.hp0, lock = false, end = 0, T = ER.secs[lv] || 0, order = [];
+    // v2 (Oct 27, 10:17 AM): the case plays inside the realistic scene + game HUD (assets/ersim-scene.js); same steps, scoring and
+    // feedback — the scene only decides where the step opens (tap the glowing spot) and shows the patient/monitor reacting.
+    var S = d && d.body && w.ERSCENE ? w.ERSCENE.open(c, { steps: steps, lv: lv, fr: fr, hp0: ER.hp0, onStep: function (i, box) { openS(box); }, onExit: function () { clearInterval(timer); erGame(); } }) : null;
+    var R = S ? S.sheet : area;
     function card() {
       return '<div class="ercard"><p class="erwho">🚑 ' + fr(c.who) + "</p>" +
         (c.sx && c.sx.length ? '<p><b>الأعراض:</b> ' + c.sx.map(erv).join(" ") + "</p>" : "") +
@@ -427,13 +431,13 @@
       return '<div class="erst ' + s[2] + (delta ? (delta > 0 ? " up" : " dn") : "") + '" id="erst"><span>❤️ المريض: <b>' + s[0] + " " + s[1] + "</b>" + (delta ? (delta > 0 ? " 📈" : " 📉") : "") + '</span><div class="erbar"><i style="width:' + hp + '%"></i></div></div>';
     }
     function paintBar(delta) { var el = d.getElementById("erst"); if (el) el.outerHTML = bar(delta); }
-    function ask() {
-      var st = steps[si], order = shuffle(st.o.map(function (o, k) { return k; })); lock = false;
-      area.innerHTML = head("er", ' <span class="gsc">' + (si + 1) + "/" + steps.length + "</span>") + bar(0) + card() +
-        (T ? '<p class="small sinfo"><b id="gt" dir="ltr">' + T + '</b> ثانية</p><div class="stbar"><i id="stbar"></i></div>' : "") +
+    function stepHtml(st) {
+      return (T ? '<p class="small sinfo"><b id="gt" dir="ltr">' + T + '</b> ثانية</p><div class="stbar"><i id="stbar"></i></div>' : "") +
         '<p class="sq">' + fr(st.q) + "</p>" + (lv === 1 && st.h ? '<p class="small erh">💡 ' + fr(st.h) + "</p>" : "") +
         '<div id="eopts">' + order.map(function (k, j) { return '<button class="opt" type="button" data-eo="' + k + '"><span class="l" dir="ltr">' + "abc"[j] + "</span><span>" + fr(st.o[k]) + "</span></button>"; }).join("") + "</div>";
-      area.querySelector("#eopts").addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-eo]"); if (b) answer(+b.getAttribute("data-eo")); });
+    }
+    function wire(root) {
+      root.querySelector("#eopts").addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-eo]"); if (b) answer(+b.getAttribute("data-eo")); });
       clearInterval(timer);
       if (T) { end = Date.now() + T * 1e3; timer = setInterval(function () {
         var ms = Math.max(0, end - Date.now()), t = d.getElementById("gt"), br = d.getElementById("stbar");
@@ -441,32 +445,45 @@
         if (ms <= 0) answer(-1);
       }, 200); }
     }
+    function ask() {
+      var st = steps[si]; order = shuffle(st.o.map(function (o, k) { return k; })); lock = false;
+      if (S) return;   // the scene shows the mission; the step opens when the player taps its spot (openS)
+      area.innerHTML = head("er", ' <span class="gsc">' + (si + 1) + "/" + steps.length + "</span>") + bar(0) + card() + stepHtml(st);
+      wire(area);
+    }
+    function openS(box) {
+      var st = steps[si]; lock = false;
+      box.innerHTML = '<div class="ers-shh"><span class="gsc">' + (si + 1) + "/" + steps.length + "</span></div>" + stepHtml(st);
+      wire(box);
+    }
     function answer(k) {
       if (lock || !d.getElementById("eopts")) return; lock = true; clearInterval(timer);
       var st = steps[si], good = k === st.a, right = fr(st.o[st.a]);
-      [].forEach.call(area.querySelectorAll("[data-eo]"), function (b) { var kk = +b.getAttribute("data-eo"); b.disabled = true; if (kk === st.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
-      var next = function () { if (!d.getElementById("eopts")) return; si++; if (si < steps.length) return ask(); done(); };
-      var box = area.querySelector("#eopts");
+      [].forEach.call(R.querySelectorAll("[data-eo]"), function (b) { var kk = +b.getAttribute("data-eo"); b.disabled = true; if (kk === st.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
+      var next = function () { if (!d.getElementById("eopts")) return; si++; if (si < steps.length) { if (S) S.next(); return ask(); } done(); };
+      var box = R.querySelector("#eopts");
       if (good) {
-        ok++; hp = Math.min(100, hp + ER.up); paintBar(1);
+        ok++; hp = Math.min(100, hp + ER.up); paintBar(1); if (S) S.result(true, hp, st, ok);
         box.insertAdjacentHTML("afterend", '<div class="gfb erok" role="status"><p>✅ صح! المريض تحسّن 📈</p><p class="small">💡 ' + fr(st.x) + '</p><div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div></div>');
-        erSee(); return hold(FB_X_MS, next);
+        erSee(); return hold(FB_X_MS, next, R);
       }
-      hp = Math.max(0, hp - ER.down); paintBar(-1);
+      hp = Math.max(0, hp - ER.down); paintBar(-1); if (S) S.result(false, hp, st, ok);
       var yours = k < 0 ? "⏰ ما جاوبت (خلص الوقت)" : fr(st.o[k]);
       box.insertAdjacentHTML("afterend", '<p class="small sfb">' + (k < 0 ? "⏰ خلص الوقت! " : "") + "📉 حالة المريض تدهورت</p>" + fbLine(yours, right, fr(st.x), 1));
       addMiss({ k: "er:" + c.id + ":" + si, q: c.ic + " " + fr(c.t) + " — " + fr(st.q), y: yours, r: right, rv: { t: "mcq", q: c.ic + " " + fr(c.who) + (c.lab ? "<br>🧪 " + fr(c.lab) : "") + "<br>" + fr(st.q), o: st.o.map(fr), a: st.a, x: fr(st.x) } });
-      erSee(); hold(0, next);
+      erSee(); hold(0, next, R);
     }
-    function erSee() { var f = area.querySelectorAll(".gfb"); f = f[f.length - 1]; if (f && f.scrollIntoView) f.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    function erSee() { var f = R.querySelectorAll(".gfb"); f = f[f.length - 1]; if (f && f.scrollIntoView) f.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
     function done() {
       var s = erState(hp), out = hp >= 70 ? "🎉 المريض استقرّ وانتقل عالقسم. شغل نظيف!" : hp >= 40 ? "🟡 المريض بعدو مش مستقر، الدكتور كمّل معو." : "🔴 المريض تدهور. راجع أخطاءك تحت 👇";
+      if (S) S.close(false);
       finish("er", ok, c.ic + " " + fr(c.t) + "<br>✅ <b>" + ok + "</b> من " + steps.length + " خطوات صح · ❤️ " + s[0] + " " + s[1] + "<br>" + out);
+      if (S) area.scrollIntoView({ block: "start" });
     }
     ask();
-    area.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (!S) area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
-  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, fbLine: fbLine, missHtml: missHtml, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX, ER: ER, erCases: erCases, erSteps: erSteps, fr: fr };
+  w.NursinGames = { terms: terms, qa: qa, pairs: pairs, memPairs: memPairs, tf: tf, enough: enough, blanks: blanks, fillOk: fillOk, mcq: mcq, fbLine: fbLine, missHtml: missHtml, STAGE: STAGE, LV: LV, ROUND_MAX: ROUND_MAX, ER: ER, erCases: erCases, erSteps: erSteps, fr: fr, erCase: erCase };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
