@@ -75,7 +75,7 @@
         el.querySelectorAll(".opt").forEach(function (b) { b.disabled = true; if (b.getAttribute("data-o") === q.a) b.classList.add("ok"); else if (b.getAttribute("data-o") === given && !ok) b.classList.add("bad"); });
         var f = el.querySelector(".ptype"); if (f) { f.querySelector("input").disabled = true; f.querySelector("button").disabled = true; }
         el.querySelector(".pgap").textContent = q.a; el.querySelector(".pgap").classList.add(ok ? "pok" : "pbad");
-        el.querySelector(".pfb").innerHTML = '<div class="expl">' + (ok ? "✅ صح!" : "❌ الجواب: <b>" + esc(q.a) + "</b>") + '</div><p><button class="btn pri" type="button" data-next>' + (st.i + 1 < st.qs.length ? "التالي ←" : "النتيجة ←") + '</button></p>';
+        el.querySelector(".pfb").innerHTML = '<div class="expl">' + (ok ? "✅ صح!" : "❌ الجواب: <b>" + esc(q.a) + "</b>") + '</div>' + (w.Osman ? (ok ? w.Osman.right() : w.Osman.wrong()) : "") + '<p><button class="btn pri" type="button" data-next>' + (st.i + 1 < st.qs.length ? "التالي ←" : "النتيجة ←") + '</button></p>';
         el.querySelector("[data-next]").onclick = function () { st.i++; draw(); };
       }
       el.querySelectorAll(".opt").forEach(function (b) { b.onclick = function () { var g = b.getAttribute("data-o"); done(g === q.a, g); }; });
@@ -92,7 +92,7 @@
     if (w.NursinGate && !w.NursinGate.signedIn) return Promise.reject(new Error("signed-out"));   // 🔒 tutor endpoint only when signed in
     var text = "صحّح جواب طالب تمريض على سؤال بالقانون التطبيقي. السؤال: «" + q + "». النقاط المطلوبة (من دفتر الصف): " + pts.join(" | ") + ". جواب الطالب: «" + ans + "». قلّو بالعربي اللبناني بـ ٣-٤ أسطر: شو صح، شو ناقص من النقاط، وعلامة من 10. ما تزيد معلومات من برّا النقاط.";
     var ctl = ("AbortController" in w) ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, 40000);
-    return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", text: text }], context: "" }), signal: ctl ? ctl.signal : undefined })
+    return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", text: text }], context: w.Osman && w.Osman.persona ? w.Osman.persona() : "" }), signal: ctl ? ctl.signal : undefined })
       .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (j) { var t = j && j.text; if (!t) throw new Error("empty"); return String(t).replace(/\*\*?/g, ""); });
   }
@@ -114,7 +114,13 @@
     function total() {
       var n = 0; for (var x in got) n += got[x];
       var shown = el.querySelectorAll(".pans:not([hidden])").length;
-      el.querySelector(".ptotal").innerHTML = shown ? '📊 مجموعك: <b>' + n + '/' + tot + '</b> نقطة (' + Math.round(n * 100 / tot) + '%)' + (shown < L.cq.length ? ' · بقيلك ' + (L.cq.length - shown) + ' سؤال' : '') : '';
+      el.querySelector(".ptotal").innerHTML = shown ? '📊 مجموعك: <b>' + n + '/' + tot + '</b> نقطة (' + Math.round(n * 100 / tot) + '%)' + (shown < L.cq.length ? ' · بقيلك ' + (L.cq.length - shown) + ' سؤال' : '') + osmLow(shown, n) : '';
+    }
+    // 👨‍🏫 الأستاذ عثمان when the whole class quiz ends under half the points (one line, kept while the ticks change)
+    var osmL = "";
+    function osmLow(shown, n) {
+      var O = w.Osman; if (!O || !O.on() || shown < L.cq.length || n * 2 >= tot) return "";
+      return osmL || (osmL = O.bubble(O.pick("wrong")));
     }
     el.querySelectorAll(".pcard").forEach(function (card) {
       var i = +card.getAttribute("data-i"), c = L.cq[i], ans = card.querySelector(".pans");

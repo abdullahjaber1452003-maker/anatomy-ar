@@ -38,7 +38,7 @@
       ["friends.html", "🏆", "أصحابي والليفل", "نقاطك، الترتيب، التحدّيات"],
       ["chat.html", "💬", "المحادثات", "رسائل لحالك أو بمجموعة"],
       ["classes.html", "🏫", "صفّي", "الصف، الترتيب، امتحان الصف"]] },
-    { k: "tutor", e: "🤖", n: "الأستاذ", href: "tutor.html", pages: ["tutor.html"] }
+    { k: "tutor", e: "👨‍🏫", n: "أستاذ عثمان", href: "tutor.html", pages: ["tutor.html"] }
   ];
   var LESSON = { "cardio.html": "❤️ القلب", "neuro.html": "🧠 الأعصاب", "henderson.html": "📋 Henderson", "law.html": "⚖️ القانون", "mgmt.html": "🏢 الإدارة", "quality.html": "✅ الجودة والاعتماد", "pharma.html": "💊 الأدوية", "3d.html": "🧊 المجسّمات 3D" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -63,9 +63,21 @@
     var P = w.NursinPWA, a = [];
     if (P && P.installable && P.installable()) a.push('<button class="gi pwainst" type="button"><span class="gie" aria-hidden="true">📲</span><span class="git"><b>زيد عالشاشة الرئيسية</b><small>Nursin متل التطبيق</small></span></button>');
     a.push(row(["friends.html#fpush", "🔔", "الإشعارات", "رسائل أصحابك + الدروس الجديدة"]));
+    a.push(osmRow());
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
     if (owner()) a.push(row(["admin" + ".html", "🛠", "لوحة الإدارة", "إعلانات + إشعار للكل"]));
     return a.join("");
+  }
+  // 👨‍🏫 «تعليقات الأستاذ عثمان» switch (assets/osman.js, localStorage nursin_osman_v1, default on)
+  function osmOn() { try { return localStorage.getItem("nursin_osman_v1") !== "0"; } catch (e) { return true; } }
+  function osmRow() {
+    var O = w.OSMAN || {}, t = function (o, f) { return (o && o.ar) || f; }, on = osmOn();
+    return '<button class="gi osmsw" type="button" role="switch" aria-checked="' + on + '"><span class="gie" aria-hidden="true">👨‍🏫</span><span class="git"><b>' + esc(t(O.toggle, "تعليقات الأستاذ عثمان")) + "</b><small>" + esc(t(O.toggle && O.toggle.sub, "")) + '</small></span><span class="osk" aria-hidden="true">' + esc(on ? t(O.onTxt, "شغّالة") : t(O.offTxt, "موقّفة")) + "</span></button>";
+  }
+  function osmFlip(b) {
+    var on = !osmOn();
+    if (w.Osman) w.Osman.set(on); else { try { localStorage.setItem("nursin_osman_v1", on ? "1" : "0"); } catch (e) {} }
+    b.outerHTML = osmRow();
   }
   function openSheet(key, btn) {
     var again = openKey === key; closeSheet(); if (again) return;
@@ -75,7 +87,7 @@
     sheet = d.createElement("div"); sheet.className = "gsheet"; sheet.id = "gsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", title.replace(/^\S+\s/, ""));
     sheet.innerHTML = '<div class="gsh"><b>' + esc(title) + '</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + body + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { var b = closeSheet(); if (b) b.focus(); });
-    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi"); if (a) closeSheet(); });
+    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi"); if (a) closeSheet(); var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); });
     d.body.appendChild(scrim); d.body.appendChild(sheet);
     if (desk() && btn) {                                   // dropdown under the clicked item (RTL: align its right edge)
       var r = btn.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
@@ -200,7 +212,7 @@
   }
   function done(m) {
     if (!card) return;
-    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 المواد · 📝 التمارين · 👥 أصحابي · 🤖 الأستاذ.</p>';
+    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 المواد · 📝 التمارين · 👥 أصحابي · 👨‍🏫 الأستاذ عثمان.</p>';
     setTimeout(closeCard, 3200);
   }
   function step2(need, total) {

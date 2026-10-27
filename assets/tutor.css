@@ -1,4 +1,4 @@
-/* الأستاذ المساعد */
+/* الأستاذ عثمان */
 .tchat{padding:10px;display:flex;flex-direction:column;gap:8px}
 .tlink{background:none;border:0;padding:0 4px;font:inherit;color:var(--pri2);text-decoration:underline;cursor:pointer}.tlink[hidden]{display:none}
 .tlog{position:relative;height:58vh;height:calc(100dvh - 340px);min-height:240px;max-height:640px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:6px 2px;background:#f8fbfb;border:1px solid var(--line);border-radius:12px}

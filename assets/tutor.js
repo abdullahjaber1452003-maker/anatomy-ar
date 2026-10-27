@@ -1,4 +1,4 @@
-/* الأستاذ المساعد: محادثة مع ذكاء اصطناعي (Gemini عبر Cloudflare Worker تبع الموقع).
+/* الأستاذ عثمان: محادثة مع ذكاء اصطناعي (Gemini عبر Cloudflare Worker تبع الموقع).
    المحادثة بتنحفظ بالـ sessionStorage (آخر 12 رسالة)، والعدّاد اليومي بالـ localStorage: 15 سؤال مجاناً بالنهار (يوم بيروت)،
    وبعدين «🎬 شوف إعلان وخود ٥ أسئلة»: شاشة إعلان Adsterra 300x250 (مش AdSense) مع عدّ 15 ثانية ثم «كمّل» = +5 أسئلة،
    أكتر شي 3 مرات بالنهار (30 سؤال بالمجموع) لحتى ما يخلص مفتاح Gemini المجاني المشترك. بلا إعلانات جوّا المحادثة.
@@ -183,7 +183,7 @@
       var d=document.createElement('div');d.className='tmsg '+(role==='user'?'tme':'tbot')+(opts.cls?' '+opts.cls:'');
       var b=document.createElement('div');b.className='tb';
       if(role==='user')b.textContent=text;else b.innerHTML=fmt(text);   // fmt escapes first
-      if(role!=='user'){var who=document.createElement('span');who.className='twho';who.setAttribute('aria-hidden','true');who.textContent='🧑‍🏫';d.appendChild(who);}
+      if(role!=='user'){var who=document.createElement('span');who.className='twho';who.setAttribute('aria-hidden','true');who.textContent='👨‍🏫';d.appendChild(who);}
       d.appendChild(b);
       if(role==='assistant'&&tts&&!opts.noVoice){
         var s=document.createElement('button');s.type='button';s.className='btn tspk';s.textContent='🔊 اسمع';s.setAttribute('aria-pressed','false');s.setAttribute('aria-label','اسمع الجواب بالصوت');
@@ -193,7 +193,7 @@
     }
     function renderAll(){
       stopSpeak();log.innerHTML='';
-      bubble('assistant','أهلا! أنا **الأستاذ المساعد** 🧑‍🏫\nاسألني عن أي درس (القلب، الأعصاب، Henderson…) وبشرحلك خطوة خطوة، أو قلّي «اعملّي كويز» 💪',{noVoice:true,cls:'twelcome'});
+      bubble('assistant','أهلا! أنا **الأستاذ عثمان** 👨‍🏫\nاسألني عن أي درس (القلب، الأعصاب، Henderson…) وبشرحلك خطوة خطوة، أو قلّي «اعملّي كويز» 💪',{noVoice:true,cls:'twelcome'});
       hist.forEach(function(m){bubble(m.role,m.text);});
       chips.hidden=hist.length>0;chat.classList.toggle('tempty',!hist.length);newBtn.hidden=!hist.length;showLeft();
     }
@@ -221,13 +221,15 @@
     }
     document.addEventListener('nursin:me',function(){if(w.NursinFB&&w.NursinFB.user)fetchLive();});
     function context(lv){return buildContext(gather(w.Nursin||{},lv));}
+    /* 👨‍🏫 الأستاذ عثمان: his persona goes first in the context the worker appends to its system text (assets/osman.js; scolding part only with «تعليقات الأستاذ عثمان» on) */
+    function persona(){var O=w.Osman;return O&&O.persona?O.persona()+'\n':'';}
     function call(){
       return liveInfo().catch(function(){return null;}).then(post);
     }
     function post(lv){
       if(!signedIn())return Promise.reject(new Error('signed-out'));   // 🔒 the endpoint is only called when signed in (Abdullah 12:28 PM)
       var ctl=('AbortController' in w)?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort();},TIMEOUT);
-      return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-KEEP),context:context(lv)}),signal:ctl?ctl.signal:undefined})
+      return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-KEEP),context:persona()+context(lv)}),signal:ctl?ctl.signal:undefined})
         .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
         .then(function(j){clearTimeout(timer);var t=j&&j.text;if(isBusy(t))throw new Error('busy');return t;},function(e){clearTimeout(timer);throw e;});
     }

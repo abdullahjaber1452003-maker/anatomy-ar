@@ -119,8 +119,11 @@
   var miss = [], lastMiss = [], lastG = "", replaying = false, FB_MS = 2000, FB_X_MS = 3500;
   function fbLine(yours, right, x, btn) {
     return '<div class="gfb" role="status"><p>❌ إنت اخترت: <b class="gy">' + yours + '</b> — ✅ الصح: <b class="gr">' + right + "</b></p>" +
-      (x ? '<p class="small">💡 ' + x + "</p>" : "") + (btn ? '<div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div>' : "") + "</div>";
+      (x ? '<p class="small">💡 ' + x + "</p>" : "") + osm() + (btn ? '<div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div>' : "") + "</div>";
   }
+  // 👨‍🏫 الأستاذ عثمان (assets/osman.js): a line inside every correction card; a short praise toast every 5 right in a row
+  function osm() { return w.Osman ? w.Osman.wrong() : ""; }
+  function osmOk() { if (w.Osman) w.Osman.toast(w.Osman.right()); }
   // wait on the feedback: «كمّل» goes on at once, else after ms (0 = only on tap)
   function hold(ms, go, root) {
     var done = false, t = 0, bs = (root || area).querySelectorAll(".gkm"), b = bs[bs.length - 1];
@@ -188,7 +191,7 @@
       var first = pick, ai = pick.getAttribute("data-s") === "a" ? pick : b, bi = ai === pick ? b : pick, i = ai.getAttribute("data-i");
       pick.classList.remove("sel"); pick = null;
       if (i === bi.getAttribute("data-i")) {
-        ai.disabled = bi.disabled = true; ai.classList.add("ok"); bi.classList.add("ok"); done++; if (!miss[i]) ok++;
+        ai.disabled = bi.disabled = true; ai.classList.add("ok"); bi.classList.add("ok"); done++; if (!miss[i]) { ok++; osmOk(); }
         d.getElementById("gsc").textContent = done + "/" + P.length;
         if (done === P.length) setTimeout(function () { finish("match", ok, "✅ <b>" + ok + "</b> من " + P.length + " صح من أوّل مرّة"); }, 500);
         var fb0 = d.getElementById("gfbm"); if (fb0) fb0.innerHTML = "";
@@ -215,7 +218,7 @@
     area.querySelector(".tfb").addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest("[data-a]"); if (!b || lock) return;
       var it = items[i], good = (b.getAttribute("data-a") === "1") === it.ok, box = d.getElementById("tfq");
-      if (good) ok++; else bad++;
+      if (good) { ok++; osmOk(); } else bad++;
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq " + (good ? "ok" : "no");
       lock = true;
@@ -285,7 +288,7 @@
     }
     function answer(typed) {
       if (lock || !d.getElementById("fq")) return; var b = items[i], good = typed != null && fillOk(b, typed), box = d.getElementById("fq");
-      if (good) ok++; else bad++;
+      if (good) { ok++; osmOk(); } else bad++;
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq fq " + (good ? "ok" : "no");
       lock = true;
@@ -351,7 +354,7 @@
         area.querySelector("[data-snext]").addEventListener("click", ask);
         area.scrollIntoView({ block: "start", behavior: "smooth" });
       };
-      if (good) return setTimeout(after, 700);
+      if (good) { osmOk(); return setTimeout(after, 700); }
       // ❌ / ⏰ −1 ❤️, the clock is already stopped: the line + the question's own explanation, then on (or «كمّل»)
       lives--; var hp = d.getElementById("shp"); if (hp) { hp.textContent = hearts(); hp.classList.add("shit"); }
       var yours = k < 0 ? "⏰ ما جاوبت (خلص الوقت)" : esc(strip(cur.o[k])), right = esc(strip(cur.o[cur.a]));
@@ -528,7 +531,7 @@
       var next = function () { if (!d.getElementById("eopts")) return; si++; if (si < steps.length) { if (S) S.next(); return ask(); } done(); };
       var box = R.querySelector("#eopts");
       if (good) {
-        ok++; hp = Math.min(100, hp + ER.up); paintBar(1); if (S) S.result(true, hp, st, ok);
+        ok++; osmOk(); hp = Math.min(100, hp + ER.up); paintBar(1); if (S) S.result(true, hp, st, ok);
         box.insertAdjacentHTML("afterend", '<div class="gfb erok" role="status"><p>✅ صح! المريض تحسّن 📈</p><p class="small">💡 ' + fr(st.x) + '</p><div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div></div>');
         erSee(); return hold(FB_X_MS, next, R);
       }

@@ -107,7 +107,7 @@ export async function openOnQuiz(api, id) {
 }
 
 
-// 🧑‍🏫 for the tutor: did I take these exams? (today: start + result; earlier days: result only)
+// 👨‍🏫 for the tutor: did I take these exams? (today: start + result; earlier days: result only)
 export async function tutorStatus(api, exs) {
   init(api); if (!A.user) return null;
   const today = N.dayKey(), out = {};

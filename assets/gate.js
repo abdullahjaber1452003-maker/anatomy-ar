@@ -9,8 +9,8 @@
    - ADD-ON (Abdullah 12:12 PM): «📺 شوف إعلان وافتح» on the lock card — a signed-out visitor can open THIS page for 1 hour (sessionStorage)
      by viewing an Adsterra 300x250 unit (never AdSense) in a box labelled «إعلان» with a 15 s countdown, same as the tutor's ad unlock.
      Only viewing + the timer count, never a click; if the ad doesn't load the button still comes after the timer. Sign-in stays the main button.
-   - TUTOR LOCK (Abdullah 12:28 PM): tutor.html «الأستاذ المساعد» is locked for signed-out visitors too: no chat box, no questions, a lock card
-     «🔒 الأستاذ المساعد مقفول — سجّل دخول بغوغل لتحكي معه» with the Google button ONLY (no ad unlock: every answer costs). assets/tutor.js
+   - TUTOR LOCK (Abdullah 12:28 PM): tutor.html «الأستاذ عثمان» is locked for signed-out visitors too: no chat box, no questions, a lock card
+     «🔒 الأستاذ عثمان مقفول — سجّل دخول بغوغل لتحكي معه» with the Google button ONLY (no ad unlock: every answer costs). assets/tutor.js
      also refuses to call its endpoint while signed out. The 🤖 bottom-bar tab and the home card show 🔒 (CSS on html.gl-out).
    html.gl-out = signed out (nav 🔒); html.gl-lock = this page's content locked (signed out and no ad unlock).
    Loaded synchronously in <head> so the locked state is there before the first paint. */
@@ -32,8 +32,8 @@
     var c = d.createElement("div");
     if (kind === "t") {                     // tutor: Google only, no ad unlock
       c.className = "glk-card glk-tut"; c.setAttribute("role", "region"); c.setAttribute("aria-label", "مقفول");
-      c.innerHTML = '<p class="glk-h">🔒 الأستاذ المساعد مقفول — سجّل دخول بغوغل لتحكي معه</p>' +
-        '<p class="small">الأستاذ المساعد بس للي عندن حساب. سجّل دخول بغوغل (ببلاش، بثانية) وبيفتحلك الأستاذ وكل الدروس والكويزات.</p>' +
+      c.innerHTML = '<p class="glk-h">🔒 الأستاذ عثمان مقفول — سجّل دخول بغوغل لتحكي معه</p>' +
+        '<p class="small">الأستاذ عثمان بس للي عندن حساب. سجّل دخول بغوغل (ببلاش، بثانية) وبيفتحلك الأستاذ وكل الدروس والكويزات.</p>' +
         '<button class="gbtn glk-go" type="button">' + G + '<span>تسجيل الدخول بغوغل</span></button><p class="glk-err small" hidden></p>';
       return c;
     }

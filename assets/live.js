@@ -186,6 +186,12 @@ function drawLive(S) {
   mark(S);
   tick(S);
 }
+// 👨‍🏫 الأستاذ عثمان (assets/osman.js) under a wrong answer; one line per question (mark() redraws often)
+const osmSeen = {};
+function osmLine(ok, q) {
+  const O = window.Osman; if (ok || !O || !O.on() || !q) return "";
+  return osmSeen[q.id] || (osmSeen[q.id] = O.bubble(O.pick("wrong")));
+}
 function mark(S) {
   const r = S.r, i = r.idx, q = qById(r.qids[i]), mine = r[S.role + "Ans"] && r[S.role + "Ans"][i] != null ? +r[S.role + "Ans"][i] : S.mine[i];
   const theirs = r[other(S.role) + "Ans"] && r[other(S.role) + "Ans"][i];
@@ -201,7 +207,7 @@ function mark(S) {
   let h;
   if (mine == null) h = '<div class="expl w">⏰ <b>خلص الوقت!</b> الجواب الصح: ' + "abcd"[q.a] + "</div>";
   else if (!over) h = '<div class="expl' + (mine === q.a ? "" : " w") + '">' + (mine === q.a ? "✅ <b>صح!</b>" : "❌ <b>غلط</b>") + " · ناطرين " + oname + "…</div>";
-  else h = '<div class="expl' + (mine === q.a ? "" : " w") + '">' + (mine === q.a ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + "abcd"[q.a] + "</b> — ") + q.x + "</div>";
+  else h = '<div class="expl' + (mine === q.a ? "" : " w") + '">' + (mine === q.a ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + "abcd"[q.a] + "</b> — ") + q.x + "</div>" + osmLine(mine === q.a, q);
   if (fb.dataset.h !== h) { fb.dataset.h = h; fb.innerHTML = h; }
 }
 async function answer(S, k) {
