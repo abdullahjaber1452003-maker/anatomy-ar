@@ -572,6 +572,8 @@ onAuthStateChanged(auth, async u => {
   if (page === "exams.html") { const m = await mod("exams"); if (m) m.page(API); }
   if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
   mod("presence").then(m => m && m.start(API));                  // 🟢 heartbeat while visible + dots/chip where names show
+  mod("studytime").then(m => m && m.start(API));                 // ⏱️ active study time on lesson/quiz pages + the home board
+  if (document.getElementById("duel")) mod("duel").then(m => m && m.start(API));   // ⚔️ «تحدي اليوم» on the home page
   const lm = await mod("live");
   if (lm) { if (page === "live.html") lm.page(API); lm.toast(API); }
   N.flush();

@@ -486,6 +486,25 @@ html.fr .gi.osmsw{text-align:left}
 .onlbox{background:var(--card);width:100%;max-width:520px;max-height:80vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px 22px;box-shadow:0 -6px 24px rgba(0,0,0,.18)}
 .onlhd{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:18px}
 .onll{list-style:none;margin:6px 0 0;padding:0}.onlr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.onlr .nm{flex:1;min-width:0}.onlr:last-child{border-bottom:0}
+/* ⚔️ تحدي اليوم + ⏱️ وقت الدرس اليوم + 📌 دروس هالأسبوع (Oct 28 home reorg) — no ads in or next to these cards */
+.duel.hfirst{border:2px solid #f59e0b;background:linear-gradient(180deg,#fffbeb,var(--card))}
+.duel h2{margin:0 0 6px}.duel h2 small,.stboard h2 small{font-size:13px;color:var(--mut);font-weight:400}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.dcls{font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line)}
+.dvs{display:flex;align-items:center;justify-content:space-around;gap:8px;margin:10px 0;padding:10px;border-radius:12px;background:#fff7ed}
+.dside{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0;max-width:42%}.dside .av{width:44px;height:44px}
+.dx{font-size:26px}.dfire{color:#c2410c;font-weight:700}.dgo{font-size:18px;padding:10px 22px}.dres{font-size:17px}.dme{font-weight:600}
+.dlh,.dweek h3{font-size:16px;margin:12px 0 6px}.dlist,.dpods{list-style:none;padding:0;margin:0}
+.dpair{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 4px;border-bottom:1px solid var(--line)}.dpair.me{background:#fef3c7;border-radius:8px}
+.dp{display:flex;align-items:center;gap:4px;min-width:0;flex:1;overflow:hidden}.dp:last-child{justify-content:flex-end}.dp .av{width:26px;height:26px;flex:none}
+.dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dwin .dn{font-weight:700;color:#15803d}.dsc{white-space:nowrap;display:inline-flex;gap:4px}.dsc i{font-style:normal}.dst{white-space:nowrap;font-size:14px}
+.dpod{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line)}.dpod .av{width:26px;height:26px}.dmed{font-size:22px}
+.dprize{flex-basis:100%;color:var(--mut)}.dwk{color:var(--mut)}.drules{margin-top:10px}.drules summary{cursor:pointer;font-weight:600}.drules li{margin:4px 0}
+.duelq{position:fixed;inset:0;z-index:9000;background:var(--bg,#fff);overflow:auto;padding:16px}.dqbox{max-width:560px;margin:0 auto}
+.dqtop{display:flex;justify-content:space-between;align-items:center}.dqt{font-weight:700;color:#c2410c}.dqq{font-size:18px;line-height:1.6}
+.dqo{display:block;width:100%;text-align:start;margin:8px 0;padding:12px;font-size:16px}.dfix li{margin:8px 0}.dfix .ok{color:#166534}.dfix .no{color:#991b1b}
+html.duelon .adx,html.duelon .ad-slot{display:none!important}
+.stboard h2,.wkles h2{margin:0 0 6px}.sthint{margin:0 0 6px}.strow{display:flex;align-items:center;gap:6px}.strow .av{width:26px;height:26px}.strk{min-width:26px}.stt{margin-inline-start:auto;white-space:nowrap}.strow.me{background:#ecfdf5;border-radius:8px}
+.wkl{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px}.wkl a{display:inline-block;padding:5px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none}.wkl .ok a{background:#ecfdf5}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}

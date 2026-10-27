@@ -224,6 +224,7 @@ export async function deleteClass(cid, cls, api) {
   const a = api || A, F3 = a.fs, db = a.db, me = a.user.uid;
   const refs = [];
   for (const s of DEL_SUBS) (await F3.getDocs(F3.collection(db, "classes", cid, s))).docs.forEach(d => refs.push(d.ref));
+  try { (await F3.getDocs(F3.collection(db, "classes", cid, "duel"))).docs.forEach(d => refs.push(d.ref)); } catch (e) {}   // ⚔️ (rules v14; before them there is nothing to delete)
   refs.sort((x, y) => (x.parent.id === "members") - (y.parent.id === "members") || (x.id === me) - (y.id === me));   // members last, my own member doc very last
   for (const part of chunks(refs)) { const b = F3.writeBatch(db); part.forEach(r => b.delete(r)); await b.commit(); }
   const b = F3.writeBatch(db);
@@ -322,6 +323,8 @@ async function openClass(el, cid) {
   if (m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
   el.innerHTML = '<nav class="small"><a href="classes.html">← صفوفي</a></nav>' +
     '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(cls.ownerName)) + '</bdi></p><div id="ccode"></div></section>' +
+    '<section class="qcard duel" id="cduel"><h2>⚔️ تحدي اليوم</h2><p class="small">⏳ …</p></section>' +
+    '<section class="qcard stboard" id="cstudy" hidden></section>' +
     '<section class="qcard cdq" id="cdq"><h2>❓ سؤال اليوم</h2><div id="cdqb"><p class="small">⏳ …</p></div></section>' +
     '<section class="qcard" id="cweek"><h2>📝 امتحان هالأسبوع</h2><div id="cexam"><p class="small">⏳ …</p></div></section>' +
     '<section class="qcard"><h2>👑 أبطال الصف</h2><div id="cawards"></div></section>' +
@@ -332,6 +335,8 @@ async function openClass(el, cid) {
     (C.canDel ? '<section class="qcard cdanger" id="cdelsec"><h2>🗑️ حذف الصف</h2><p class="small">' + (C.owner ? "إنت صاحب الصف." : "🛡️ إنت أدمن الموقع.") + ' الحذف بيشيل الصف وعلاماتو وأسئلتو لكل الأعضاء، وما بيرجع.</p><p><button class="btn clsdel" id="cdel" type="button">🗑️ احذف الصف</button></p><p id="cdelmsg" class="small" aria-live="polite"></p></section>' : "");
   C.prof = {};
   drawCode(); drawBoard(); drawAwards(); drawRank(); drawMembers();
+  A.mod("duel").then(m => m && m.classCard(A, $("#cduel"), cid, cls.name));                        // ⚔️ today's draw for this class
+  A.mod("studytime").then(m => m && m.classBoard(A, $("#cstudy"), members.map(x => x.uid)));      // ⏱️ today's active study time, this class
   if (isAdminUser(A.user)) initAdminAdd();
   if (C.canDel) $("#cdel").addEventListener("click", () => askDelete(cid, cls, cls.name, $("#cdelsec")));
   if (!C.member) {   // the admin looking at a class he isn't in: read-only, nothing gets written in his name
