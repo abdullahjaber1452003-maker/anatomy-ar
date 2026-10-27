@@ -113,7 +113,7 @@
     if (S) { var o = S.activity("game", pts, GN[g].replace(/^\S+\s/, ""), d.getElementById("gpts")); if (o && o.paid < pts && w.Nursin && w.Nursin.me) d.getElementById("gpts").insertAdjacentHTML("afterend", '<p class="small">وصلت لحدّ نقاط الألعاب اليوم (' + S.GAME_CAP + ")، بس بتضل تلعب وتتمرّن 💪</p>"); }
     area.scrollIntoView({ block: "start", behavior: "smooth" });
   }
-  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (g === "er" ? "حالات من درس الـ réa" : sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : g === "er" ? LV[lv].n + " · " + (lv + 2) + " خطوات" : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
+  function head(g, sub) { return '<div class="ghead"><b>' + GN[g] + "</b> <span class=\"small\">" + (g === "er" ? "حالات من درس الـ réa" : sel === "all" ? "كل المواد" : esc((w.QSUBJ || {})[sel] || sel)) + " · " + (g === "stage" ? STAGE.levels + " مراحل" : g === "er" ? LV[lv].n + " · " + (w.ERSTORY ? "حالة قصّة" : (lv + 2) + " خطوات") : LV[lv].n) + "</span>" + (sub || "") + '<button class="btn gx" type="button" data-back="1">✕</button></div>'; }
 
   /* ---- ❌/✅ instant correction + 📋 this round's mistakes + 🎯 replay (no points) ---- */
   var miss = [], lastMiss = [], lastG = "", replaying = false, FB_MS = 2000, FB_X_MS = 3500;
@@ -405,14 +405,79 @@
   function erv(s) { return '<span class="erv" dir="auto">' + esc(s) + "</span>"; }
   function erState(hp) { return hp >= 70 ? ["🟢", "مستقر، عم يتحسّن", "ok"] : hp >= 40 ? ["🟡", "مش مستقر", "mid"] : ["🔴", "عم يتدهور", "bad"]; }
   function erGame() {
-    var cs = erCases();
-    area.innerHTML = head("er") + '<p class="small">🚑 وصلت سيارة إسعاف! اختار الحالة، أو خلّيها عشوائية. إنت الممرّض: قيّم واختار الخطوة الصح.</p><div class="erpick">' +
+    var cs = erCases(), sv = er3Load(), E3 = w.ERSTORY;
+    // v3 (Oct 27, 12:36 PM): a case = a living story (assets/ersim-story.js); the old 3–5 quick questions stay as «⚡ أسئلة سريعة»
+    area.innerHTML = head("er") + '<div class="erwrap"><p class="small">🚑 وصلت سيارة إسعاف! اختار الحالة. إنت الممرّض: قيس، افحص، اطلب تحاليل، عطي العلاج… كل شي بينسجّل والمريض بيتغيّر مع الوقت.</p>' +
+      (sv ? '<button type="button" class="btn on erc errs" data-er3r="1">▶️ كمّل الحالة: ' + fr(sv.c.ic + " " + sv.c.t) + ' <small dir="ltr">🕒 ' + Math.floor(sv.st.t / 60) + ":" + ("0" + Math.round(sv.st.t % 60)).slice(-2) + "</small></button>" : "") +
+      '<div class="erpick">' +
       cs.map(function (c, i) { return '<button type="button" class="btn erc" data-erc="' + i + '"><span>' + c.ic + "</span> " + fr(c.t) + "</button>"; }).join("") +
-      '<button type="button" class="btn on erc" data-erc="-1">🎲 حالة عشوائية</button></div>';
-    area.querySelector(".erpick").addEventListener("click", function (e) {
-      var b = e.target.closest && e.target.closest("[data-erc]"); if (!b) return; var i = +b.getAttribute("data-erc");
-      erCase(cs[i >= 0 ? i : Math.floor(Math.random() * cs.length)]);
+      '<button type="button" class="btn on erc" data-erc="-1">🎲 حالة عشوائية</button></div>' +
+      '<label class="erq small"><input type="checkbox" id="erquick"> ⚡ أسئلة سريعة بدل القصّة (3–5 أسئلة)</label></div>';
+    area.querySelector(".erwrap").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-erc],[data-er3r]"); if (!b) return;
+      if (b.hasAttribute("data-er3r")) return erStory(sv.c, sv.st);
+      var i = +b.getAttribute("data-erc"), c = cs[i >= 0 ? i : Math.floor(Math.random() * cs.length)], q = d.getElementById("erquick");
+      if ((q && q.checked) || !E3 || !E3.story(c.id) || !w.ERSCENE) erCase(c); else erStory(c);
     });
+  }
+  /* ---- 🚑 v3 «الحالة قصّة» (Abdullah, Oct 27 12:34–12:36 PM): free actions, many at once, a game clock, the patient gets worse untreated and
+     better (slowly) with the right care; every action in «📋 ملف المريض». Engine + data: assets/ersim-story.js; room UI: ERSCENE.open(c, {sim}).
+     Wrong treatment = «❌ إنت اخترت … ✅ الصح …» + the line from the notes, into 📋 أخطاءك / 🎯 راجع أخطاءك; end → finish("er", stars). ---- */
+  var ER3 = "nursin_er3_v1";
+  function er3Load() {
+    try { var o = JSON.parse(localStorage.getItem(ER3) || "null"), E3 = w.ERSTORY; if (!o || !o.st || o.st.v !== 3 || o.st.end || !E3 || !E3.story(o.st.cid)) return null;
+      var c = erCases().filter(function (x) { return x.id === o.st.cid; })[0]; return c ? { c: c, st: o.st } : null; } catch (e) { return null; }
+  }
+  function er3Save(st) { try { if (st.end) localStorage.removeItem(ER3); else localStorage.setItem(ER3, JSON.stringify({ st: st, at: Date.now() })); } catch (e) {} }
+  function erStory(c, saved) {
+    var E3 = w.ERSTORY, st = saved || E3.create(c.id, lv);
+    if (saved) { lv = st.lv; try { localStorage.setItem("nursin_games_lv", lv); } catch (e) {} } else miss = [];
+    er3Save(st);
+    var L3 = E3.actions(c.id);
+    function other(a, right) { var o = L3.filter(function (x) { return x.k === "bad" && x.id !== a.id && x.n !== right; })[0]; return o ? o.n : ""; }
+    function rvq(q, right, wrong, third, x) { var o = [fr(right), fr(wrong)]; if (third && third !== wrong && third !== right) o.push(fr(third)); return { t: "mcq", q: c.ic + " " + fr(c.who) + "<br>" + q, o: o, a: 0, x: fr(x) }; }
+    function quizRun(idxs, box, done) {
+      var qi = 0, okN = 0, lock = false;
+      function show() {
+        var s0 = c.steps[idxs[qi]], ord = shuffle(s0.o.map(function (o, k) { return k; })); lock = false;
+        box.innerHTML = '<div class="ers-shh"><b>' + (idxs.length > 1 ? "📖 " + (qi + 1) + "/" + idxs.length : "🧠") + '</b></div><p class="sq">' + fr(s0.q) + "</p>" + (lv === 1 && s0.h ? '<p class="small erh">💡 ' + fr(s0.h) + "</p>" : "") +
+          '<div id="eopts">' + ord.map(function (k, j) { return '<button class="opt" type="button" data-eo="' + k + '"><span class="l" dir="ltr">' + "abc"[j] + "</span><span>" + fr(s0.o[k]) + "</span></button>"; }).join("") + "</div>";
+        box.scrollTop = 0;
+        box.querySelector("#eopts").addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-eo]"); if (b) ans(+b.getAttribute("data-eo"), s0, idxs[qi]); });
+      }
+      function ans(k, s0, si) {
+        if (lock) return; lock = true; var good = k === s0.a, right = fr(s0.o[s0.a]), bx = box.querySelector("#eopts");
+        [].forEach.call(box.querySelectorAll("[data-eo]"), function (b) { var kk = +b.getAttribute("data-eo"); b.disabled = true; if (kk === s0.a) b.classList.add("ok"); else if (kk === k) b.classList.add("bad"); });
+        if (good) { okN++; bx.insertAdjacentHTML("afterend", '<div class="gfb erok" role="status"><p>✅ صح!</p><p class="small">💡 ' + fr(s0.x) + '</p><div class="sbtns"><button class="btn on gkm" type="button">كمّل ⬅️</button></div></div>'); }
+        else {
+          bx.insertAdjacentHTML("afterend", fbLine(fr(s0.o[k]), right, fr(s0.x), 1));
+          addMiss({ k: "er:" + c.id + ":" + si, q: c.ic + " " + fr(c.t) + " — " + fr(s0.q), y: fr(s0.o[k]), r: right, rv: { t: "mcq", q: c.ic + " " + fr(c.who) + "<br>" + fr(s0.q), o: s0.o.map(fr), a: s0.a, x: fr(s0.x) } });
+        }
+        hold(0, function () { qi++; if (qi < idxs.length) show(); else done(okN, idxs.length); }, box);
+      }
+      show();
+    }
+    var S = w.ERSCENE.open(c, { steps: E3.keys(c.id), lv: lv, fr: fr, onExit: function () { erGame(); },
+      sim: { st: st, resume: !!saved, save: er3Save,
+        fb: function (y, r, x) { return fbLine(y, r, x, 0); },
+        onMiss: function (a, e) { addMiss({ k: "er3:" + c.id + ":" + a.id, q: c.ic + " " + fr(c.t) + " — شو الصح تعمل؟", y: fr(a.n), r: fr(e.r), rv: rvq("شو الصح تعمل؟", e.r, a.n, other(a, e.r), a.x) }); },
+        onQuiz: quizRun,
+        onEnd: function (st2) { erDebrief(c, st2); } } });
+    return S;
+  }
+  function erDebrief(c, st) {
+    var E3 = w.ERSTORY, L3 = E3.actions(c.id), ks = E3.keys(c.id), stars = E3.stars(st), S = E3.status(st), kd = ks.filter(function (k) { return st.done[k]; });
+    ks.forEach(function (k) {
+      if (st.done[k]) return; var a = E3.act(c.id, k), bad = L3.filter(function (x) { return x.k === "bad"; });
+      addMiss({ k: "er3m:" + c.id + ":" + k, q: c.ic + " " + fr(c.t) + " — ما عملت: " + fr(a.n), y: "— ما عملتها", r: fr(a.n),
+        rv: { t: "mcq", q: c.ic + " " + fr(c.who) + "<br>شو كان لازم تعمل كمان؟", o: [fr(a.n)].concat(bad.slice(0, 2).map(function (b) { return fr(b.n); })), a: 0, x: fr(a.x) } });
+    });
+    var tm = Math.floor(st.t / 60) + ":" + ("0" + Math.round(st.t % 60)).slice(-2), seen = {}, ideal = E3.cases[c.id].ideal.filter(function (id) { if (seen[id]) return false; seen[id] = 1; return true; });
+    var once = {}, did = st.log.filter(function (e) { var a = E3.act(c.id, e.a); if (!a || once[e.a + e.kind] || !(e.kind === "tx" || (a.key && /^(exam|lab|call|res|quiz)$/.test(e.kind)))) return false; if (e.kind === "call" && /constantes؟/.test(e.txt)) return false; if (e.kind === "quiz" && !(st.qd && st.qd[e.a])) return false; once[e.a + e.kind] = 1; return true; });
+    var out = st.end === "ok" ? "🎉 المريض استقرّ وانتقل عالقسم. شغل نظيف!" : st.end === "lost" ? "🔴 المريض تدهور: " + fr(E3.cases[c.id].lost) : "🤝 سلّمت الحالة والمريض " + S.ic + " " + S.n + ".";
+    finish("er", stars, c.ic + " " + fr(c.t) + "<br>⭐ <b>" + stars + "</b>/10 · 🕒 " + tm + " · ✅ " + kd.length + "/" + ks.length + " مهام أساسية<br>" + out +
+      '<div class="erdb"><p><b>✅ شو عملت صح (بالترتيب):</b></p><ol>' + (did.length ? did.map(function (e) { var a = E3.act(c.id, e.a); return '<li><i dir="ltr">' + Math.floor(e.t / 60) + ":" + ("0" + e.t % 60).slice(-2) + "</i> " + e.ic + " " + fr(e.kind === "res" ? e.txt : a.n) + (e.fast ? " ⚡" : "") + "</li>"; }).join("") : "<li>—</li>") + "</ol>" +
+      "<p><b>📘 الترتيب الصح حسب نوطاتك:</b></p><ol>" + ideal.map(function (id) { var a = E3.act(c.id, id); return "<li>" + a.ic + " " + fr(a.n) + "</li>"; }).join("") + "</ol></div>");
   }
   function erCase(c) {
     var steps = erSteps(c), si = 0, ok = 0, hp = ER.hp0, lock = false, end = 0, T = ER.secs[lv] || 0, order = [];
