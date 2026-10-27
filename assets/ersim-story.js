@@ -282,3 +282,4 @@
   w.ERSTORY = { K: K, cases: CASES, MEAS: MEAS, COMMON: COMMON, story: story, actions: actions, act: act, keys: keys, band: band, vit: vit, moves: moves,
     create: create, tick: tick, doAct: doAct, quiz: quiz, handover: handover, stars: stars, status: status, hint: hint, maxPts: maxPts, drift: drift };
 })(typeof window !== "undefined" ? window : this);
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("ERSTORY"); }   // 🇫🇷 Français seulement (assets/lang.js)

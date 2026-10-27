@@ -46,7 +46,7 @@
         var a={'class':'hs',slot:'hotspot-'+h.key,'data-position':h.pos.map(function(v){return v+'m';}).join(' '),type:'button','aria-label':h.ar};
         if(h.normal)a['data-normal']=h.normal.join(' ');
         if(h.ves)a['class']+=' ves';
-        var b=el('button',a,(i+1)+'<span class="lbl" dir="rtl">'+h.ar+'</span>'+(h.ves?'<span class="vlbl" dir="rtl" style="border-color:'+h.ves+'">'+h.lab.split(' – ')[0]+' – <bdi dir="ltr" lang="fr">'+h.lab.split(' – ')[1]+'</bdi></span>':''));
+        var b=el('button',a,(i+1)+'<span class="lbl" dir="rtl">'+h.ar+'</span>'+(h.ves?'<span class="vlbl" dir="rtl" style="border-color:'+h.ves+'">'+(window.Lang&&Lang.fr?'':h.lab.split(' – ')[0]+' – ')+'<bdi dir="ltr" lang="fr">'+h.lab.split(' – ')[1]+'</bdi></span>':''));
         b.addEventListener('click',function(ev){ev.stopPropagation();pick(i,false);});
         mv.appendChild(b);btns.push(b);
         var li=el('li'),lb=el('button',{type:'button'},'<span class="num">'+(i+1)+'</span><span><b>'+h.ar+'</b><br><span class="fr" lang="fr">'+h.fr+'</span></span>');

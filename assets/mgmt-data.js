@@ -23,3 +23,4 @@ window.MGMT={
   }
  ]
 };
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("MGMT"); }   // 🇫🇷 Français seulement (assets/lang.js)

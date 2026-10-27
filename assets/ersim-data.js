@@ -126,3 +126,4 @@ window.ERSIM = [
       x: "علاج acidose métabolique: علاج السبب، غسيل الكلى إذا في فشل كلوي، وإعطاء bicarbonate de sodium.", h: "" }
    ] }
 ];
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("ERSIM"); }   // 🇫🇷 Français seulement (assets/lang.js)

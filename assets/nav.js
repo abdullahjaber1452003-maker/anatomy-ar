@@ -63,7 +63,7 @@
     var P = w.NursinPWA, a = [];
     if (P && P.installable && P.installable()) a.push('<button class="gi pwainst" type="button"><span class="gie" aria-hidden="true">📲</span><span class="git"><b>زيد عالشاشة الرئيسية</b><small>Nursin متل التطبيق</small></span></button>');
     a.push(row(["friends.html#fpush", "🔔", "الإشعارات", "رسائل أصحابك + الدروس الجديدة"]));
-    a.push(osmRow());
+    a.push(langRow(), osmRow());
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
     if (owner()) a.push(row(["admin" + ".html", "🛠", "لوحة الإدارة", "إعلانات + إشعار للكل"]));
     return a.join("");
@@ -73,6 +73,19 @@
   function osmRow() {
     var O = w.OSMAN || {}, t = function (o, f) { return (o && o.ar) || f; }, on = osmOn();
     return '<button class="gi osmsw" type="button" role="switch" aria-checked="' + on + '"><span class="gie" aria-hidden="true">👨‍🏫</span><span class="git"><b>' + esc(t(O.toggle, "تعليقات الأستاذ عثمان")) + "</b><small>" + esc(t(O.toggle && O.toggle.sub, "")) + '</small></span><span class="osk" aria-hidden="true">' + esc(on ? t(O.onTxt, "شغّالة") : t(O.offTxt, "موقّفة")) + "</span></button>";
+  }
+  // 🇫🇷 «اللغة / Langue»: how this student studies (assets/lang.js, localStorage nursin_lang_v1; reloads the page in the new mode).
+  // Both labels stay as written in both modes (data-nofr) so a student can always find his way back.
+  function langPick() {
+    var fr = !!(w.Lang && w.Lang.fr);
+    return '<div class="oblang" data-nofr role="radiogroup" aria-label="كيف بدك تدرس؟ · Comment veux-tu étudier ?"><small>' + (fr ? "Comment veux-tu étudier ?" : "كيف بدك تدرس؟") + '</small><span class="lgo"><button type="button" class="lgb" dir="auto" role="radio" data-lang="ar" aria-checked="' + !fr + '">🇫🇷+🇱🇧 فرنسي وعربي</button>' +
+      '<button type="button" class="lgb" dir="ltr" role="radio" data-lang="fr" lang="fr" aria-checked="' + fr + '">🇫🇷 Français seulement</button></span></div>';
+  }
+  function langRow() {
+    var fr = !!(w.Lang && w.Lang.fr);
+    return '<div class="gi langsw" data-nofr role="radiogroup" aria-label="اللغة · Langue"><span class="gie" aria-hidden="true">🌐</span><span class="git"><b>' + (fr ? "Langue d'étude" : "لغة الدراسة") + "</b>" +
+      '<span class="lgo"><button type="button" class="lgb" dir="auto" role="radio" data-lang="ar" aria-checked="' + !fr + '">🇫🇷+🇱🇧 فرنسي وعربي</button>' +
+      '<button type="button" class="lgb" dir="ltr" role="radio" data-lang="fr" lang="fr" aria-checked="' + fr + '">🇫🇷 Français seulement</button></span></span></div>';
   }
   function osmFlip(b) {
     var on = !osmOn();
@@ -87,7 +100,7 @@
     sheet = d.createElement("div"); sheet.className = "gsheet"; sheet.id = "gsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", title.replace(/^\S+\s/, ""));
     sheet.innerHTML = '<div class="gsh"><b>' + esc(title) + '</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + body + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { var b = closeSheet(); if (b) b.focus(); });
-    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi"); if (a) closeSheet(); var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); });
+    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi"); if (a) closeSheet(); var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
     d.body.appendChild(scrim); d.body.appendChild(sheet);
     if (desk() && btn) {                                   // dropdown under the clicked item (RTL: align its right edge)
       var r = btn.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
@@ -193,8 +206,10 @@
   function step1(total) {
     if (w.Nursin && w.Nursin.loadFB) w.Nursin.loadFB();               // Firebase starts loading now, so the tap opens Google's window right away
     var c = shell(1, total, '<h2 id="obt">👋 أهلا فيك بـ Nursin!</h2><p>سجّل دخول بغوغل تا تنحفظ نقاطك وتطلع بالليفل، وتحكي مع أصحابك وصفّك.</p>' +
+      langPick() +
       '<div class="obbtns"><button class="gbtn obgo" type="button">' + GSVG + '<span>سجّل دخول بغوغل</span></button><button class="oblater" type="button">بعدين</button></div>' +
       '<p class="small obnote">الدروس كاملة والكويزات بتفتح بس تسجّل. <a href="privacy.html">الخصوصية</a></p>');
+    c.addEventListener("click", function (e) { var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
     var go = c.querySelector(".obgo");
     go.addEventListener("click", async function () {
       go.disabled = true; say("");

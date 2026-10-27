@@ -67,3 +67,4 @@ window.QUALITY={
  ],
  "soon": []
 };
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("QUALITY"); }   // 🇫🇷 Français seulement (assets/lang.js)

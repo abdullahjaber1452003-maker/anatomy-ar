@@ -93,3 +93,4 @@ window.LAW={
   }
  ]
 };
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("LAW"); }   // 🇫🇷 Français seulement (assets/lang.js)

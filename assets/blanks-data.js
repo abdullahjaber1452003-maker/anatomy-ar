@@ -799,3 +799,4 @@ window.BLANKS=[
 ]
 }
 ];
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("BLANKS"); }   // 🇫🇷 Français seulement (assets/lang.js)

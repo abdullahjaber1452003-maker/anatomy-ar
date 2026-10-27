@@ -101,6 +101,7 @@
     tEl.innerHTML = html; tEl.classList.add("on"); clearTimeout(tTm);
     tTm = setTimeout(function () { tEl.classList.remove("on"); }, 2600);
   }
-  function persona() { return t(on() ? O.persona : O.personaPlain); }
+  function persona() { return t(on() ? O.persona : O.personaPlain) + (w.Lang && w.Lang.fr ? " [Langue] L'élève a choisi «Français seulement» : réponds uniquement en français (termes médicaux en français, sans traduction arabe)." : ""); }
   w.Osman = { on: on, set: set, wrong: wrong, right: right, toast: toast, bubble: bubble, persona: persona, pick: pick, name: function () { return t(O.name); }, _reset: function () { ws = rs = 0; } };
 })(window, document);
+if (window.Lang) Lang.fix("OSMAN");   // 🇫🇷 Français seulement: French lines from assets/fr/ui.js

@@ -137,3 +137,4 @@
   w.addEventListener("hashchange", openHash);
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
+if (typeof window !== "undefined" && window.Lang) { Lang.fix("NLESSONS"); }   // 🇫🇷 Français seulement (assets/lang.js)

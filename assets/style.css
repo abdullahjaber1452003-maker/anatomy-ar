@@ -447,6 +447,19 @@ html.ers-on,html.ers-on body{overflow:hidden;overscroll-behavior:none}
 .gi.osmsw{width:100%;text-align:right;background:none;border:0;font:inherit;color:inherit;cursor:pointer}
 .osk{margin-inline-start:auto;flex:none;font-size:12px;padding:2px 9px;border-radius:999px;background:#dcfce7;color:#166534}.osmsw[aria-checked="false"] .osk{background:#e5e7eb;color:#374151}
 @media (prefers-reduced-motion:reduce){.osmt{transition:none}}
+/* 🇫🇷 «Français seulement» (assets/lang.js) — LTR, no duplicated glosses; the language switch in ☰ and the welcome card */
+.langsw{display:flex;gap:10px;align-items:flex-start;cursor:default}
+.langsw .git{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.lgo{display:flex;flex-wrap:wrap;gap:6px}
+.lgb{font:inherit;font-size:13px;line-height:1.2;padding:6px 10px;border-radius:999px;border:1.5px solid #cbd5e1;background:#fff;color:#0f172a;cursor:pointer;white-space:nowrap}
+.lgb[aria-checked="true"]{background:#0f766e;border-color:#0f766e;color:#fff;font-weight:700}
+.oblang{margin:8px 0 4px;display:flex;flex-direction:column;gap:6px}
+.oblang small{color:#475569}
+html.fr body{text-align:left}
+html.fr .skip{right:auto;left:-999px}html.fr .skip:focus{left:8px;right:auto}
+html.fr .dfr + .dar,html.fr .dsec h4 small{display:none}
+html.fr .topic summary .t > b + .fr{display:none}
+html.fr .gi.osmsw{text-align:left}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}
