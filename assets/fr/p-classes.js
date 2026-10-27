@@ -1,0 +1,4 @@
+/* 🇫🇷 nursin — «Français seulement» dictionary: p-classes. Translated once from the site's own Arabic (Oct 27 2026), faithful, French terms kept verbatim;
+   keys = Lang.hash of the normalised Arabic string (see assets/lang.js). Loaded only when a student picks 🇫🇷 Français seulement. */
+Lang.add({"qzmh9v.1j":"Classes — Examen de classe chaque semaine — Cœur et nerfs — Cours de soins infirmiers","6yaoqm.3y":"<a href=\"classes.html\" aria-current=\"page\"><span aria-hidden=\"true\">🏫</span> <bdi>Classes</bdi> <small lang=\"fr\" dir=\"ltr\">Classes</small></a>","5vllys.1j":"<a href=\"index.html\">Accueil</a> › <span>Classes</span>","1wh6k86.9":"🏫 Classes","bwfk2o.49":"Toute ta classe au même endroit : le Professeur Osman choisit un examen chaque semaine selon les points faibles de la classe, tout le monde le passe, les notes sont visibles pour tous, et chacun sait sur quoi il doit travailler 💪"});
+Lang.start();

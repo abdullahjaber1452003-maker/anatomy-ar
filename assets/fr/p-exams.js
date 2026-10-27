@@ -1,0 +1,4 @@
+/* 🇫🇷 nursin — «Français seulement» dictionary: p-exams. Translated once from the site's own Arabic (Oct 27 2026), faithful, French terms kept verbatim;
+   keys = Lang.hash of the normalised Arabic string (see assets/lang.js). Loaded only when a student picks 🇫🇷 Français seulement. */
+Lang.add({"16f8jkw.1f":"Examens de la semaine et classement — Cœur et nerfs — Cours de soins infirmiers","xdz68w.40":"<a href=\"exams.html\" aria-current=\"page\"><span aria-hidden=\"true\">📅</span> <bdi>Examens</bdi> <small lang=\"fr\" dir=\"ltr\">Examens</small></a>","1j5xy60.1n":"<a href=\"index.html\">Accueil</a> › <span>Examens</span>","1jv8szn.s":"📅 Examens de la semaine et classement","hfpp7u.2g":"Chaque jour du lundi au samedi, il y a deux examens, chacun avec un seul essai. Les points te placent dans le classement du mois 🏆"});
+Lang.start();
