@@ -249,10 +249,24 @@ N.flush = async function () {
 };
 
 /* ---------- friends ---------- */
+// 🏫 classmates are friends automatically (Abdullah, Oct 27 3:54 PM): everyone in my class(es) joins my friends list, the ranking and
+// «🏆 تحدي الأسبوع» — computed here (users/{me}/myClasses → classes/{cid}/members, both readable to a member under rules v10), no writes.
+async function classmates() {                        // uid → [class names]
+  const out = {};
+  try {
+    const mc = await getDocs(collection(db, "users", user.uid, "myClasses"));
+    await Promise.all(mc.docs.slice(0, 10).map(async c => {
+      try { (await getDocs(collection(db, "classes", c.id, "members"))).docs.forEach(m => { if (m.id !== user.uid) (out[m.id] = out[m.id] || []).push(String(c.data().name || "")); }); }
+      catch (e) { if (!(e && e.code === "permission-denied")) console.warn("nursin: classmates", e && e.code); }
+    }));
+  } catch (e) {}
+  return out;
+}
 async function loadBoard() {
-  const fs = await getDocs(query(collection(db, "users", user.uid, "friends"), limit(200)));
-  const docs = await Promise.all(fs.docs.map(f => getDoc(doc(db, "users", f.id)).catch(() => null)));
-  const list = docs.filter(d => d && d.exists()).map(d => ({ uid: d.id, ...d.data() }));
+  const [fs, cm] = await Promise.all([getDocs(query(collection(db, "users", user.uid, "friends"), limit(200))), classmates()]);
+  const fr = new Set(fs.docs.map(f => f.id)), ids = [...fr, ...Object.keys(cm).filter(u => !fr.has(u))].slice(0, 300);
+  const docs = await Promise.all(ids.map(id => getDoc(doc(db, "users", id)).catch(() => null)));
+  const list = docs.filter(d => d && d.exists()).map(d => ({ uid: d.id, ...d.data(), fr: fr.has(d.id), mate: cm[d.id] || null }));
   list.push({ ...profile, me: true });
   list.sort((a, b) => (b.points | 0) - (a.points | 0) || (a.me ? -1 : b.me ? 1 : 0));
   return list;
@@ -324,6 +338,12 @@ function renderOut() {
 }
 
 function rowHtml(p, i) {
+  let h = rowHtml0(p, i);
+  if (p.mate) h = h.replace("</bdi>", '</bdi> <small class="fmate" title="' + esc(p.mate.join("، ")) + '">🏫</small>');
+  if (p.mate && !p.fr) h = h.replace(/<button class="rm"[^>]*>[^<]*<\/button>/, "");   // a classmate stays while you share the class
+  return h;
+}
+function rowHtml0(p, i) {
   const medal = ["🥇", "🥈", "🥉"][i] || String(i + 1);
   return '<li class="lbr' + (p.me ? " me" : "") + '"><span class="rk">' + medal + "</span>" + N.avatar(p.photo, p.name, "av") +
     '<span class="nm"><b><bdi>' + esc(N.cleanName(p.name)) + "</bdi>" + (p.me ? " <small>(إنت)</small>" : "") + '</b><small><span class="lvc">Lv ' + N.level(p.points) + "</span> " + N.streakPill(p) + " " + (p.points | 0) + " نقطة" + N.badgeRow(p) + "</small></span>" +
@@ -370,6 +390,7 @@ async function renderIn() {
     '<p class="fbtns"><a class="btn pri" href="chat.html">💬 المحادثات</a> <a class="btn" href="chat.html?new">➕ مجموعة جديدة</a></p>' +
     '<div id="fpush"></div>' +
     '<div class="qcard"><h2>🏅 ترتيب أصحابي</h2><ol id="fboard" class="lb"><li class="small">⏳ …</li></ol></div>' +
+    '<div class="qcard" id="fmatesc" hidden><h2>🏫 زملاء الصف</h2><p class="small">كل حدا بصفّك صار من أصحابك تلقائياً: بالترتيب، بالمحادثات وبـ«🏆 تحدي الأسبوع» — بلا طلب صداقة.</p><ol id="fmates" class="lb"></ol></div>' +
     '<div class="qcard" id="livein"><h2>🔴 تحدّي لايف</h2><ul class="chl" id="liveinl"><li class="small">⏳ …</li></ul><p class="small">كبس «🔴 لايف» حد صاحبك، أو <a href="live.html">اعمل غرفة وابعت الرابط</a>. الكويز بيبلّش بس تكونوا التنين أونلاين وجاهزين.</p></div>' +
     '<div class="qcard" id="chin"><h2>⚔️ تحدّيات إلك</h2><ul class="chl" id="chinl"><li class="small">⏳ …</li></ul></div>' +
     '<div class="qcard" id="chout"><h2>🎯 تحدّياتي</h2><ul class="chl" id="choutl"><li class="small">⏳ …</li></ul><p class="small">كبس «⚔️ تحدّى» حد أي صاحب بالترتيب: بتلعبو نفس الـ ١٠ أسئلة كل واحد بوقتو، ويلي بيجيب أكتر بياخد <b>+10 نقاط</b>.</p></div>' +
@@ -464,6 +485,8 @@ async function drawBoard() {
     const list = await loadBoard();
     lastBoard = list;
     ol.innerHTML = list.map(rowHtml).join("") + (list.length < 2 ? '<li class="small fempty">لسّا ما زدت حدا. ابعت كودك لرفقاتك 👆 أو زيد كودن.</li>' : "");
+    const mates = list.filter(p => p.mate && !p.me), ms = document.getElementById("fmatesc");
+    if (ms) { ms.hidden = !mates.length; document.getElementById("fmates").innerHTML = mates.map(rowHtml).join(""); }
   } catch (e) { console.warn("nursin: board", e && e.code); ol.innerHTML = '<li class="small">⚠️ ما قدرنا نجيب الترتيب هلّق. جرّب بعد شوي.</li>'; }
 }
 

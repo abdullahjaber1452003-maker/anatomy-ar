@@ -67,6 +67,7 @@ async function openDM(fid) {
     const s = await getDoc(doc(API.db, "chats", cid));
     if (!s.exists()) {
       const f = (await friends()).find(x => x.uid === fid) || (await getDoc(doc(API.db, "users", fid)).then(d => d.data()).catch(() => null));
+      if (f && f.mate && !f.fr) await setDoc(doc(API.db, "users", me, "friends", fid), { since: serverTimestamp() });   // 🏫 classmate: the DM rule wants a friend link → made here, once
       await setDoc(doc(API.db, "chats", cid), { type: "dm", members, names: { [me]: myName(), [fid]: API.N.cleanName(f && f.name) }, updatedAt: serverTimestamp() });
     }
   } catch (e) {                                // rules up but refused = not friends (either one adding the other's code is enough)

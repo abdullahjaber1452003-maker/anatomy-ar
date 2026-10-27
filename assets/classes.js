@@ -464,6 +464,8 @@ function drawRank() {
 // 👥 classmates: each one's friend code + «➕ أضف صديق» (Oct 27 1:56 PM) — the same add-by-code as أصحابي (users/{me}/friends)
 function mateCode(uid, me) { const p = C.prof[uid], fc = p && p.friendCode; return fc ? ' <span class="cfc">🔑 <b dir="ltr">' + esc(fc) + "</b></span>" : (uid === me ? "" : ""); }
 function mateAdd(uid) {
+  // 🏫 Oct 27 3:54 PM: classmates are friends automatically (fb.js loadBoard = friends ∪ class members) → no «➕ أضف صديق» between classmates
+  if (C.member) return '<span class="cfok small">🏫 صاحبك تلقائياً</span>';
   const p = C.prof[uid]; if (!p || !p.friendCode || !A.addFriend) return "";
   if (C.friends && C.friends.has(uid)) return '<span class="cfok small">✅ صاحبك</span>';
   return '<button class="btn sm cfadd" type="button" data-uid="' + esc(uid) + '" data-code="' + esc(p.friendCode) + '">➕ أضف صديق</button>';
