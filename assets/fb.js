@@ -52,9 +52,18 @@ async function claimCode(uid) {
 /* 🆕 Abdullah, Oct 27 6:31 PM: a push to the admin's phone when a NEW student signs up — worker v6 /admin/newuser verifies the
    ID token itself (name from the token, one push per account ever). LOGIN_PING = "all" (+ NOTIFY_LOGINS=all on the worker) = every sign-in. */
 const LOGIN_PING = "new", ADMIN_PING_URL = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/admin/newuser";
-function pingAdmin(u, first) {
+function pingAdmin(u, first, catchup) {
   fetch(ADMIN_PING_URL).then(r => r.json()).then(j => j && j.newuser ? u.getIdToken() : null)          // only a worker v6+ answers newuser:true
-    .then(t => t && fetch(ADMIN_PING_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, first: !!first }) })).catch(() => {});
+    .then(t => t && fetch(ADMIN_PING_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, first: !!first, ...(catchup ? { catchup: true } : {}) }) })).catch(() => {});
+}
+/* 🔔 Oct 27 9:28 PM fix: an account created since the 🆕 push shipped (createdAt) whose push never went out (no adminNotified — e.g.
+   the page answered before worker v6 was live, or the network dropped) is announced once on its next visit. Once per session. */
+const CATCHUP_KEY = "nursin_newuser_catchup_v1";
+export function needsCatchup(d) { return !!(d && d.createdAt && !d.adminNotified); }
+function catchupPing(u, d) {
+  if (!needsCatchup(d)) return;
+  try { if (sessionStorage.getItem(CATCHUP_KEY) === u.uid) return; sessionStorage.setItem(CATCHUP_KEY, u.uid); } catch (e) {}
+  pingAdmin(u, true, true);
 }
 async function ensureProfile(u) {
   const ref = doc(db, "users", u.uid);
@@ -66,6 +75,7 @@ async function ensureProfile(u) {
   if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
     await setDoc(ref, { ...prof, updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
   if (!snap.exists() || LOGIN_PING === "all") pingAdmin(u, !snap.exists());
+  else catchupPing(u, d);
   profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
 }

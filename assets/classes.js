@@ -118,6 +118,17 @@ export function dqSummary(answers) {
 let A, F, N, esc, $;
 const NOT_READY = "🏫 الصفوف بعدها عم تتجهّز (ناطرين تحديث صغير بإعدادات الموقع). جرّب كمان شوي 🙏";
 const denied = e => e && e.code === "permission-denied";
+// v7 worker checks the caller's Firebase token AND a real class membership before alerting Abdullah.
+const JOIN_PUSH_URL = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/admin/joined";
+export function pingJoined(u, cid, uid) {
+  if (!u || !cid) return Promise.resolve(false);
+  return fetch(JOIN_PUSH_URL).then(r => r.json()).then(j => {
+    if (!j || !j.joined) return false;
+    return u.getIdToken().then(token => fetch(JOIN_PUSH_URL, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ t: token, cid, ...(uid ? { uid } : {}) }) })).then(r => r.ok);
+  }).catch(() => false);
+}
+
 // 🗑️ deleting a class: the site admin (verified Gmail, same check as admin page / chat) can delete ANY class; the owner his own
 export const ADMIN_EMAIL = "abdullahjaber1452003@gmail.com";
 export const isAdminUser = u => !!(u && u.email === ADMIN_EMAIL && u.emailVerified);
@@ -266,6 +277,8 @@ export async function joinWithCode(api, raw, ask) {
       tx.set(F2.doc(db, "classes", cid, "members", me), { ...bitsOf(api), code, joinedAt: F2.serverTimestamp() });
       tx.set(F2.doc(db, "users", me, "myClasses", cid), { name, owner: false, at: F2.serverTimestamp() });
     });
+    // A successful join is the event; the worker deduplicates via the member document. Never hold up navigation for a push.
+    pingJoined(api.user, cid);
     return { cid, name };
   } catch (e) { if (!denied(e)) console.warn("nursin: class join", e && e.code); return { err: failMsg(e) }; }
 }
@@ -314,10 +327,12 @@ async function openClass(el, cid) {
     '<section class="qcard"><h2>👑 أبطال الصف</h2><div id="cawards"></div></section>' +
     '<section class="qcard"><h2>📊 علامات هالأسبوع</h2><ol class="lb" id="cboard"></ol></section>' +
     '<section class="qcard"><h2>🏆 ترتيب الصف <small>(كل الأسابيع)</small></h2><ol class="lb" id="crank"></ol></section>' +
-    '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p></section>' +
+    '<section class="qcard"><h2>👥 الطلاب</h2><ol class="lb" id="cmem"></ol><p id="cmmsg" class="small" aria-live="polite"></p>' +
+      (isAdminUser(A.user) ? '<div class="cadminadd"><button class="btn pri" id="caddopen" type="button">➕ ضيف طالب</button><form id="caddform" class="fadd" hidden autocomplete="off"><input id="caddcode" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="كود الصديق من أصحابي" aria-label="كود الصديق"><button class="btn pri" type="submit">ضيف</button></form><div id="caddfriends" class="cfriends"></div><p id="caddmsg" class="small" role="status" aria-live="polite"></p></div>' : '') + '</section>' +
     (C.canDel ? '<section class="qcard cdanger" id="cdelsec"><h2>🗑️ حذف الصف</h2><p class="small">' + (C.owner ? "إنت صاحب الصف." : "🛡️ إنت أدمن الموقع.") + ' الحذف بيشيل الصف وعلاماتو وأسئلتو لكل الأعضاء، وما بيرجع.</p><p><button class="btn clsdel" id="cdel" type="button">🗑️ احذف الصف</button></p><p id="cdelmsg" class="small" aria-live="polite"></p></section>' : "");
   C.prof = {};
   drawCode(); drawBoard(); drawAwards(); drawRank(); drawMembers();
+  if (isAdminUser(A.user)) initAdminAdd();
   if (C.canDel) $("#cdel").addEventListener("click", () => askDelete(cid, cls, cls.name, $("#cdelsec")));
   if (!C.member) {   // the admin looking at a class he isn't in: read-only, nothing gets written in his name
     const ro = '<p class="small">👀 إنت فاتح هالصف كأدمن (مش عضو فيه).</p>';
@@ -490,6 +505,69 @@ function drawMembers() {
     try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); chatOut(m.uid); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawAwards(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
     catch (e) { $("#cmmsg").textContent = failMsg(e); }
   }));
+}
+
+/* ---- Abdullah alone: directly add a student by their friend code or from his friends ---- */
+function addToast(text, error = false) {
+  const box = $("#caddmsg"); if (!box) return;
+  box.textContent = text; box.classList.toggle("err", !!error);
+}
+async function adminAddStudent(uid, code) {
+  if (!isAdminUser(A.user) || !C || !C.cid) return;     // visual gate plus rules v12 enforce verified admin
+  const btn = $("#caddform button"); if (btn) btn.disabled = true;
+  addToast("⏳ عم ضيف الطالب…");
+  try {
+    if (!uid) {
+      code = N.normCode(code || "");
+      if (code.length !== 6) { addToast("⚠️ كود الصديق ٦ حروف/أرقام.", true); return; }
+      const snap = await F.getDoc(F.doc(A.db, "friendCodes", code));
+      if (!snap.exists() || !snap.data().uid) { addToast("❌ ما في طالب بهالكود. تأكّد من كود أصحابي.", true); return; }
+      uid = snap.data().uid;
+    }
+    if (C.members.some(m => m.uid === uid)) { addToast("ℹ️ هالطالب موجود بهالصف من قبل.", true); return; }
+    const student = await F.getDoc(F.doc(A.db, "users", uid));
+    if (!student.exists()) { addToast("❌ ما في طالب بهالكود. تأكّد من كود أصحابي.", true); return; }
+    const p = student.data(), name = N.cleanName(p.name || "طالب"), photo = String(p.photo || "").slice(0, 500),
+      level = Math.max(1, Math.min(1000, N.level(p.points || 0))), cid = C.cid;
+    const chatRef = F.doc(A.db, "chats", "cls-" + cid);
+    // One transaction: membership, student's index and chat. A student needn't open the class before being in its group.
+    await F.runTransaction(A.db, async tx => {
+      const m = await tx.get(F.doc(A.db, "classes", cid, "members", uid)), chat = await tx.get(chatRef);
+      if (m.exists()) throw { already: true };
+      if (chat.exists()) {
+        const data = chat.data(), members = data.members || [];
+        if (!members.includes(uid)) {
+          if (members.length >= 300) throw { full: true };
+          tx.update(chatRef, { members: [...members, uid], names: { ...(data.names || {}), [uid]: name } });
+        }
+      } else {
+        tx.set(chatRef, { type: "class", cls: cid, name: C.cls.name, members: [uid], names: { [uid]: name }, updatedAt: F.serverTimestamp() });
+      }
+      tx.set(F.doc(A.db, "classes", cid, "members", uid), { name, photo, level, code: C.cls.code, joinedAt: F.serverTimestamp() });
+      tx.set(F.doc(A.db, "users", uid, "myClasses", cid), { name: C.cls.name, owner: false, at: F.serverTimestamp() });
+    });
+    C.members.push({ uid, name, photo, level, code: C.cls.code }); C.prof[uid] = p;
+    drawMembers(); drawBoard(); drawAwards(); drawRank();
+    $(".chead .small").textContent = C.members.length + (C.members.length === 1 ? " طالب" : " طلاب") + " · صاحب الصف: " + N.cleanName(C.cls.ownerName);
+    addToast("✅ " + name + " صار بالصف ومجموعة الصف.");
+    if ($("#caddcode")) $("#caddcode").value = "";
+    pingJoined(A.user, cid, uid);
+  } catch (e) {
+    addToast(e && e.already ? "ℹ️ هالطالب موجود بهالصف من قبل." : e && e.full ? "⚠️ مجموعة الصف مليانة." : denied(e) ? "⚠️ لازم تنشر قواعد Firebase v12 تا تضيف طالب." : "⚠️ ما زبطت الإضافة، تأكّد من الإنترنت وجرّب كمان مرّة.", true);
+  } finally { if (btn) btn.disabled = false; }
+}
+async function initAdminAdd() {
+  const opener = $("#caddopen"), form = $("#caddform"), list = $("#caddfriends");
+  opener.addEventListener("click", () => { form.hidden = !form.hidden; if (!form.hidden) $("#caddcode").focus(); });
+  form.addEventListener("submit", e => { e.preventDefault(); adminAddStudent(null, $("#caddcode").value); });
+  try {
+    const s = await F.getDocs(F.collection(A.db, "users", A.user.uid, "friends"));
+    const fs = await Promise.all(s.docs.slice(0, 100).map(d => F.getDoc(F.doc(A.db, "users", d.id)).then(x => x.exists() ? { uid: d.id, ...x.data() } : null, () => null)));
+    const friends = fs.filter(x => x && !C.members.some(m => m.uid === x.uid));
+    if (!friends.length) return;
+    list.innerHTML = '<p class="small">أو نقّي من أصحابك:</p>' + friends.map(x => '<button class="btn sm caddfriend" type="button" data-uid="' + esc(x.uid) + '">➕ ' + esc(N.cleanName(x.name || "طالب")) + '</button>').join(" ");
+    list.querySelectorAll("button").forEach(b => b.addEventListener("click", () => adminAddStudent(b.dataset.uid)));
+  } catch (e) { /* code input remains available */ }
 }
 
 /* ---- the week's exam: created once per class per ISO week; the tutor picks the topics ---- */

@@ -830,3 +830,5 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 
 /* 🔔 admin «مين مفعّل الإشعارات» (Oct 27) */
 .pwho .pwl{max-height:320px}.pwho .pwl li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}.pwon{color:#047857;font-weight:600}.pwoff{color:#b91c1c}.pwho .ain{width:100%;box-sizing:border-box}.wkwin{background:rgba(15,118,110,.07);border-radius:8px;padding:6px 8px}
+/* ➕ «ضيف طالب» (admin only, Oct 27) */
+.cadminadd{margin-top:.8rem;border-top:1px dashed rgba(127,127,127,.35);padding-top:.7rem}.cadminadd .fadd{margin-top:.5rem}.cadminadd .cfriends{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0}.cadminadd .cfriends p{width:100%;margin:0}#caddmsg.err{color:#c0392b}
