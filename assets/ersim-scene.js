@@ -12,9 +12,10 @@
    the monitor shows only what you measured (and how long ago), every action goes into «📋 ملف المريض», 🔴 = alarm (+ 💡 on سهل/وسط). */
 (function (w, d) {
   "use strict";
-  var IMG = { a: "assets/er-scene-a.webp", b: "assets/er-scene-b.webp", c: "assets/er-scene-c.webp", d: "assets/er-scene-d.webp" }, V = "20261026z";
+  var IMG = { a: "assets/er-scene-a.webp", b: "assets/er-scene-b.webp", c: "assets/er-scene-c.webp", d: "assets/er-scene-d.webp" }, V = "20261027a";
   // v3: the room with a patient who looks like the case (same room, same spots; edits of er-scene-c)
-  var ROOM = {};
+  var ROOM = { hypovol: "assets/er-room-young.webp", gds: "assets/er-room-young.webp", hypoca: "assets/er-room-woman.webp", hypok: "assets/er-room-oldw.webp" };   // elderly-man cases (hyperk 60, hypona 78, hypermg 70) keep er-scene-c
+  var FACE = { hypovol: "🧑", gds: "🧑", hypoca: "👩", hypok: "👵" };   // the patient emoji matches the picture
   var IW = 1024, IH = 1536;   // every scene image is 2:3 portrait
   // tap spots on the room image (x, y = centre in % of the image)
   var SPOTS = {
@@ -169,7 +170,7 @@
     }
     function sceneC() {
       scene("c"); mapTo("r"); vitals(0); ecgGo();
-      spotsEl.innerHTML = Object.keys(SPOTS).map(function (k) { var p = SPOTS[k]; return '<button type="button" class="ers-spot" data-spot="' + k + '" aria-label="' + esc(p.n) + '"><span>' + p.ic + "</span><em>" + fr(p.n) + "</em></button>"; }).join("");
+      spotsEl.innerHTML = Object.keys(SPOTS).map(function (k) { var p = SPOTS[k]; return '<button type="button" class="ers-spot" data-spot="' + k + '" aria-label="' + esc(p.n) + '"><span>' + (k === "pt" ? ((o.sim && FACE[c.id]) || p.ic) : p.ic) + "</span><em>" + fr(p.n) + "</em></button>"; }).join("");
       place(); if (SIM) simRoom(); else mission();
     }
     function mission() {
@@ -193,12 +194,12 @@
     }
     function sceneD() {
       scene("d"); var L = dlg(c).filter(function (x) { return !SIM || x.by === "pt"; }), asked = {};   // v3: vitals / labs are measured, not told
-      cta.innerHTML = '<div class="ers-chat glass" id="erschat"><div class="ers-b pt">🧓 أهلا يا حكيم… 😟</div></div><div class="ers-qs" id="ersqs"></div><button type="button" class="ers-go sm" data-ers="back">⬅️ رجوع عالغرفة</button>';
+      cta.innerHTML = '<div class="ers-chat glass" id="erschat"><div class="ers-b pt">' + ((o.sim && FACE[c.id]) || "🧓") + ' أهلا يا حكيم… 😟</div></div><div class="ers-qs" id="ersqs"></div><button type="button" class="ers-go sm" data-ers="back">⬅️ رجوع عالغرفة</button>';
       setTask("💬 احكي مع المريض: اختار سؤال");
       function qs() { $("#ersqs").innerHTML = L.filter(function (x) { return !asked[x.k]; }).map(function (x) { return '<button type="button" class="glass" data-q="' + x.k + '">' + fr(x.q) + "</button>"; }).join(""); }
       $("#ersqs").addEventListener("click", function (e) {
         var b = e.target.closest && e.target.closest("[data-q]"); if (!b) return; var k = b.getAttribute("data-q"), x = L.filter(function (y) { return y.k === k; })[0]; asked[k] = 1;
-        var ch = $("#erschat"); ch.insertAdjacentHTML("beforeend", '<div class="ers-b me">👨‍⚕️ ' + fr(x.q) + '</div><div class="ers-b ' + (x.by === "pt" ? "pt" : "inf") + '">' + (x.by === "pt" ? "🧓 " : "") + fr(x.a) + "</div>");
+        var ch = $("#erschat"); ch.insertAdjacentHTML("beforeend", '<div class="ers-b me">👨‍⚕️ ' + fr(x.q) + '</div><div class="ers-b ' + (x.by === "pt" ? "pt" : "inf") + '">' + (x.by === "pt" ? ((o.sim && FACE[c.id]) || "🧓") + " " : "") + fr(x.a) + "</div>");
         ch.scrollTop = ch.scrollHeight; qs();
       });
       qs();
