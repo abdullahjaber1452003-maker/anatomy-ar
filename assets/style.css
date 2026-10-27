@@ -460,6 +460,24 @@ html.fr .skip{right:auto;left:-999px}html.fr .skip:focus{left:8px;right:auto}
 html.fr .dfr + .dar,html.fr .dsec h4 small{display:none}
 html.fr .topic summary .t > b + .fr{display:none}
 html.fr .gi.osmsw{text-align:left}
+/* ✂️ lesson parts + 📖 «درس اليوم من» + 🏫 classmates' codes + 🔔 notifications reminder (Oct 27 2026) */
+.lpart{font-weight:600;color:var(--muted,#667);font-size:.85em;white-space:nowrap}
+.gosl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.6rem .8rem;border-top:1px solid rgba(0,0,0,.08);font-size:.9rem}
+.gosl select{max-width:100%;font:inherit;padding:.25rem .4rem;border-radius:8px;border:1px solid rgba(0,0,0,.2);background:#fff}
+.cfc{display:inline-block;margin-inline-start:.35rem;font-size:.82rem;white-space:nowrap}
+.cfc b{letter-spacing:.06em}
+#cmem .cfadd{margin-inline-start:auto;white-space:nowrap;flex:0 0 auto}
+.cfok{margin-inline-start:auto;white-space:nowrap}
+.cnonew{padding:.4rem .2rem}
+.pushnag{position:relative;border:2px solid #f5b301;background:#fffaf0;padding-inline-end:2.2rem}
+.pushnag b{display:block;margin-bottom:.25rem}
+.pushnag .pnx{position:absolute;top:.4rem;inset-inline-end:.4rem;border:0;background:transparent;font-size:1.05rem;cursor:pointer;line-height:1;padding:.3rem}
+.pushnag .pnsteps{margin:.3rem 0;padding-inline-start:1.1rem;font-size:.9rem}
+.pwahome{position:relative;padding-inline-end:2.2rem;border:2px solid #2a7de1;background:#f3f8ff}
+.pwahome .pnx{position:absolute;top:.4rem;inset-inline-end:.4rem;border:0;background:transparent;font-size:1.05rem;cursor:pointer;line-height:1;padding:.3rem}
+.pwasteps{padding-inline-start:1.2rem;line-height:1.7}
+.wkpick details{border-top:1px solid rgba(0,0,0,.08);padding:.35rem 0}
+.wkpick summary{cursor:pointer}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}

@@ -31,12 +31,13 @@
     if (!a.length) return "";
     return '<details class="topic phg" id="g-' + g.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + g.e + '</span><span class="t"><b>' + esc(g.n) + ' <span class="phn">(' + a.length + ')</span></b><span class="small" lang="fr" dir="ltr">' + esc(g.fr) + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody drugs">' + a.map(card).join("") + "</div></details>" + lq("pharma", g.k);
   }).join("");
+  if (w.NursinLessons && w.NursinLessons.splitPage) w.NursinLessons.splitPage();   // ✂️ big groups → «الجزء 1 / 2 …» (≤ 4 cards each, assets/lessons.js)
   var q = d.getElementById("phq"), cnt = d.getElementById("phcount"), chips = d.getElementById("phchips"), cur = "";
   if (chips) chips.innerHTML = '<button class="chip on" type="button" data-g="">الكل (' + D.length + ")</button>" + G.map(function (g) { var n = D.filter(function (x) { return x.g === g.k; }).length; return n ? '<button class="chip" type="button" data-g="' + g.k + '">' + g.e + " " + esc(g.n) + " (" + n + ")</button>" : ""; }).join("");
   function run() {
     var t = norm(q ? q.value : "").trim(), words = t.split(/\s+/).filter(Boolean), shown = 0;
     [].forEach.call(box.querySelectorAll("details.phg"), function (g) {
-      var k = g.id.slice(2), n = 0;
+      var k = g.id.slice(2).replace(/-p\d+$/, ""), n = 0;   // a part of a split group (g-cardio-p2) filters as its group
       [].forEach.call(g.querySelectorAll(".drug"), function (c) {
         var s = c.getAttribute("data-s"), ok = (!cur || cur === k) && words.every(function (w2) { return s.indexOf(w2) > -1; });
         c.hidden = !ok; if (ok) n++;

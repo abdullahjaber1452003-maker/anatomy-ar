@@ -16,6 +16,7 @@ function soon(e) {
 }
 function title(c) {
   if (c.type === "group") return "👥 " + c.name;
+  if (c.type === "class") return "🏫 " + c.name;
   const o = c.members.find(m => m !== API.user.uid);
   return (c.names && c.names[o]) || "صاحب";
 }
@@ -33,6 +34,7 @@ async function route() {
   const p = new URLSearchParams(location.search);
   if (p.get("with")) return openDM(p.get("with"));
   if (p.get("c")) return openRoom(p.get("c"));
+  if (p.get("class")) return openClassChat(p.get("class"));
   if (p.get("new") != null) return newGroup();
   return drawList();
 }
@@ -81,7 +83,7 @@ async function openRoom(cid) {
   let c;
   try { const s = await getDoc(doc(API.db, "chats", cid)); if (!s.exists() || !s.data().members.includes(me)) throw { code: "gone" }; c = s.data(); }
   catch (e) { if (e && e.code === "permission-denied" && !(await rulesUp())) return soon(e); el.innerHTML = '<div class="qcard"><p>💬 هالمحادثة مش موجودة أو ما عدت فيها.</p><p><a class="btn" href="chat.html">← المحادثات</a></p></div>'; return; }
-  const group = c.type === "group", owner = group && c.owner === me;
+  const group = c.type === "group" || c.type === "class", owner = c.type === "group" && c.owner === me;
   el.innerHTML = '<div class="chead"><a class="btn sm" href="chat.html" id="cback">→</a><b><bdi>' + API.esc(title(c)) + "</bdi></b>" +
     (group ? '<button class="btn sm" id="cmem" type="button">👥 ' + c.members.length + "</button>" : "") + "</div>" +
     '<div id="cpanel" hidden></div><ol class="cmsgs" id="cmsgs" aria-live="polite"><li class="small">⏳ …</li></ol>' +
@@ -157,7 +159,7 @@ async function drawMembers(cid, c, owner) {
   p.innerHTML = '<div class="qcard"><ul class="cmemb">' + c.members.map(u => "<li><bdi>" + API.esc((c.names && c.names[u]) || "طالب") + "</bdi>" + (u === c.owner ? " <small>(عامل المجموعة)</small>" : "") +
     (owner && u !== me ? ' <button class="rm" type="button" data-uid="' + API.esc(u) + '" aria-label="شيل">✕</button>' : "") + "</li>").join("") + "</ul>" +
     (owner ? (c.members.length < MAXM ? '<p class="small">زيد أصحاب:</p><div id="gpick">⏳ …</div><button class="btn sm" id="gadd" type="button">➕ زيد</button>' : '<p class="small">وصلتو للحد (' + MAXM + ").</p>")
-      : '<button class="btn sm" id="gleave" type="button">🚪 اطلع من المجموعة</button>') + "</div>";
+      : c.type === "class" ? '<p class="small">🏫 كل طلاب الصف بيفوتو هون لحالهن، وبيطلعو لمّا يطلعو من الصف.</p>' : '<button class="btn sm" id="gleave" type="button">🚪 اطلع من المجموعة</button>') + "</div>";
   p.querySelectorAll(".rm").forEach(b => b.addEventListener("click", () => {
     if (!confirm("تشيلو من المجموعة؟")) return;
     const names = { ...c.names }; delete names[b.dataset.uid];
@@ -177,4 +179,47 @@ async function drawMembers(cid, c, owner) {
       save([...c.members, ...ids], names);
     });
   }
+}
+
+/* ---------- 🏫 «💬 مجموعة الصف» (Abdullah, Oct 27 1:56 PM): one group chat per class, every class member in it ----------
+   chats/cls-<classId> {type:"class", cls, name, members, names, updatedAt}. Rules v11: any member of classes/<classId> may create it
+   with himself in it, add or remove HIMSELF; the class owner / site admin may remove anyone; messages = same rules as every chat
+   (text only, ≤ 500, admin silent delete). Joining happens by itself when a member opens his class (classes.js → classJoin) or this
+   chat; leaving the class takes him out (classLeave). Until rules v11 are published every write is refused → a calm note. */
+export const classChatId = classId => "cls-" + classId;
+export async function classJoin(api, classId, className) {
+  const { doc, runTransaction, serverTimestamp } = api.fs, me = api.user.uid, ref = doc(api.db, "chats", classChatId(classId)), name = api.N.cleanName(api.profile && api.profile.name);
+  await runTransaction(api.db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) { tx.set(ref, { type: "class", cls: classId, name: String(className || "").slice(0, 40) || "الصف", members: [me], names: { [me]: name }, updatedAt: serverTimestamp() }); return; }
+    const c = s.data(); if ((c.members || []).includes(me)) return;
+    tx.update(ref, { members: [...c.members, me], names: { ...(c.names || {}), [me]: name } });
+  });
+  return classChatId(classId);
+}
+export async function classLeave(api, classId, uid) {
+  const { doc, runTransaction } = api.fs, ref = doc(api.db, "chats", classChatId(classId));
+  await runTransaction(api.db, async tx => {
+    const s = await tx.get(ref); if (!s.exists()) return;
+    const c = s.data(); if (!(c.members || []).includes(uid)) return;
+    const names = { ...(c.names || {}) }; delete names[uid];
+    tx.update(ref, { members: c.members.filter(u => u !== uid), names });
+  });
+}
+async function openClassChat(classId) {
+  const { doc, getDoc } = API.fs, me = API.user.uid;
+  el.innerHTML = "<p>⏳ …</p>";
+  let cls;
+  try {
+    const s = await getDoc(doc(API.db, "classes", classId)); if (!s.exists()) throw { code: "gone" }; cls = s.data();
+    const m = await getDoc(doc(API.db, "classes", classId, "members", me)); if (!m.exists()) throw { code: "gone" };
+  } catch (e) { el.innerHTML = '<div class="qcard"><p>🏫 لازم تكون بالصف تا تفوت على مجموعتو.</p><p><a class="btn" href="classes.html">🏫 صفوفي</a></p></div>'; return; }
+  try { await classJoin(API, classId, cls.name); }
+  catch (e) {
+    if (e && e.code !== "permission-denied") console.warn("nursin: class chat", e && e.code);
+    el.innerHTML = '<div class="qcard"><p class="fbig">💬 مجموعة الصف عم تتجهّز…</p><p>ناطرين تحديث صغير بإعدادات الموقع. رجاع بعد شوي 🙏</p><p><a class="btn" href="classes.html?c=' + encodeURIComponent(classId) + '">← الصف</a></p></div>';
+    return;
+  }
+  history.replaceState(null, "", "chat.html?c=" + encodeURIComponent(classChatId(classId)));
+  openRoom(classChatId(classId));
 }

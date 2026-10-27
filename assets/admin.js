@@ -91,4 +91,31 @@ export function page(API) {
     try { await deleteDoc(ref); msg("🗑️ انمحى الإعلان."); show(); window.NursinAnn && window.NursinAnn.refresh(); } catch (e) { err(e); }
   });
   show();
+  if (window.NursinLessons) weekPicker(API, el); else window.addEventListener("load", () => weekPicker(API, el), { once: true });
+}
+
+/* 📌 «دروس هالأسبوع» (Abdullah, Oct 27 3:35 PM): per subject, which lessons count this week. The students' daily lesson goals
+   spread exactly these (unread small parts) over the days before each subject's class day (assets/lessons.js plan). Saved to
+   config/weekLessons {subj:{s:[lesson keys]}, at, by} — public read, only the admin writes (rules v11; until he publishes them the
+   save is refused and this card says so). Nothing ticked for a subject = no lesson goal for it. */
+function weekPicker(API, el) {
+  const L = window.NursinLessons; if (!L || !L.CLASSDAY) return;
+  const { doc, getDoc, setDoc, serverTimestamp } = API.fs, ref = doc(API.db, "config", "weekLessons"), esc = API.esc;
+  const box = document.createElement("div"); box.className = "qcard wkpick"; box.id = "wkpick";
+  const subs = Object.keys(L.CLASSDAY);
+  const draw = cur => {
+    box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. أهداف اليوم عندن بتوزّع الأجزاء غير المقروءة عالأيام لقبل يوم الحصّة (اليوم يلي قبلها أخفّ، للمراجعة). مادة ما فيها شي معلّم = ما في درس إلها بالأهداف.</p>' +
+      subs.map(s => { const S = L.subjects[s] || {}, dn = L.classDayOf(s), ls = L.list.filter(x => x.s === s);
+        return '<details class="wks"' + ((cur[s] || []).length ? " open" : "") + '><summary><b>' + esc(S.ar || s) + "</b> <small>· حصّة " + dn[0] + " · " + (cur[s] || []).length + "/" + ls.length + "</small></summary><ul class=\"cpick\">" +
+          ls.map(x => { const k = L.base(x), n = L.parts.filter(p => L.base(p) === k).length; return '<li><label><input type="checkbox" data-s="' + esc(s) + '" value="' + esc(k) + '"' + ((cur[s] || []).includes(k) ? " checked" : "") + "> <bdi>" + esc(x.n) + "</bdi>" + (n > 1 ? " <small>(" + n + " أجزاء)</small>" : "") + "</label></li>"; }).join("") + "</ul></details>"; }).join("") +
+      '<p class="fbtns"><button class="btn pri" id="wksave" type="button">💾 احفظ دروس هالأسبوع</button></p><p class="small" id="wkmsg" aria-live="polite"></p>';
+    box.querySelector("#wksave").addEventListener("click", async () => {
+      const subj = {}; box.querySelectorAll("input[type=checkbox]:checked").forEach(i => { (subj[i.dataset.s] = subj[i.dataset.s] || []).push(i.value); });
+      const m = box.querySelector("#wkmsg"); m.textContent = "⏳ …";
+      try { await setDoc(ref, { subj, at: serverTimestamp(), by: API.user.uid }); L.weekLes(subj); document.dispatchEvent(new CustomEvent("nursin:weekles")); m.textContent = "✅ انحفظ. الطلاب بيشوفوها بأهدافن بأوّل مرّة بيفتحو الموقع."; draw(subj); box.querySelector("#wkmsg").textContent = "✅ انحفظ. الطلاب بيشوفوها بأهدافن بأوّل مرّة بيفتحو الموقع."; }
+      catch (e) { m.textContent = e && e.code === "permission-denied" ? "⏳ لازم تنشر قواعد Firestore v11 أوّل (الملف يلي بعتلك ياه)، وبعدين بيزبط الحفظ." : "⚠️ ما انحفظ، جرّب كمان مرّة."; }
+    });
+  };
+  el.appendChild(box); draw(L.weekLes());
+  getDoc(ref).then(s => { if (s.exists()) { const v = s.data().subj || {}; L.weekLes(v); draw(L.weekLes()); } }, () => {});
 }

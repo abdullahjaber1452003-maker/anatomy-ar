@@ -121,6 +121,8 @@ const denied = e => e && e.code === "permission-denied";
 // 🗑️ deleting a class: the site admin (verified Gmail, same check as admin page / chat) can delete ANY class; the owner his own
 export const ADMIN_EMAIL = "abdullahjaber1452003@gmail.com";
 export const isAdminUser = u => !!(u && u.email === ADMIN_EMAIL && u.emailVerified);
+// 🏫 ONLY Abdullah creates classes (Oct 27 1:58 PM: "ممنوع حدا يعمل صف جديد غير أنا"); everyone else joins by code / invite link
+export const canCreate = u => isAdminUser(u);
 export const canDeleteClass = (u, cls) => !!(u && cls && (isAdminUser(u) || cls.owner === u.uid));
 export const DEL_CONFIRM = "متأكد؟ رح ينحذف الصف لكل الأعضاء";
 export const RULES_MSG = "⚠️ لازم تنشر القواعد الجديدة (v10) بـ Firebase تا يزبط الحذف.";
@@ -151,9 +153,10 @@ async function home(el, note) {
   el.innerHTML = (note ? '<p class="finv">' + note + "</p>" : "") +
     '<section class="qcard" id="cmine"><h2>📚 صفوفي</h2><div id="clist"><p class="small">⏳ …</p></div><p id="clmsg" class="small" aria-live="polite"></p></section>' +
     '<section class="qcard"><h2>🔑 فوت على صف بالكود</h2><form id="cjoin" class="fadd" autocomplete="off"><input id="cjcode" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود الصف" value="' + esc(join) + '"><button class="btn pri" type="submit">فوت</button></form><p id="cjmsg" class="small" aria-live="polite"></p></section>' +
-    '<section class="qcard"><h2>➕ اعمل صف جديد</h2><form id="cnew" class="fadd" autocomplete="off"><input id="cname" maxlength="40" placeholder="مثلاً LT2" aria-label="اسم الصف"><button class="btn pri" type="submit">اعمل</button></form><p class="small">بتاخد كود من ٦ حروف، بتبعتو لرفقاتك بالصف وبيفوتو فيه.</p><p id="cnmsg" class="small" aria-live="polite"></p></section>';
+    (canCreate(A.user) ? '<section class="qcard"><h2>➕ اعمل صف جديد <small>(أدمن)</small></h2><form id="cnew" class="fadd" autocomplete="off"><input id="cname" maxlength="40" placeholder="مثلاً LT2" aria-label="اسم الصف"><button class="btn pri" type="submit">اعمل</button></form><p class="small">بتاخد كود من ٦ حروف، بتبعتو لرفقاتك بالصف وبيفوتو فيه.</p><p id="cnmsg" class="small" aria-live="polite"></p></section>'
+      : '<p class="small cnonew">🏫 الصفوف بيعملها الأدمن بس. فوت على صفّك بالكود أو بالرابط يلي بيبعتلك ياه رفيقك 👆</p>');
   $("#cjoin").addEventListener("submit", e => { e.preventDefault(); joinByCode($("#cjcode").value); });
-  $("#cnew").addEventListener("submit", e => { e.preventDefault(); createClass($("#cname").value); });
+  if ($("#cnew")) $("#cnew").addEventListener("submit", e => { e.preventDefault(); createClass($("#cname").value); });
   try {
     const s = await F.getDocs(F.collection(A.db, "users", A.user.uid, "myClasses"));
     let list = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
@@ -225,6 +228,7 @@ export async function deleteClass(cid, cls, api) {
 function bitsOf(api) { const p = api.profile || {}; return { name: api.N.cleanName(p.name || api.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, api.N.level(p.points))) }; }
 function profileBits() { return bitsOf(A); }
 async function createClass(raw) {
+  if (!canCreate(A.user)) return;                         // only the admin (rules v11 refuse anyone else too)
   const name = String(raw || "").replace(/\s+/g, " ").trim().slice(0, 40), msg = $("#cnmsg");
   if (!name) { msg.textContent = "اكتب اسم الصف (مثلاً LT2)."; return; }
   const btn = $("#cnew button"); btn.disabled = true; msg.textContent = "⏳ …";
@@ -319,7 +323,7 @@ async function openClass(el, cid) {
     const ro = '<p class="small">👀 إنت فاتح هالصف كأدمن (مش عضو فيه).</p>';
     $("#cdqb").innerHTML = ro; $("#cexam").innerHTML = ro; loadProfiles(); return;
   }
-  dqCard(); weekCard(); loadProfiles(); myClassBadges();
+  dqCard(); weekCard(); loadProfiles(); myClassBadges(); chatIn();
 }
 // 🔥 + 🏅 of every member (users/{uid} is readable by any signed-in student)
 async function loadProfiles() {
@@ -327,6 +331,7 @@ async function loadProfiles() {
   const snaps = await Promise.all(ids.map(id => F.getDoc(F.doc(A.db, "users", id)).catch(() => null)));
   snaps.forEach((s, i) => { if (s && s.exists()) C.prof[ids[i]] = s.data(); });
   if (A.profile) C.prof[A.user.uid] = A.profile;
+  try { if (A.loadFriends) C.friends = new Set((await A.loadFriends()).map(f => f.uid)); } catch (e) {}
   drawMembers();
 }
 // 🏫 first class exam, 👑 champion and 📈 most improved of past weeks → my badges
@@ -401,10 +406,16 @@ async function dqAnswer(box, q, k, dk) {
   if (act) { C.prof[me] = A.profile; drawMembers(); }
   dqDraw(box, q, ans.length ? ans : [{ uid: me, pick: k, ok, at: Date.now() }], dk, (iWon ? '<p class="finv">🎯 إنت أوّل واحد جاوب صح اليوم!</p>' : "") + (act ? act.html : ""));
 }
+// 📤 «ادعي رفيق» (Oct 27 1:57 PM): any member shares the SAME class — WhatsApp text with the code + nursin.store/classes.html?join=CODE
+export function inviteUrl(name, code) {
+  const link = "https://nursin.store/classes.html?join=" + encodeURIComponent(code);
+  return "https://wa.me/?text=" + encodeURIComponent("فوت على صفّنا «" + name + "» على nursin 🏫\nالكود: " + code + "\n" + link);
+}
 function drawCode() {
   const code = C.cls.code, link = "https://nursin.store/classes.html?join=" + code;
-  const share = "https://wa.me/?text=" + encodeURIComponent("فوت على صفّنا «" + C.cls.name + "» على nursin 🏫\nالكود: " + code + "\n" + link);
-  $("#ccode").innerHTML = '<p class="finv">🔑 كود الصف: <b dir="ltr" class="ccodev">' + esc(code) + '</b></p><p class="fbtns"><a class="btn pri" href="' + esc(share) + '" target="_blank" rel="noopener">📲 ابعت الكود عالواتساب</a>' +
+  const share = inviteUrl(C.cls.name, code);
+  $("#ccode").innerHTML = '<p class="finv">🔑 كود الصف: <b dir="ltr" class="ccodev">' + esc(code) + '</b></p><p class="fbtns"><a class="btn pri cinv" href="' + esc(share) + '" target="_blank" rel="noopener">📤 ادعي رفيق</a>' +
+    (C.member ? ' <a class="btn cgchat" href="chat.html?class=' + encodeURIComponent(C.cid) + '">💬 مجموعة الصف</a>' : "") +
     (C.owner ? ' <button class="btn" id="cregen" type="button">🔄 كود جديد</button>' : C.member === false ? "" : ' <button class="btn" id="cleave" type="button">🚪 اطلع من الصف</button>') + '</p><p id="ccmsg" class="small" aria-live="polite"></p>';
   const rg = $("#cregen"); if (rg) rg.addEventListener("click", regenCode);
   const lv = $("#cleave"); if (lv) lv.addEventListener("click", leave);
@@ -427,7 +438,7 @@ async function regenCode() {
 }
 async function leave() {
   if (!confirm("أكيد بدّك تطلع من «" + C.cls.name + "»؟")) return;
-  try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", A.user.uid)); await F.deleteDoc(F.doc(A.db, "users", A.user.uid, "myClasses", C.cid)); location.href = "classes.html"; }
+  try { await chatOut(A.user.uid); await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", A.user.uid)); await F.deleteDoc(F.doc(A.db, "users", A.user.uid, "myClasses", C.cid)); location.href = "classes.html"; }
   catch (e) { $("#ccmsg").textContent = failMsg(e); }
 }
 function row(rk, p, sub, me, extra) {
@@ -450,14 +461,31 @@ function drawRank() {
   $("#crank").innerHTML = r.length ? r.map((e, i) => row(["🥇", "🥈", "🥉"][i] || i + 1, byUid[e.uid] || e, '<b dir="ltr">' + e.pct + "%</b> معدّل · " + e.weeks + (e.weeks === 1 ? " امتحان" : " امتحانات"), e.uid === me)).join("")
     : '<li class="small fempty">الترتيب بيطلع بعد أوّل امتحان.</li>';
 }
+// 👥 classmates: each one's friend code + «➕ أضف صديق» (Oct 27 1:56 PM) — the same add-by-code as أصحابي (users/{me}/friends)
+function mateCode(uid, me) { const p = C.prof[uid], fc = p && p.friendCode; return fc ? ' <span class="cfc">🔑 <b dir="ltr">' + esc(fc) + "</b></span>" : (uid === me ? "" : ""); }
+function mateAdd(uid) {
+  const p = C.prof[uid]; if (!p || !p.friendCode || !A.addFriend) return "";
+  if (C.friends && C.friends.has(uid)) return '<span class="cfok small">✅ صاحبك</span>';
+  return '<button class="btn sm cfadd" type="button" data-uid="' + esc(uid) + '" data-code="' + esc(p.friendCode) + '">➕ أضف صديق</button>';
+}
+async function addMate(b) {
+  b.disabled = true; const msg = $("#cmmsg");
+  try { await A.addFriend(b.dataset.code); (C.friends || (C.friends = new Set())).add(b.dataset.uid); b.outerHTML = '<span class="cfok small">✅ صرتو أصحاب</span>'; if (msg) msg.textContent = "✅ انضاف لأصحابك. فيكن تحكو وتتحدّو من صفحة أصحابي."; }
+  catch (e) { b.disabled = false; if (msg) msg.textContent = (e && e.ar) || "⚠️ ما زبط هلّق، جرّب كمان شوي."; }
+}
+// 💬 the class group chat follows the class (assets/chat.js classJoin / classLeave; rules v11 — quiet until he publishes them)
+async function chatMod() { try { return A.mod ? await A.mod("chat") : null; } catch (e) { return null; } }
+async function chatIn() { if (!C.member) return; const m = await chatMod(); if (m && m.classJoin) m.classJoin(A, C.cid, C.cls.name).catch(() => {}); }
+async function chatOut(uid) { const m = await chatMod(); if (m && m.classLeave) { try { await m.classLeave(A, C.cid, uid); } catch (e) {} } }
 function drawMembers() {
   const me = A.user.uid;
   $("#cmem").innerHTML = C.members.slice().sort((a, b) => (b.uid === C.cls.owner) - (a.uid === C.cls.owner) || (b.level | 0) - (a.level | 0)).map(m =>
-    row(m.uid === C.cls.owner ? "👑" : "🎓", m, '<span class="lvc">Lv ' + (m.level | 0 || 1) + "</span> " + N.streakPill(C.prof[m.uid]) + N.badgeRow(C.prof[m.uid]), m.uid === me,
-      C.owner && m.uid !== me ? '<button class="rm" type="button" data-uid="' + esc(m.uid) + '" aria-label="طلّع ' + esc(N.cleanName(m.name)) + ' من الصف">✖</button>' : "")).join("");
+    row(m.uid === C.cls.owner ? "👑" : "🎓", m, '<span class="lvc">Lv ' + (m.level | 0 || 1) + "</span> " + N.streakPill(C.prof[m.uid]) + N.badgeRow(C.prof[m.uid]) + mateCode(m.uid, me), m.uid === me,
+      (m.uid !== me ? mateAdd(m.uid) : "") + (C.owner && m.uid !== me ? '<button class="rm" type="button" data-uid="' + esc(m.uid) + '" aria-label="طلّع ' + esc(N.cleanName(m.name)) + ' من الصف">✖</button>' : ""))).join("");
+  document.querySelectorAll("#cmem .cfadd").forEach(b => b.addEventListener("click", () => addMate(b)));
   document.querySelectorAll("#cmem .rm").forEach(b => b.addEventListener("click", async () => {
     const m = C.members.find(x => x.uid === b.dataset.uid); if (!m || !confirm("تطلّع " + N.cleanName(m.name) + " من الصف؟")) return;
-    try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawAwards(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
+    try { await F.deleteDoc(F.doc(A.db, "classes", C.cid, "members", m.uid)); chatOut(m.uid); C.members = C.members.filter(x => x !== m); drawMembers(); drawBoard(); drawAwards(); drawRank(); $("#cmmsg").textContent = "✅ طلع من الصف. إذا ما بدّك يرجع، اعمل 🔄 كود جديد."; }
     catch (e) { $("#cmmsg").textContent = failMsg(e); }
   }));
 }

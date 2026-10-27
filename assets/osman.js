@@ -74,8 +74,8 @@
   function lang() { var N = w.Nursin; return (N && N.lang && N.lang() === "fr") ? "fr" : "ar"; }
   function t(o) { return o ? (o[lang()] || o.ar || "") : ""; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function on() { try { return localStorage.getItem(KEY) !== "0"; } catch (e) { return true; } }
-  function set(b) { try { localStorage.setItem(KEY, b ? "1" : "0"); } catch (e) {} try { d.dispatchEvent(new CustomEvent("nursin:osman", { detail: !!b })); } catch (e) {} }
+  function on() { return true; }   // always on (Abdullah, Oct 27 2:48 PM: students can't turn him off); an old stored "0" is ignored
+  function set(b) { try { localStorage.removeItem(KEY); } catch (e) {} try { d.dispatchEvent(new CustomEvent("nursin:osman", { detail: !!b })); } catch (e) {} }
   // a random line, never one of the last few of the same pool
   function pick(k) {
     var pool = O[k], last = used[k] || (used[k] = []), i, n = 0;

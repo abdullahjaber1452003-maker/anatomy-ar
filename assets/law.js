@@ -12,6 +12,7 @@
     box.innerHTML = L.map(function (x, i) {
       return '<details class="topic" id="' + x.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + (i + 1) + '</span><span class="t"><b>' + x.n + '</b><span class="small">' + (x.fr ? '<span lang="fr">' + x.fr + '</span> — ' : "") + (x.d || "") + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody prose">' + x.html + '</div></details>' + lq("law", x.k);
     }).join("") + S.map(function (x) { return '<div class="lsoon"><b>🔜 ' + x.n + ' — قريباً</b><p class="small">' + (x.d || "") + '</p></div>'; }).join("");
+    if (w.NursinLessons && w.NursinLessons.splitPage) w.NursinLessons.splitPage();   // ✂️ long lessons → «الجزء 1 / 2 …» (assets/lessons.js)
   }
   var pick = d.getElementById("cqpick"), cq = d.getElementById("cqbox");
   var withQ = L.filter(function (x) { return (x.cq || []).length; });

@@ -478,7 +478,8 @@ const API = {
   db, auth, N, esc, MERGE,
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
-  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod
+  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
+  addFriend: raw => addFriend(raw)          // 🏫 classmates «➕ أضف صديق» (classes.js)
 };
 window.NursinFB = API;
 

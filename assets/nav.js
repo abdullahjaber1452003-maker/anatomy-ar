@@ -61,9 +61,10 @@
   function owner() { var A = w.NursinFB, u = A && A.user; return !!(u && u.email === OWNER && u.emailVerified); }
   function moreItems() {
     var P = w.NursinPWA, a = [];
-    if (P && P.installable && P.installable()) a.push('<button class="gi pwainst" type="button"><span class="gie" aria-hidden="true">📲</span><span class="git"><b>زيد عالشاشة الرئيسية</b><small>Nursin متل التطبيق</small></span></button>');
+    if (P && P.installable && P.installable()) { var it = P.instText ? P.instText(P.kind(), !!(w.Lang && w.Lang.fr)) : { btn: "📲 حمّل التطبيق", sub: "Nursin متل التطبيق عالتلفون" };   // 📲 Oct 27 3:35 PM
+      a.push('<button class="gi pwainst" type="button" data-nofr><span class="gie" aria-hidden="true">📲</span><span class="git"><b>' + esc(it.btn.replace(/^📲\s*/, "")) + "</b><small>" + esc(it.sub) + "</small></span></button>"); }
     a.push(row(["friends.html#fpush", "🔔", "الإشعارات", "رسائل أصحابك + الدروس الجديدة"]));
-    a.push(langRow(), osmRow());
+    a.push(langRow());   // 👨‍🏫 Osman is always on now (no switch, Oct 27 2:48 PM)
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
     if (owner()) a.push(row(["admin" + ".html", "🛠", "لوحة الإدارة", "إعلانات + إشعار للكل"]));
     return a.join("");

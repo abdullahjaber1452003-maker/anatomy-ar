@@ -11,13 +11,17 @@
      Anything without a confident translation keeps the bilingual text (fallback by design).
    Keys: FNV-1a of the whitespace-normalised string (blocks: of the element's innerHTML). */
 (function (w, d) {
-  var K = "nursin_lang_v1", V = "20261027d", AR = /[\u0600-\u06FF]/;
+  var K = "nursin_lang_v1", V = "20261027e", AR = /[\u0600-\u06FF]/;
   var mode = "ar"; try { mode = localStorage.getItem(K) === "fr" ? "fr" : "ar"; } catch (e) {}
-  var FR = mode === "fr", html = d.documentElement;
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html?$/, "") || "index";
+  /* ⚖️ القانون stays Arabic ALWAYS (Abdullah, Oct 27 2:47 PM): the law page and a law-only quiz are drawn exactly as before (bilingual,
+     RTL) even in «Français seulement»; elsewhere law items (quiz / blanks / lesson list) are never patched and LAWSET keeps the
+     page translator off their text. */
+  var LAWPAGE = page === "law" || (page === "quiz" && /(?:^|[?&])t=law(?:&|$)/.test(location.search || ""));
+  var FR = mode === "fr" && !LAWPAGE, html = d.documentElement, LAWSET = {};
   // which data dictionaries each page needs (same order as its data scripts)
-  var DATA = { index: ["quiz"], quiz: ["quiz", "law", "blanks"], exams: ["quiz"], live: ["quiz"], classes: ["quiz"], friends: ["quiz"], tutor: ["quiz"],
-    law: ["quiz", "law", "blanks"], mgmt: ["quiz", "mgmt", "blanks"], quality: ["quiz", "quality", "blanks"], pharma: ["quiz", "pharma", "blanks"],
+  var DATA = { index: ["quiz"], quiz: ["quiz", "blanks"], exams: ["quiz"], live: ["quiz"], classes: ["quiz"], friends: ["quiz"], tutor: ["quiz"],
+    law: [], mgmt: ["quiz", "mgmt", "blanks"], quality: ["quiz", "quality", "blanks"], pharma: ["quiz", "pharma", "blanks"],
     games: ["quiz", "pharma", "blanks", "ersim"] };
   var PAGES = { index: 1, cardio: 1, neuro: 1, henderson: 1, quiz: 1, "3d": 1, about: 1, privacy: 1, credits: 1, "404": 1, friends: 1, exams: 1, live: 1, tutor: 1, classes: 1, law: 1, mgmt: 1, quality: 1, pharma: 1, games: 1, chat: 1, admin: 1 };
   var H = {}, U = {}, fre = null, on = false, miss = [];
@@ -25,7 +29,7 @@
   function hash(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36) + "." + s.length.toString(36); }
   function digits(s) { return s.replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }); }
   function look(s) {
-    var n = norm(s), x; if (!n) return null;
+    var n = norm(s), x; if (!n || LAWSET[n]) return null;
     if (U[n] != null) return U[n];
     if ((x = H[hash(n)]) != null) return x;
     if (/[0-9٠-٩]/.test(n)) {                    // same sentence with other numbers ("3 أسئلة" → "3 questions")
@@ -44,7 +48,7 @@
   // little sentence rules for numbers glued by code: "3 من 10" → "3 sur 10", "20ث" → "20 s"
   function rules(s) { return s.replace(/(^|[\s\d)])من\s+([0-9٠-٩]+)/g, "$1sur $2").replace(/([0-9]+)\s?ث(?![\u0600-\u06FF])/g, "$1 s").replace(/([0-9]+)\s?د(?![\u0600-\u06FF])/g, "$1 min"); }
   function setText(t) {
-    var v = t.nodeValue; if (!v || !AR.test(v)) return;
+    var v = t.nodeValue; if (!v || !AR.test(v) || LAWSET[norm(v)]) return;
     var x = look(v);
     if (x == null) { x = rules(frag(norm(v))); if (AR.test(x) && miss.length < 300 && miss.indexOf(norm(v)) < 0) miss.push(norm(v)); if (x === norm(v)) return; }
     var lead = v.match(/^\s*/)[0], tail = v.match(/\s*$/)[0];
@@ -74,6 +78,7 @@
   function pass(root, safe) {
     var u = units(root);
     u.segs.forEach(function (el) {
+      if (LAWSET[norm(el.textContent)]) return;           // a law question/option drawn by a renderer: stays Arabic
       var x = H[hash(norm(el.innerHTML))];
       if (x != null && (safe || !el.querySelector("a,button,input"))) { el.innerHTML = x; ltr(el); return; }
       var y = look(el.textContent);                       // a label built in code from one UI string ("الشريان الأبهر – Aorte")
@@ -100,12 +105,17 @@
     }).observe(d.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTR });
   }
   // patch a data bank in place (strings only, by their hash); called at the end of each data file
+  function lawKeep(o) {                                   // remember a law item's strings (≥ 12 chars, so short UI words stay free)
+    (function walk(v) { if (typeof v === "string") { var n = norm(v); if (n.length >= 12 && AR.test(n)) LAWSET[n] = 1; } else if (v && typeof v === "object") for (var k in v) if (Object.prototype.hasOwnProperty.call(v, k)) walk(v[k]); })(o);
+  }
+  function isLaw(o, k) { return k === "law" || (o && typeof o === "object" && !Array.isArray(o) && (o.t === "law" || o.s === "law")); }
   function fix(name) {
     if (!FR) return;
     var root = w[name]; if (!root) return;
+    if (name === "LAW") { lawKeep(root); return; }
     (function walk(o) {
-      if (Array.isArray(o)) { for (var i = 0; i < o.length; i++) { if (typeof o[i] === "string") { var x = o[i] && AR.test(o[i]) ? H[hash(norm(o[i]))] : null; if (x != null) o[i] = x; } else if (o[i] && typeof o[i] === "object") walk(o[i]); } }
-      else for (var k in o) { if (!Object.prototype.hasOwnProperty.call(o, k)) continue; var v = o[k]; if (typeof v === "string") { var y = v && AR.test(v) ? H[hash(norm(v))] : null; if (y != null) o[k] = y; } else if (v && typeof v === "object") walk(v); }
+      if (Array.isArray(o)) { for (var i = 0; i < o.length; i++) { if (isLaw(o[i])) { lawKeep(o[i]); continue; } if (typeof o[i] === "string") { var x = o[i] && AR.test(o[i]) ? H[hash(norm(o[i]))] : null; if (x != null) o[i] = x; } else if (o[i] && typeof o[i] === "object") walk(o[i]); } }
+      else for (var k in o) { if (!Object.prototype.hasOwnProperty.call(o, k)) continue; var v = o[k]; if (isLaw(v, k)) { lawKeep(v); continue; } if (typeof v === "string") { var y = v && AR.test(v) ? H[hash(norm(v))] : null; if (y != null) o[k] = y; } else if (v && typeof v === "object") walk(v); }
     })(root);
   }
   function set(m, noReload) {
@@ -114,7 +124,7 @@
     var A = w.NursinFB; if (A && A.user && A.fs && A.db) { try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { lang: m }, { merge: true }).catch(function () {}); } catch (e) {} }
     if (!noReload && m !== mode) location.reload();
   }
-  var L = w.Lang = { mode: mode, fr: FR, KEY: K, page: page, hash: hash, norm: norm, units: units, look: look,
+  var L = w.Lang = { mode: mode, fr: FR, lawPage: LAWPAGE, isLawText: function (s) { return !!LAWSET[norm(s)]; }, KEY: K, page: page, hash: hash, norm: norm, units: units, look: look,
     add: function (o, ui) { var k; if (ui) { for (k in o) U[k] = o[k]; fre = null; } else for (k in o) H[k] = o[k]; },
     has: function (s) { return look(s) != null; },
     t: function (ar, fr) { return FR && fr ? fr : ar; },

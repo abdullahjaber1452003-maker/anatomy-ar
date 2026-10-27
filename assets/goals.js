@@ -71,7 +71,9 @@
   function goals() {
     var L = live && live.dk === today() ? live : {};
     var L2 = w.NursinLessons, nl = [], R = gsToday(), D = {}, st = studyToday(), k;
-    try { nl = L2 ? L2.goals(today(), L2.readMap()) : []; } catch (e) {}
+    try {   // 📅 today's small lessons from the class timetable + «📌 هالأسبوع» (assets/lessons.js todayPlan): another device's list for today wins, read → ✅
+      if (L2 && L2.todayPlan) { var seen = (R.rows || []).filter(function (r) { return r && /^les:/.test(r.k); }).map(function (r) { return r.k.slice(4); }), rm = L2.readMap(); nl = L2.todayPlan(seen, R.done).map(function (x) { return L2.row(x, rm); }); }
+    } catch (e) {}
     for (k in R.done) D[k] = R.done[k];
     var loc = state().done; for (k in loc) D[k] = loc[k];
     var list = build({ weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), newL: nl });
@@ -110,7 +112,8 @@
   function gsApply(list, R) {
     var have = {};
     list.forEach(function (x) { have[x.k] = 1; if (R.done && R.done[x.k]) x.done = true; });
-    (R.rows || []).forEach(function (r) { if (r && r.k && !have[r.k]) { have[r.k] = 1; list.push({ k: r.k, e: r.e || "✅", n: r.n || "", s: r.s || "", href: r.h || "index.html", done: !!(R.done && R.done[r.k]) }); } });
+    var one = list.some(function (x) { return /^les:/.test(x.k); });
+    (R.rows || []).forEach(function (r) { if (r && r.k && !have[r.k] && !(one && /^les:/.test(r.k)) && !/^new:/.test(r.k)) { have[r.k] = 1; list.push({ k: r.k, e: r.e || "✅", n: r.n || "", s: r.s || "", href: r.h || "index.html", done: !!(R.done && R.done[r.k]) }); } });
     return list;
   }
   function gsSnap() {
@@ -277,10 +280,20 @@
   }
   function fill() {
     if (!sheet) return;
-    sheet.innerHTML = '<div class="gsh"><b>✅ أهدافك اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>";
+    sheet.innerHTML = '<div class="gsh"><b>✅ أهدافك اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>" + subjPick();
     sheet.querySelector(".gx").addEventListener("click", function () { close(); pill.focus(); });
   }
   function refresh() { paint(); fill(); mirror(); gsPush(); }
+  function subjPick() {     // 📅 the class timetable the lesson goals follow (assets/lessons.js CLASSDAY) — information only
+    var L2 = w.NursinLessons; if (!L2 || !L2.CLASSDAY) return "";
+    var fr = !!(w.Lang && w.Lang.fr), S = L2.subjects, by = {}, s, out = [];
+    for (s in L2.CLASSDAY) (by[L2.CLASSDAY[s]] = by[L2.CLASSDAY[s]] || []).push(S[s] ? esc(fr ? S[s].fr : S[s].ar) : s);
+    [4, 5, 6].forEach(function (dd) { var n = L2.classDayOf(Object.keys(L2.CLASSDAY).filter(function (k) { return L2.CLASSDAY[k] === dd; })[0]); if (by[dd]) out.push("<b>" + (fr ? n[1] : n[0]) + "</b> " + by[dd].join("، ")); });
+    var none = !Object.keys(L2.weekLes()).length;
+    return '<p class="gosl" data-nofr>📅 ' + (fr ? "Les leçons du jour suivent l'emploi du temps : " : "دروس اليوم ماشية حسب برنامج الصف: ") + out.join(" · ") +
+      (none ? "<br><small>" + (fr ? "📌 Pas encore de leçons choisies pour cette semaine." : "📌 لسّا ما في دروس محدّدة لهالأسبوع.") + "</small>" : "") + "</p>";
+  }
+
   function goTo(e) {
     if (e.target.closest && e.target.closest(".gopsw")) { e.preventDefault(); toggle(); return; }
     var a = e.target.closest && e.target.closest("a.goi"); if (!a) return;
@@ -319,6 +332,7 @@
   d.addEventListener("nursin:me", paint);
   d.addEventListener("nursin:study", refresh);         // a ⏱️ round / 🎮 round just counted (study.js)
   d.addEventListener("nursin:lesson-read", refresh);   // a 📖 new lesson was read (lessons.js)
+  d.addEventListener("nursin:weekles", refresh);       // 📌 Abdullah changed this week's lessons (lessons.js wkPull)
   w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1" || e.key === "nursin_study_v1" || e.key === "nursin_read_v1") refresh(); });
   w.addEventListener("pageshow", function (e) { if (e.persisted) { refresh(); if (signed()) fetchLive(true); } });
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
