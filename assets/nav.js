@@ -64,6 +64,7 @@
     if (P && P.installable && P.installable()) { var it = P.instText ? P.instText(P.kind(), !!(w.Lang && w.Lang.fr)) : { btn: "📲 حمّل التطبيق", sub: "Nursin متل التطبيق عالتلفون" };   // 📲 Oct 27 3:35 PM
       a.push('<button class="gi pwainst" type="button" data-nofr><span class="gie" aria-hidden="true">📲</span><span class="git"><b>' + esc(it.btn.replace(/^📲\s*/, "")) + "</b><small>" + esc(it.sub) + "</small></span></button>"); }
     a.push(row(["friends.html#fpush", "🔔", "الإشعارات", "رسائل أصحابك + الدروس الجديدة"]));
+    a.push('<button class="gi" type="button" data-theme-open><span class="gie" aria-hidden="true">🎨</span><span class="git"><b>المظهر</b><small>اختار شكل الموقع: كلاسيك، ليلي، وردي…</small></span></button>');   // 🎨 Oct 28 (assets/theme.js)
     a.push(langRow());   // 👨‍🏫 Osman is always on now (no switch, Oct 27 2:48 PM)
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
     if (owner()) a.push(row(["admin" + ".html", "⚙️", "لوحة الأدمن", "إعلانات + إشعارات + دروس هالأسبوع"]));
@@ -146,6 +147,11 @@
       var s = el.querySelector("summary"), s2 = s && (s.querySelector(".t b") || s.querySelector("b") || s), t = s2 ? s2.textContent.replace(/\s+/g, " ").replace(/▾/g, "").trim().slice(0, 70) : "";
       lsSet(LAST, { p: page, h: el.id, t: t, at: Date.now() });
     }, true);
+  }
+  // 📖 the home tile «كمّل آخر درس» (assets/tiles.js, Oct 28) reads the same record
+  function lastLesson() {
+    var l = lsGet(LAST); if (!l || !LESSON[l.p] || Date.now() - (l.at || 0) > 60 * DAY) return null;
+    return { href: l.p + (l.h && /^[\w-]+$/.test(l.h) ? "#" + l.h : ""), name: LESSON[l.p], part: l.t || "" };
   }
   function continueCard() {
     var box = d.getElementById("homecont"); if (!box) return;
@@ -327,6 +333,6 @@
     buildNav(); remember(); continueCard();
     whenQuiet(startWelcome);
   }
-  w.NursinNav = { groups: G, due: due, open: openSheet, close: closeSheet, classCard: classCard };
+  w.NursinNav = { groups: G, due: due, open: openSheet, close: closeSheet, classCard: classCard, lastLesson: lastLesson };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(window, document);

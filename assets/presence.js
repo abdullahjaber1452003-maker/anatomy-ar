@@ -71,6 +71,7 @@ function markDots() {
 }
 function paint() {
   markDots();
+  try { document.dispatchEvent(new CustomEvent("nursin:tile", { detail: { k: "onl", n: online.length } })); } catch (e) {}   // 🏠 home tile «🟢 أونلاين» (assets/tiles.js)
   const c = document.getElementById("onl");
   if (!c) return;
   c.hidden = false;
@@ -98,6 +99,7 @@ function openList() {
   fillList(s); s.hidden = false;
 }
 
+window.NursinOnline = { open: () => { if (A) openList(); }, count: () => online.length };   // the home tile opens the same list
 export function start(api) {
   if (A) return;
   A = api; F = api.fs; page = location.pathname.split("/").pop() || "index.html";

@@ -119,6 +119,7 @@ function podium(R, mem, prizes) {
   return '<div class="dweek"><h3>🏆 ترتيب الأسبوع</h3><ol class="dpods">' + rows + "</ol>" + (isAdmin() ? '<button class="btn sm" type="button" data-dprize>✏️ حدّد الجوائز (أدمن)</button>' : "") + "</div>";
 }
 function isAdmin() { return !!(A.user && A.user.email === "abdullahjaber1452003@gmail.com" && A.user.emailVerified); }
+export function tileNote(k, n, st) { try { document.dispatchEvent(new CustomEvent("nursin:tile", { detail: { k, n, st } })); } catch (e) {} }
 function render(el, cid, cname, data, classes) {
   const today = N.dayKey(), R = replay(cid, data.members, data.docs, today), T = R.today, me = A.user.uid;
   const by = {}; data.members.forEach(m => { by[m.uid] = m; });
@@ -150,14 +151,41 @@ function render(el, cid, cname, data, classes) {
     (T.pairs.length ? '<h3 class="dlh">قرعة اليوم</h3><ol class="dlist">' + list + "</ol>" : '<p class="small">لازم يكون بالصف تنين أو أكتر (فاتوا قبل اليوم) تا تصير قرعة.</p>') +
     podium(R, data.members, data.prizes) + RULES;
   const s = el.querySelector("[data-dstart]"); if (s) s.addEventListener("click", () => play(el, cid, mine, qs, () => show(el, cid)));
+  // 🏠 the home tile «⚔️ تحدي اليوم» (assets/tiles.js) shows how many challenges are still to play today (one per day; the design has no catch-up days)
+  if (el.id === "duel") tileNote("duel", el.querySelector("[data-dstart]") ? 1 : 0, mine ? (docs[me] && docs[me].s >= 0 ? "done" : "todo") : "none");
   const c = el.querySelector(".dcls"); if (c) c.addEventListener("change", () => { try { localStorage.setItem(LS, c.value); } catch (e) {} show(el, c.value); });
   const pz = el.querySelector("[data-dprize]"); if (pz) pz.addEventListener("click", () => editPrizes(data.prizes, () => show(el, cid)));
 }
 function openPlay(cid) { try { const p = JSON.parse(localStorage.getItem(PS) || "null"); return p && p.cid === cid && p.d === N.dayKey() && p.u === A.user.uid && Date.now() - p.at < (WINDOW_MIN - 1) * 60000 ? p : null; } catch (e) { return null; } }
-async function editPrizes(cur, done) {
-  const v = [0, 1, 2].map(i => { const r = prompt(["🥇", "🥈", "🥉"][i] + " الجائزة (فاضي = لسّا ما تحدّدت)", prizeText(cur, i)); return r == null ? prizeText(cur, i) : String(r).trim().slice(0, 80); });
-  try { await F.setDoc(F.doc(A.db, "config", "duelPrizes"), { p1: v[0], p2: v[1], p3: v[2], at: F.serverTimestamp(), by: A.user.uid }); done(); }
-  catch (e) { alert(e && e.code === "permission-denied" ? "⚠️ لازم تنشر قواعد Firestore v14 أوّل." : "⚠️ ما زبط الحفظ."); }
+// ✏️ prizes (Abdullah, Oct 28 6:37 AM): no typing — he PICKS from ready options per rank (the same option may go to several ranks);
+// «✍️ غير شي» stays as a last, optional free text. Display only: the chosen text is what students read under each rank.
+export function prizePresets(i) {
+  return ["👑 تاج جنب الاسم لمدة أسبوع", ["🏅 شارة ذهبية عالبروفايل", "🏅 شارة فضية عالبروفايل", "🏅 شارة برونزية عالبروفايل"][i] || "🏅 شارة عالبروفايل",
+    ["⭐ +100 نقطة إضافية", "⭐ +50 نقطة إضافية", "⭐ +25 نقطة إضافية"][i] || "⭐ نقاط إضافية", "📌 الاسم بلوحة الشرف عالصفحة الرئيسية",
+    "🎨 ثيم حصري يفتح للفائز", "💡 تلميح مجاني بتحدي الأسبوع الجاي", "🛡️ حماية سلسلة 🔥 ليوم واحد", "🎁 جائزة من الأستاذ (بالصف)"];
+}
+function editPrizes(cur, done) {
+  const old = document.getElementById("dprizes"); if (old) old.remove();
+  const box = document.createElement("div"); box.id = "dprizes"; box.className = "onlsheet dpzsheet"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-label", "حدّد الجوائز");
+  const row = i => {
+    const P = prizePresets(i), v = prizeText(cur, i), isP = P.includes(v), custom = !!v && !isP;
+    return '<label class="dpzr"><b>' + ["🥇 الأول", "🥈 التاني", "🥉 التالت"][i] + '</b><select data-pz="' + i + '"><option value="">— لسّا ما تحدّدت —</option>' +
+      P.map(p => '<option' + (p === v ? " selected" : "") + ">" + esc(p) + "</option>").join("") + '<option value="*"' + (custom ? " selected" : "") + ">✍️ غير شي…</option></select>" +
+      '<input type="text" maxlength="80" data-pzt="' + i + '" placeholder="اكتب الجائزة" value="' + (custom ? esc(v) : "") + '"' + (custom ? "" : " hidden") + "></label>";
+  };
+  box.innerHTML = '<div class="onlbox"><div class="onlhd"><b>✏️ جوائز الأسبوع</b><button class="btn sm" type="button" data-pzx aria-label="سكّر">✖</button></div>' +
+    '<p class="small">اختار جائزة لكل مرتبة (فيك تعطي نفس الجائزة لأكتر من مرتبة). الطلاب بيشوفوا النص تحت كل مرتبة.</p>' + [0, 1, 2].map(row).join("") +
+    '<p class="dpzmsg small" aria-live="polite"></p><button class="btn pri dpzsave" type="button">💾 احفظ الجوائز</button></div>';
+  document.body.appendChild(box);
+  box.addEventListener("change", e => { const s = e.target.closest("select[data-pz]"); if (!s) return; const t = box.querySelector('[data-pzt="' + s.dataset.pz + '"]'); t.hidden = s.value !== "*"; if (!t.hidden) t.focus(); });
+  box.addEventListener("click", async e => {
+    if (e.target === box || e.target.closest("[data-pzx]")) { box.remove(); return; }
+    if (!e.target.closest(".dpzsave")) return;
+    const v = [0, 1, 2].map(i => { const s = box.querySelector('[data-pz="' + i + '"]').value; return (s === "*" ? box.querySelector('[data-pzt="' + i + '"]').value : s).trim().slice(0, 80); });
+    const msg = box.querySelector(".dpzmsg"); msg.textContent = "⏳ …";
+    try { await F.setDoc(F.doc(A.db, "config", "duelPrizes"), { p1: v[0], p2: v[1], p3: v[2], at: F.serverTimestamp(), by: A.user.uid }); box.remove(); done(); }
+    catch (er) { msg.textContent = er && er.code === "permission-denied" ? "⚠️ لازم تنشر قواعد Firestore v14 أوّل." : "⚠️ ما زبط الحفظ."; }
+  });
 }
 // the quiz: a full-screen sheet (no ads inside), one question at a time, 30 s each, no answers shown until the end
 async function play(el, cid, pair, qs, done) {
@@ -207,7 +235,7 @@ async function play(el, cid, pair, qs, done) {
 async function show(el, cid) {
   try {
     const classes = await myClasses();
-    if (!classes.length) { el.innerHTML = '<h2>⚔️ تحدي اليوم</h2><p>كل يوم قرعة بين طلاب صفّك: ' + NQ + ' أسئلة، العلامة الأعلى بتربح وبتتأهّل لبكرا.</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>'; return; }
+    if (!classes.length) { el.innerHTML = '<h2>⚔️ تحدي اليوم</h2><p>كل يوم قرعة بين طلاب صفّك: ' + NQ + ' أسئلة، العلامة الأعلى بتربح وبتتأهّل لبكرا.</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>'; if (el.id === "duel") tileNote("duel", 0, "noclass"); return; }
     let pick = cid; if (!pick) { try { pick = localStorage.getItem(LS); } catch (e) {} }
     const c = classes.find(x => x.id === pick) || classes[0];
     render(el, c.id, c.name, await load(c.id), classes);
@@ -224,4 +252,5 @@ export async function classCard(api, el, cid, cname) {
   catch (e) { el.innerHTML = '<h2>⚔️ تحدي اليوم</h2><p class="small">' + (e && e.code === "permission-denied" ? "⏳ التحدي بعدو مش جاهز (ناطرين تحديث صغير بإعدادات الموقع). قريباً 🙏" : "⚠️ ما قدرنا نجيب التحدي هلّق. جرّب بعد شوي.") + "</p>"; }
 }
 // tests / screenshots: draw a given state without Firebase
+export function _mockPrizes(api, cur) { A = api; F = api.fs; N = api.N; editPrizes(cur || {}, () => {}); }
 export function _mock(api, el, cid, cname, data, classes) { A = api; F = api.fs; N = api.N; render(el, cid, cname, data, classes); }

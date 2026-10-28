@@ -26,3 +26,10 @@
 
 /* 🎬 إعلان مقابل ٥ أسئلة (بعد الـ ١٥ المجانيين) */
 .tb .tadbtn{display:block;margin:10px 0 2px;font-size:16px}.tok .tb{background:#ecfdf5;border-color:#a7f3d0}.tadgate .g3t{font-size:17px}.tadx{font-size:13px;margin-top:6px}
+/* 🌙 «ليلي» — generated from the fixed light colours above (Oct 28): light backgrounds → dark surfaces, dark text → light, light borders → dark; hues kept. Ads untouched. */
+html[data-theme=night] .tlog{background:#172828}
+html[data-theme=night] .tbot .tb{background:var(--card)}
+html[data-theme=night] .terr .tb{background:#2b2317;border-color:#5a4630}
+html[data-theme=night] .tspk[aria-pressed=true]{background:#301a1a;border-color:#5a3030}
+html[data-theme=night] .tform textarea{background:var(--card)}
+html[data-theme=night] .tok .tb{background:#182d23;border-color:#305a46}

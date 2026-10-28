@@ -253,6 +253,7 @@
   var pill = null, sheet = null, scrim = null;
   function count() { var g = goals(), n = 0; g.forEach(function (x) { if (x.done) n++; }); return { g: g, n: n }; }
   function paint() {
+    try { d.dispatchEvent(new CustomEvent("nursin:goals")); } catch (e) {}   // 🏠 the home tiles (assets/tiles.js) re-count
     if (!pill) return;
     if (!signed()) {
       pill.className = "gopill out"; pill.innerHTML = '<span aria-hidden="true">🔒</span><span class="gol">أهدافك اليوم</span>';
@@ -354,7 +355,7 @@
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
 
-  w.NursinGoals = { gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
+  w.NursinGoals = { list: function () { return signed() ? goals() : null; }, fetch: function () { return signed() ? fetchLive(false) : Promise.resolve(null); }, gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount); else mount();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

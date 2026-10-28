@@ -27,7 +27,11 @@
     if(scroll)root.scrollIntoView({block:'start'});
   }
   function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
-  function chips(sel){document.querySelectorAll('#qsets .chip').forEach(function(c){c.classList.toggle('on',c.dataset.set===sel);});}
+  function chips(sel){document.querySelectorAll('#qsets .chip').forEach(function(c){c.classList.toggle('on',c.dataset.set===sel);});qlab();}
+  // 🧹 Oct 28: the «اختار نوع التمرين» box shows what is running and folds itself away once a kind is picked
+  function qlab(){var cu=document.getElementById('qcur');if(!cu)return;var on=document.querySelector('#qpick .chip.on');cu.textContent=on?on.textContent:'';}
+  document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('#qpick .chip');if(!c)return;setTimeout(function(){var pk=document.getElementById('qpick');if(pk)pk.open=false;qlab();},0);});
+  (function(){var wk=document.getElementById('qweak');function oh(){if(wk&&location.hash==='#weak'){wk.open=true;setTimeout(function(){wk.scrollIntoView({block:'start'});},80);}}oh();window.addEventListener('hashchange',oh);})();
   function emptyWeak(scroll){
     state=null;chips('weak');
     root.innerHTML='<div class="qcard wemptycard"><p class="qq">🎯 ما عندك أخطاء لهلّق.</p><p><b>اعمل الكويز أول، وأخطاؤك بتطلع هون.</b> كل سؤال بتغلط فيه بينحفظ بنقاط ضعفك، وبعدين بتقدر تعمل كويز عليهن بس.</p><p><button class="btn pri" id="go20" type="button">🔀 ابدأ كويز ٢٠ سؤال</button></p></div>';
