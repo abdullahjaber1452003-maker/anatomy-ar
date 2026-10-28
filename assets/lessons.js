@@ -314,10 +314,10 @@
     for (s in w) (w[s] || []).forEach(function (k) { var x = R.list.find(function (y) { return base(y) === k; }); if (x) rows.push(x); });
     var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
     el.hidden = false;
-    el.innerHTML = "<h2>📌 دروس هالأسبوع وأهدافك</h2>" + (rows.length
+    el.innerHTML = "<h2>📌 دروس هالأسبوع ودرس اليوم</h2>" + (rows.length
       ? '<ul class="wkl">' + rows.slice(0, 12).map(function (x) { var r = isRead(x, m); return '<li' + (r ? ' class="ok"' : "") + '><a href="' + esc(x.href) + '">' + (r ? "✅ " : "📖 ") + esc(x.n) + "</a></li>"; }).join("") + "</ul>"
       : '<p class="small">لسّا ما في دروس مثبّتة هالأسبوع' + (w && Object.keys(w).length ? "" : " (بتبين بعد ما تسجّل دخول)") + ".</p>") +
-      '<p><button class="btn pri sm" type="button" id="wkgoals">✅ أهدافك اليوم</button> <a class="btn sm" href="quiz.html">📝 الكويز</a></p>';
+      '<p><button class="btn pri sm" type="button" id="wkgoals">✅ درس اليوم</button> <a class="btn sm" href="quiz.html">📝 الكويز</a></p>';
     d.getElementById("wkgoals").addEventListener("click", function () { var p = d.querySelector(".gopill"); if (p) p.click(); else location.href = "friends.html"; });
   }
   d.addEventListener("nursin:weekles", homeWeek); d.addEventListener("nursin:lesson-read", homeWeek);

@@ -916,6 +916,34 @@ html.gl-lock .lqz a::after,html.gl-lock .sqz b::after{content:" 🔒"}
 .pwho .pwl{max-height:320px}.pwho .pwl li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}.pwon{color:#047857;font-weight:600}.pwoff{color:#b91c1c}.pwho .ain{width:100%;box-sizing:border-box}.wkwin{background:rgba(15,118,110,.07);border-radius:8px;padding:6px 8px}
 /* ➕ «ضيف طالب» (admin only, Oct 27) */
 .cadminadd{margin-top:.8rem;border-top:1px dashed rgba(127,127,127,.35);padding-top:.7rem}.cadminadd .fadd{margin-top:.5rem}.cadminadd .cfriends{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0}.cadminadd .cfriends p{width:100%;margin:0}#caddmsg.err{color:#c0392b}
+/* 🔁 «مراجعة اليوم» (srs.js, Oct 28 8:32 PM): a wide tile under the six home tiles + a button on quiz.html */
+.htile.htw{grid-column:1/-1;flex-direction:row;gap:10px;min-height:56px;padding:10px 14px}
+.htile.htw .hti{font-size:1.3rem}
+.qrevrow{margin:10px 0 4px}
+.qrev{width:100%;min-height:46px;font-weight:800;justify-content:center}
+.qrev.hot{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18)}
+.srsh{margin:8px 0 0}
+html.gl-lock .qrevrow{display:none!important}
+/* ⚠️ «الأخطاء الشائعة» from all students (qstats.js, Oct 28 10:58 PM) — high on the home page, no ad near it */
+.cmist{margin:6px 0 16px;border:1.5px solid #f59e0b}
+.cmist h2{margin:0 0 4px}
+.cmist .cmsub{margin:0 0 8px;color:var(--mut)}
+.cmlist{margin:0;padding:0 18px 0 0;display:grid;gap:10px}
+.cmi{padding:8px 0;border-bottom:1px solid var(--line)}
+.cmi:last-child{border-bottom:0}
+.cmi p{margin:2px 0}
+.cmq{font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cma{color:#15803d}
+.cmx{font-size:.92rem;color:var(--mut);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cmn{color:#b91c1c}
+.cmist .hmist{margin:8px 0 0}
+html[data-theme=night] .cma{color:#86efac}
+html[data-theme=night] .cmn{color:#fca5a5}
+/* 📝 «كويز الصف (كل ٣ أيام)» scores (qstats.js) */
+.cqh{font-size:1rem;margin:12px 0 6px}
+.cqb{margin:0;padding:0 18px 0 0}
+.cqb li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.cqb li.me{font-weight:800}
 /* 🌙 «ليلي» — generated from the fixed light colours above (Oct 28): light backgrounds → dark surfaces, dark text → light, light borders → dark; hues kept. Ads untouched. */
 html[data-theme=night] h4{color:#f0c6b8}
 html[data-theme=night] .box.tip{background:#17202b;border-color:#30435a}

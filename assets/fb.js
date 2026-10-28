@@ -573,6 +573,7 @@ onAuthStateChanged(auth, async u => {
   if (page === "classes.html") { const m = await mod("classes"); if (m) m.page(API); }
   mod("presence").then(m => m && m.start(API));                  // 🟢 heartbeat while visible + dots/chip where names show
   mod("studytime").then(m => m && m.start(API));                 // ⏱️ active study time on lesson/quiz pages + the home board
+  mod("qstats").then(m => { if (!m) return; m.start(API); const cq = params.get("cq"); if (cq && window.NursinQuiz) m.openCq(API, cq); });   // ⚠️ counters + 🔁 srs copy + 📝 class quiz (rules v15)
   if (document.getElementById("duel")) mod("duel").then(m => m && m.start(API));   // ⚔️ «تحدي اليوم» on the home page
   const lm = await mod("live");
   if (lm) { if (page === "live.html") lm.page(API); lm.toast(API); }

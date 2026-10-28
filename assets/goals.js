@@ -14,7 +14,7 @@
                                 (≈1 min on it / scrolled through it) or its lesson quiz finished (nursin_read_v1)
    Each row has a ✅ when done and goes straight to it. Badge "2/4". Done-state per Beirut day in localStorage (nursin_goals_v1).
    Signed out: the pill shows 🔒 and the sheet only offers Google sign-in (assets/gate.js state).
-   🔔 Goal reminders (Abdullah, Oct 26 9:56 PM): the switch «🔔 ذكّرني بأهدافي (4–10:30 المسا)» at the bottom of the sheet turns on
+   🔔 Goal reminders (Abdullah, Oct 26 9:56 PM): the switch «🔔 ذكّرني بدرس اليوم (4–10:30 المسا)» at the bottom of the sheet turns on
    notifications (the same push subscription as chat, NursinPWA.enable) and sets goalPush on the student's own profile users/{uid}.
    While it's on, this file mirrors today's goals there (fields the v10 rules already allow on your own profile):
      goalsDay "YYYY-MM-DD", goalsList [{k, n, h}], goalsDone [k] — written only when they change (nursin_goals_mirror_v1).
@@ -215,7 +215,7 @@
   }
   function gpHtml() {
     var on = pushOn();
-    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بأهدافي (4–10:30 المسا)</span></button>' +
+    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بدرس اليوم (4–10:30 المسا)</span></button>' +
       '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: كل ٤٥–٦٠ دقيقة إشعار بهدف واحد ما خلّصتو، وبيوقف لمّا تخلّص الكل." : "إشعار بهدف واحد بكل مرّة، بس عن يلّي ما خلّصتو اليوم.")) + "</small></div>";
   }
   function hello(A) {        // worker v4: one push right now so the student sees it works (an older worker just answers without «goals»)
@@ -229,7 +229,7 @@
     var A = fbA(), P = w.NursinPWA; if (!A || gpBusy) return;
     if (pushOn()) {
       setFlag(false); gpBusy = true; gpSay("");
-      doMirror({ goalPush: false }).then(function () { gpBusy = false; gpSay("🔕 وقّفنا تذكير الأهداف. (إشعارات الرسائل بتضل متل ما هي)"); });
+      doMirror({ goalPush: false }).then(function () { gpBusy = false; gpSay("🔕 وقّفنا تذكير درس اليوم. (إشعارات الرسائل بتضل متل ما هي)"); });
       return;
     }
     var st = pst || (P && P.env ? (P.env().canPush ? "off" : (P.env().ios && !P.env().standalone ? "ios" : "none")) : "none");
@@ -256,22 +256,22 @@
     try { d.dispatchEvent(new CustomEvent("nursin:goals")); } catch (e) {}   // 🏠 the home tiles (assets/tiles.js) re-count
     if (!pill) return;
     if (!signed()) {
-      pill.className = "gopill out"; pill.innerHTML = '<span aria-hidden="true">🔒</span><span class="gol">أهدافك اليوم</span>';
-      pill.setAttribute("aria-label", "أهدافك اليوم — مقفول، سجّل دخول بغوغل"); return;
+      pill.className = "gopill out"; pill.innerHTML = '<span aria-hidden="true">🔒</span><span class="gol">درس اليوم</span>';
+      pill.setAttribute("aria-label", "درس اليوم — مقفول، سجّل دخول بغوغل"); return;
     }
     var c = count(), all = c.n === c.g.length;
     pill.className = "gopill" + (all ? " all" : "");
-    pill.innerHTML = '<span aria-hidden="true">✅</span><span class="gol">أهدافك اليوم</span><b class="gob" dir="ltr">' + c.n + "/" + c.g.length + "</b>";
-    pill.setAttribute("aria-label", "أهدافك اليوم: خلصت " + c.n + " من " + c.g.length);
+    pill.innerHTML = '<span aria-hidden="true">✅</span><span class="gol">درس اليوم</span><b class="gob" dir="ltr">' + c.n + "/" + c.g.length + "</b>";
+    pill.setAttribute("aria-label", "درس اليوم: خلصت " + c.n + " من " + c.g.length);
   }
   function sheetHtml() {
     if (!signed()) {
       var G = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
-      return '<div class="glk-card gocard"><p class="glk-h">🔒 أهدافك اليوم مقفولة — سجّل دخول بغوغل</p><p class="small">بعد ما تسجّل، كل يوم بتلاقي هون شو لازم تخلّص: نقاط ضعفك، امتحانات اليوم وصفّك، جولة ⏱️ بومودورو، 🎮 لعبة، و📖 الدروس الجديدة.</p>' +
+      return '<div class="glk-card gocard"><p class="glk-h">🔒 درس اليوم مقفول — سجّل دخول بغوغل</p><p class="small">بعد ما تسجّل، كل يوم بتلاقي هون شو لازم تخلّص: نقاط ضعفك، امتحانات اليوم وصفّك، جولة ⏱️ بومودورو، 🎮 لعبة، و📖 الدروس الجديدة.</p>' +
         '<button class="gbtn glk-go" type="button">' + G + '<span>تسجيل الدخول بغوغل</span></button><p class="glk-err small" hidden></p></div>';
     }
     var c = count();
-    return '<p class="small gonote">' + (c.n === c.g.length ? "🔥 خلصت كل أهدافك اليوم! برافو" : "خلصت " + c.n + " من " + c.g.length + " · كبسة على أي هدف بتاخدك عليه") + "</p>" +
+    return '<p class="small gonote">' + (c.n === c.g.length ? "🔥 خلّصت درس اليوم كلّو! برافو" : "خلصت " + c.n + " من " + c.g.length + " · كبسة على أي هدف بتاخدك عليه") + "</p>" +
       c.g.map(function (x) {
         return '<a class="gi goi' + (x.done ? " done" : "") + '" href="' + esc(x.href) + '" data-k="' + esc(x.k) + '"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b>" + (x.s ? "<small>" + esc(x.s) + "</small>" : "") + '</span><span class="gotick" aria-label="' + (x.done ? "خلص" : "لسّا") + '">' + (x.done ? "✅" : "⬜") + "</span></a>";
       }).join("") + (function (x) { return x ? '<a class="gi goi goopt" href="' + esc(x.href) + '" data-k="xtra"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b><small>" + esc(x.s) + '</small></span><span class="gotick" aria-hidden="true">➕</span></a>' : ""; })(xtra(c.g)) + gpHtml();
@@ -281,7 +281,7 @@
     if (sheet) { close(); return; }
     if (!signed() && N().loadFB) N().loadFB();
     scrim = d.createElement("div"); scrim.className = "gscrim"; scrim.addEventListener("click", close);
-    sheet = d.createElement("div"); sheet.className = "gsheet gosheet"; sheet.id = "gosheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "أهدافك اليوم");
+    sheet = d.createElement("div"); sheet.className = "gsheet gosheet"; sheet.id = "gosheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "درس اليوم");
     d.body.appendChild(scrim); d.body.appendChild(sheet); fill();
     if (w.matchMedia && w.matchMedia("(min-width: 860px)").matches) {
       var r = pill.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
@@ -295,7 +295,7 @@
   }
   function fill() {
     if (!sheet) return;
-    sheet.innerHTML = '<div class="gsh"><b>✅ أهدافك اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>" + subjPick();
+    sheet.innerHTML = '<div class="gsh"><b>✅ درس اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>" + subjPick();
     sheet.querySelector(".gx").addEventListener("click", function () { close(); pill.focus(); });
   }
   function refresh() { paint(); fill(); mirror(); gsPush(); }

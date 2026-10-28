@@ -7,11 +7,13 @@
      🟢 أونلاين          — classmates + friends online now (assets/presence.js) → the existing «مين أونلاين» list
      📖 كمّل آخر درس     — the last lesson page / part opened (assets/nav.js nursin_last_v1); none yet = «ابدأ»
      🎮 الألعاب          — games.html straight away (no number)
+     🔁 مراجعة اليوم     — (Oct 28 8:32 PM) wide tile: today's due spaced-repetition questions (assets/srs.js) → quiz.html?t=review
+     🏫 also lists 📝 «كويز الصف (كل ٣ أيام)» of each class (assets/qstats.js) in its number and sheet
    Signed out: the numbers that need an account show 🔒 and the tap explains / goes to sign-in. The full cards (#duel, #onl chip, ▶️ continue)
    stay in the page, parked in a hidden holder, so they are not shown twice. No ad inside or next to the sheet. */
 (function (w, d) {
   var box = d.getElementById("htiles"); if (!box) return;
-  var hold = d.getElementById("tilehold"), counts = { duel: null, onl: null }, duelSt = "";
+  var hold = d.getElementById("tilehold"), counts = { duel: null, onl: null, cq: null }, duelSt = "", cqItems = [];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function signed() { var G = w.NursinGate; return G ? !!G.signedIn : !!(w.Nursin && w.Nursin.me); }
   function today() { var N = w.Nursin; return N && N.dayKey ? N.dayKey() : new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10); }
@@ -39,8 +41,11 @@
     else setNum("duel", counts.duel ? counts.duel : duelSt === "done" ? "✓" : "0", counts.duel ? "todo" : duelSt === "done" ? "done" : "");
     // 🏫 class exam + question of the day
     if (!s) setNum("cls", "🔒", "lock");
-    else if (!g) setNum("cls", "…", "");
-    else setNum("cls", c.cls.length ? (c.clsLeft ? c.clsLeft : "✓") : "0", c.clsLeft ? "todo" : c.cls.length ? "done" : "");
+    else if (!g && counts.cq == null) setNum("cls", "…", "");
+    else { var cn = c.cls.length + cqItems.length, cl = c.clsLeft + (counts.cq | 0);   // + 📝 «كويز الصف (كل ٣ أيام)» (assets/qstats.js)
+      setNum("cls", cn ? (cl ? cl : "✓") : "0", cl ? "todo" : cn ? "done" : ""); }
+    // 🔁 today's spaced-repetition reviews (assets/srs.js) — works signed out too (saved in this browser)
+    var S = w.NursinSRS; if (!s) setNum("review", "🔒", "lock"); else if (S) { var rn = S.count(); setNum("review", rn, rn ? "todo" : "done"); }
     // 🟢 online
     if (!s) setNum("onl", "🔒", "lock");
     else setNum("onl", counts.onl == null ? "…" : counts.onl, counts.onl ? "live" : "");
@@ -86,7 +91,8 @@
       open("⚔️ تحدي اليوم", "", el);
     } else if (k === "cls") {
       if (!s) { open("🏫 امتحان الصف", LOCK("امتحان الصف")); return; }
-      open("🏫 امتحان الصف", c.cls.length ? rows(c.cls) + '<p><a class="btn" href="classes.html">🏫 صفّي</a></p>' : (g ? '<p class="small">ما عندك صف بعد. فوت على صفّك بالكود اللي عطاك ياه الأستاذ.</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>' : '<p class="small">⏳ …</p><p><a class="btn" href="classes.html">🏫 صفّي</a></p>'));
+      var cll = c.cls.concat(cqItems);
+      open("🏫 امتحان الصف", cll.length ? rows(cll) + '<p><a class="btn" href="classes.html">🏫 صفّي</a></p>' : (g ? '<p class="small">ما عندك صف بعد. فوت على صفّك بالكود اللي عطاك ياه الأستاذ.</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>' : '<p class="small">⏳ …</p><p><a class="btn" href="classes.html">🏫 صفّي</a></p>'));
       if (!g && w.NursinGoals && w.NursinGoals.fetch) w.NursinGoals.fetch().then(function () { if (sheet) tap("cls"); });
     } else if (k === "onl") {
       if (!s) { open("🟢 مين أونلاين", LOCK("تشوف مين أونلاين")); return; }
@@ -96,13 +102,13 @@
   }
   box.addEventListener("click", function (e) {
     var t = e.target.closest && e.target.closest("[data-tile]"); if (!t) return;
-    var k = t.getAttribute("data-tile"); if (k === "last" || k === "games") return;   // plain links
+    var k = t.getAttribute("data-tile"); if (k === "last" || k === "games" || k === "review") return;   // plain links
     e.preventDefault(); tap(k);
   });
   d.addEventListener("nursin:tile", function (e) {
-    var x = e.detail || {}; if (x.k === "duel") { counts.duel = x.n | 0; duelSt = x.st || ""; } else if (x.k === "onl") counts.onl = x.n | 0; paint();
+    var x = e.detail || {}; if (x.k === "duel") { counts.duel = x.n | 0; duelSt = x.st || ""; } else if (x.k === "onl") counts.onl = x.n | 0; else if (x.k === "cq") { counts.cq = x.n | 0; cqItems = x.items || []; } paint();
   });
-  ["nursin:goals", "nursin:gate", "nursin:auth"].forEach(function (ev) { d.addEventListener(ev, function () { setTimeout(paint, 30); }); });
+  ["nursin:goals", "nursin:gate", "nursin:auth", "nursin:srs"].forEach(function (ev) { d.addEventListener(ev, function () { setTimeout(paint, 30); }); });
   w.NursinTiles = { calc: calc, paint: paint, open: tap, close: close };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", paint); else paint();
   setTimeout(paint, 1500);

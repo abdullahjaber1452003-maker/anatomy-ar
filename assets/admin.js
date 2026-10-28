@@ -106,7 +106,7 @@ function weekPicker(API, el) {
   const box = document.createElement("div"); box.className = "qcard wkpick"; box.id = "wkpick";
   const subs = Object.keys(L.CLASSDAY);
   const draw = cur => {
-    box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. أهداف اليوم عندن بتوزّع الأجزاء غير المقروءة بالتساوي على أيام الدرس، وأيام الصف (خميس، جمعة، سبت) أخفّ. مادة ما فيها شي معلّم = ما في درس إلها بالأهداف.</p><p class="small wkwin">🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة</p>' +
+    box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. «درس اليوم» عندن بيوزّع الأجزاء غير المقروءة بالتساوي على أيام الدرس، وأيام الصف (خميس، جمعة، سبت) أخفّ. مادة ما فيها شي معلّم = ما في شي إلها بدرس اليوم.</p><p class="small wkwin">🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة</p>' +
       subs.map(s => { const S = L.subjects[s] || {}, dn = L.classDayOf(s), ls = L.list.filter(x => x.s === s);
         return '<details class="wks"' + ((cur[s] || []).length ? " open" : "") + '><summary><b>' + esc(S.ar || s) + "</b> <small>· حصّة " + dn[0] + " · " + (cur[s] || []).length + "/" + ls.length + "</small></summary><ul class=\"cpick\">" +
           ls.map(x => { const k = L.base(x), n = L.parts.filter(p => L.base(p) === k).length; return '<li><label><input type="checkbox" data-s="' + esc(s) + '" value="' + esc(k) + '"' + ((cur[s] || []).includes(k) ? " checked" : "") + "> <bdi>" + esc(x.n) + "</bdi>" + (n > 1 ? " <small>(" + n + " أجزاء)</small>" : "") + "</label></li>"; }).join("") + "</ul></details>"; }).join("") +
