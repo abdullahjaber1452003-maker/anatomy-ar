@@ -20,7 +20,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nursin">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/style.css?v=20261027l">
+<script src="assets/theme.js?v=20261027m"></script>
+<link rel="stylesheet" href="assets/style.css?v=20261027m">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2554036492962277"
      crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
@@ -31,11 +32,11 @@
   gtag('js', new Date());
   gtag('config', 'G-7MY0Z597WC');
 </script>
-<script src="assets/lang.js?v=20261027l"></script>
-<script src="assets/gate.js?v=20261027l"></script>
+<script src="assets/lang.js?v=20261027m"></script>
+<script src="assets/gate.js?v=20261027m"></script>
 </head>
 <body class="home">
-<script src="assets/splash.js?v=20261027l"></script>
+<script src="assets/splash.js?v=20261027m"></script>
 <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
 <header class="topbar">
  <div class="wrap bar">
@@ -46,13 +47,25 @@
 </header>
 <main id="main" class="wrap">
 <div class="adx adx-top" data-mobile="735f5c76ee5abde951ff9d70e2263fab" data-desktop="f0cd90c85278798fba5a155236050d61"></div>
-<section class="hero hsm"><h1>❤️🧠 قلب وأعصاب — دروس تمريض</h1><p>دروس الصف بالعربي مع المصطلحات الفرنسية، <b>مجسّمات 3D</b> و<b>كويز</b> من الدروس نفسها.</p><p lang="fr" dir="ltr" style="text-align:right" class="small">Cardio & Neuro — Soins infirmiers</p></section>
-<!-- 🧭 the essentials first (Abdullah, Oct 27 9:51 PM): ⚔️ today's challenge, 🟢 who's online, ⏱️ today's study time, 📌 this week's lessons + goals. No ad inside or next to these cards. -->
+<!-- 🏠 home tiles (Abdullah, Oct 28 6:32–6:36 AM): the title banner is gone; small tiles, each only an icon, a name and a number. Tap = open it there (assets/tiles.js). -->
+<h1 class="vh">قلب وأعصاب — دروس تمريض</h1>
+<nav id="htiles" class="htiles" aria-label="أهم الشغلات">
+<a class="htile" href="exams.html" data-tile="exams"><span class="hti" aria-hidden="true">📅</span><b class="htn">امتحانات الأسبوع</b><span class="htc" data-tc="exams">…</span></a>
+<a class="htile" href="#duel" data-tile="duel"><span class="hti" aria-hidden="true">⚔️</span><b class="htn">تحدي اليوم</b><span class="htc" data-tc="duel">…</span></a>
+<a class="htile" href="classes.html" data-tile="cls"><span class="hti" aria-hidden="true">🏫</span><b class="htn">امتحان الصف</b><span class="htc" data-tc="cls">…</span></a>
+<a class="htile" href="friends.html" data-tile="onl"><span class="hti" aria-hidden="true">🟢</span><b class="htn">أونلاين</b><span class="htc" data-tc="onl">…</span></a>
+<a class="htile" href="cardio.html" data-tile="last"><span class="hti" aria-hidden="true">📖</span><b class="htn">كمّل آخر درس</b><span class="htc sub" data-tc="last">ابدأ</span></a>
+<a class="htile" href="games.html" data-tile="games"><span class="hti" aria-hidden="true">🎮</span><b class="htn">الألعاب</b><span class="htc sub">العب هلّق</span></a>
+</nav>
+<!-- 🧭 the essentials first (Abdullah, Oct 27 9:51 PM): ⚔️ today's challenge, 🟢 who's online, ⏱️ today's study time, 📌 this week's lessons + goals. No ad inside or next to these cards.
+     Oct 28: the full challenge card, the online chip and ▶️ continue are parked here and open from the tiles above (no duplicates). -->
+<div id="tilehold" hidden>
 <section id="duel" class="qcard duel hfirst" aria-live="polite"><h2>⚔️ تحدي اليوم</h2><p>كل يوم قرعة بين طلاب صفّك: نفس الأسئلة للتنين، العلامة الأعلى بتربح وبتتأهّل لبكرا 🔥</p><p><a class="btn pri" href="friends.html">👤 سجّل دخول</a> <a class="btn" href="classes.html">🏫 صفّي</a></p></section>
 <div id="onl" class="onl" hidden aria-live="polite"></div>
+<div id="homecont" hidden></div>
+</div>
 <section id="stboard" class="qcard stboard" hidden aria-live="polite"></section>
 <section id="wkles" class="qcard wkles" hidden></section>
-<div id="homecont" hidden></div>
 <section id="study" class="study" aria-label="🔥 سلسلتك، ⏱️ بومودورو، 🏆 تحدّي الأسبوع"></section>
 <div class="grid g2h">
 <div class="card hg"><a class="hgh" href="cardio.html"><div class="ic">📚</div><div><h2>المواد <span class="fr" lang="fr">Matières</span></h2><p>كل مادة فيها دروسها: القلب (12 درس)، الأعصاب (8 دروس)، Henderson، القانون، الإدارة، الجودة، الأدوية، ومجسّمات 3D</p></div></a>
@@ -82,8 +95,9 @@
   <p class="small">المحتوى للتعليم فقط، مكتوب من دروس الصف، وما بيغني عن استشارة طبية أو عن مراجع الدراسة الرسمية.</p>
  </div>
 </footer>
-<script src="assets/app.js" defer></script><script src="assets/pwa.js?v=20261027l" defer></script><script src="assets/lessons.js?v=20261027l" defer></script><script src="assets/account.js?v=20261027l" defer></script><script src="assets/osman.js?v=20261027l" defer></script>
-<script src="assets/nav.js?v=20261027l" defer></script><script src="assets/goals.js?v=20261027l" defer></script><script src="assets/announce.js?v=20261027l" defer></script><script src="assets/quiz-data.js?v=20261027l" defer></script><script src="assets/weak.js?v=20261027l" defer></script><script src="assets/study.js?v=20261027l" defer></script>
-<script src="assets/ads.js?v=20261027l" defer></script>
+<script src="assets/app.js" defer></script><script src="assets/pwa.js?v=20261027m" defer></script><script src="assets/lessons.js?v=20261027m" defer></script><script src="assets/account.js?v=20261027m" defer></script><script src="assets/osman.js?v=20261027m" defer></script>
+<script src="assets/nav.js?v=20261027m" defer></script><script src="assets/goals.js?v=20261027m" defer></script><script src="assets/announce.js?v=20261027m" defer></script><script src="assets/quiz-data.js?v=20261027m" defer></script><script src="assets/weak.js?v=20261027m" defer></script><script src="assets/study.js?v=20261027m" defer></script>
+<script src="assets/tiles.js?v=20261027m" defer></script>
+<script src="assets/ads.js?v=20261027m" defer></script>
 </body>
 </html>
