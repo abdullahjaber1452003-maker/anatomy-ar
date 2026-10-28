@@ -20,8 +20,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nursin">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="assets/theme.js?v=20261027m"></script>
-<link rel="stylesheet" href="assets/style.css?v=20261027m">
+<script src="assets/theme.js?v=20261027n"></script>
+<link rel="stylesheet" href="assets/style.css?v=20261027n">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2554036492962277"
      crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
@@ -32,11 +32,11 @@
   gtag('js', new Date());
   gtag('config', 'G-7MY0Z597WC');
 </script>
-<script src="assets/lang.js?v=20261027m"></script>
-<script src="assets/gate.js?v=20261027m"></script>
+<script src="assets/lang.js?v=20261027n"></script>
+<script src="assets/gate.js?v=20261027n"></script>
 </head>
 <body class="home">
-<script src="assets/splash.js?v=20261027m"></script>
+<script src="assets/splash.js?v=20261027n"></script>
 <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
 <header class="topbar">
  <div class="wrap bar">
@@ -56,6 +56,7 @@
 <a class="htile" href="friends.html" data-tile="onl"><span class="hti" aria-hidden="true">🟢</span><b class="htn">أونلاين</b><span class="htc" data-tc="onl">…</span></a>
 <a class="htile" href="cardio.html" data-tile="last"><span class="hti" aria-hidden="true">📖</span><b class="htn">كمّل آخر درس</b><span class="htc sub" data-tc="last">ابدأ</span></a>
 <a class="htile" href="games.html" data-tile="games"><span class="hti" aria-hidden="true">🎮</span><b class="htn">الألعاب</b><span class="htc sub">العب هلّق</span></a>
+<a class="htile htw" href="quiz.html?t=review" data-tile="review"><span class="hti" aria-hidden="true">🔁</span><b class="htn">مراجعة اليوم</b><span class="htc" data-tc="review">0</span></a>
 </nav>
 <!-- 🧭 the essentials first (Abdullah, Oct 27 9:51 PM): ⚔️ today's challenge, 🟢 who's online, ⏱️ today's study time, 📌 this week's lessons + goals. No ad inside or next to these cards.
      Oct 28: the full challenge card, the online chip and ▶️ continue are parked here and open from the tiles above (no duplicates). -->
@@ -64,6 +65,18 @@
 <div id="onl" class="onl" hidden aria-live="polite"></div>
 <div id="homecont" hidden></div>
 </div>
+<!-- ⚠️ «الأخطاء الشائعة» from ALL students (Abdullah, Oct 28 10:58 PM): the 5 questions students got wrong most this week, with the right answer
+     and the bank's explanation (assets/qstats.js, one read, no names). Signed out / before rules v15: the hand-written list below. No ad near it. -->
+<section id="cmist" class="qcard cmist" aria-live="polite"><h2>⚠️ الأخطاء الشائعة</h2><div id="cmlive" hidden></div>
+<details class="box warn hmist" open><summary><span class="bi">📌</span> أخطاء شائعة لازم تنتبهلها</summary><ul>
+<li>تشخيص الـ <b>Endocardite</b> = <b>Hémocultures</b> (زرع دم) + <b>ETO</b> (إيكو عن طريق المري)</li>
+<li>أهم فحص دم للجلطة القلبية = <b>Troponine</b> (مش AST)</li>
+<li><b>Digoxine</b> والنبض أقل من ٦٠ = ما منعطي ومنخبّر الحكيم</li>
+<li><b>QRS large (عريض)</b> = ventriculaire (بطيني) = خطر</li>
+<li><b>Embolie artérielle</b> = ما منرفع الإجر</li>
+<li><b>Œdème papillaire</b> = HTIC ← ممنوع ponction lombaire</li>
+<li>بعد Pacemaker: ضيق نفس مفاجئ = <b>Pneumothorax</b>؛ نبض بطيء مع BAV = Pacemaker</li>
+</ul></details></section>
 <section id="stboard" class="qcard stboard" hidden aria-live="polite"></section>
 <section id="wkles" class="qcard wkles" hidden></section>
 <section id="study" class="study" aria-label="🔥 سلسلتك، ⏱️ بومودورو، 🏆 تحدّي الأسبوع"></section>
@@ -77,15 +90,6 @@
 <div class="card hg"><a class="hgh" href="tutor.html"><div class="ic">👨‍🏫</div><div><h2>الأستاذ عثمان <span class="fr" lang="fr">Tuteur IA</span></h2><p>اسأل أي سؤال عن الدروس، بيشرحلك وبيقلّك شو تدرس بعدين</p></div></a></div>
 </div>
 <section id="weak" class="weak" aria-live="polite"><h2>🎯 نقاط ضعفك</h2><p class="small">اعمل الكويز أول، وأخطاؤك بتطلع هون.</p></section>
-<details class="box warn hmist"><summary><span class="bi">⚠️</span> أخطاء شائعة لازم تنتبهلها</summary><ul>
-<li>تشخيص الـ <b>Endocardite</b> = <b>Hémocultures</b> (زرع دم) + <b>ETO</b> (إيكو عن طريق المري)</li>
-<li>أهم فحص دم للجلطة القلبية = <b>Troponine</b> (مش AST)</li>
-<li><b>Digoxine</b> والنبض أقل من ٦٠ = ما منعطي ومنخبّر الحكيم</li>
-<li><b>QRS large (عريض)</b> = ventriculaire (بطيني) = خطر</li>
-<li><b>Embolie artérielle</b> = ما منرفع الإجر</li>
-<li><b>Œdème papillaire</b> = HTIC ← ممنوع ponction lombaire</li>
-<li>بعد Pacemaker: ضيق نفس مفاجئ = <b>Pneumothorax</b>؛ نبض بطيء مع BAV = Pacemaker</li>
-</ul></details>
 <div class="ad-slot" aria-hidden="true"><!-- AdSense ad slot (Auto ads active via head script) --></div>
 </main>
 <footer class="foot">
@@ -95,9 +99,9 @@
   <p class="small">المحتوى للتعليم فقط، مكتوب من دروس الصف، وما بيغني عن استشارة طبية أو عن مراجع الدراسة الرسمية.</p>
  </div>
 </footer>
-<script src="assets/app.js" defer></script><script src="assets/pwa.js?v=20261027m" defer></script><script src="assets/lessons.js?v=20261027m" defer></script><script src="assets/account.js?v=20261027m" defer></script><script src="assets/osman.js?v=20261027m" defer></script>
-<script src="assets/nav.js?v=20261027m" defer></script><script src="assets/goals.js?v=20261027m" defer></script><script src="assets/announce.js?v=20261027m" defer></script><script src="assets/quiz-data.js?v=20261027m" defer></script><script src="assets/weak.js?v=20261027m" defer></script><script src="assets/study.js?v=20261027m" defer></script>
-<script src="assets/tiles.js?v=20261027m" defer></script>
-<script src="assets/ads.js?v=20261027m" defer></script>
+<script src="assets/app.js" defer></script><script src="assets/pwa.js?v=20261027n" defer></script><script src="assets/lessons.js?v=20261027n" defer></script><script src="assets/account.js?v=20261027n" defer></script><script src="assets/osman.js?v=20261027n" defer></script>
+<script src="assets/nav.js?v=20261027n" defer></script><script src="assets/goals.js?v=20261027n" defer></script><script src="assets/announce.js?v=20261027n" defer></script><script src="assets/quiz-data.js?v=20261027n" defer></script><script src="assets/weak.js?v=20261027n" defer></script><script src="assets/study.js?v=20261027n" defer></script>
+<script src="assets/srs.js?v=20261027n" defer></script><script src="assets/tiles.js?v=20261027n" defer></script>
+<script src="assets/ads.js?v=20261027n" defer></script>
 </body>
 </html>
