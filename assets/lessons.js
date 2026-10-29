@@ -308,19 +308,27 @@
     (function go() { var el = d.getElementById(id); if (el) { if (el.tagName === "DETAILS" && !el.open) { el.open = true; setTimeout(function () { el.scrollIntoView({ block: "start" }); }, 60); } return; } if (++n < 20) setTimeout(go, 200); })();
   }
   // 📌 home card «دروس هالأسبوع وأهدافك» (Oct 28 home reorg): the lessons Abdullah pinned this week, ✅ once read, + today's goals sheet
+  // ⏱️ today's active study minutes, lesson reading included (Oct 29 6:14 AM) — the record assets/studytime.js keeps for the board
+  function stMins() {
+    try { var o = JSON.parse(localStorage.getItem("nursin_stact_v1") || "null");
+      return o && o.d === dk() ? Math.floor(Math.max(o.s | 0, o.r | 0) / 60) : 0; } catch (e) { return 0; }
+  }
   function homeWeek() {
     var el = d.getElementById("wkles"); if (!el) return;
     var w = weekLes(), m = readMap(), rows = [], s;
     for (s in w) (w[s] || []).forEach(function (k) { var x = R.list.find(function (y) { return base(y) === k; }); if (x) rows.push(x); });
     var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
     el.hidden = false;
-    el.innerHTML = "<h2>📌 دروس هالأسبوع ودرس اليوم</h2>" + (rows.length
+    var mn = stMins();
+    el.innerHTML = "<h2>📌 دروس هالأسبوع ودرس اليوم</h2>" + (mn ? '<p class="small wkmin">⏱️ درست اليوم ' + mn + " د (قراءة الدروس والكويز)</p>" : "") + (rows.length
       ? '<ul class="wkl">' + rows.slice(0, 12).map(function (x) { var r = isRead(x, m); return '<li' + (r ? ' class="ok"' : "") + '><a href="' + esc(x.href) + '">' + (r ? "✅ " : "📖 ") + esc(x.n) + "</a></li>"; }).join("") + "</ul>"
       : '<p class="small">لسّا ما في دروس مثبّتة هالأسبوع' + (w && Object.keys(w).length ? "" : " (بتبين بعد ما تسجّل دخول)") + ".</p>") +
       '<p><button class="btn pri sm" type="button" id="wkgoals">✅ درس اليوم</button> <a class="btn sm" href="quiz.html">📝 الكويز</a></p>';
     d.getElementById("wkgoals").addEventListener("click", function () { var p = d.querySelector(".gopill"); if (p) p.click(); else location.href = "friends.html"; });
   }
-  d.addEventListener("nursin:weekles", homeWeek); d.addEventListener("nursin:lesson-read", homeWeek);
+  d.addEventListener("nursin:weekles", homeWeek); d.addEventListener("nursin:lesson-read", homeWeek); d.addEventListener("nursin:study", homeWeek);
+  w.addEventListener("load", function () { if (stMins()) homeWeek(); });   // Beirut day from account.js once it ran
+  var stShown = -1; w.addEventListener("storage", function (e) { if (e.key === "nursin_stact_v1" && d.getElementById("wkles") && stMins() !== stShown) { stShown = stMins(); homeWeek(); } });
   w.NursinLessons.homeWeek = homeWeek;
   function boot() { splitPage(); openHash(); track(); homeWeek(); }
   w.addEventListener("hashchange", openHash);

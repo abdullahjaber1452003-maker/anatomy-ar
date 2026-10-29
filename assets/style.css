@@ -937,6 +937,16 @@ html.gl-lock .qrevrow{display:none!important}
 .cmx{font-size:.92rem;color:var(--mut);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cmn{color:#b91c1c}
 .cmist .hmist{margin:8px 0 0}
+/* ⚠️ folded by default (Oct 29): only the title line + count + ▾/▴ */
+.cmfold>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;min-height:40px;-webkit-tap-highlight-color:transparent}
+.cmfold>summary::-webkit-details-marker{display:none}
+.cmfold>summary h2{margin:0;flex:1;font-size:1.05rem}
+.cmcnt{background:#f59e0b;color:#1f1300;font-weight:700;border-radius:999px;min-width:26px;padding:1px 8px;text-align:center;font-size:.85rem;line-height:1.5}
+.cmarr::after{content:"▾";color:var(--mut);font-size:1.15rem}
+.cmfold[open]>summary .cmarr::after{content:"▴"}
+.cmfold[open]>summary{margin-bottom:6px}
+.cmist:has(>.cmfold:not([open])){padding-top:8px;padding-bottom:8px}
+.wkmin{margin:0 0 6px;color:var(--mut)}
 html[data-theme=night] .cma{color:#86efac}
 html[data-theme=night] .cmn{color:#fca5a5}
 /* 📝 «كويز الصف (كل ٣ أيام)» scores (qstats.js) */

@@ -8,7 +8,8 @@
    Fix Oct 26 12:55 PM (Abdullah: «سؤال اليوم» stayed ⬜ after answering): done comes from those real docs, re-read every time the
    sheet opens; classes.html also marks dq / cls:{cid} the moment the answer/result is saved or shown.
      📝 كويز ١٠ أسئلة         — only when none of the rows above is on the list
-     ⏱️ جولة بومودورو وحدة    — every day; done when ≥1 pomodoro focus round finished today (nursin_study_v1 tp, assets/study.js)
+     ⏱️ ٢٥ دقيقة دراسة       — every day; done when ≥1 pomodoro focus round finished today (nursin_study_v1 tp, assets/study.js)
+                                OR 25 min of active lesson reading / quizzes today (nursin_stact_v1, assets/studytime.js — Oct 29)
      🎮 العب لعبة وحدة         — every day; done when ≥1 round of ANY game finished today (nursin_study_v1 tg) — one game, not all of them
      📖 درس جديد: …           — on top, on the day a lesson is added and the next day (assets/lessons.js «added»); done when read
                                 (≈1 min on it / scrolled through it) or its lesson quiz finished (nursin_read_v1)
@@ -38,6 +39,9 @@
   function weakRanToday() { var t = 0; try { t = w.Weak && w.Weak.ranAt ? w.Weak.ranAt() : ((lsGet("nursin_weak_v1") || {}).ran || 0); } catch (e) {} return !!t && dayOf(t) === today(); }
   // ⏱️/🎮 today's counts from the record assets/study.js keeps (works on pages that don't load study.js too)
   function studyToday() { var o = lsGet("nursin_study_v1"); return o && o.td === today() ? { p: o.tp | 0, g: o.tg | 0 } : { p: 0, g: 0 }; }
+  // 📖 today's active study minutes (lesson reading + quizzes), the record assets/studytime.js keeps for the ⏱️ board
+  var stM = -1;
+  function minsToday() { var o = lsGet("nursin_stact_v1"); return o && o.d === today() ? Math.floor(Math.max(o.s | 0, o.r | 0) / 60) : 0; }
   function signed() { var G = w.NursinGate; return G ? !!G.signedIn : !!N().me; }
   function todayExams() { var n = N(); try { return n.examsFor ? n.examsFor(today()) : []; } catch (e) { return []; } }
 
@@ -61,8 +65,10 @@
     if (!g.length) g.push({ k: "quiz10", e: "📝", n: "كويز ١٠ أسئلة", s: "أسئلة مخلوطة من كل الدروس", href: "quiz.html?t=all&n=10", done: !!D.quiz10 });
     // ⏱️ + 🎮 every day (Oct 26 7:41 PM + 7:42 PM): one pomodoro focus round and ONE game round (any of the games, not all of them),
     // both read from the real local record that study.js keeps (nursin_study_v1: tp = pomodoro rounds today, tg = game rounds today)
-    var P = o.pomo | 0, G = o.game | 0;
-    g.push({ k: "pomo", e: "⏱️", n: "جولة بومودورو وحدة (٢٥ دقيقة)", s: P ? "✅ خلصت " + P + (P === 1 ? " جولة" : " جولات") + " اليوم" : "٢٥ دقيقة تركيز، بعدها بريك", href: "index.html#study", done: P >= 1 });
+    // 📖 Oct 29 6:14 AM: the ⏱️ row also counts the minutes spent READING lessons (+ quizzes) today — the same active time as the
+    // «⏱️ وقت الدرس اليوم» board (assets/studytime.js, nursin_stact_v1): done at 25 min, or one pomodoro round as before
+    var P = o.pomo | 0, G = o.game | 0, M = o.mins | 0;
+    g.push({ k: "pomo", e: "⏱️", n: "٢٥ دقيقة دراسة (قراءة أو بومودورو)", s: M >= 25 ? "✅ درست " + M + " د اليوم" : P ? "✅ خلصت " + P + (P === 1 ? " جولة" : " جولات") + " اليوم" : M ? "درست " + M + " د من ٢٥ (قراءة الدروس والكويز)" : "اقرا درس أو جولة بومودورو، بينحسب الوقت لحالو", href: "index.html#study", done: P >= 1 || M >= 25 });
     g.push({ k: "game", e: "🎮", n: "العب لعبة وحدة", s: G ? "✅ لعبت " + G + (G === 1 ? " جولة" : " جولات") + " اليوم" : "جولة وحدة من أي لعبة بتكفي", href: "games.html", done: G >= 1 });
     // 📖 new lessons (assets/lessons.js «added» date): on the day they're added and the next day, on top of the list
     return (o.newL || []).concat(g);
@@ -76,7 +82,7 @@
     var L2 = w.NursinLessons, nl = [], R = gsToday(), D = {}, st = studyToday(), k;
     for (k in R.done) D[k] = R.done[k];
     var loc = state().done; for (k in loc) D[k] = loc[k];
-    var o = { weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), newL: [] };
+    var o = { weak: weakCount(), weakRan: weakRanToday() || !!R.wr, exams: todayExams(), st: L.st, classes: L.classes, done: D, pomo: Math.max(st.p, R.p | 0), game: Math.max(st.g, R.g | 0), mins: minsToday(), newL: [] };
     try {   // 📅 today's small lessons from the class timetable + «📌 هالأسبوع» (assets/lessons.js todayPlan), capped; parts done today stay ✅
       if (L2 && L2.todayPlan) {
         var seen = (R.rows || []).filter(function (r) { return r && /^les:/.test(r.k); }).map(function (r) { return r.k.slice(4); }), rm = L2.readMap();
@@ -350,7 +356,7 @@
   d.addEventListener("nursin:study", refresh);         // a ⏱️ round / 🎮 round just counted (study.js)
   d.addEventListener("nursin:lesson-read", refresh);   // a 📖 new lesson was read (lessons.js)
   d.addEventListener("nursin:weekles", refresh);       // 📌 Abdullah changed this week's lessons (lessons.js wkPull)
-  w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1" || e.key === "nursin_study_v1" || e.key === "nursin_read_v1") refresh(); });
+  w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1" || e.key === "nursin_study_v1" || e.key === "nursin_read_v1") refresh(); else if (e.key === "nursin_stact_v1" && minsToday() !== stM) { stM = minsToday(); refresh(); } });   // ⏱️ another tab counted a minute
   w.addEventListener("pageshow", function (e) { if (e.persisted) { refresh(); if (signed()) fetchLive(true); } });
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }

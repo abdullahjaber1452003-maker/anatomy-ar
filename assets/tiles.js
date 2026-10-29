@@ -109,6 +109,13 @@
     var x = e.detail || {}; if (x.k === "duel") { counts.duel = x.n | 0; duelSt = x.st || ""; } else if (x.k === "onl") counts.onl = x.n | 0; else if (x.k === "cq") { counts.cq = x.n | 0; cqItems = x.items || []; } paint();
   });
   ["nursin:goals", "nursin:gate", "nursin:auth", "nursin:srs"].forEach(function (ev) { d.addEventListener(ev, function () { setTimeout(paint, 30); }); });
+  /* ⚠️ «الأخطاء الشائعة» folds (Abdullah, Oct 29 6:14 AM: «تصغر وبس بدنا منكبرها ومنشوف»): closed by default, only the title + count + ▾;
+     opened/closed is remembered on this device (localStorage nursin_cmist_v1 = 1 open / 0 closed) */
+  (function () {
+    var f = d.getElementById("cmfold"); if (!f) return;
+    try { if (localStorage.getItem("nursin_cmist_v1") === "1") f.open = true; } catch (e) {}
+    f.addEventListener("toggle", function () { try { localStorage.setItem("nursin_cmist_v1", f.open ? "1" : "0"); } catch (e) {} });
+  })();
   w.NursinTiles = { calc: calc, paint: paint, open: tap, close: close };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", paint); else paint();
   setTimeout(paint, 1500);

@@ -94,6 +94,7 @@ async function card() {
     if (rows.filter(r => r.wrong > 0).length < 3) { const p = await top(addDays(week(), -7)); if (p.filter(r => r.wrong > 0).length > rows.filter(r => r.wrong > 0).length) { rows = p; last = true; } }
     const h = cardHtml(rows, b, last); if (!h) return;
     el.innerHTML = h; el.hidden = false; const c = D.getElementById("cmist"); if (c) { c.classList.add("live"); const st = c.querySelector("details.hmist"); if (st) st.open = false; }
+    const cn = D.getElementById("cmcnt"); if (cn) cn.textContent = String((h.match(/<li class="cmi">/g) || []).length);   // the folded title's count = live questions
     const rb = D.getElementById("cmrev");
     if (rb) rb.addEventListener("click", () => { const n = W.NursinSRS ? W.NursinSRS.add(rows.map(r => r.id)) : 0; rb.outerHTML = '<span class="small">🔁 ' + (n ? "انضافو " + n + " لمراجعتك، بيطلعو بكرا" : "هودي أصلاً بمراجعتك") + "</span>"; });
   } catch (e) { /* v14: the hand-written list stays */ }
