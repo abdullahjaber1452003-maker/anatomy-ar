@@ -26,7 +26,8 @@
       law: { ar: "القانون", fr: "L\u00e9gislation", page: "law.html" },
       mgmt: { ar: "الإدارة", fr: "Management", page: "mgmt.html" },
       quality: { ar: "الجودة والاعتماد", fr: "Qualit\u00e9 & accr\u00e9ditation", page: "quality.html" },
-      pharma: { ar: "الأدوية", fr: "Pharmacologie", page: "pharma.html" }
+      pharma: { ar: "الأدوية", fr: "Pharmacologie", page: "pharma.html" },
+      rea: { ar: "الإنعاش", fr: "R\u00e9animation", page: "rea.html" }
     },
     list: [
     { s: "cardio", t: "heart", n: "القلب: التشريح", href: "cardio.html#heart" },
@@ -53,8 +54,11 @@
     { s: "henderson", t: "henderson", l: "h2", n: "الحاجات ٨–١٤", href: "henderson.html" },
     { s: "law", t: "law", l: "l1", n: "القانون التطبيقي: تصنيفات التمريض", href: "law.html#l1" },
     { s: "law", t: "law", l: "l2", n: "أنواع الشهادات التمريضية المهنية في لبنان", href: "law.html#l2", added: "2026-10-26" },
+    { s: "law", t: "law", l: "l3", n: "وزارة الصحة العامة ومهامها", href: "law.html#l3", added: "2026-10-29" },
     { s: "mgmt", t: "mgmt", l: "m1", n: "الدوافع وهرم Maslow", href: "mgmt.html#m1", added: "2026-10-26" },
     { s: "mgmt", t: "mgmt", l: "m2", n: "الهيكل التنظيمي للمستشفى", href: "mgmt.html#m2", added: "2026-10-26" },
+    { s: "mgmt", t: "mgmt", l: "m3", n: "التوجيه والقيادة", href: "mgmt.html#m3", added: "2026-10-29" },
+    { s: "mgmt", t: "mgmt", l: "m4", n: "المشاركة", href: "mgmt.html#m4", added: "2026-10-29" },
     { s: "quality", t: "quality", l: "q1", n: "مفاهيم الجودة", href: "quality.html#q1", added: "2026-10-26" },
     { s: "quality", t: "quality", l: "q2", n: "الأساليب والأدوات لتحسين الجودة", href: "quality.html#q2", added: "2026-10-26" },
     { s: "quality", t: "quality", l: "q3", n: "خطة تحسين الجودة", href: "quality.html#q3", added: "2026-10-26" },
@@ -72,7 +76,8 @@
     { s: "pharma", t: "pharma", l: "dig", n: "الجهاز الهضمي", href: "pharma.html#g-dig", added: "2026-10-26" },
     { s: "pharma", t: "pharma", l: "cort", n: "الكورتيزون", href: "pharma.html#g-cort", added: "2026-10-26" },
     { s: "pharma", t: "pharma", l: "diab", n: "السكري", href: "pharma.html#g-diab", added: "2026-10-26" },
-    { s: "pharma", t: "pharma", l: "other", n: "غيرها", href: "pharma.html#g-other", added: "2026-10-26" }
+    { s: "pharma", t: "pharma", l: "other", n: "غيرها", href: "pharma.html#g-other", added: "2026-10-26" },
+    { s: "rea", t: "rea", l: "r1", n: "غازات الدم الشرياني ABG", href: "rea.html#r1", added: "2026-10-29" }
     ]
   };
   /* ✂️ smaller lessons (Abdullah, Oct 27 2:39 PM: "long lessons with many sections put too much pressure on the student — split them,
@@ -81,7 +86,7 @@
      body into consecutive <details> at the child indices below (same structure in 🇫🇷, checked by the tests). Part 1 keeps the old
      anchor (cardio.html#infarctus), the next parts are #infarctus-p2, #infarctus-p3… The lesson quiz stays after the last part.
      SPLIT key = subject:lesson → index of the first child (of the lesson body; pharma: of its drug cards) of parts 2, 3, … */
-  var SPLIT = {"cardio:heart": [7], "cardio:infarctus": [11], "cardio:endomyo": [12], "cardio:ic": [7], "neuro:evaluation": [6], "neuro:examens": [10, 17], "neuro:avc": [13], "quality:q1": [39], "quality:q2": [23, 60, 86, 119, 135], "quality:q3": [33, 70, 83, 100], "quality:q4": [34], "quality:q5": [24, 67], "quality:q6": [12, 32, 70], "quality:q7": [21, 37], "quality:q8": [23, 43, 58, 71, 88], "quality:q9": [23], "law:l1": [8, 24], "pharma:cardio": [4, 8], "pharma:atb": [4, 8], "pharma:pain": [4], "pharma:resp": [2], "pharma:dig": [4]};
+  var SPLIT = {"rea:r1": [12, 25, 46, 52, 61], "mgmt:m3": [12, 17], "cardio:heart": [7], "cardio:infarctus": [11], "cardio:endomyo": [12], "cardio:ic": [7], "neuro:evaluation": [6], "neuro:examens": [10, 17], "neuro:avc": [13], "quality:q1": [39], "quality:q2": [23, 60, 86, 119, 135], "quality:q3": [33, 70, 83, 100], "quality:q4": [34], "quality:q5": [24, 67], "quality:q6": [12, 32, 70], "quality:q7": [21, 37], "quality:q8": [23, 43, 58, 71, 88], "quality:q9": [23], "law:l1": [8, 24], "pharma:cardio": [4, 8], "pharma:atb": [4, 8], "pharma:pain": [4], "pharma:resp": [2], "pharma:dig": [4]};
   var RK = "nursin_read_v1", PK = "nursin_daylesson_v1";
   function dk() { var n = w.Nursin; return n && n.dayKey ? n.dayKey() : new Date(Date.now() + 3 * 36e5).toISOString().slice(0, 10); }
   function addDays(k, n) { var t = new Date(k + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
@@ -152,7 +157,7 @@
      Saturday = community health, 💊 pharma, gerontology, psych, ✅ quality. Only the lessons Abdullah pins as «📌 هالأسبوع»
      on admin.html count (Firestore config/weekLessons {subj:{s:[lesson keys]}}, public read, admin write — rules v11); a subject
      with nothing pinned gives no lesson goal. How they are spread: the 🗓️ study windows below. */
-  var CLASSDAY = { law: 4, mgmt: 4, cardio: 5, neuro: 5, henderson: 5, pharma: 6, quality: 6 };       // Thu 4 · Fri 5 · Sat 6
+  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, pharma: 6, quality: 6 };       // Thu 4 · Fri 5 · Sat 6
   var DAYN = { 4: ["الخميس", "jeudi"], 5: ["الجمعة", "vendredi"], 6: ["السبت", "samedi"] }, WK = "nursin_weekles_v1";
   function dow(day) { return new Date(Date.parse(day + "T12:00:00Z")).getUTCDay(); }
   function cleanAsg(a) {                                      // {s:[keys]} → only known subjects + real lesson keys

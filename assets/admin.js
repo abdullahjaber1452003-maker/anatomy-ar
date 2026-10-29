@@ -4,7 +4,7 @@
 // 🔔 «مين مفعّل الإشعارات» (Oct 27): every student (users/) with ✅/❌ from pushSubs/{uid}.d (≥1 device = on) — admin-only reads, no rules change.
 const OWNER = "abdullahjaber1452003@gmail.com";
 const WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev", CHUNK = 25;
-const PAGES = [["/", "🏠 الرئيسية"], ["/cardio.html", "❤️ القلب"], ["/neuro.html", "🧠 الأعصاب"], ["/3d.html", "🧊 المجسّمات 3D"], ["/quiz.html", "📝 الكويز"], ["/henderson.html", "📋 Henderson"], ["/law.html", "⚖️ القانون"], ["/mgmt.html", "🏢 الإدارة"], ["/quality.html", "✅ الجودة والاعتماد"], ["/pharma.html", "💊 الأدوية"], ["/exams.html", "📅 الامتحانات"], ["/classes.html", "🏫 الصفوف"], ["/tutor.html", "👨‍🏫 الأستاذ عثمان"], ["/chat.html", "💬 المحادثات"]];
+const PAGES = [["/", "🏠 الرئيسية"], ["/cardio.html", "❤️ القلب"], ["/neuro.html", "🧠 الأعصاب"], ["/3d.html", "🧊 المجسّمات 3D"], ["/quiz.html", "📝 الكويز"], ["/henderson.html", "📋 Henderson"], ["/law.html", "⚖️ القانون"], ["/mgmt.html", "🏢 الإدارة"], ["/quality.html", "✅ الجودة والاعتماد"], ["/pharma.html", "💊 الأدوية"], ["/rea.html", "🚑 الإنعاش"], ["/exams.html", "📅 الامتحانات"], ["/classes.html", "🏫 الصفوف"], ["/tutor.html", "👨‍🏫 الأستاذ عثمان"], ["/chat.html", "💬 المحادثات"]];
 export function page(API) {
   const el = document.getElementById("admin-app"); if (!el) return;
   const u = API.user, { doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, updateDoc } = API.fs;

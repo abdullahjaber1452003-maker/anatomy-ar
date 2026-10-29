@@ -94,25 +94,62 @@
       setTimeout(function () { try { c.close(); } catch (e) {} }, 1200);
     } catch (e) {}
   }
-  function pstart() { var p = pstate(); if (p.run) return; p.end = Date.now() + left(p); p.run = true; put(PK, p); render(); }
-  function ppause() { var p = pstate(); if (!p.run) return; p.left = left(p); p.run = false; put(PK, p); render(); }
-  function preset() { put(PK, { m: "f", run: false, left: DUR.f, r: 0 }); render(); }
+  function pstart() { var p = pstate(); if (p.run) return; p.end = Date.now() + left(p); p.run = true; put(PK, p); pushTimer(p); render(); }
+  function ppause() { var p = pstate(); if (!p.run) return; p.left = left(p); p.run = false; put(PK, p); pushTimer(p); render(); }
+  function preset() { var p = { m: "f", run: false, left: DUR.f, r: 0 }; put(PK, p); pushTimer(p); render(); }
   function pdone() {
     var p = pstate(); if (!p.run || Date.now() < p.end) return;
-    var was = p.m; beep();
+    var was = p.m, own = !syncOn || !p.dev || p.dev === DEV; beep();   // 🔄 another device's run: show the change, its owner gives the points
+    if (!own) { if (was === "f") { p.r = (p.r | 0) + 1; p.m = p.r >= SET ? "l" : "s"; if (p.r >= SET) p.r = 0; p.end = p.end + DUR[p.m]; } else { p.m = "f"; p.run = false; p.left = DUR.f; } put(PK, p); render(); return; }
     if (was === "f") {
       p.r = (p.r | 0) + 1;
       var o = rec(), t = today(o), paid = t.p < POMO_CAP;
       var setDone = p.r >= SET; p.m = setDone ? "l" : "s"; if (setDone) p.r = 0;
-      p.run = true; p.end = Date.now() + DUR[p.m]; put(PK, p);
+      p.run = true; p.end = Date.now() + DUR[p.m]; put(PK, p); pushTimer(p);
       activity("pomo", paid ? POMO_PTS : 0, "جولة بومودورو", d.getElementById("pomopts"));
       toast(setDone ? REWARD + "<br><small>خلّصت ٤ جولات! بريك طويل ١٥ دقيقة 🌴</small>" : "✅ <b>خلصت جولة تركيز!</b> " + (paid ? "+" + POMO_PTS + " نقاط · " : "") + "هلّق بريك ٥ دقايق ☕", 9000);
     } else {
-      p.m = "f"; p.run = false; p.left = DUR.f; put(PK, p);
+      p.m = "f"; p.run = false; p.left = DUR.f; put(PK, p); pushTimer(p);
       toast("⏰ <b>خلص البريك!</b> يلا جولة جديدة ▶️", 8000);
     }
     render();
   }
+
+  /* ---- 🔄 one timer on every device of the same account (Abdullah, Oct 29 2026 1:12 PM: «إذا شغلته على الابتوب ما بيكون متزامن على تليفوني»).
+     Signed in: the state also lives in users/{uid}/timer/current {m, run, end, left, r, dev, at, t} (rules v16) and every open page listens
+     to it (onSnapshot), so start / pause / reset on one device shows on the others within a second or two. The remaining time is always
+     end − now (end = epoch ms), so it keeps counting with the screen locked or the tab closed. Only the device that started a run gives
+     the round's points (no double points). Before rules v16 are published (permission-denied) or signed out: local timer, as before. */
+  var DEV = (function () { try { var x = localStorage.getItem("nursin_dev_v1"); if (!x) { x = Math.random().toString(36).slice(2, 10); localStorage.setItem("nursin_dev_v1", x); } return x; } catch (e) { return "dev"; } })();
+  var syncOn = false, syncUid = "", unsub = null;
+  function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db && A.fs.onSnapshot ? A : null; }
+  function tref(A) { return A.fs.doc(A.db, "users", A.user.uid, "timer", "current"); }
+  function timerDoc(p, now) { return { m: p.m, run: !!p.run, end: p.run ? Math.round(p.end) : 0, left: p.run ? 0 : Math.round(left(p)), r: p.r | 0, dev: DEV, at: now }; }
+  // pure: a remote doc → the local state it means (tests call NursinStudy.fromDoc)
+  function fromDoc(x) {
+    var m = DUR[x && x.m] ? x.m : "f", q = { m: m, run: !!(x && x.run), r: (x && x.r) | 0, at: +(x && x.at) || 0, dev: String((x && x.dev) || "") };
+    if (q.run && +x.end > 0) q.end = +x.end; else { q.run = false; q.left = Math.max(0, Math.min(DUR[m], x && x.left != null ? +x.left : DUR[m])); }
+    return q;
+  }
+  function pushTimer(p) {
+    var A = fbA(); if (!A || !syncOn) return;
+    var now = Date.now(); p.at = now; p.dev = DEV; try { localStorage.setItem(PK, JSON.stringify(p)); } catch (e) {}
+    var o = timerDoc(p, now); o.t = A.fs.serverTimestamp();
+    A.fs.setDoc(tref(A), o).catch(function (e) { if (e && e.code === "permission-denied") syncOn = false; });
+  }
+  function startSync() {
+    var A = fbA(); if (!A || syncUid === A.user.uid) return;
+    syncUid = A.user.uid; syncOn = true; if (unsub) try { unsub(); } catch (e) {}
+    unsub = A.fs.onSnapshot(tref(A), function (s) {
+      var p = pstate();
+      if (!s.exists()) { if (p.run || left(p) < DUR[p.m]) pushTimer(p); return; }   // first device of this account: share what is running here
+      if (s.metadata && s.metadata.hasPendingWrites) return;
+      var x = s.data() || {};
+      if ((+x.at || 0) <= (p.at || 0)) { if ((p.at || 0) > (+x.at || 0) && p.dev === DEV) pushTimer(p); return; }   // ours is newer (changed offline)
+      var q = fromDoc(x); try { localStorage.setItem(PK, JSON.stringify(q)); } catch (e) {} render();
+    }, function () { syncOn = false; });
+  }
+  function pomoBreak(min) { var p = pstate(); p.m = "s"; p.run = true; p.end = Date.now() + (min || 5) * MIN; put(PK, p); pushTimer(p); render(); }
   function pomoHtml(mini) {
     var p = pstate(), t = today(rec()), dots = "";
     for (var i = 0; i < SET; i++) dots += '<i class="' + (i < (p.r | 0) ? "on" : "") + '"></i>';
@@ -121,7 +158,7 @@
       '<div class="ptime" dir="ltr" aria-live="off">' + mmss(left(p)) + '</div>' +
       '<div class="sbtns">' + (p.run ? '<button class="btn" type="button" data-p="pause">⏸ وقّف</button>' : '<button class="btn on" type="button" data-p="start">▶️ ' + (left(p) < DUR[p.m] ? "كمّل" : "ابدأ") + '</button>') +
       '<button class="btn" type="button" data-p="reset">↺ من الأول</button></div>' +
-      '<p class="small pinfo">جولات اليوم: <b>' + t.p + '</b> · +' + POMO_PTS + ' نقاط لكل جولة (لحدّ ' + POMO_CAP + ' جولات بالنهار)</p><p class="small" id="pomopts"></p>';
+      (syncOn ? '<p class="small psync">🔄 نفس المؤقّت على كل أجهزتك (اللابتوب والتلفون)</p>' : '') + '<p class="small pinfo">جولات اليوم: <b>' + t.p + '</b> · +' + POMO_PTS + ' نقاط لكل جولة (لحدّ ' + POMO_CAP + ' جولات بالنهار)</p><p class="small" id="pomopts"></p>';
   }
   function wire(el) {
     el.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-p]"); if (!b) return; var a = b.getAttribute("data-p"); if (a === "start") pstart(); else if (a === "pause") ppause(); else preset(); });
@@ -192,7 +229,7 @@
       if (fab) { var sp = fab.querySelector("span"); if (sp) sp.textContent = t; else render(); }
     }
   }
-  var SUBJ = /^(cardio|neuro|henderson|law|mgmt|quality|pharma)\.html$/;
+  var SUBJ = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea)\.html$/;
   function init() {
     var page = location.pathname.split("/").pop() || "index.html";
     home = d.getElementById("study");
@@ -216,8 +253,10 @@
       d.addEventListener("nursin:me", function () { if (!wkList) loadWeek(); render(); });
     }
     w.addEventListener("storage", function (e) { if (e.key === PK || e.key === K) render(); });
+    var sv = 0, siv = setInterval(function () { sv++; if (fbA()) { clearInterval(siv); startSync(); } else if (sv > 60) clearInterval(siv); }, 1000);
+    d.addEventListener("nursin:auth", function () { setTimeout(startSync, 300); });
   }
-  w.NursinStudy = { hit: hit, today: today, streakNow: streakNow, activity: activity, toast: toast, REWARD: REWARD, POMO_PTS: POMO_PTS, POMO_CAP: POMO_CAP, GAME_CAP: GAME_CAP, DUR: DUR, rec: rec, render: render };
+  w.NursinStudy = { pomoBreak: pomoBreak, fromDoc: fromDoc, timerDoc: timerDoc, hit: hit, today: today, streakNow: streakNow, activity: activity, toast: toast, REWARD: REWARD, POMO_PTS: POMO_PTS, POMO_CAP: POMO_CAP, GAME_CAP: GAME_CAP, DUR: DUR, rec: rec, render: render };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

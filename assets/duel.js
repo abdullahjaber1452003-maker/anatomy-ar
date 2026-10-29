@@ -1,3 +1,5 @@
+// ⚔️ Oct 29 2026 (Abdullah, 1:06 PM): the daily draw became a WEEKLY KNOCKOUT per class («متل بطولة كرة القدم») — see bracket() below;
+// the result docs, the 5-question duel, the prizes and the rules v14 stay exactly as they were. Older notes:
 // ⚔️ «تحدي اليوم» (Abdullah, Oct 27 9:44–9:53 PM): every day the site draws random pairs inside each class, the list is visible to the
 // whole class, both students of a pair take the SAME short quiz (questions from the site's own quiz bank, this week's 📌 lessons first)
 // and the higher score wins. The winner stays qualified (🔥) for the next day and meets a new challenger; the loser is out and a
@@ -74,6 +76,83 @@ export function pickQuestions(quiz, cid, dk, topics) {
 }
 export function prizeText(p, i) { const t = p && String(p["p" + (i + 1)] || "").trim(); return t || ""; }
 
+/* ==tourney-core== (the same block is in the Cloudflare worker v8 for the «دورك اليوم» push; keep both copies identical) */
+export const TOURNEY_FROM = "2026-10-29";            // the knockout started on Thu Oct 29 2026 (that first week starts on Thursday)
+export function tStart(today) { const w = weekStart(today); return w < TOURNEY_FROM && TOURNEY_FROM <= addDays(w, 6) ? TOURNEY_FROM : w; }
+export function roundName(n) { return n <= 2 ? "النهائي" : n <= 4 ? "نصف النهائي" : n <= 8 ? "ربع النهائي" : "دور الـ " + n; }
+// pairs for one day: a fixed shuffle of who is still to play in this round; nobody meets yesterday's opponent again if another choice exists
+export function pairUp(list, seed, last) {
+  const x = shuffle(list.slice().sort(), seed), pairs = [];
+  while (x.length > 1) { const a = x.shift(); let j = x.findIndex(b => last[a] !== b); if (j < 0) j = 0; pairs.push([a, x.splice(j, 1)[0]]); }
+  return pairs;
+}
+// ⚔️ the week's knockout, replayed from the result docs (pure: every phone computes the same bracket, nobody writes it).
+// Monday (Beirut) = new bracket from the members who joined before that day; one round a day; the winner goes on, the loser is out.
+// 🤝 draw → nobody wins or loses: both stay in the round and are paired again the NEXT day against other tied players of the same
+//    round (the same two only if nobody else is left). Odd number left in a round → one 😴 bye (the player with the fewest byes so far,
+//    then the fixed order) goes straight to the next round. No-show: only one played (a started quiz counts as 0) → he goes on, the
+//    absent one is out. Nobody played → both are out. Final = the round with 2 players → 🏆 champion + finalist; 🥉 = the semi-final losers.
+export function bracket(cid, members, docs, today) {
+  const start = tStart(today), sun = addDays(weekStart(today), 6), by = {};
+  (docs || []).forEach(d => { if (d && d.d && d.uid) (by[d.d] = by[d.d] || {})[d.uid] = d; });
+  const players = eligible(members, start), st = {};
+  players.forEach(u => { st[u] = { uid: u, wins: 0, played: 0, correct: 0, byes: 0, out: 0, outD: "" }; });
+  let round = 1, pending = players.slice(), adv = [], last = {}, champion = null, finalist = null, live = null;
+  const semis = [], days = [], size = { 1: players.length };
+  for (let dk = start; dk <= today && dk <= sun && players.length > 1; dk = addDays(dk, 1)) {
+    if (!pending.length) {
+      if (adv.length <= 1) { champion = adv[0] || null; break; }
+      round++; pending = adv.slice().sort(); adv = []; size[round] = pending.length;
+    }
+    const seed = hash(cid + "|" + dk + "|" + round);
+    let bye = null;
+    if (pending.length % 2) {
+      const ord = shuffle(pending.slice().sort(), seed ^ 0x51ed);
+      bye = ord.slice().sort((a, b) => st[a].byes - st[b].byes || ord.indexOf(a) - ord.indexOf(b))[0];
+      st[bye].byes++; adv.push(bye); pending = pending.filter(u => u !== bye);
+    }
+    const pairs = pairUp(pending, seed, last), n = size[round];
+    const day = { d: dk, round, n, name: roundName(n), pairs, bye, res: [] };
+    days.push(day);
+    if (dk === today) { live = day; break; }
+    const next = [], day0 = by[dk] || {};
+    pairs.forEach(([a, b]) => {
+      const o = outcome(day0[a], day0[b], true);
+      [[a, o.a], [b, o.b]].forEach(([u, s]) => { if (s != null) { st[u].played++; st[u].correct += s; } });
+      last[a] = b; last[b] = a;
+      let w = null, l = [];
+      if (o.k === "a" || o.k === "b") { w = o.k === "a" ? a : b; l = [o.k === "a" ? b : a]; st[w].wins++; }
+      else if (o.k === "half") { w = o.a == null ? b : a; l = [o.a == null ? a : b]; }
+      else if (o.k === "tie") next.push(a, b);
+      else l = [a, b];
+      if (w) adv.push(w);
+      l.forEach(u => { st[u].out = round; st[u].outD = dk; });
+      if (n === 2 && w) { champion = w; finalist = l[0]; }
+      if (n <= 4 && n > 2 && w) semis.push(l[0]);
+      day.res.push({ a, b, k: o.k, sa: o.a, sb: o.b, w });
+    });
+    pending = next;
+    if (champion) break;
+    if (!pending.length && !adv.length) break;                 // everybody out (nobody played): no champion this week
+  }
+  if (!champion && players.length === 1) champion = players[0];
+  return { start, players, st, round, pending, adv, champion, finalist, semis, days, live, size };
+}
+// one student's place today: champ · out · todo (play now) · live (playing) · done (waiting for the other) · bye · wait (won, next round tomorrow) · none
+export function tStatus(B, uid, todayDocs) {
+  if (!B.st[uid]) return { k: "none" };
+  if (B.champion === uid) return { k: "champ" };
+  if (B.st[uid].out) return { k: "out", round: B.st[uid].out };
+  const L = B.live;
+  if (L) {
+    if (L.bye === uid) return { k: "bye", name: L.name };
+    const p = L.pairs.find(x => x.includes(uid));
+    if (p) { const op = p[0] === uid ? p[1] : p[0], md = (todayDocs || {})[uid]; return { k: !md ? "todo" : md.s < 0 ? "live" : "done", op, name: L.name }; }
+  }
+  if (B.champion) return { k: "out" };
+  return { k: "wait" };
+}
+/* ==/tourney-core== */
 /* ---------- browser ---------- */
 let A = null, F = null, N = null;
 const esc = s => (A && A.esc ? A.esc(s) : String(s == null ? "" : s));
@@ -101,58 +180,79 @@ async function load(cid) {
   return { members, docs: ds.docs.map(d => d.data()), prizes: pz && pz.exists() ? pz.data() : {} };
 }
 const RULES = '<details class="drules"><summary>📜 القوانين</summary><ul>' +
-  "<li>كل يوم قرعة جديدة بين طلاب الصف. الكل بيشوف اللائحة.</li>" +
-  "<li>التنين بياخدوا نفس الأسئلة: " + NQ + " أسئلة من كويز الموقع (دروس 📌 هالأسبوع أوّل)، " + Q_SEC + " ثانية لكل سؤال، محاولة وحدة بس.</li>" +
-  "<li>العلامة الأعلى بتربح: الرابح بيضل متأهّل 🔥 لبكرا وبيواجه حدا جديد، والخسران بيطلع ومحلّو بيفوت حدا تاني من الصف.</li>" +
-  "<li>🤝 نفس العلامة = تعادل: ما في رابح، والتنين بيحتفظوا بالـ 🔥 تبعن.</li>" +
-  "<li>إذا واحد بس لعب: ما في رابح (التحدي ما كمل). اللي لعب بيحتفظ بالـ 🔥، واللي ما لعب بيخسرها. إذا ولا واحد لعب: ما في نتيجة.</li>" +
-  "<li>بلّشت وما كمّلت = صفر. عدد فردي = واحد بيرتاح 😴 وبيحتفظ بالـ 🔥. اللي فات عالصف اليوم بيدخل قرعة بكرا.</li>" +
-  "<li>ترتيب الأسبوع (الاتنين → الأحد): عدد الربحات، بعدين أطول 🔥، بعدين مجموع الأجوبة الصح.</li>" +
+  "<li>🏆 بطولة إقصائية كل أسبوع: كل اتنين (بتوقيت بيروت) بتبلّش بطولة جديدة بين طلاب الصف (اللي فاتوا قبل يوم البداية). الكل بيشوف الجدول.</li>" +
+  "<li>كل يوم دور واحد. التنين بياخدوا نفس الأسئلة: " + NQ + " أسئلة من كويز الموقع (دروس 📌 هالأسبوع أوّل)، " + Q_SEC + " ثانية لكل سؤال، محاولة وحدة بس.</li>" +
+  "<li>العلامة الأعلى بتربح وبتطلع عالدور الجاي، والخسران بيطلع من البطولة.</li>" +
+  "<li>🤝 تعادل: ما حدا بيربح ولا بيخسر. التنين بيضلّوا بنفس الدور وبيلعبوا بكرا ضد حدا تاني من اللي تعادلوا (نفس الخصم بس إذا ما ضل غيرو).</li>" +
+  "<li>واحد بس لعب لآخر النهار ← هوّي بيطلع والتاني بيخرج. ولا واحد لعب ← التنين بيخرجوا. بلّشت وما كمّلت = صفر.</li>" +
+  "<li>عدد فردي بالدور ← واحد 😴 بيتأهّل بلا لعب (اللي أخد أقل استراحات).</li>" +
+  "<li>لحد ما يبقى تنين بالنهائي: الرابح 🏆 بطل الأسبوع، التاني 🥈، وخاسرين نص النهائي 🥉. إذا خلص الأحد قبل النهائي، ما في بطل هالأسبوع.</li>" +
   "<li>⚠️ العلامة بتنحسب على تلفونك. ما حدا بيقدر يبعت علامة عن غيره ولا يعيد ولا يبعت متأخّر، بس النظام مش مضمون ١٠٠٪ ضد الغش.</li></ul></details>";
-function podium(R, mem, prizes) {
+function podium(B, mem, prizes) {
   const by = {}; mem.forEach(m => { by[m.uid] = m; });
+  const who = [B.champion ? [B.champion] : [], B.finalist ? [B.finalist] : [], B.semis];
   const rows = [0, 1, 2].map(i => {
-    const x = R.board[i], p = prizeText(prizes, i);
-    return '<li class="dpod"><span class="dmed">' + ["🥇", "🥈", "🥉"][i] + "</span>" + (x && by[x.uid] ? person(by[x.uid], 0) + ' <small class="dwk">' + x.wins + " ربح · أطول 🔥" + x.best + "</small>" : '<span class="small">لسّا فاضي</span>') +
+    const p = prizeText(prizes, i), xs = who[i].filter(u => by[u]);
+    return '<li class="dpod"><span class="dmed">' + ["🥇", "🥈", "🥉"][i] + "</span>" + (xs.length ? xs.map(u => person(by[u], 0)).join(" ") + ' <small class="dwk">' + ["🏆 بطل الأسبوع", "وصل للنهائي", "نص النهائي"][i] + "</small>" : '<span class="small">لسّا فاضي</span>') +
       '<small class="dprize">🎁 ' + (p ? esc(p) : "الجائزة: لسّا ما تحدّدت") + "</small></li>";
   }).join("");
   return '<div class="dweek"><h3>🏆 ترتيب الأسبوع</h3><ol class="dpods">' + rows + "</ol>" + (isAdmin() ? '<button class="btn sm" type="button" data-dprize>✏️ حدّد الجوائز (أدمن)</button>' : "") + "</div>";
 }
 function isAdmin() { return !!(A.user && A.user.email === "abdullahjaber1452003@gmail.com" && A.user.emailVerified); }
 export function tileNote(k, n, st) { try { document.dispatchEvent(new CustomEvent("nursin:tile", { detail: { k, n, st } })); } catch (e) {} }
+export function statusText(s, opName) {
+  const fr = typeof window !== "undefined" && window.Lang && window.Lang.fr;
+  if (fr) return s.k === "champ" ? "🏆 Tu es le champion de la semaine !" : s.k === "out" ? "❌ Éliminé du tournoi cette semaine. Un nouveau commence lundi 💪"
+    : s.k === "todo" ? "⚔️ C'est ton tour aujourd'hui (" + s.name + ") contre " + opName : s.k === "live" ? "✏️ Tu joues maintenant"
+    : s.k === "done" ? "✅ Tu as joué. On attend que " + opName + " joue" : s.k === "bye" ? "😴 Qualifié sans jouer aujourd'hui (nombre impair)"
+    : s.k === "wait" ? "✅ Qualifié ! Prochain tour demain" : "🆕 Tu entreras dans le tournoi de lundi prochain";
+  return s.k === "champ" ? "🏆 إنت بطل الأسبوع!" : s.k === "out" ? "❌ طلعت من البطولة هالأسبوع. بتبلّش وحدة جديدة الاتنين 💪"
+    : s.k === "todo" ? "⚔️ دورك اليوم (" + s.name + ") ضد " + opName : s.k === "live" ? "✏️ عم تلعب هلّق"
+    : s.k === "done" ? "✅ لعبت. ناطرين " + opName + " يلعب" : s.k === "bye" ? "😴 تأهّلت بلا لعب اليوم (عدد فردي)"
+    : s.k === "wait" ? "✅ تأهّلت! ناطر الدور الجاي بكرا" : "🆕 بتدخل بطولة الاتنين الجاي";
+}
 function render(el, cid, cname, data, classes) {
-  const today = N.dayKey(), R = replay(cid, data.members, data.docs, today), T = R.today, me = A.user.uid;
+  const today = N.dayKey(), B = bracket(cid, data.members, data.docs, today), me = A.user.uid;
   const by = {}; data.members.forEach(m => { by[m.uid] = m; });
   const docs = {}; data.docs.filter(d => d.d === today).forEach(d => { docs[d.uid] = d; });
-  const sk = T.streak, mine = T.pairs.find(p => p.includes(me));
-  let top = "";
+  const S = by[me] ? tStatus(B, me, docs) : { k: "none" }, L = B.live, mine = L && L.pairs.find(p => p.includes(me));
   const qs = pickQuestions(window.QUIZ, cid, today, weekTopics());
+  let top = "";
   if (!by[me]) top = '<p class="small">إنت مش بهالصف.</p>';
-  else if (!eligible(data.members, today).includes(me)) top = '<p class="dme">🆕 فتت عالصف اليوم، بتدخل قرعة بكرا.</p>';
-  else if (T.bye === me) top = '<p class="dme">😴 اليوم إلك استراحة (عدد الطلاب فردي). الـ 🔥 تبعك محفوظة.</p>';
   else if (mine) {
     const op = mine[0] === me ? mine[1] : mine[0], md = docs[me], od = docs[op], o = outcome(md, od, false);
     let act;
     if (!md) act = qs.length === NQ ? '<button class="btn pri dgo" type="button" data-dstart>⚔️ ابدأ التحدي</button><p class="small">' + NQ + " أسئلة · " + Q_SEC + " ثانية لكل سؤال · محاولة وحدة</p>" : '<p class="small">⚠️ ما في أسئلة كفاية هلّق.</p>';
     else if (md.s < 0) act = openPlay(cid) ? '<button class="btn pri dgo" type="button" data-dstart>▶️ كمّل التحدي</button>' : '<p class="small">⏱️ بلّشت وما كمّلت، فعلامتك صفر اليوم.</p>';
     else if (!od || od.s < 0) act = '<p class="dres">✅ علامتك ' + md.s + "/" + md.n + ". ناطرين <bdi>" + esc(nm(by[op])) + "</bdi> يلعب (علامتك مخبّاية عنو لحتى يخلّص).</p>";
-    else act = '<p class="dres">' + (o.k === "tie" ? "🤝 تعادل " : o.k === "a" ? "🏆 ربحت! " : "😔 خسرت ") + '<b class="dsc"><span>' + md.s + "</span><i>–</i><span>" + od.s + "</span></b></p>";
-    top = '<div class="dvs"><div class="dside">' + person(by[me], sk[me]) + '</div><b class="dx">⚔️</b><div class="dside">' + person(by[op], sk[op]) + "</div></div>" + act;
-  }
-  const list = T.pairs.map(([a, b]) => {
-    const o = outcome(docs[a], docs[b], false), st = (u, s) => s == null ? "⏳" : s === -1 ? "✏️" : "✅";
-    const res = o.k === "a" || o.k === "b" || o.k === "tie" ? '<b class="dsc"><span>' + o.a + "</span><i>–</i><span>" + o.b + "</span></b>" : '<span class="dst">' + st(a, o.a) + " " + st(b, o.b) + "</span>";
-    const win = o.k === "a" ? a : o.k === "b" ? b : null;
-    return '<li class="dpair' + (a === me || b === me ? " me" : "") + '"><span class="dp' + (win === a ? " dwin" : "") + '">' + person(by[a] || { uid: a }, sk[a]) + "</span>" + res +
-      '<span class="dp' + (win === b ? " dwin" : "") + '">' + person(by[b] || { uid: b }, sk[b]) + "</span></li>";
-  }).join("") + (T.bye && by[T.bye] ? '<li class="dpair dbye">😴 ' + person(by[T.bye], sk[T.bye]) + " <small>استراحة</small></li>" : "");
+    else act = '<p class="dres">' + (o.k === "tie" ? "🤝 تعادل، بتلعبوا بكرا ضد حدا تاني " : o.k === "a" ? "🏆 ربحت! بتطلع عالدور الجاي " : "😔 خسرت ") + '<b class="dsc"><span>' + md.s + "</span><i>–</i><span>" + od.s + "</span></b></p>";
+    top = '<p class="dme">' + esc(L.name) + '</p><div class="dvs"><div class="dside">' + person(by[me], 0) + '</div><b class="dx">⚔️</b><div class="dside">' + person(by[op] || { uid: op }, 0) + "</div></div>" + act;
+  } else top = '<p class="dme tnst">' + esc(statusText(S, "")) + "</p>";
+  const nm2 = u => esc(nm(by[u] || { uid: u }));
+  const dayHtml = (D0, isLive) => '<li class="tnday"><b>' + esc(D0.name) + ' <small dir="ltr">' + esc(D0.d) + "</small></b><ol class=\"dlist\">" + D0.pairs.map(([a, b]) => {
+      const r = isLive ? null : D0.res.find(x => x.a === a && x.b === b), o = isLive ? outcome(docs[a], docs[b], false) : null;
+      const win = r ? r.w : (o && (o.k === "a" ? a : o.k === "b" ? b : null)), sa = r ? r.sa : o.a, sb = r ? r.sb : o.b;
+      const show = s => s == null ? "⏳" : s === -1 ? "✏️" : (isLive && !(o.k === "a" || o.k === "b" || o.k === "tie") ? "✅" : s);
+      const tag = r ? (r.k === "tie" ? ' <small>🤝 بيعيدوا</small>' : r.k === "half" ? ' <small>غياب</small>' : r.k === "none" ? ' <small>ولا واحد لعب</small>' : "") : "";
+      return '<li class="dpair' + (a === me || b === me ? " me" : "") + '"><span class="dp' + (win === a ? " dwin" : "") + '">' + person(by[a] || { uid: a }, 0) + '</span><b class="dsc"><span>' + show(sa) + "</span><i>–</i><span>" + show(sb) + "</span></b>" +
+        '<span class="dp' + (win === b ? " dwin" : "") + '">' + person(by[b] || { uid: b }, 0) + "</span>" + tag + "</li>";
+    }).join("") + (D0.bye && by[D0.bye] ? '<li class="dpair dbye">😴 ' + person(by[D0.bye], 0) + " <small>تأهّل بلا لعب</small></li>" : "") + "</ol></li>";
+  const past = B.days.filter(x => x !== L).slice().reverse();
+  const tree = B.players.length < 2 ? '<p class="small">لازم يكون بالصف تنين أو أكتر (فاتوا قبل يوم البداية) تا تصير بطولة.</p>'
+    : (B.champion ? '<p class="tnchamp">🏆 بطل الأسبوع: ' + person(by[B.champion] || { uid: B.champion }, 0) + "</p>" : "") +
+      '<h3 class="dlh">🗂️ جدول البطولة</h3><ol class="tntree">' + (L ? dayHtml(L, true) : "") + past.map(x => dayHtml(x, false)).join("") + "</ol>" +
+      (B.adv.length && L ? '<p class="small">✅ متأهّلين للدور الجاي: ' + B.adv.map(nm2).join("، ") + "</p>" : "");
   const pick = classes && classes.length > 1 ? '<select class="dcls" aria-label="الصف">' + classes.map(c => '<option value="' + esc(c.id) + '"' + (c.id === cid ? " selected" : "") + ">" + esc(c.name) + "</option>").join("") + "</select>" : "";
-  el.innerHTML = '<div class="dhead"><h2>⚔️ تحدي اليوم <small dir="ltr">' + esc(today) + "</small></h2>" + pick + '</div><p class="small">صف <bdi>' + esc(cname) + "</bdi> · " + T.pairs.length + " تحدّي اليوم</p>" + top +
-    (T.pairs.length ? '<h3 class="dlh">قرعة اليوم</h3><ol class="dlist">' + list + "</ol>" : '<p class="small">لازم يكون بالصف تنين أو أكتر (فاتوا قبل اليوم) تا تصير قرعة.</p>') +
-    podium(R, data.members, data.prizes) + RULES;
+  el.innerHTML = '<div class="dhead"><h2>⚔️ بطولة الأسبوع <small dir="ltr">' + esc(today) + "</small></h2>" + pick + '</div><p class="small">صف <bdi>' + esc(cname) + "</bdi> · " + B.players.length + " لاعب · " + (L ? esc(L.name) : B.champion ? "خلصت" : "—") + "</p>" + top + tree +
+    podium(B, data.members, data.prizes) + RULES;
   const s = el.querySelector("[data-dstart]"); if (s) s.addEventListener("click", () => play(el, cid, mine, qs, () => show(el, cid)));
-  // 🏠 the home tile «⚔️ تحدي اليوم» (assets/tiles.js) shows how many challenges are still to play today (one per day; the design has no catch-up days)
-  if (el.id === "duel") tileNote("duel", el.querySelector("[data-dstart]") ? 1 : 0, mine ? (docs[me] && docs[me].s >= 0 ? "done" : "todo") : "none");
+  // 🏠 the home tile (assets/tiles.js) + 👨‍🏫 Osman (assets/coach.js) read the student's tournament status
+  if (el.id === "duel") {
+    tileNote("duel", el.querySelector("[data-dstart]") ? 1 : 0, mine ? (docs[me] && docs[me].s >= 0 ? "done" : "todo") : "none");
+    const op = S.op ? nm(by[S.op] || {}) : "";
+    try { localStorage.setItem("nursin_tn_v1", JSON.stringify({ d: today, u: me, k: S.k, op, txt: statusText(S, op) })); } catch (e) {}
+    try { document.dispatchEvent(new CustomEvent("nursin:tourney", { detail: { k: S.k, op, txt: statusText(S, op) } })); } catch (e) {}
+  }
   const c = el.querySelector(".dcls"); if (c) c.addEventListener("change", () => { try { localStorage.setItem(LS, c.value); } catch (e) {} show(el, c.value); });
   const pz = el.querySelector("[data-dprize]"); if (pz) pz.addEventListener("click", () => editPrizes(data.prizes, () => show(el, cid)));
 }
@@ -206,7 +306,7 @@ async function play(el, cid, pair, qs, done) {
   }
   const save = () => { try { localStorage.setItem(PS, JSON.stringify(st)); } catch (e) {} };
   save();
-  const sh = document.createElement("div"); sh.className = "duelq"; sh.setAttribute("role", "dialog"); sh.setAttribute("aria-modal", "true"); sh.setAttribute("aria-label", "⚔️ تحدي اليوم");
+  const sh = document.createElement("div"); sh.className = "duelq"; sh.setAttribute("role", "dialog"); sh.setAttribute("aria-modal", "true"); sh.setAttribute("aria-label", "⚔️ بطولة الأسبوع");
   document.body.appendChild(sh); document.documentElement.classList.add("duelon");
   let timer = 0;
   const finish = async () => {
@@ -217,6 +317,7 @@ async function play(el, cid, pair, qs, done) {
       '</ol><button class="btn pri" type="button" data-dclose>رجوع</button></div>';
     sh.querySelector("[data-dclose]").addEventListener("click", () => { sh.remove(); document.documentElement.classList.remove("duelon"); done(); });
     const msg = sh.querySelector("#dsave");
+    try { document.dispatchEvent(new CustomEvent("nursin:dueldone", { detail: { score, n: NQ } })); } catch (e) {}   // 👨‍🏫 Osman comments (assets/coach.js)
     try { await F.updateDoc(ref, { s: score, ft: F.serverTimestamp() }); msg.textContent = "✅ انحفظت علامتك. النتيجة بتبين أوّل ما يلعب خصمك."; try { localStorage.removeItem(PS); } catch (e) {} }
     catch (e) { msg.textContent = "⚠️ ما انحفظت العلامة (الإنترنت أو خلص الوقت). جرّب ترجع للصفحة خلال دقايق."; }
   };
@@ -235,7 +336,7 @@ async function play(el, cid, pair, qs, done) {
 async function show(el, cid) {
   try {
     const classes = await myClasses();
-    if (!classes.length) { el.innerHTML = '<h2>⚔️ تحدي اليوم</h2><p>كل يوم قرعة بين طلاب صفّك: ' + NQ + ' أسئلة، العلامة الأعلى بتربح وبتتأهّل لبكرا.</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>'; if (el.id === "duel") tileNote("duel", 0, "noclass"); return; }
+    if (!classes.length) { el.innerHTML = '<h2>⚔️ بطولة الأسبوع</h2><p>كل أسبوع بطولة بصفّك: كل يوم دور، ' + NQ + ' أسئلة، الرابح بيطلع لحد النهائي 🏆</p><p><a class="btn pri" href="classes.html">🏫 فوت على صفّك</a></p>'; if (el.id === "duel") tileNote("duel", 0, "noclass"); return; }
     let pick = cid; if (!pick) { try { pick = localStorage.getItem(LS); } catch (e) {} }
     const c = classes.find(x => x.id === pick) || classes[0];
     render(el, c.id, c.name, await load(c.id), classes);

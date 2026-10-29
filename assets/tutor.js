@@ -49,8 +49,8 @@
   /* شو منبعت للأستاذ عن الطالب والموقع: التاريخ، جدول الامتحانات (نفس exams.html)، صفوفو، حسابو، نقاط ضعفو، ودروس الموقع حسب الصفحة.
      o = {dk, days:[الاتنين…], topics, groups, exams:[{label, day, list:[{id,n,ar,t,q}]}], later:[{day,list}], st:{id:{s,score,total}}, past:[ex…],
           me, level, prof, badges:[{e,n}], weak, classes:{list}|{err}|null, signedIn} — كلّو نص قصير (< ~2500 حرف) */
-  var PAGES={cardio:'cardio.html',neuro:'neuro.html',henderson:'henderson.html',law:'law.html',mgmt:'mgmt.html',quality:'quality.html',pharma:'pharma.html'};
-  var PAGE_AR={cardio:'القلب',neuro:'الأعصاب',henderson:'Henderson',law:'القانون التطبيقي',mgmt:'الإدارة',quality:'الجودة والاعتماد',pharma:'الأدوية (Pharmacologie TS2)'};
+  var PAGES={cardio:'cardio.html',neuro:'neuro.html',henderson:'henderson.html',law:'law.html',mgmt:'mgmt.html',quality:'quality.html',pharma:'pharma.html',rea:'rea.html'};
+  var PAGE_AR={cardio:'القلب',neuro:'الأعصاب',henderson:'Henderson',law:'القانون التطبيقي',mgmt:'الإدارة',quality:'الجودة والاعتماد',pharma:'الأدوية (Pharmacologie TS2)',rea:'الإنعاش (Réanimation): غازات الدم ABG'};
   function pageOf(t,G){for(var g in (G||{}))if((G[g]||[]).indexOf(t)>=0)return PAGES[g]||'';return '';}
   function dm(dk){return +String(dk).slice(8,10)+'/'+(+String(dk).slice(5,7));}
   function dayName(o,dk){var d=new Date(dk+'T12:00:00Z').getUTCDay();return (o.days||[])[(d+6)%7]||'';}

@@ -201,9 +201,22 @@
   function pushOn() { var A = fbA(), o = lsGet(PK); return !!(A && o && o.u === A.user.uid && o.on); }
   function setFlag(on) { var A = fbA(); if (A) lsSet(PK, { u: A.user.uid, on: !!on }); }
   function cut(s, n) { return Array.from(String(s == null ? "" : s)).slice(0, n).join(""); }
+  /* ⏰ Oct 29 2026 (Abdullah 1:22 PM: «الإشعارات… ما شغال متل انه يذكرني بالهدف اليومي»): the student picks WHEN «درس اليوم» reminds him
+     (remAt, default 18:00) and his quiet hours (no push from quietFrom to quietTo, default 22:30 → 08:00). The mirror also carries srsDue
+     {day: n} (his spaced-repetition items by due day, next 14 days) so the worker v8 can send «🔁 عندك N مراجعة» without the page open. */
+  var RK = "nursin_rem_v1", REM_DEF = { at: "18:00", qf: "22:30", qt: "08:00" };
+  function remGet() { var o = lsGet(RK) || {}; return { at: /^\d\d:\d\d$/.test(o.at) ? o.at : REM_DEF.at, qf: /^\d\d:\d\d$/.test(o.qf) ? o.qf : REM_DEF.qf, qt: /^\d\d:\d\d$/.test(o.qt) ? o.qt : REM_DEF.qt }; }
+  function srsDue() {
+    var x = null; try { x = JSON.parse(localStorage.getItem("nursin_srs_v1") || "null"); } catch (e) {}
+    var out = {}, t = today(), end = new Date(Date.parse(t + "T12:00:00Z") + 14 * 864e5).toISOString().slice(0, 10);
+    if (x && x.items) Object.keys(x.items).forEach(function (k) { var dd = String(x.items[k].d || ""); if (!/^\d{4}-\d\d-\d\d$/.test(dd) || dd > end) return; if (dd < t) dd = t; out[dd] = (out[dd] | 0) + 1; });
+    return out;
+  }
   function mirrorData(g) {
+    var r = remGet();
     return { goalsDay: today(), goalsList: g.slice(0, 20).map(function (x) { return { k: cut(x.k, 80), n: cut(x.n, 80), h: cut(x.href, 160) }; }),
-      goalsDone: g.filter(function (x) { return x.done; }).slice(0, 20).map(function (x) { return cut(x.k, 80); }) };
+      goalsDone: g.filter(function (x) { return x.done; }).slice(0, 20).map(function (x) { return cut(x.k, 80); }),
+      remAt: r.at, quietFrom: r.qf, quietTo: r.qt, srsDue: srsDue() };
   }
   function mirror(now) { if (!pushOn()) return; clearTimeout(mt); mt = setTimeout(doMirror, now ? 0 : 2500); }
   function doMirror(extra) {
@@ -217,12 +230,25 @@
   var synced = "";
   function syncFlag() {
     var A = fbA(); if (!A || synced === A.user.uid) return; synced = A.user.uid;
-    A.fs.getDoc(A.fs.doc(A.db, "users", A.user.uid)).then(function (s) { var v = s.exists() && s.data().goalPush === true; if (v !== pushOn()) { setFlag(v); fill(); } if (v) mirror(true); }, function () { synced = ""; });
+    A.fs.getDoc(A.fs.doc(A.db, "users", A.user.uid)).then(function (s) {
+      var raw = s.exists() ? s.data().goalPush : undefined, v = raw === true;
+      // 🔔 Oct 29: notifications already allowed on this device and he never touched the switch (no goalPush at all) → reminders on by
+      // default (before, only chat + broadcasts reached the students who allowed notifications, the reminder switch stayed off)
+      if (raw === undefined && autoOk()) { setFlag(true); fill(); doMirror({ goalPush: true, goalPushAt: A.fs.serverTimestamp() }); return; }
+      if (v !== pushOn()) { setFlag(v); fill(); } if (v) mirror(true);
+    }, function () { synced = ""; });
+  }
+  function autoOk() { var P = w.NursinPWA; try { return !!(P && P.env && P.env().canPush && w.Notification && Notification.permission === "granted"); } catch (e) { return false; } }
+  var TIMES = ["07:00", "08:00", "09:00", "10:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+  function remHtml() {
+    var r = remGet(), opt = function (list, v) { return list.map(function (t) { return '<option' + (t === v ? " selected" : "") + ">" + t + "</option>"; }).join(""); };
+    return '<div class="gorem"><label>⏰ وقت تذكير درس اليوم <select data-rem="at">' + opt(TIMES, r.at) + '</select></label>' +
+      '<label>🌙 ما في إشعارات من <select data-rem="qf">' + opt(["21:00", "22:00", "22:30", "23:00", "23:59"], r.qf) + '</select> لـ <select data-rem="qt">' + opt(["06:00", "07:00", "08:00", "09:00"], r.qt) + "</select></label></div>";
   }
   function gpHtml() {
     var on = pushOn();
-    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بدرس اليوم (4–10:30 المسا)</span></button>' +
-      '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: كل ٤٥–٦٠ دقيقة إشعار بهدف واحد ما خلّصتو، وبيوقف لمّا تخلّص الكل." : "إشعار بهدف واحد بكل مرّة، بس عن يلّي ما خلّصتو اليوم.")) + "</small></div>";
+    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بدرس اليوم (الأستاذ عثمان)</span></button>' +
+      '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: الأستاذ عثمان بيذكّرك بدرس اليوم بالوقت اللي بتختارو، وبالمراجعات المستحقة، وبدورك بالبطولة." : "الأستاذ عثمان بيذكّرك بدرس اليوم، بالمراجعات، وبدورك بالبطولة.")) + "</small>" + (on ? remHtml() : "") + "</div>";
   }
   function hello(A) {        // worker v4: one push right now so the student sees it works (an older worker just answers without «goals»)
     fetch(WORKER + "/push").then(function (r) { return r.json(); }).then(function (j) {
@@ -250,11 +276,15 @@
       return doMirror({ goalPush: true, goalPushAt: A.fs.serverTimestamp() }).then(function (ok) {
         gpBusy = false;
         if (!ok) { setFlag(false); return gpSay("ما قدرنا نحفظ التذكير هلّق، جرّب بعد شوي."); }
-        gpSay("✅ تمام! من 4 لـ 10:30 المسا بيوصلك إشعار بهدف واحد كل شوي، لحد ما تخلّصن."); hello(A);
+        gpSay("✅ تمام! الأستاذ عثمان رح يذكّرك بدرس اليوم عالساعة " + remGet().at + "، وبالمراجعات وبدورك بالبطولة."); hello(A);
       });
     }, function () { gpBusy = false; gpSay("🔔 الإشعارات عم تتجهّز، جرّب بعد شوي."); });
   }
 
+  if (d && d.addEventListener) {
+    d.addEventListener("change", function (e) { var s = e.target && e.target.closest && e.target.closest("select[data-rem]"); if (!s) return; var r = remGet(); r[s.getAttribute("data-rem")] = s.value; lsSet(RK, r); mirror(true); });
+    d.addEventListener("nursin:srs", function () { mirror(false); });
+  }
   /* ---- UI ---- */
   var pill = null, sheet = null, scrim = null;
   function count() { var g = goals(), n = 0; g.forEach(function (x) { if (x.done) n++; }); return { g: g, n: n }; }
