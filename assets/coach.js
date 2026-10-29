@@ -30,6 +30,8 @@
     if (x.due > 0) out.push({ txt: T("🔁 عندك " + x.due + " سؤال مراجعة مستحق اليوم. شو رأيك نراجع ١٠ دقايق؟", "🔁 Tu as " + x.due + " question(s) à réviser aujourd'hui. On révise 10 minutes ?"), href: "quiz.html?t=review", btn: T("🔁 راجع", "🔁 Réviser") });
     if (x.les) out.push({ txt: T("📖 درس اليوم: " + x.les.n + ". خمس دقايق قراءة بيكفّوا لنبلّش.", "📖 Leçon du jour : " + x.les.n + ". Cinq minutes de lecture suffisent pour commencer."), href: x.les.href || "index.html#wkles", btn: T("📖 اقرا", "📖 Lire") });
     if (x.weak > 0) out.push({ txt: T("🎯 عندك " + x.weak + " سؤال بنقاط ضعفك. صلّحهن قبل ما يصيروا عادة 😉", "🎯 Tu as " + x.weak + " question(s) dans tes points faibles. Corrige-les avant qu'elles deviennent une habitude 😉"), href: "quiz.html#weak", btn: T("🎯 كويز أخطائي", "🎯 Quiz de mes erreurs") });
+    // 🗺️ Oct 29 11:43 PM (Abdullah: «بيضل بيذكره بشو يدرس بالدرس لضعيف فيه»): the most faded lesson, until it is green again
+    if (x.red) out.push({ txt: T("🔴 «" + x.red.n + "» عم يروح منّك (" + x.red.score + "%). راجعو هلّق بالبطاقات 🃏", "🔴 « " + x.red.n + " » s'efface (" + x.red.score + " %). Révise-la maintenant avec les cartes 🃏"), href: fcHref(x.red), btn: T("🃏 راجعو", "🃏 Réviser") });
     var first = out[0] || { txt: x.min > 0 ? T("⏱️ درست اليوم " + x.min + " دقيقة. كمّل هيك 👏", "⏱️ Tu as étudié " + x.min + " min aujourd'hui. Continue comme ça 👏") : T("يلا نبلّش بشي خفيف: كويز ١٠ أسئلة 📝", "On commence léger : un quiz de 10 questions 📝"), href: x.min > 0 ? "" : "quiz.html", btn: x.min > 0 ? "" : T("📝 كويز", "📝 Quiz") };
     if (out.length && x.min > 0) first.sub = T("⏱️ درست اليوم " + x.min + " د", "⏱️ " + x.min + " min aujourd'hui");
     return first;
@@ -41,13 +43,26 @@
     var tn = get("nursin_tn_v1"); if (!tn || tn.d !== today()) tn = null;
     var st = get("nursin_stact_v1"), min = st && st.d === today() ? Math.floor(Math.max(st.s || 0, st.r || 0) / 60) : 0;
     var m = mood();
-    return { mood: m, cont: contMin(Date.now()), tn: tn, due: due, les: les, weak: weak, min: min };
+    var R = w.NursinRet, wk1 = R && R.weakest ? R.weakest(1)[0] : null;
+    return { mood: m, cont: contMin(Date.now()), tn: tn, due: due, les: les, weak: weak, min: min, red: wk1 && wk1.score < 40 ? wk1 : null };
+  }
+  // a lesson's page with its 🃏 cards opening at once (assets/cards.js ?fc=)
+  function fcHref(l) { var p = String(l.href).split("#"); return p[0] + "?fc=" + encodeURIComponent(l.id) + (p[1] ? "#" + p[1] : ""); }
+  // 🗺️ 1–2 reminders under the suggestion: the lessons fading the most (assets/hifz.js), red first; they stay until the lesson is green
+  function reminders(skip) {
+    var R = w.NursinRet; if (!R || !R.weakest) return "";
+    var L = R.weakest(3).filter(function (l) { return !skip || l.id !== skip; }).slice(0, 2); if (!L.length) return "";
+    return '<ul class="osmrem">' + L.map(function (l) {
+      var red = l.score < 40, t = red ? T("«" + l.n + "» عم يروح منّك — راجعو", "« " + l.n + " » s'efface — révise-la") : T("«" + l.n + "» صار بدّو مراجعة", "« " + l.n + " » a besoin d'une révision");
+      return '<li><a href="' + esc(fcHref(l)) + '">' + (R.dotHtml ? R.dotHtml(l.score) : "") + '<span>' + esc(t) + '</span><b dir="ltr">' + l.score + "%</b></a></li>";
+    }).join("") + "</ul>";
   }
   var restShown = get("nursin_rest_v1", true) || 0;
   function restBtn() { return '<button class="btn sm on" type="button" data-osm-rest>' + T("☕ بلّش بريك ١٠ دقايق", "☕ Pause de 10 min") + "</button>"; }
-  function bodyHtml(s) {
-    return '<p class="osmtx">' + esc(s.txt) + (s.sub ? ' <small>' + esc(s.sub) + "</small>" : "") + "</p>" +
-      (s.rest ? restBtn() : s.href === "index.html#duel" && HOME ? '<button class="btn sm on" type="button" data-osm-duel>' + esc(s.btn) + "</button>" : s.href && s.btn ? '<a class="btn sm on" href="' + esc(s.href === "index.html#duel" ? "index.html" : s.href) + '">' + esc(s.btn) + "</a>" : "");
+  function bodyHtml(s, big) {
+    var b = big ? "btn pri osmgo" : "btn sm on", lbl = function (x) { return big ? T("▶️ ابدأ", "▶️ Commencer") : x; };
+    return '<p class="osmtx">' + (big ? '<small class="osmnow">' + esc(T("👉 هلّق اعمل هيدا:", "👉 Maintenant, fais ça :")) + "</small>" : "") + esc(s.txt) + (s.sub ? ' <small>' + esc(s.sub) + "</small>" : "") + "</p>" +
+      (s.rest ? restBtn() : s.href === "index.html#duel" && HOME ? '<button class="' + b + '" type="button" data-osm-duel>' + esc(lbl(s.btn)) + "</button>" : s.href && s.btn ? '<a class="' + b + '" href="' + esc(s.href === "index.html#duel" ? "index.html" : s.href) + '">' + esc(lbl(s.btn)) + "</a>" : "");
   }
   function wire(el) {
     el.addEventListener("click", function (e) {
@@ -55,26 +70,26 @@
       var m = t.closest("[data-mood]");
       if (m) { put(MK, { d: today(), m: m.getAttribute("data-mood") }); draw(); return; }
       if (t.closest("[data-osm-rest]")) { if (w.NursinStudy && w.NursinStudy.pomoBreak) w.NursinStudy.pomoBreak(10); el.querySelector(".osmbd").innerHTML = '<p class="osmtx">' + esc(T("⏱️ بلّش البريك. ارجعلي بعد ١٠ دقايق 😉", "⏱️ La pause a commencé. Reviens dans 10 minutes 😉")) + "</p>"; return; }
-      if (t.closest("[data-osm-duel]")) { var tl = d.querySelector('[data-tile="duel"]'); if (tl) tl.click(); return; }
+      if (t.closest("[data-osm-duel]")) { var du = d.getElementById("duel"); if (du) { du.scrollIntoView({ behavior: w.NursinAnim && w.NursinAnim.reduced() ? "auto" : "smooth", block: "start" }); du.classList.add("pulse"); setTimeout(function () { du.classList.remove("pulse"); }, 1200); } return; }
       if (t.closest("[data-osm-x]")) { el.remove(); if (HOME) put(SK, { d: today(), x: 1 }); }
     });
   }
   var card = null;
   function draw() {
     if (!card) return;
-    var nm = name(), m = mood(), s = pick(data());
+    var nm = name(), m = mood(), x = data(), s = pick(x);
     var hi = T("👋 أهلا" + (nm ? " " + nm : "") + "! كيفك اليوم؟", "👋 Salut" + (nm ? " " + nm : "") + " ! Comment ça va aujourd'hui ?");
     var moods = m ? "" : '<div class="osmmood">' + [["good", "😊 منيح", "😊 Bien"], ["ok", "😐 عادي", "😐 Normal"], ["tired", "😴 تعبان", "😴 Fatigué"]].map(function (x) { return '<button class="chip" type="button" data-mood="' + x[0] + '">' + T(x[1], x[2]) + "</button>"; }).join("") + "</div>";
     var ack = m === "good" ? T("حلو! 😊 ", "Super ! 😊 ") : m === "ok" ? T("ماشي، منمشيها خفيفة 🙂 ", "D'accord, on y va doucement 🙂 ") : "";
-    card.innerHTML = '<div class="osmhd"><span class="osa" aria-hidden="true">👨‍🏫</span><b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + '</b><button class="osmx" type="button" data-osm-x aria-label="' + esc(T("سكّر", "Fermer")) + '">✕</button></div>' +
-      (m ? "" : '<p class="osmtx"><b>' + esc(hi) + "</b></p>" + moods) + '<div class="osmbd">' + (m ? (ack ? '<p class="osmtx small">' + esc(ack) + "</p>" : "") + bodyHtml(s) : "") + "</div>";
+    // 🏠 Oct 29 11:43 PM: Osman is the FIRST thing on the home page — one clear «هلّق اعمل هيدا» + a big «ابدأ», then 1–2 fading lessons
+    card.innerHTML = '<div class="osmhd"><span class="osa" aria-hidden="true">👨‍🏫</span><b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + "</b>" + (m ? '<span class="osmack">' + esc(ack || (m === "tired" ? "🌿" : "")) + "</span>" : "") + "</div>" +
+      (m ? "" : '<p class="osmtx osmhi"><b>' + esc(hi) + "</b></p>" + moods) + '<div class="osmbd">' + bodyHtml(s, true) + "</div>" + (s.rest ? "" : reminders(x.red && s.href === fcHref(x.red) ? x.red.id : ""));
   }
   function homeCard() {
-    var x = get(SK); if (x && x.d === today() && x.x) return;
-    var after = d.getElementById("htiles"); if (!after || !after.parentNode) return;
-    card = d.createElement("section"); card.className = "osmcard"; card.id = "osmcard"; card.setAttribute("data-nofr", ""); card.setAttribute("aria-label", T("الأستاذ عثمان", "Professeur Osman"));
-    after.parentNode.insertBefore(card, after.nextSibling); wire(card); draw();
-    ["nursin:goals", "nursin:srs", "nursin:tourney", "nursin:auth", "nursin:study"].forEach(function (ev) { d.addEventListener(ev, function () { if (card && card.isConnected && !card.querySelector("[data-osm-rest]") ) draw(); }); });
+    var host = d.getElementById("osmhome"); if (!host) return;
+    card = d.createElement("div"); card.className = "osmcard"; card.id = "osmcard"; card.setAttribute("data-nofr", "");
+    host.appendChild(card); wire(card); draw();
+    ["nursin:goals", "nursin:srs", "nursin:tourney", "nursin:auth", "nursin:study", "nursin:ret"].forEach(function (ev) { d.addEventListener(ev, function () { if (card && card.isConnected && !card.querySelector("[data-osm-rest]") ) draw(); }); });
   }
   // a light bubble (lesson / quiz pages, comments after a quiz or a match)
   var bub = null, bubT = 0;
@@ -87,6 +102,8 @@
   function pageBubble() {
     var k = "osm:" + page; if (get(k, true)) return; put(k, 1, true);       // once per page visit (per tab session)
     var c = get("nursin_osmc_v1"); if (!c || c.d !== today()) c = { d: today(), n: 0 }; if (c.n >= 4) return; c.n++; put("nursin_osmc_v1", c);
+    var R = w.NursinRet, here = R && R.weakest ? R.weakest(8).filter(function (l) { return l.score < 40 && String(l.href).split("#")[0] === page; })[0] : null;
+    if (here) return bubble('<p class="osmtx">' + esc(T("🔴 «" + here.n + "» عم يروح منّك (" + here.score + "%). بآخر الدرس في 🃏 بطاقات، جرّبهن.", "🔴 « " + here.n + " » s'efface (" + here.score + " %). À la fin de la leçon il y a 🃏 des cartes, essaie-les.")) + '</p><a class="btn sm on" href="' + esc(fcHref(here)) + '">' + esc(T("🃏 البطاقات", "🃏 Les cartes")) + "</a>");
     var s = pick(data()); if (s.href && s.href.split("#")[0] === page && !s.rest) return;   // already where he would send you
     bubble(bodyHtml(s));
   }
@@ -100,7 +117,7 @@
     if (kind === "duel") return p >= 80 ? T("⚔️ " + score + "/" + total + "! هيك بتربح البطولة 🔥", "⚔️ " + score + "/" + total + " ! C'est comme ça qu'on gagne le tournoi 🔥") : p >= 60 ? T("⚔️ " + score + "/" + total + "، منيح! خلّينا نشوف خصمك 😏", "⚔️ " + score + "/" + total + ", pas mal ! Voyons ton adversaire 😏") : T("⚔️ " + score + "/" + total + "… ولا يهمّك، راجع الأجوبة تحت وبكرا أحسن 💪", "⚔️ " + score + "/" + total + "… pas grave, revois les réponses et demain ça ira mieux 💪");
     return p >= 85 ? T("🔥 " + p + "%! برافو، الأستاذ عثمان فخور فيك", "🔥 " + p + " % ! Bravo, le professeur Osman est fier de toi") : p >= 60 ? T("👍 " + p + "%. منيح! راجع الغلطات تحت، وهني رح يرجعولك بالمراجعة 🔁", "👍 " + p + " %. Bien ! Revois les erreurs, elles reviendront en révision 🔁") : T("💪 " + p + "%. مش مشكلة، اقرا الدرس شي ١٠ دقايق وجرّب كمان مرّة", "💪 " + p + " %. Pas grave, relis le cours 10 minutes et réessaie");
   }
-  w.NursinCoach = { pick: pick, after: after, contMin: contMin };
+  w.NursinCoach = { reminders: reminders, fcHref: fcHref, pick: pick, after: after, contMin: contMin };
   if (!d || !d.addEventListener || !d.body) return;
   ["scroll", "touchstart", "click", "keydown"].forEach(function (ev) { w.addEventListener(ev, function () { touch(); }, { passive: true }); });
   touch();

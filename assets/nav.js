@@ -14,9 +14,14 @@
   var DAY = 864e5, OUT_GAP = 4 * DAY, OUT_MAX = 6, IN_GAP = 7 * DAY, IN_MAX = 4;
   var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   if (!/\.html$/.test(page)) page = "index.html";
+  /* 🧭 Oct 29 2026 11:39–11:45 PM (Abdullah: «شو في شغلات بالموقع عاجقة ممكن نرتبها ويصير الوصول الها اسرع»): the bottom bar is now
+     🏠 الرئيسية · 📚 المواد (+ 🔎 search, 🗺️ حفظي, 👨‍🏫 the tutor) · 📝 تمارين · ⚔️ صفّي (tournament, online, class, friends, chats) · 👤 أنا (me.html:
+     points/level, streak + pomodoro, theme, 🔔 Osman's notifications, settings, prizes). Every page is at most 2 taps away. Items marked
+     with a 5th value need an account: signed out they show 🔒 (as the home tiles did). */
   var G = [
     { k: "home", e: "🏠", n: "الرئيسية", href: "index.html", pages: ["index.html"] },
-    { k: "learn", e: "📚", n: "المواد", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html"], items: [
+    { k: "learn", e: "📚", n: "المواد", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "hifzi.html", "tutor.html"], items: [
+      ["#search", "🔎", "دوّر على درس", "اكتب أي كلمة بالعربي أو بالفرنسي"],
       ["cardio.html", "❤️", "القلب", "12 درس: الجلطة، ECG، القصور، الصدمة"],
       ["neuro.html", "🧠", "الأعصاب", "8 دروس: AVC، HTIC، Glasgow"],
       ["henderson.html", "📋", "Henderson", "الحاجات الـ ١٤ بالاسم مع NANDA"],
@@ -25,21 +30,26 @@
       ["quality.html", "✅", "الجودة والاعتماد", "9 دروس: مفاهيم الجودة، PDCA، المؤشرات، الاعتماد، الملف الطبي"],
       ["pharma.html", "💊", "الأدوية", "55 دوا (TS2): العائلة، الدواعي، الموانع، المتابعة + بحث"],
       ["rea.html", "🚑", "الإنعاش", "غازات الدم ABG: القيم، التفسير، الدور التمريضي"],
-      ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"]] },
-    { k: "practice", e: "📝", n: "التمارين", pages: ["quiz.html", "exams.html", "live.html", "games.html"], items: [
+      ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"],
+      ["hifzi.html", "🗺️", "حفظي", "الحفظ، نقاط ضعفك والأخطاء الشائعة"],
+      ["tutor.html", "👨‍🏫", "اسأل الأستاذ عثمان", "بيشرحلك أي شي من الدروس"]] },
+    { k: "practice", e: "📝", n: "تمارين", pages: ["quiz.html", "exams.html", "live.html", "games.html"], items: [
       ["quiz.html", "📝", "الكويز", "284 سؤال بأسلوب الامتحان مع الشرح"],
+      ["quiz.html?t=review", "🔁", "مراجعة اليوم", "الأسئلة المستحقة اليوم"],
       ["quiz.html#weak", "🎯", "نقاط ضعفك", "كويز من الأسئلة يلي غلطت فيها"],
       ["games.html", "🎮", "ألعاب", "وصّل، صح ولا غلط بـ ٦٠ ثانية، لعبة الذاكرة"],
       ["quiz.html#blanks", "✍️", "عبّي الفراغ", "كمّل الكلمة الناقصة بكل المواد: اختيار أو كتابة"],
       ["law.html#classquiz", "⚖️", "كويز متل الصف (القانون)", "سؤال مفتوح، بتكتب، وبتشوف النقاط"],
-      ["exams.html", "📅", "امتحانات الأسبوع", "مادّتين كل يوم + أوائل الشهر"],
-      ["classes.html#cdq", "❓", "سؤال اليوم بصفّك", "نفس السؤال لكل الصف"],
-      ["live.html", "🔴", "تحدّي لايف", "إنت وصاحبك بنفس الوقت"]] },
-    { k: "friends", e: "👥", n: "أصحابي", pages: ["friends.html", "chat.html", "classes.html"], items: [
-      ["friends.html", "🏆", "أصحابي والليفل", "نقاطك، الترتيب، التحدّيات"],
-      ["chat.html", "💬", "المحادثات", "رسائل لحالك أو بمجموعة"],
-      ["classes.html", "🏫", "صفّي", "الصف، الترتيب، امتحان الصف"]] },
-    { k: "tutor", e: "👨‍🏫", n: "أستاذ عثمان", href: "tutor.html", pages: ["tutor.html"] }
+      ["exams.html", "📅", "امتحانات الأسبوع", "مادّتين كل يوم + أوائل الشهر", 1],
+      ["live.html", "🔴", "تحدّي لايف", "إنت وصاحبك بنفس الوقت", 1]] },
+    { k: "class", e: "⚔️", n: "صفّي", pages: ["friends.html", "chat.html", "classes.html"], items: [
+      ["index.html#duel", "🏆", "البطولة", "بطولة الأسبوع بصفّك", 1],
+      ["#online", "🟢", "مين أونلاين", "مين من صفّك وأصحابك هلّق", 1],
+      ["classes.html", "🏫", "صفّي", "الصف، الترتيب، امتحان الصف", 1],
+      ["classes.html#cdq", "❓", "سؤال اليوم بصفّك", "نفس السؤال لكل الصف", 1],
+      ["friends.html", "👥", "أصحابي والليفل", "نقاطك، الترتيب، التحدّيات"],
+      ["chat.html", "💬", "المحادثات", "رسائل لحالك أو بمجموعة", 1]] },
+    { k: "me", e: "👤", n: "أنا", href: "me.html", pages: ["me.html"] }
   ];
   var LESSON = { "cardio.html": "❤️ القلب", "neuro.html": "🧠 الأعصاب", "henderson.html": "📋 Henderson", "law.html": "⚖️ القانون", "mgmt.html": "🏢 الإدارة", "quality.html": "✅ الجودة والاعتماد", "pharma.html": "💊 الأدوية", "rea.html": "🚑 الإنعاش", "3d.html": "🧊 المجسّمات 3D" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -51,13 +61,18 @@
   /* ---------------- 1) navigation ---------------- */
   var bar = null, sheet = null, scrim = null, openKey = null, opener = null;
   function closeSheet() {
-    if (sheet) sheet.remove(); if (scrim) scrim.remove(); sheet = scrim = null;
+    var s = sheet, sc = scrim, A = w.NursinAnim; sheet = scrim = null;          // ✨ slides away (assets/hifz.js), at once with reduced motion
+    if (s) { if (A) A.out(s, function () { s.remove(); }); else s.remove(); }
+    if (sc) { if (A) A.out(sc, function () { sc.remove(); }); else sc.remove(); }
     var o = d.querySelectorAll(".gt.open,.menu-btn.open"); for (var i = 0; i < o.length; i++) { o[i].classList.remove("open"); o[i].setAttribute("aria-expanded", "false"); }
     var back = opener; openKey = null; opener = null; return back;
   }
   function row(it) {
-    var href = it[0], here = href.split("#")[0] === page && href.indexOf("#") < 0;
-    return '<a class="gi" href="' + href + '"' + (here ? ' aria-current="page"' : "") + '><span class="gie" aria-hidden="true">' + it[1] + '</span><span class="git"><b>' + esc(it[2]) + "</b>" + (it[3] ? "<small>" + esc(it[3]) + "</small>" : "") + "</span></a>";
+    var href = it[0], here = href.split("#")[0] === page && href.indexOf("#") < 0, lock = it[4] && !signedIn() ? " 🔒" : "";
+    var inner = '<span class="gie" aria-hidden="true">' + it[1] + '</span><span class="git"><b>' + esc(it[2]) + lock + "</b>" + (it[3] ? "<small>" + esc(it[3]) + "</small>" : "") + "</span>";
+    if (href === "#search") return '<button class="gi" type="button" data-search-open>' + inner + "</button>";            // 🔎 assets/hifz.js
+    if (href === "#online") return '<button class="gi" type="button" data-online>' + inner + "</button>";                  // 🟢 assets/presence.js
+    return '<a class="gi" href="' + href + '"' + (here ? ' aria-current="page"' : "") + ">" + inner + "</a>";
   }
   function owner() { var A = w.NursinFB, u = A && A.user; return !!(u && u.email === OWNER && u.emailVerified); }
   function moreItems() {
@@ -103,7 +118,7 @@
     sheet = d.createElement("div"); sheet.className = "gsheet"; sheet.id = "gsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", title.replace(/^\S+\s/, ""));
     sheet.innerHTML = '<div class="gsh"><b>' + esc(title) + '</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + body + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { var b = closeSheet(); if (b) b.focus(); });
-    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi"); if (a) closeSheet(); var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
+    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi,[data-search-open]"); if (a) closeSheet(); if (e.target.closest && e.target.closest("[data-online]")) { closeSheet(); if (signedIn() && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; } var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
     d.body.appendChild(scrim); d.body.appendChild(sheet);
     if (desk() && btn) {                                   // dropdown under the clicked item (RTL: align its right edge)
       var r = btn.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
@@ -163,7 +178,7 @@
   }
 
   /* ---------------- 3) 👋 welcome card ---------------- */
-  var OB_PAGES = ["index.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "quiz.html", "exams.html", "live.html", "classes.html", "tutor.html", "games.html"];
+  var OB_PAGES = ["index.html", "hifzi.html", "me.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "quiz.html", "exams.html", "live.html", "classes.html", "tutor.html", "games.html"];
   var GSVG = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
   var card = null;
   function signedIn() { var A = w.NursinFB; if (A && A.user !== undefined && w.__nursinAuthSeen) return !!A.user; return !!(w.Nursin && w.Nursin.me); }
@@ -235,7 +250,7 @@
   }
   function done(m) {
     if (!card) return;
-    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 المواد · 📝 التمارين · 👥 أصحابي · 👨‍🏫 الأستاذ عثمان.</p>';
+    card.innerHTML = '<h2 id="obt">' + esc(m) + '</h2><p class="small">لقيت كل شي تحت: 📚 المواد · 📝 تمارين · ⚔️ صفّي · 👤 أنا.</p>';
     setTimeout(closeCard, 3200);
   }
   function step2(need, total) {
@@ -248,7 +263,7 @@
     }
     var c = shell(2, total, '<h2 id="obt">🔔 فعّل الإشعارات</h2><p>بيوصلك خبر لمّا ينزل درس جديد، ولمّا حدا من أصحابك يبعتلك رسالة، حتى لو الموقع مسكّر.</p>' +
       '<div class="obbtns"><button class="btn pri obgo" type="button">🔔 فعّل الإشعارات</button><button class="oblater" type="button">بعدين</button></div>' +
-      '<p class="small obnote">فيك توقّفها بأي وقت من ☰ ← 🔔 الإشعارات.</p>');
+      '<p class="small obnote">فيك توقّفها بأي وقت من 👤 أنا ← 🔔 الإشعارات.</p>');
     var go = c.querySelector(".obgo");
     go.addEventListener("click", async function () {
       go.disabled = true; say("");
@@ -258,10 +273,10 @@
         var r = await P.enable(A);
         if (r === "on") { mark(2); return done("✅ تفعّلت الإشعارات!"); }
         mark(2);
-        say(r === "default" ? "ما وافقت عالإشعارات. فيك تفعّلها بعدين من ☰ ← 🔔 الإشعارات." : "🔕 الإشعارات مسكّرة من إعدادات المتصفح. فيك تفتحها من الإعدادات بعدين.");
+        say(r === "default" ? "ما وافقت عالإشعارات. فيك تفعّلها بعدين من 👤 أنا ← 🔔 الإشعارات." : "🔕 الإشعارات مسكّرة من إعدادات المتصفح. فيك تفتحها من الإعدادات بعدين.");
         setTimeout(closeCard, 4000);
       } catch (e) {
-        say("🔔 الإشعارات عم تتجهّز، جرّب بعد شوي من ☰ ← 🔔 الإشعارات.");
+        say("🔔 الإشعارات عم تتجهّز، جرّب بعد شوي من 👤 أنا ← 🔔 الإشعارات.");
         if (!(e && (e.soon || e.code === "permission-denied"))) console.warn("nursin: push on", e && (e.code || e.message));
         go.disabled = false;
       }
@@ -287,7 +302,7 @@
     var c = shell(1, 1, '<h2 id="obt">🏫 عندك كود صف؟</h2><p>إذا أستاذك أو رفيقك عطاك كود صفّك، حطّو هون وبتفوت عالصف دغري: امتحان الصف، سؤال اليوم، وعلامات رفقاتك.</p>' +
       '<form class="obcc" autocomplete="off"><input class="obccin" dir="ltr" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="مثلاً K7Q2MX" aria-label="كود الصف">' +
       '<div class="obbtns"><button class="btn pri obgo" type="submit">فوت عالصف</button><button class="obccno" type="button">ما عندي / بعدين</button></div></form>' +
-      '<p class="small obnote">الدروس مفتوحة إلك بكل الأحوال. فيك تفوت على صف بعدين من 👥 أصحابي ← 🏫 صفّي.</p>');
+      '<p class="small obnote">الدروس مفتوحة إلك بكل الأحوال. فيك تفوت على صف بعدين من ⚔️ صفّي ← 🏫 صفّي.</p>');
     var f = c.querySelector(".obcc"), inp = c.querySelector(".obccin"), go = c.querySelector(".obgo");
     inp.addEventListener("input", function () { say(""); });
     c.querySelector(".obccno").addEventListener("click", function () { var s = ccState(); s.off = Date.now(); lsSet(CC, s); closeCard(); if (next) setTimeout(next, 300); });

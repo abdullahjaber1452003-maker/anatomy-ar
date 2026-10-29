@@ -68,7 +68,7 @@
     var t = instText(kind(), frOn()); c = d.createElement("div");
     c.id = "pwahome"; c.className = "qcard pwahome"; c.setAttribute("data-nofr", "");
     c.innerHTML = '<button class="pnx" type="button" aria-label="' + esc(t.x) + '">✕</button><p>' + t.card + '</p><p class="fbtns"><button class="btn pri pwainst" type="button">' + t.btn + "</button></p>";
-    var after = main.querySelector(".crumbs") || main.querySelector(".adx-top");
+    var after = main.querySelector("#prio") || main.querySelector(".crumbs") || main.querySelector(".adx-top");
     if (after && after.parentNode === main) main.insertBefore(c, after.nextSibling); else main.insertBefore(c, main.firstChild);
     c.querySelector(".pnx").addEventListener("click", function () { try { sessionStorage.setItem(INSTX, "1"); } catch (e) {} c.remove(); });
   }
@@ -152,7 +152,7 @@
      that (permission granted + subscription saved) it never asks again. Permission «denied»: short how-to steps instead of a button
      that can't work; iPhone outside the home-screen app: "add to home screen first". */
   var NAGX = "nursin_pushnag_x", EVER = "nursin_push_ever_v1";
-  var NAG_SKIP = { "quiz.html": 1, "games.html": 1, "chat.html": 1, "live.html": 1, "exams.html": 1, "admin.html": 1 };
+  var NAG_SKIP = { "quiz.html": 1, "games.html": 1, "chat.html": 1, "live.html": 1, "exams.html": 1, "admin.html": 1, "hifzi.html": 1, "me.html": 1 };
   function nagText(st) {
     var fr = !!(w.Lang && w.Lang.fr);
     var T = fr ? { h: "🔔 Active les notifications", off: "Un message d'un ami, une nouvelle leçon ou ton objectif du jour : on te prévient, même site fermé.", btn: "🔔 Activer les notifications",
@@ -177,7 +177,7 @@
     var t = nagText(st), box = d.createElement("div");
     box.id = "pushnag"; box.className = "qcard pushnag"; box.setAttribute("data-nofr", ""); box.setAttribute("role", "status");
     box.innerHTML = '<button class="pnx" type="button" aria-label="' + esc(t.T.x) + '" title="' + esc(t.T.x) + '">✕</button><b>' + t.T.h + "</b>" + t.body + '<p class="small pnmsg" aria-live="polite"></p>';
-    var after = main.querySelector(".crumbs") || main.querySelector(".adx-top");
+    var after = main.querySelector("#prio") || main.querySelector(".crumbs") || main.querySelector(".adx-top");
     if (after && after.parentNode === main) main.insertBefore(box, after.nextSibling); else main.insertBefore(box, main.firstChild);
     box.querySelector(".pnx").addEventListener("click", function () { try { sessionStorage.setItem(NAGX, "1"); } catch (e) {} box.remove(); });
     var on = box.querySelector(".pnon");

@@ -213,10 +213,13 @@
     return out;
   }
   function mirrorData(g) {
-    var r = remGet();
-    return { goalsDay: today(), goalsList: g.slice(0, 20).map(function (x) { return { k: cut(x.k, 80), n: cut(x.n, 80), h: cut(x.href, 160) }; }),
+    var r = remGet(), m = { goalsDay: today(), goalsList: g.slice(0, 20).map(function (x) { return { k: cut(x.k, 80), n: cut(x.n, 80), h: cut(x.href, 160) }; }),
       goalsDone: g.filter(function (x) { return x.done; }).slice(0, 20).map(function (x) { return cut(x.k, 80); }),
-      remAt: r.at, quietFrom: r.qf, quietTo: r.qt, srsDue: srsDue() };
+      quietFrom: r.qf, quietTo: r.qt, srsDue: srsDue() };
+    // 🗺️ the study summary for worker v9 (assets/hifz.js): times rounded to 5 minutes so the profile is written at most every few minutes
+    var R = w.NursinRet, s = R && R.studyState ? R.studyState() : null;
+    if (s) { for (var k in s) m[k] = s[k]; m.stAt = Math.floor((s.stAt || 0) / 3e5) * 3e5; m.stMin = Math.floor((s.stMin || 0) / 5) * 5; }
+    return m;
   }
   function mirror(now) { if (!pushOn()) return; clearTimeout(mt); mt = setTimeout(doMirror, now ? 0 : 2500); }
   function doMirror(extra) {
@@ -239,16 +242,17 @@
     }, function () { synced = ""; });
   }
   function autoOk() { var P = w.NursinPWA; try { return !!(P && P.env && P.env().canPush && w.Notification && Notification.permission === "granted"); } catch (e) { return false; } }
-  var TIMES = ["07:00", "08:00", "09:00", "10:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+  /* 🔔 Oct 29 11:49 PM (Abdullah): «اشعارات الأستاذ عثمان ما بدها تكون على وقت بيختارو الطالب، عثمان بيقرّر لحالو إيمتى لازم يدرس» →
+     no time picker any more: only the on/off switch and the quiet hours (default 22:30 → 08:00). Worker v9 reads the study summary below
+     (NursinRet.studyState: last activity, minutes today, due reviews, red lessons + the weakest one, tournament match pending) and decides. */
   function remHtml() {
     var r = remGet(), opt = function (list, v) { return list.map(function (t) { return '<option' + (t === v ? " selected" : "") + ">" + t + "</option>"; }).join(""); };
-    return '<div class="gorem"><label>⏰ وقت تذكير درس اليوم <select data-rem="at">' + opt(TIMES, r.at) + '</select></label>' +
-      '<label>🌙 ما في إشعارات من <select data-rem="qf">' + opt(["21:00", "22:00", "22:30", "23:00", "23:59"], r.qf) + '</select> لـ <select data-rem="qt">' + opt(["06:00", "07:00", "08:00", "09:00"], r.qt) + "</select></label></div>";
+    return '<div class="gorem"><label>🌙 ما في إشعارات من <select data-rem="qf">' + opt(["21:00", "22:00", "22:30", "23:00", "23:59"], r.qf) + '</select> لـ <select data-rem="qt">' + opt(["06:00", "07:00", "08:00", "09:00"], r.qt) + "</select></label></div>";
   }
   function gpHtml() {
     var on = pushOn();
-    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 ذكّرني بدرس اليوم (الأستاذ عثمان)</span></button>' +
-      '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: الأستاذ عثمان بيذكّرك بدرس اليوم بالوقت اللي بتختارو، وبالمراجعات المستحقة، وبدورك بالبطولة." : "الأستاذ عثمان بيذكّرك بدرس اليوم، بالمراجعات، وبدورك بالبطولة.")) + "</small>" + (on ? remHtml() : "") + "</div>";
+    return '<div class="gopush"><button class="gopsw" type="button" role="switch" aria-checked="' + on + '"' + (gpBusy ? " disabled" : "") + '><span class="gopk" aria-hidden="true"></span><span class="gopt">🔔 إشعارات الأستاذ عثمان</span></button>' +
+      '<small class="gopm" aria-live="polite">' + esc(gpMsg || (on ? "✅ شغّال: الأستاذ عثمان بيقرّر لحالو إيمتى لازم تدرس وبيبعتلك (٣ بالنهار بالكتير، ومش بساعات الهدوء)." : "الأستاذ عثمان بيعرف إيمتى ما درست، أو إذا درس عم يروح منّك، أو عندك مراجعات أو دور بالبطولة، وبيبعتلك إشعار.")) + "</small>" + (on ? remHtml() : "") + "</div>";
   }
   function hello(A) {        // worker v4: one push right now so the student sees it works (an older worker just answers without «goals»)
     fetch(WORKER + "/push").then(function (r) { return r.json(); }).then(function (j) {
@@ -261,7 +265,7 @@
     var A = fbA(), P = w.NursinPWA; if (!A || gpBusy) return;
     if (pushOn()) {
       setFlag(false); gpBusy = true; gpSay("");
-      doMirror({ goalPush: false }).then(function () { gpBusy = false; gpSay("🔕 وقّفنا تذكير درس اليوم. (إشعارات الرسائل بتضل متل ما هي)"); });
+      doMirror({ goalPush: false }).then(function () { gpBusy = false; gpSay("🔕 وقّفنا إشعارات الأستاذ عثمان. (إشعارات الرسائل بتضل متل ما هي)"); });
       return;
     }
     var st = pst || (P && P.env ? (P.env().canPush ? "off" : (P.env().ios && !P.env().standalone ? "ios" : "none")) : "none");
@@ -276,7 +280,7 @@
       return doMirror({ goalPush: true, goalPushAt: A.fs.serverTimestamp() }).then(function (ok) {
         gpBusy = false;
         if (!ok) { setFlag(false); return gpSay("ما قدرنا نحفظ التذكير هلّق، جرّب بعد شوي."); }
-        gpSay("✅ تمام! الأستاذ عثمان رح يذكّرك بدرس اليوم عالساعة " + remGet().at + "، وبالمراجعات وبدورك بالبطولة."); hello(A);
+        gpSay("✅ تمام! الأستاذ عثمان رح يقرّر لحالو إيمتى يذكّرك تدرس، وما بيزعجك بساعات الهدوء."); hello(A);
       });
     }, function () { gpBusy = false; gpSay("🔔 الإشعارات عم تتجهّز، جرّب بعد شوي."); });
   }
@@ -284,6 +288,9 @@
   if (d && d.addEventListener) {
     d.addEventListener("change", function (e) { var s = e.target && e.target.closest && e.target.closest("select[data-rem]"); if (!s) return; var r = remGet(); r[s.getAttribute("data-rem")] = s.value; lsSet(RK, r); mirror(true); });
     d.addEventListener("nursin:srs", function () { mirror(false); });
+    d.addEventListener("nursin:ret", function () { mirror(false); });
+    if (w.setInterval) w.setInterval(function () { if (!d.hidden) mirror(false); }, 5 * 60e3);
+    d.addEventListener("visibilitychange", function () { if (d.hidden) mirror(true); });
   }
   /* ---- UI ---- */
   var pill = null, sheet = null, scrim = null;
@@ -330,6 +337,7 @@
     if (signed() && fbA()) { syncFlag(); if (w.NursinPWA && w.NursinPWA.state) w.NursinPWA.state(fbA()).then(function (s) { pst = s; }, function () {}); }
   }
   function fill() {
+    try { d.dispatchEvent(new CustomEvent("nursin:gpush")); } catch (e) {}   // 👤 «أنا» page redraws its copy of the switch
     if (!sheet) return;
     sheet.innerHTML = '<div class="gsh"><b>✅ درس اليوم</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + sheetHtml() + "</nav>" + subjPick();
     sheet.querySelector(".gx").addEventListener("click", function () { close(); pill.focus(); });
@@ -391,7 +399,7 @@
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
   function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
 
-  w.NursinGoals = { list: function () { return signed() ? goals() : null; }, fetch: function () { return signed() ? fetchLive(false) : Promise.resolve(null); }, gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle };
+  w.NursinGoals = { list: function () { return signed() ? goals() : null; }, fetch: function () { return signed() ? fetchLive(false) : Promise.resolve(null); }, gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle, pushHtml: function () { return gpHtml(); } };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount); else mount();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

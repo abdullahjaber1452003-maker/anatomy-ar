@@ -243,8 +243,9 @@ function render(el, cid, cname, data, classes) {
       '<h3 class="dlh">🗂️ جدول البطولة</h3><ol class="tntree">' + (L ? dayHtml(L, true) : "") + past.map(x => dayHtml(x, false)).join("") + "</ol>" +
       (B.adv.length && L ? '<p class="small">✅ متأهّلين للدور الجاي: ' + B.adv.map(nm2).join("، ") + "</p>" : "");
   const pick = classes && classes.length > 1 ? '<select class="dcls" aria-label="الصف">' + classes.map(c => '<option value="' + esc(c.id) + '"' + (c.id === cid ? " selected" : "") + ">" + esc(c.name) + "</option>").join("") + "</select>" : "";
-  el.innerHTML = '<div class="dhead"><h2>⚔️ بطولة الأسبوع <small dir="ltr">' + esc(today) + "</small></h2>" + pick + '</div><p class="small">صف <bdi>' + esc(cname) + "</bdi> · " + B.players.length + " لاعب · " + (L ? esc(L.name) : B.champion ? "خلصت" : "—") + "</p>" + top + tree +
-    podium(B, data.members, data.prizes) + RULES;
+  el.innerHTML = '<div class="dhead"><h2>⚔️ بطولة الأسبوع <small dir="ltr">' + esc(today) + "</small></h2>" + pick + '</div><p class="small">صف <bdi>' + esc(cname) + "</bdi> · " + B.players.length + " لاعب · " + (L ? esc(L.name) : B.champion ? "خلصت" : "—") + "</p>" + top +
+    // 🏠 Oct 29 (home v2): on the home page only the status shows; the bracket, the week's podium/prizes and the rules fold under one line
+    (el.id === "duel" ? '<details class="dmore"><summary>🗂️ جدول البطولة، الترتيب والجوائز</summary>' + tree + podium(B, data.members, data.prizes) + RULES + "</details>" : tree + podium(B, data.members, data.prizes) + RULES);
   const s = el.querySelector("[data-dstart]"); if (s) s.addEventListener("click", () => play(el, cid, mine, qs, () => show(el, cid)));
   // 🏠 the home tile (assets/tiles.js) + 👨‍🏫 Osman (assets/coach.js) read the student's tournament status
   if (el.id === "duel") {

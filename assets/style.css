@@ -574,6 +574,9 @@ html[data-theme=night] .osmbub{background:#1f2937;color:#e5e7eb}html[data-theme=
 @keyframes osmin{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 /* ⚔️ weekly knockout (Oct 29) */
 .tntree{list-style:none;padding:0;margin:6px 0}.tnday>b{display:block;margin:10px 0 4px}.tnchamp{font-weight:700;font-size:1.05em;padding:8px 10px;border-radius:12px;background:#fef3c7;color:#78350f}.tnst{font-weight:600}
+/* 🔎 search + 🃏 cards sheets (Oct 29 batch 1; fixed elements stay above the ad rules) */
+.srch{position:fixed;inset:0;z-index:90;background:rgba(15,23,42,.42);display:flex;justify-content:center;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px 10px;animation:fadein .18s ease-out}
+.fcwrap{position:fixed;inset:0;z-index:95;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease-out}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}
@@ -966,6 +969,103 @@ html[data-theme=night] .cmn{color:#fca5a5}
 .cqb{margin:0;padding:0 18px 0 0}
 .cqb li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
 .cqb li.me{font-weight:800}
+/* ===== BATCH 1 (Oct 29 2026 11:36–11:45 PM, Abdullah): home v2, bottom bar ⚔️ صفّي / 👤 أنا, 🗺️ حفظي, 🃏 cards, 📄 summary, 🔎 search, ✨ transitions ===== */
+.rdot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:0 0 auto;vertical-align:middle;margin-inline-end:6px;background:#cbd5e1;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.rdot.r-green,.r-green>.rdot{background:#16a34a}.rdot.r-yellow{background:#eab308}.rdot.r-red{background:#dc2626}.rdot.r-grey{background:#cbd5e1}
+summary .t b .rdot,h3>.rdot{margin-inline-end:7px;position:relative;top:-1px}
+/* 🔎 header button + search sheet; phones: ☰ folds into 👤 أنا (all its items are on me.html) so the header never overflows */
+@media(max-width:859px){html.jsnav .topbar .menu-btn{display:none}}
+.topbar .bar>.brand{min-width:34px;flex-shrink:50}.topbar .bar>.gopill{min-width:0;flex-shrink:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#mecard>p:last-child{display:flex;flex-wrap:wrap;gap:8px}#mecard>p:last-child .btn{margin:0}
+.srchbtn{flex:0 0 auto;background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:10px;font-size:17px;width:40px;height:40px;cursor:pointer;margin-inline-start:6px}
+.srchbox{width:100%;max-width:560px;background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden;animation:sheetdown .22s cubic-bezier(.2,.8,.2,1)}
+.srchf{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.srchin{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:16px;background:transparent;color:var(--ink);padding:6px 0}
+.srchx{border:0;background:var(--tint);border-radius:999px;width:32px;height:32px;cursor:pointer;color:var(--ink)}
+.srchr{max-height:min(70vh,520px);overflow:auto;padding:4px 8px 10px}.srchh{padding:10px 6px;margin:0}
+.srchi .rdot{margin-top:6px}
+/* 🏠 home v2: Osman first, the tournament, «📌 الأهمّيات» */
+.osmhome{margin:8px 0 0}.osmhome .osmcard{margin:0 0 10px;padding:14px 14px 12px}
+.osmhome .osmhd{display:flex;align-items:center;gap:8px}.osmhome .osmhd .osa{font-size:24px}.osmack{margin-inline-start:auto;font-size:13px;color:var(--mut)}
+.osmhi{margin:6px 0 4px}.osmnow{display:block;font-weight:700;color:var(--pri2);font-size:13px;margin-bottom:2px}
+.osmhome .osmtx{font-size:15.5px;line-height:1.6;margin:8px 0}
+.btn.osmgo{display:block;width:100%;text-align:center;font-size:17px;font-weight:800;padding:12px 14px;border-radius:12px;text-decoration:none;box-shadow:0 4px 14px rgba(15,118,110,.28)}
+.osmrem{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.osmrem a{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:13.5px;line-height:1.4}
+.osmrem a>span:not(.rdot){flex:1;min-width:0}.osmrem a b{font-size:12.5px;color:var(--mut)}
+.dmore{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}.dmore>summary{cursor:pointer;font-weight:700;color:var(--pri2);font-size:14.5px;padding:4px 0}
+#duel.pulse{box-shadow:0 0 0 3px var(--pril),var(--sh);transition:box-shadow .3s}
+.prio h2{font-size:18px;margin:0 0 8px}.prio .wkles{margin:8px 0 0;padding:0;border:0;box-shadow:none;background:none}
+.prrev,.prmap{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--tint);color:var(--ink);text-decoration:none;margin:0 0 8px}
+.prrev>span:first-child,.prmap>span:first-child{font-size:22px}.prrev span:nth-child(2),.prmap span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}
+.prrev small,.prmap small{color:var(--mut);font-size:12.5px}.prn{min-width:30px;text-align:center;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--card);border:1px solid var(--line)}
+.prrev.hot .prn{background:var(--acc);color:#fff;border-color:var(--acc)}
+.prmap{margin:8px 0 0;background:var(--card)}.prcnt{font-size:12.5px;font-weight:700;white-space:nowrap;color:var(--mut)}.prcnt .rdot{width:8px;height:8px;margin-inline:6px 2px}
+.prio #homecont{margin:0}.prio .hcont{box-shadow:none;margin:0 0 8px}
+/* 🗺️ hifzi.html */
+.rlead{margin:4px 0 10px}.rleg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;margin:8px 0}.rleg>span{white-space:nowrap}
+.srchin::-webkit-search-cancel-button{display:none}
+.rosm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:var(--tint);border:1px solid rgba(15,118,110,.18);margin:8px 0}
+.rosm .osa{font-size:26px}.rosm p{flex:1;min-width:180px;margin:0;font-size:15px;line-height:1.55}
+.rsum{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.rchip{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.rmap{margin:6px 0 14px}.rsub{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:8px 0;box-shadow:var(--sh);overflow:hidden}
+.rsub>summary{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;list-style:none}.rsub>summary::-webkit-details-marker{display:none}
+.rsn{display:flex;flex-direction:column;min-width:96px}.rsn small{color:var(--mut);font-size:12px}
+.rbar{flex:1;display:flex;gap:3px;flex-wrap:wrap}.rbar i{width:12px;height:12px;border-radius:3px;background:#cbd5e1}.rbar i.r-green{background:#16a34a}.rbar i.r-yellow{background:#eab308}.rbar i.r-red{background:#dc2626}
+.ravg{font-size:14px;min-width:42px;text-align:center}.ravg.r-green{color:#15803d}.ravg.r-yellow{color:#a16207}.ravg.r-red{color:#b91c1c}.ravg.r-grey{color:var(--mut)}
+.rlist{list-style:none;margin:0;padding:0 8px 8px}.rlist li{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line)}
+.rl{flex:1;display:flex;align-items:center;gap:4px;padding:10px 6px;color:var(--ink);text-decoration:none;min-width:0;font-size:14.5px}.rl>span:not(.rdot){flex:1;min-width:0}.rl b{font-size:13px;color:var(--mut)}
+.rlist li.r-red .rl b{color:#b91c1c}.rfc{flex:0 0 auto;text-decoration:none;font-size:18px;padding:6px 8px;border-radius:10px;background:var(--tint)}
+/* 👤 me.html */
+.meh{display:flex;align-items:center;gap:12px}.meh h2{margin:0}.meh p{margin:2px 0 6px}.meav{width:54px;height:54px;font-size:22px}
+.lvbar.mebar{display:block;width:100%;max-width:260px;height:7px}
+.mepush h2,.meset h2{font-size:18px;margin:0 0 8px}.mepush .gopsw{width:100%}
+/* 🃏 cards + 📄 summary under each lesson */
+.lsk{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 6px;padding:0 4px}.lsk .btn{border-color:var(--tint3);background:var(--tint);font-weight:700}
+.fcbox{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:10px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:sheetup .26s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:700px){.fcwrap{align-items:center}.fcbox{border-radius:20px}}
+.fchd{display:flex;align-items:center;gap:8px;padding:4px 0 10px}.fchd b{flex:1;min-width:0;font-size:15px}.fcn{font-size:13px;color:var(--mut);font-weight:700}
+.fcx{border:0;background:var(--card);border-radius:999px;width:34px;height:34px;cursor:pointer;color:var(--ink);box-shadow:var(--sh)}
+.fcbar{height:5px;border-radius:9px;background:var(--line);overflow:hidden;margin:0 0 12px}.fcbar i{display:block;height:100%;background:var(--pri);border-radius:9px;transition:width .25s}
+.fc{display:block;width:100%;border:0;padding:0;background:none;perspective:1200px;cursor:pointer;font:inherit;color:inherit;text-align:inherit}
+.fci{display:grid;transition:transform .3s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.fc.flip .fci{transform:rotateY(180deg)}
+.fcf{grid-area:1/1;display:flex;flex-direction:column;gap:8px;min-height:230px;padding:18px 16px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 22px rgba(0,0,0,.08);backface-visibility:hidden;-webkit-backface-visibility:hidden;font-size:16px;line-height:1.65}
+.fcback{transform:rotateY(180deg);background:var(--tint);border-color:var(--tint3)}
+.fcf small{color:var(--mut);font-weight:700;font-size:12px}.fcf em{margin-top:auto;font-style:normal;color:var(--mut);font-size:12.5px;text-align:center}
+.fct{display:block}.fct p{margin:.3em 0}.fct ul{margin:.3em 0;padding-inline-start:1.2em}
+.fc.fcin{animation:cardnext .24s cubic-bezier(.2,.8,.2,1)}
+.fcact{display:flex;gap:8px;margin:12px 0 0}.fcact[hidden]{display:none}.fcact .btn{flex:1;font-weight:800;padding:11px 8px;font-size:15px;text-align:center;text-decoration:none}
+.fcno{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+.fcend{text-align:center;padding:10px 4px}.fcbig{font-size:46px;margin:6px 0}.fcend .fcact{flex-wrap:wrap}
+.sumdoc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:14.5px;line-height:1.6}
+.sumdoc h2{font-size:18px;margin:0 0 6px;color:var(--pri2)}.sumdoc h3{font-size:15.5px;margin:12px 0 4px}.sumdoc p{margin:4px 0}.sumdoc ul{margin:4px 0;padding-inline-start:1.2em}
+.sumdoc .sbx{background:var(--tint);border-radius:10px;padding:6px 10px;margin:6px 0}.sumdoc .sbx .bi{margin-inline-end:4px}.sumdoc .stbl{overflow:auto}.sumdoc table{font-size:13px}
+.sumnote{color:var(--mut);margin-top:10px}
+@media print{html.printsum body>*:not(.fcwrap){display:none!important}html.printsum body{padding:0!important;background:#fff}html.printsum .fcwrap{position:static;background:none;display:block;animation:none}
+ html.printsum .fcbox{max-height:none;overflow:visible;box-shadow:none;border-radius:0;max-width:none;padding:0;background:#fff;animation:none}html.printsum .fchd{display:none}html.printsum .sumdoc{border:0;padding:0}}
+/* ✨ transitions (fast, transform/opacity only) */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:.16s ease-in both vtout}::view-transition-new(root){animation:.22s cubic-bezier(.2,.8,.2,1) both vtin}
+@keyframes vtout{to{opacity:0;transform:translateY(-6px)}}@keyframes vtin{from{opacity:0;transform:translateY(8px)}}
+@keyframes pgin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}}@keyframes sheetup{from{transform:translateY(40px);opacity:.4}}@keyframes sheetdown{from{transform:translateY(-16px);opacity:0}}
+@keyframes popin{from{transform:translateY(10px) scale(.98);opacity:0}}@keyframes cardnext{from{transform:translateX(-24px);opacity:0}}
+@keyframes dopen{from{opacity:0;transform:translateY(-6px)}}@keyframes dclose{to{opacity:0;transform:translateY(-6px)}}
+@keyframes anout{to{opacity:0;transform:translateY(14px)}}
+main#main{animation:pgin .24s cubic-bezier(.2,.8,.2,1) backwards}
+html.pgout main#main{opacity:0;transform:translateY(-6px);transition:opacity .14s ease-in,transform .14s ease-in}
+.osmhome,.home #duel,.home #prio{animation:popin .3s cubic-bezier(.2,.8,.2,1) backwards}.home #duel{animation-delay:.05s}.home #prio{animation-delay:.1s}
+.gsheet{animation:sheetup .22s cubic-bezier(.2,.8,.2,1)}.gscrim{animation:fadein .18s ease-out}
+.onlsheet{animation:fadein .18s ease-out}.onlbox{animation:sheetup .24s cubic-bezier(.2,.8,.2,1)}
+.osmbub,.obx{animation:popin .26s cubic-bezier(.2,.8,.2,1)}
+details[open]>*:not(summary){animation:dopen .22s ease-out}details.dclosing>*:not(summary){animation:dclose .16s ease-in forwards}
+.anout{animation:anout .17s ease-in forwards!important;pointer-events:none}.gscrim.anout,.srch.anout,.fcwrap.anout{animation:anout .17s ease-in forwards!important}
+.gt .ge{transition:background-color .2s,padding .2s}.gt:active .ge{transform:scale(.9)}.btn,.gi,.chip{transition:transform .12s,background-color .15s}.btn:active,.chip:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){main#main,.osmhome,.home #duel,.home #prio,.gsheet,.gscrim,.onlsheet,.onlbox,.osmbub,.obx,.srch,.srchbox,.fcwrap,.fcbox,.fc.fcin,details[open]>*:not(summary),details.dclosing>*:not(summary),.anout{animation:none!important}
+ .fci,.fcbar i,.gt .ge,.btn,.gi,.chip,html.pgout main#main{transition:none!important}.btn:active,.chip:active,.gt:active .ge{transform:none}
+ ::view-transition-old(root),::view-transition-new(root){animation:none}}
+
 /* 🌙 «ليلي» — generated from the fixed light colours above (Oct 28): light backgrounds → dark surfaces, dark text → light, light borders → dark; hues kept. Ads untouched. */
 html[data-theme=night] h4{color:#f0c6b8}
 html[data-theme=night] .box.tip{background:#17202b;border-color:#30435a}
