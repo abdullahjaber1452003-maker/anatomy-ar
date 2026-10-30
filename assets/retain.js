@@ -280,7 +280,7 @@
       ret(id, got / res.length >= 0.6 ? "fok" : "fbad");
       var pct = Math.round(100 * got / res.length);
       bd.innerHTML = '<div class="fcend rtscore"><p class="fcbig">' + (pct >= 80 ? "🔥" : pct >= 50 ? "👏" : "💪") + "</p><p><b>" + esc(T("غطّيت " + got + " من " + res.length + " نقاط", "Tu as couvert " + got + " points sur " + res.length)) + "</b></p>" +
-        '<p class="small">' + esc(said ? T("بـ " + secs + " ثانية", "en " + secs + " s") : T("ما كتبت شي هالمرّة، هيدي كل النقاط لتراجعها.", "Tu n'as rien écrit cette fois : voici tous les points à revoir.")) + "</p></div>" +
+        '<p class="small">' + esc(said ? "⏱️ " + Math.floor(secs / 60) + ":" + ("0" + secs % 60).slice(-2) : T("ما كتبت شي هالمرّة، هيدي كل النقاط لتراجعها.", "Tu n'as rien écrit cette fois : voici tous les points à revoir.")) + "</p></div>" +
         checklist(res) + '<p class="small rtauto">' + esc(T("المقارنة بالكلمات الأساسية لكل نقطة (عربي وفرنسي). إذا كتبتها بكلمات تانية ممكن ما تنحسب، ارجع للدرس وتأكّد.", "Comparaison par mots-clés de chaque point (arabe et français). Si tu l'as écrit autrement, il se peut qu'il ne soit pas compté : vérifie dans la leçon.")) + "</p>" + endBtns(res, x);
       wireEnd(bd, res, x, intro);
     }
