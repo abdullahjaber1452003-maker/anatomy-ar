@@ -59,13 +59,19 @@
     return out.sort(function (a, b) { return b.length - a.length; }).slice(0, 8);
   }
   function same(a, b) { if (a === b) return true; var n = Math.min(a.length, b.length); return n >= 5 && a.slice(0, 5) === b.slice(0, 5); }
-  function cover(point, text) {
-    var ks = terms(point), got = tokens(text), hit = 0;
-    ks.forEach(function (k) { for (var i = 0; i < got.length; i++) if (same(k, got[i])) { hit++; break; } });
+  /* a point counts as covered when about a third of its words are in her text — or when she names its own French term
+     (a Latin word of 6+ letters that only this point or one other of the part uses: «thrombus», «Athérosclérose»…) */
+  function cover(point, text, df) {
+    var ks = terms(point), got = tokens(text), hit = 0, key = false;
+    ks.forEach(function (k) { for (var i = 0; i < got.length; i++) if (same(k, got[i])) { hit++; if (/^[a-z]{6,}$/.test(k) && (!df || (df[k] || 0) <= 2)) key = true; break; } });
     var need = ks.length <= 2 ? 1 : Math.max(2, Math.ceil(ks.length * 0.34));
-    return { hit: hit, of: ks.length, ok: ks.length > 0 && hit >= need };
+    return { hit: hit, of: ks.length, ok: ks.length > 0 && (hit >= need || key) };
   }
-  function check(points, text) { return points.map(function (p) { var c = cover(p.t, text); return { t: p.t, h: p.h || "", lab: p.lab || "", ok: c.ok, hit: c.hit, of: c.of }; }); }
+  function check(points, text) {
+    var df = {};
+    points.forEach(function (p) { var seen = {}; terms(p.t).forEach(function (k) { if (/^[a-z]{6,}$/.test(k) && !seen[k]) { seen[k] = 1; df[k] = (df[k] || 0) + 1; } }); });
+    return points.map(function (p) { var c = cover(p.t, text, df); return { t: p.t, h: p.h || "", lab: p.lab || "", ok: c.ok, hit: c.hit, of: c.of }; });
+  }
 
   /* ---------------- 📃🧑‍🏫 the key points of one lesson part (from the page itself) ---------------- */
   function R() { return w.NLESSONS || {}; }
