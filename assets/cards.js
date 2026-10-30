@@ -24,7 +24,7 @@
   }
   function loadQuiz() {
     if (w.QUIZ) return Promise.resolve();
-    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027t"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
+    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027u"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
   }
   // the lesson's own blocks on this page (all its parts), in order
   function blocks(l) {
