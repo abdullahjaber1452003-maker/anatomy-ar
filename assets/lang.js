@@ -11,7 +11,7 @@
      Anything without a confident translation keeps the bilingual text (fallback by design).
    Keys: FNV-1a of the whitespace-normalised string (blocks: of the element's innerHTML). */
 (function (w, d) {
-  var K = "nursin_lang_v1", V = "20261027s", AR = /[\u0600-\u06FF]/;
+  var K = "nursin_lang_v1", V = "20261027t", AR = /[\u0600-\u06FF]/;
   var mode = "ar"; try { mode = localStorage.getItem(K) === "fr" ? "fr" : "ar"; } catch (e) {}
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html?$/, "") || "index";
   /* ⚖️ القانون stays Arabic ALWAYS (Abdullah, Oct 27 2:47 PM): the law page and a law-only quiz are drawn exactly as before (bilingual,
@@ -22,9 +22,9 @@
   // which data dictionaries each page needs (same order as its data scripts)
   var DATA = { index: ["quiz"], hifzi: ["quiz"], cardio: ["quiz"], neuro: ["quiz"], henderson: ["quiz"],   // 🃏 cards + 🔎 search read the question bank there too (Oct 29)
     quiz: ["quiz", "blanks"], exams: ["quiz"], live: ["quiz"], classes: ["quiz"], friends: ["quiz"], tutor: ["quiz"],
-    law: [], mgmt: ["quiz", "mgmt", "blanks"], quality: ["quiz", "quality", "blanks"], pharma: ["quiz", "pharma", "blanks"], rea: ["quiz", "rea"],
+    law: [], mgmt: ["quiz", "mgmt", "blanks"], quality: ["quiz", "quality", "blanks"], pharma: ["quiz", "pharma", "blanks"], rea: ["quiz", "rea"], geri: ["quiz"], community: ["quiz"], medsurg: ["quiz", "medsurg"],
     games: ["quiz", "pharma", "blanks", "ersim"] };
-  var PAGES = { index: 1, cardio: 1, neuro: 1, henderson: 1, quiz: 1, "3d": 1, about: 1, privacy: 1, credits: 1, "404": 1, friends: 1, exams: 1, live: 1, tutor: 1, classes: 1, law: 1, mgmt: 1, quality: 1, pharma: 1, rea: 1, games: 1, chat: 1, admin: 1, hifzi: 1, me: 1, notes: 1 };
+  var PAGES = { index: 1, cardio: 1, neuro: 1, henderson: 1, quiz: 1, "3d": 1, about: 1, privacy: 1, credits: 1, "404": 1, friends: 1, exams: 1, live: 1, tutor: 1, classes: 1, law: 1, mgmt: 1, quality: 1, pharma: 1, rea: 1, geri: 1, community: 1, medsurg: 1, games: 1, chat: 1, admin: 1, hifzi: 1, me: 1, notes: 1 };
   var H = {}, U = {}, fre = null, on = false, miss = [];
   function norm(s) { return String(s).replace(/\s+/g, " ").trim(); }
   function hash(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36) + "." + s.length.toString(36); }

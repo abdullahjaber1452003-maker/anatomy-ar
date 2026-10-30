@@ -14,7 +14,7 @@
 (function (w, d) {
   var MK = "nursin_mood_v1", CK = "nursin_cont_v1", SK = "nursin_osmday_v1", BK = "nursin_brk_v1", PK = "nursin_pomo_v1";
   var page = (w.location && w.location.pathname || "/index.html").split("/").pop() || "index.html";
-  var LESSON = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|3d)\.html$/, QUIZ = page === "quiz.html", HOME = page === "index.html" || page === "";
+  var LESSON = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|geri|community|medsurg|3d)\.html$/, QUIZ = page === "quiz.html", HOME = page === "index.html" || page === "";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

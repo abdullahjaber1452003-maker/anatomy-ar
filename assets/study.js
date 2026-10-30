@@ -236,7 +236,7 @@
       if (fab) { var sp = fab.querySelector("span"); if (sp) sp.textContent = t; else render(); }
     }
   }
-  var SUBJ = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea)\.html$/;
+  var SUBJ = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|geri|community|medsurg)\.html$/;
   function init() {
     var page = location.pathname.split("/").pop() || "index.html";
     home = d.getElementById("study");

@@ -183,7 +183,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261027s", jobs = [];
+    var v = "?v=20261027t", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });
@@ -193,7 +193,7 @@
   function index() {
     if (idx) return idx;
     var S = subjects(), by = {};
-    idx = lessons().map(function (l) { var s = S[l.s] || {}, e = { id: lid(l), l: l, name: norm(l.n), subj: norm((s.ar || "") + " " + (s.fr || "") + " " + l.s), body: "", qs: [] }; by[e.id] = e; return e; });
+    idx = lessons().map(function (l) { var s = S[l.s] || {}, g = (w.NLESSONS.groups || {}), gk = Object.keys(g).filter(function (k) { return g[k].subs.indexOf(l.s) > -1; })[0], gs = gk ? g[gk].ar + " " + g[gk].fr + " " + gk : "", e = { id: lid(l), l: l, name: norm(l.n), subj: norm((s.ar || "") + " " + (s.fr || "") + " " + l.s + " " + gs), body: "", qs: [] }; by[e.id] = e; return e; });
     (w.QUIZ || []).forEach(function (q) { var e = by[ofQ(q)]; if (e) { e.body += " " + norm(q.q + " " + (q.o || []).join(" ")); e.qs.push(q.q); } });
     ((w.PHARMA && w.PHARMA.drugs) || []).forEach(function (x) { var e = by["pharma:" + x.g]; if (e) { var t = (x.n || []).join(" "); e.body += " " + norm(t); e.qs.push("💊 " + t); } });
     return idx;
@@ -290,7 +290,8 @@
   function mapPage() {
     var box = d.getElementById("rmap"); if (!box) return;
     var all = list(), S = subjects(), c = counts(), by = {}, order = [];
-    all.forEach(function (l) { if (!by[l.s]) { by[l.s] = []; order.push(l.s); } by[l.s].push(l); });
+    var NLx = w.NursinLessons, GR = (NLx && NLx.groups) || {}, gof = function (s) { return NLx && NLx.groupOf ? NLx.groupOf(s) : s; };
+    all.forEach(function (l) { var k = gof(l.s); if (!by[k]) { by[k] = []; order.push(k); } by[k].push(l); });   // 🏥 Med-Surg = القلب + الأعصاب + Henderson + التسريب (ids unchanged)
     if (FR()) {                                           // 🇫🇷 the page's own lines (the static Arabic stays for the bilingual mode)
       var ld = d.getElementById("rlead"), lg = d.getElementById("rleg"), h1 = d.querySelector("main h1");
       if (h1) { h1.setAttribute("data-nofr", ""); h1.textContent = "🗺️ Ma mémoire"; }
@@ -302,11 +303,11 @@
     var wk = weakest(1)[0], osm = d.getElementById("rosm");
     if (osm) osm.innerHTML = '<span class="osa" aria-hidden="true">👨‍🏫</span><p>' + esc(wk ? (wk.score < 40 ? T("«" + wk.n + "» عم يروح منّك. ابدأ فيه هلّق، ١٠ بطاقات بس 🃏", "« " + wk.n + " » s'efface. Commence par elle, juste 10 cartes 🃏") : T("«" + wk.n + "» بدّو مراجعة صغيرة قبل ما يصير أحمر.", "« " + wk.n + " » a besoin d'une petite révision avant de devenir rouge.")) : c.green ? T("كل اللي درستو ثابت 💪 كمّل هيك!", "Tout ce que tu as étudié est solide 💪 Continue !") : T("بلّش بأي درس: كل ما تقرا أو تحلّ كويز أو بطاقات، بتتعبّى الخريطة.", "Commence par n'importe quelle leçon : lecture, quiz ou cartes remplissent la carte.")) + "</p>" + (wk ? '<a class="btn sm on" href="' + esc(fcLink(wk)) + '">' + esc(T("🃏 راجعو", "🃏 Réviser")) + "</a>" : "");
     box.innerHTML = order.map(function (k) {
-      var s = S[k] || {}, L = by[k], st = L.filter(function (l) { return l.score != null; }), avg = st.length ? Math.round(st.reduce(function (a, l) { return a + l.score; }, 0) / st.length) : null;
+      var s = GR[k] || S[k] || {}, L = by[k], st = L.filter(function (l) { return l.score != null; }), avg = st.length ? Math.round(st.reduce(function (a, l) { return a + l.score; }, 0) / st.length) : null;
       return '<details class="rsub"' + (L.some(function (l) { return l.color === "red"; }) ? " open" : "") + '><summary><span class="rsn"><b>' + esc(FR() ? s.fr || s.ar : s.ar || k) + "</b><small>" + esc(T(L.length + " دروس", L.length + " leçons")) + "</small></span>" +
         '<span class="rbar" aria-hidden="true">' + L.map(function (l) { return '<i class="r-' + l.color + '"></i>'; }).join("") + "</span>" + (avg != null ? '<b class="ravg r-' + color(avg) + '" dir="ltr">' + avg + "%</b>" : '<b class="ravg r-grey">—</b>') + "</summary>" +
         '<ul class="rlist">' + L.map(function (l) {
-          return '<li class="r-' + l.color + '"><a class="rl" href="' + esc(l.href) + '">' + dotHtml(l.score) + "<span>" + esc(l.n) + '</span><b dir="ltr">' + (l.score == null ? "—" : l.score + "%") + "</b></a>" +
+          return '<li class="r-' + l.color + '"><a class="rl" href="' + esc(l.href) + '">' + dotHtml(l.score) + "<span>" + (GR[k] && S[l.s] && S[l.s].e && l.s !== k ? S[l.s].e + " " : "") + esc(l.n) + '</span><b dir="ltr">' + (l.score == null ? "—" : l.score + "%") + "</b></a>" +
             '<a class="rfc" href="' + esc(fcLink(l)) + '" aria-label="' + esc(T("🃏 بطاقات: ", "🃏 Cartes : ") + l.n) + '">🃏</a></li>';
         }).join("") + "</ul></details>";
     }).join("");

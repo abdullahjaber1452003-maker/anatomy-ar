@@ -346,7 +346,7 @@
   function subjPick() {     // 📅 the class timetable the lesson goals follow (assets/lessons.js CLASSDAY) — information only
     var L2 = w.NursinLessons; if (!L2 || !L2.CLASSDAY) return "";
     var fr = !!(w.Lang && w.Lang.fr), S = L2.subjects, by = {}, s, out = [];
-    for (s in L2.CLASSDAY) (by[L2.CLASSDAY[s]] = by[L2.CLASSDAY[s]] || []).push(S[s] ? esc(fr ? S[s].fr : S[s].ar) : s);
+    for (s in L2.CLASSDAY) (function (s) { var g = L2.groupOf ? L2.groupOf(s) : s, X = g !== s && L2.groups ? L2.groups[g] : S[s], nm = X ? esc(fr ? X.fr : X.ar) : s, a = by[L2.CLASSDAY[s]] = by[L2.CLASSDAY[s]] || []; if (a.indexOf(nm) < 0) a.push(nm); })(s);   // 🏥 القلب/الأعصاب/Henderson = one «Med-Surg»
     [4, 5, 6].forEach(function (dd) { var n = L2.classDayOf(Object.keys(L2.CLASSDAY).filter(function (k) { return L2.CLASSDAY[k] === dd; })[0]); if (by[dd]) out.push("<b>" + (fr ? n[1] : n[0]) + "</b> " + by[dd].join("، ")); });
     var none = !Object.keys(L2.weekLes()).length;
     return '<p class="gosl" data-nofr>📅 ' + (fr ? "Les leçons du jour suivent l'emploi du temps : " : "دروس اليوم ماشية حسب برنامج الصف: ") + out.join(" · ") +

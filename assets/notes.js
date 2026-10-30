@@ -120,7 +120,7 @@
 
   /* ---------------- where a note belongs (مادة / درس) ---------------- */
   var EXTRA = { anatomy: { ar: "المجسّمات 3D", fr: "Modèles 3D", page: "3d.html", e: "🧊" }, other: { ar: "عام", fr: "Général", page: "notes.html", e: "🗒️" } };
-  var EMO = { cardio: "❤️", neuro: "🧠", henderson: "📋", law: "⚖️", mgmt: "🏢", quality: "✅", pharma: "💊", rea: "🚑" };
+  var EMO = { cardio: "❤️", neuro: "🧠", henderson: "📋", law: "⚖️", mgmt: "🏢", quality: "✅", pharma: "💊", rea: "🚑", geri: "👴", comm: "🏘️", medsurg: "🏥" };
   var MODELS = { heart: ["القلب", "Cœur", "cardio"], brain: ["الدماغ", "Cerveau", "neuro"], spine: ["العمود القطني", "Colonne lombaire", "neuro"] };
   function R() { return w.NLESSONS || { subjects: {}, list: [], parts: [] }; }
   function subjects() { var o = {}, s = R().subjects, k; for (k in s) o[k] = { ar: s[k].ar, fr: s[k].fr, page: s[k].page, e: EMO[k] || "📘" }; for (k in EXTRA) o[k] = EXTRA[k]; return o; }

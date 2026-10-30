@@ -4,7 +4,7 @@
 // 🔔 «مين مفعّل الإشعارات» (Oct 27): every student (users/) with ✅/❌ from pushSubs/{uid}.d (≥1 device = on) — admin-only reads, no rules change.
 const OWNER = "abdullahjaber1452003@gmail.com";
 const WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev", CHUNK = 25;
-const PAGES = [["/", "🏠 الرئيسية"], ["/cardio.html", "❤️ القلب"], ["/neuro.html", "🧠 الأعصاب"], ["/3d.html", "🧊 المجسّمات 3D"], ["/quiz.html", "📝 الكويز"], ["/henderson.html", "📋 Henderson"], ["/law.html", "⚖️ القانون"], ["/mgmt.html", "🏢 الإدارة"], ["/quality.html", "✅ الجودة والاعتماد"], ["/pharma.html", "💊 الأدوية"], ["/rea.html", "🚑 الإنعاش"], ["/exams.html", "📅 الامتحانات"], ["/classes.html", "🏫 الصفوف"], ["/tutor.html", "👨‍🏫 الأستاذ عثمان"], ["/chat.html", "💬 المحادثات"]];
+const PAGES = [["/", "🏠 الرئيسية"], ["/cardio.html", "❤️ القلب"], ["/neuro.html", "🧠 الأعصاب"], ["/3d.html", "🧊 المجسّمات 3D"], ["/quiz.html", "📝 الكويز"], ["/henderson.html", "📋 Henderson"], ["/law.html", "⚖️ القانون"], ["/mgmt.html", "🏢 الإدارة"], ["/quality.html", "✅ الجودة والاعتماد"], ["/pharma.html", "💊 الأدوية"], ["/rea.html", "🚑 الإنعاش"], ["/medsurg.html", "🏥 Med-Surg"], ["/geri.html", "👴 الشيخوخة"], ["/community.html", "🏘️ صحة المجتمع"], ["/exams.html", "📅 الامتحانات"], ["/classes.html", "🏫 الصفوف"], ["/tutor.html", "👨‍🏫 الأستاذ عثمان"], ["/chat.html", "💬 المحادثات"]];
 export function page(API) {
   const el = document.getElementById("admin-app"); if (!el) return;
   const u = API.user, { doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, updateDoc } = API.fs;
@@ -104,12 +104,16 @@ function weekPicker(API, el) {
   const L = window.NursinLessons; if (!L || !L.CLASSDAY) return;
   const { doc, getDoc, setDoc, serverTimestamp } = API.fs, ref = doc(API.db, "config", "weekLessons"), esc = API.esc;
   const box = document.createElement("div"); box.className = "qcard wkpick"; box.id = "wkpick";
-  const subs = Object.keys(L.CLASSDAY);
+  const subs = Object.keys(L.CLASSDAY), units = [];
+  subs.forEach(s => { const g = L.groupOf ? L.groupOf(s) : s, G = g !== s && L.groups ? L.groups[g] : null, u = G && units.find(x => x.k === g); if (u) u.subs.push(s); else units.push({ k: G ? g : s, g: G, subs: [s] }); });
   const draw = cur => {
     box.innerHTML = '<h2>📌 دروس هالأسبوع</h2><p class="small">علّم الدروس يلي لازم يكونو الطلاب خالصينها قبل حصّة كل مادة. «درس اليوم» عندن بيوزّع الأجزاء غير المقروءة بالتساوي على أيام الدرس، وأيام الصف (خميس، جمعة، سبت) أخفّ. مادة ما فيها شي معلّم = ما في شي إلها بدرس اليوم.</p><p class="small wkwin">🗓️ مواد الخميس: سبت→أربعا • الجمعة: أحد→خميس • السبت: أحد→جمعة</p>' +
-      subs.map(s => { const S = L.subjects[s] || {}, dn = L.classDayOf(s), ls = L.list.filter(x => x.s === s);
-        return '<details class="wks"' + ((cur[s] || []).length ? " open" : "") + '><summary><b>' + esc(S.ar || s) + "</b> <small>· حصّة " + dn[0] + " · " + (cur[s] || []).length + "/" + ls.length + "</small></summary><ul class=\"cpick\">" +
-          ls.map(x => { const k = L.base(x), n = L.parts.filter(p => L.base(p) === k).length; return '<li><label><input type="checkbox" data-s="' + esc(s) + '" value="' + esc(k) + '"' + ((cur[s] || []).includes(k) ? " checked" : "") + "> <bdi>" + esc(x.n) + "</bdi>" + (n > 1 ? " <small>(" + n + " أجزاء)</small>" : "") + "</label></li>"; }).join("") + "</ul></details>"; }).join("") +
+      // 🏥 Oct 30: القلب / الأعصاب / Henderson / التسريب sit under ONE «Med-Surg» box (NursinLessons.groupOf); each tick still saves
+      // under its own subject key, so config/weekLessons keeps the same shape.
+      units.map(u => { const G = u.g, ss = u.subs, nOn = ss.reduce((a, s) => a + (cur[s] || []).length, 0), nAll = ss.reduce((a, s) => a + L.list.filter(x => x.s === s).length, 0), dn = L.classDayOf(ss[0]);
+        return '<details class="wks"' + (nOn ? " open" : "") + '><summary><b>' + esc(G ? G.e + " " + G.ar : (L.subjects[ss[0]] || {}).ar || ss[0]) + "</b> <small>· حصّة " + dn[0] + " · " + nOn + "/" + nAll + "</small></summary>" + ss.map(s => { const S = L.subjects[s] || {}, ls = L.list.filter(x => x.s === s);
+          return (G ? '<p class="small"><b>' + esc((S.e ? S.e + " " : "") + (S.ar || s)) + "</b></p>" : "") + "<ul class=\"cpick\">" +
+          ls.map(x => { const k = L.base(x), n = L.parts.filter(p => L.base(p) === k).length; return '<li><label><input type="checkbox" data-s="' + esc(s) + '" value="' + esc(k) + '"' + ((cur[s] || []).includes(k) ? " checked" : "") + "> <bdi>" + esc(x.n) + "</bdi>" + (n > 1 ? " <small>(" + n + " أجزاء)</small>" : "") + "</label></li>"; }).join("") + "</ul>"; }).join("") + "</details>"; }).join("") +
       '<p class="fbtns"><button class="btn pri" id="wksave" type="button">💾 احفظ دروس هالأسبوع</button></p><p class="small" id="wkmsg" aria-live="polite"></p>';
     box.querySelector("#wksave").addEventListener("click", async () => {
       const subj = {}; box.querySelectorAll("input[type=checkbox]:checked").forEach(i => { (subj[i.dataset.s] = subj[i.dataset.s] || []).push(i.value); });

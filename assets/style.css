@@ -1268,3 +1268,7 @@ html[data-theme=night] .gfb.erok{border-color:#305a3f;background:#172b1d}
 html[data-theme=night] .pwon{color:#bdf1e2}
 html[data-theme=night] .pwoff{color:#eca7a7}
 html[data-theme=night] #caddmsg.err{color:#e5938a}
+
+/* Oct 30: geri / community / medsurg tables (assets/subject.js) never push the page sideways on a phone */
+.sublessons .lawtbl,.subintro .lawtbl{overflow-x:auto}.sublessons .lawtbl th,.sublessons .lawtbl td,.subintro .lawtbl td{overflow-wrap:anywhere;word-break:normal}
+.mslist{margin:6px 0 10px;padding-inline-start:22px}.mslist li{margin:4px 0}

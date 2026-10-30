@@ -24,7 +24,7 @@
   }
   function loadQuiz() {
     if (w.QUIZ) return Promise.resolve();
-    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027s"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
+    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027t"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
   }
   // the lesson's own blocks on this page (all its parts), in order
   function blocks(l) {
@@ -34,7 +34,19 @@
       parts.forEach(function (p) { var b = p.querySelector(".tbody") || p; [].slice.call(b.children).forEach(function (c) { if (c.tagName !== "SUMMARY") out.push(c); }); });
     } else if (l.l) {                                     // Henderson: from the <h3> before its quiz link down to the link
       var q = d.querySelector('.lqz a[href*="l=' + l.l + '"]'), end = q && q.closest(".lqz"), p = end;
-      var tmp = []; while (p && (p = p.previousElementSibling)) { if (p.classList && (p.classList.contains("lsk") || p.classList.contains("adx"))) continue; tmp.unshift(p); if (p.tagName === "H3") break; }
+      var tmp = [], skip = function (x) { return x.classList && (x.classList.contains("lsk") || x.classList.contains("adx")); };
+      // Oct 30 (Abdullah: «بطاقات/خلاصة الحاجات ٨–١٤ عم يجيبو الدرس الأول»): lesson 2's quiz link sits right after the <div class="prose">
+      // that holds BOTH lessons, so walking up the siblings swallowed lesson 1 too. A sibling that contains an <h3> is now walked
+      // from its end, child by child, down to this lesson's own <h3> (or the previous lesson's quiz link).
+      outer: while (p && (p = p.previousElementSibling)) {
+        if (skip(p)) continue;
+        if (p.tagName !== "H3" && p.querySelector && p.querySelector("h3")) {
+          var kids = [].slice.call(p.children);
+          for (var k = kids.length - 1; k >= 0; k--) { var c = kids[k]; if (skip(c)) continue; if (c.classList && c.classList.contains("lqz")) break outer; tmp.unshift(c); if (c.tagName === "H3") break outer; }
+          break;
+        }
+        tmp.unshift(p); if (p.tagName === "H3") break;
+      }
       out = tmp;
     }
     return out.filter(function (el) { return !(el.classList && (el.classList.contains("adx") || el.classList.contains("lsk") || el.classList.contains("lqz") || el.classList.contains("ad-slot") || el.classList.contains("nlrow"))); });   // nlrow = 📝 (assets/notes.js)
@@ -58,7 +70,7 @@
       if (isHead(el) && txt(el).length > 2) {
         var back = [], n = 0;
         for (var j = i + 1; j < bl.length && n < 2; j++) { if (isHead(bl[j])) break; if (/^(DETAILS)$/.test(bl[j].tagName)) continue; var t = txt(bl[j]); if (!t) continue; back.push(clean(bl[j]).outerHTML); n++; }
-        if (back.length) out.push({ k: "h", front: T("🧠 شو بتتذكّر عن: ", "🧠 Que retiens-tu de : ") + txt(el).replace(/[📌🫁🍽️🚽🚶😴👕🌡️🧼⚠️]+/g, "").trim() + T("؟", " ?"), back: back.join("") });
+        if (back.length) out.push({ k: "h", front: T("🧠 شو بتتذكّر عن: ", "🧠 Que retiens-tu de : ") + txt(el).replace(/[📌🫁🍽️🚽🚶😴👕🌡️🧼⚠️🗣🙌💼🎉📚]+/gu, "").replace(/[\uD800-\uDFFF]/g, "").trim() + T("؟", " ?"), back: back.join("") });
       } else if (el.classList && el.classList.contains("box") && el.classList.contains("warn") && txt(el).length > 10) {
         out.push({ k: "h", front: T("⚠️ خطأ شائع بهالدرس: شو لازم تنتبه؟", "⚠️ Erreur fréquente dans cette leçon : à quoi faire attention ?"), back: clean(el).innerHTML });
       }

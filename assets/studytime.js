@@ -7,7 +7,7 @@
 //    most the real time since the last write (+30 s), so nobody can type in hours or write for someone else.
 //  • The board (home #stboard, class page) shows friends + classmates, ranked, with the date and an honest label: it measures active
 //    time on the site, not how much anyone learned. Before rules v14 are published it stays hidden and writes stop quietly.
-export const STUDY_PAGES = ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "quiz.html", "exams.html"];
+export const STUDY_PAGES = ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "medsurg.html", "3d.html", "quiz.html", "exams.html"];
 export const IDLE_MS = 90000, FIRST_S = 60, EVERY_MS = 180000, CREATE_MAX = 300, DAY_MAX = 57600;
 // 📖 Oct 29 6:14 AM (Abdullah: «الوقت لازم يشمل كمان أديه قعد عم يقرأ الدرس»): reading a lesson counts whenever the tab is VISIBLE and
 //    there was a scroll / tap / click / key in the last 90 s (focus no longer required). One shared record per browser, so two open tabs

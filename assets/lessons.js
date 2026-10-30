@@ -20,14 +20,24 @@
 (function (w, d) {
   var R = w.NLESSONS = {
     subjects: {
-      cardio: { ar: "القلب", fr: "Cardiologie", page: "cardio.html" },
-      neuro: { ar: "الأعصاب", fr: "Neurologie", page: "neuro.html" },
-      henderson: { ar: "Henderson", fr: "Henderson", page: "henderson.html" },
+      cardio: { ar: "القلب", fr: "Cardiologie", page: "cardio.html", e: "❤️" },
+      neuro: { ar: "الأعصاب", fr: "Neurologie", page: "neuro.html", e: "🧠" },
+      henderson: { ar: "Henderson", fr: "Henderson", page: "henderson.html", e: "📋" },
       law: { ar: "القانون", fr: "L\u00e9gislation", page: "law.html" },
       mgmt: { ar: "الإدارة", fr: "Management", page: "mgmt.html" },
       quality: { ar: "الجودة والاعتماد", fr: "Qualit\u00e9 & accr\u00e9ditation", page: "quality.html" },
       pharma: { ar: "الأدوية", fr: "Pharmacologie", page: "pharma.html" },
-      rea: { ar: "الإنعاش", fr: "R\u00e9animation", page: "rea.html" }
+      rea: { ar: "الإنعاش", fr: "R\u00e9animation", page: "rea.html" },
+      geri: { ar: "الشيخوخة (Gériatrie)", fr: "G\u00e9riatrie", page: "geri.html", e: "👴" },
+      comm: { ar: "صحة المجتمع", fr: "Sant\u00e9 communautaire", page: "community.html", e: "🏘️" },
+      medsurg: { ar: "Med-Surg (طبّي-جراحي)", fr: "M\u00e9dico-chirurgical (Med-Surg)", page: "medsurg.html", e: "🏥" }
+    },
+    /* 🏥 Oct 30 2026 (Abdullah): «Med-Surg» is ONE مادة on the screen that groups القلب / الأعصاب / Henderson (their pages, anchors,
+       lesson ids «cardio:infarctus»…, progress, quiz history, retention, notes and tournament ids are untouched — the group is only a
+       layer for the lists) + the lessons that live on medsurg.html itself (s: "medsurg", e.g. 💉 التسريب الوريدي). groupOf(s) → the
+       key a list shows the subject under; subjects with no group show as themselves. */
+    groups: {
+      medsurg: { ar: "Med-Surg (طبّي-جراحي)", fr: "M\u00e9dico-chirurgical (Med-Surg)", page: "medsurg.html", e: "🏥", subs: ["cardio", "neuro", "henderson", "medsurg"] }
     },
     list: [
     { s: "cardio", t: "heart", n: "القلب: التشريح", href: "cardio.html#heart" },
@@ -77,7 +87,24 @@
     { s: "pharma", t: "pharma", l: "cort", n: "الكورتيزون", href: "pharma.html#g-cort", added: "2026-10-26" },
     { s: "pharma", t: "pharma", l: "diab", n: "السكري", href: "pharma.html#g-diab", added: "2026-10-26" },
     { s: "pharma", t: "pharma", l: "other", n: "غيرها", href: "pharma.html#g-other", added: "2026-10-26" },
-    { s: "rea", t: "rea", l: "r1", n: "غازات الدم الشرياني ABG", href: "rea.html#r1", added: "2026-10-29" }
+    { s: "rea", t: "rea", l: "r1", n: "غازات الدم الشرياني ABG", href: "rea.html#r1", added: "2026-10-29" },
+    { s: "geri", t: "geri", l: "g1", n: "تعريفات الشيخوخة وتغيّرات أجهزة الجسم مع العمر", href: "geri.html#g1", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g2", n: "تقييم المسن ودور الممرضة بدار رعاية المسنين", href: "geri.html#g2", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g3", n: "سوء التغذية، فقر الدم، الحرارة، الجفاف وضربة الشمس", href: "geri.html#g3", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g4", n: "التغيّرات النفسية والسقوط عند المسن", href: "geri.html#g4", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g5", n: "الفُصال العظمي، النقرس وهشاشة العظام", href: "geri.html#g5", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g6", n: "متلازمة عدم الحركة وقرحة الفراش", href: "geri.html#g6", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g7", n: "السلس البولي، سلس البراز والإمساك", href: "geri.html#g7", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g8", n: "اضطرابات النوم والغدة الدرقية وجارات الدرق", href: "geri.html#g8", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g9", n: "أمراض الجلد والاضطرابات العصبية", href: "geri.html#g9", added: "2026-10-30" },
+    { s: "geri", t: "geri", l: "g10", n: "الأدوية، الأطراف الصناعية، الفم والجهاز الهضمي", href: "geri.html#g10", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c1", n: "الرعاية الصحية الأولية والمجتمع", href: "community.html#c1", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c2", n: "صحة المجتمع والرعاية المجتمعية على المستوى الوطني", href: "community.html#c2", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c3", n: "ممرضة صحة المجتمع: الدور والوظائف والرعاية المنزلية", href: "community.html#c3", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c4", n: "الصحة العامة والتخطيط الصحي، الأوبئة والأمراض المعدية", href: "community.html#c4", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c5", n: "التثقيف الصحي والصحة النفسية في المجتمع", href: "community.html#c5", added: "2026-10-30" },
+    { s: "comm", t: "comm", l: "c6", n: "التعاون بين القطاعات والتحديات المستقبلية", href: "community.html#c6", added: "2026-10-30" },
+    { s: "medsurg", t: "medsurg", l: "iv", n: "💉 التسريب الوريدي (Perfusion)", href: "medsurg.html#iv", added: "2026-10-30" }
     ]
   };
   /* ✂️ smaller lessons (Abdullah, Oct 27 2:39 PM: "long lessons with many sections put too much pressure on the student — split them,
@@ -86,7 +113,8 @@
      body into consecutive <details> at the child indices below (same structure in 🇫🇷, checked by the tests). Part 1 keeps the old
      anchor (cardio.html#infarctus), the next parts are #infarctus-p2, #infarctus-p3… The lesson quiz stays after the last part.
      SPLIT key = subject:lesson → index of the first child (of the lesson body; pharma: of its drug cards) of parts 2, 3, … */
-  var SPLIT = {"rea:r1": [12, 25, 46, 52, 61], "mgmt:m3": [12, 17], "cardio:heart": [7], "cardio:infarctus": [11], "cardio:endomyo": [12], "cardio:ic": [7], "neuro:evaluation": [6], "neuro:examens": [10, 17], "neuro:avc": [13], "quality:q1": [39], "quality:q2": [23, 60, 86, 119, 135], "quality:q3": [33, 70, 83, 100], "quality:q4": [34], "quality:q5": [24, 67], "quality:q6": [12, 32, 70], "quality:q7": [21, 37], "quality:q8": [23, 43, 58, 71, 88], "quality:q9": [23], "law:l1": [8, 24], "pharma:cardio": [4, 8], "pharma:atb": [4, 8], "pharma:pain": [4], "pharma:resp": [2], "pharma:dig": [4]};
+  var SPLIT = {"rea:r1": [12, 25, 46, 52, 61], "mgmt:m3": [12, 17], "cardio:heart": [7], "cardio:infarctus": [11], "cardio:endomyo": [12], "cardio:ic": [7], "neuro:evaluation": [6], "neuro:examens": [10, 17], "neuro:avc": [13], "quality:q1": [39], "quality:q2": [23, 60, 86, 119, 135], "quality:q3": [33, 70, 83, 100], "quality:q4": [34], "quality:q5": [24, 67], "quality:q6": [12, 32, 70], "quality:q7": [21, 37], "quality:q8": [23, 43, 58, 71, 88], "quality:q9": [23], "law:l1": [8, 24], "pharma:cardio": [4, 8], "pharma:atb": [4, 8], "pharma:pain": [4], "pharma:resp": [2], "pharma:dig": [4], "geri:g1": [8, 23, 39, 52, 60, 75, 94], "geri:g2": [16, 33, 58], "geri:g3": [11, 22, 32, 38, 52, 60], "geri:g4": [7, 18, 30, 40], "geri:g5": [26], "geri:g6": [28], "geri:g7": [25, 52], "geri:g8": [31, 54], "geri:g9": [36, 75], "geri:g10": [17, 31, 47, 66], "comm:c1": [14, 19], "comm:c2": [15, 20, 23], "comm:c4": [5, 9, 26], "comm:c5": [29, 46, 61], "comm:c6": [17, 30, 53], "medsurg:iv": [10, 19, 29]};
+  function groupOf(s) { var G = R.groups || {}, k; for (k in G) if (G[k].subs.indexOf(s) > -1) return k; return s; }   // 🏥 cardio → medsurg
   var RK = "nursin_read_v1", PK = "nursin_daylesson_v1";
   function dk() { var n = w.Nursin; return n && n.dayKey ? n.dayKey() : new Date(Date.now() + 3 * 36e5).toISOString().slice(0, 10); }
   function addDays(k, n) { var t = new Date(k + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
@@ -146,7 +174,8 @@
     return byKey(k);
   }
   function row(x, m) {
-    if (!x) return null; var S = R.subjects[x.s] || {}, fr = frOn(x);
+    if (!x) return null; var S = R.subjects[x.s] || {}, fr = frOn(x), gk = groupOf(x.s), GG = gk !== x.s && R.groups ? R.groups[gk] : null;
+    if (GG && x.s !== gk) S = { ar: "Med-Surg · " + (S.ar || x.s), fr: "Med-Surg · " + (S.fr || x.s) };   // 🏥 القلب/الأعصاب/Henderson show under Med-Surg
     return { k: "les:" + key(x), e: "📖", n: (fr ? "Leçon du jour : " : "درس اليوم: ") + label(x), s: (fr ? (S.fr || x.s) : (S.ar || x.s)) + (x.p ? " · " + (fr ? "partie " + x.p + " sur " + x.of : "جزء " + x.p + " من " + x.of) : "") + (CLASSDAY[x.s] ? (fr ? " · avant le cours du " + DAYN[CLASSDAY[x.s]][1] : " · قبل حصّة " + DAYN[CLASSDAY[x.s]][0]) : (fr ? " · une courte lecture" : " · قراية قصيرة")), href: x.href, done: isRead(x, m) };
   }
   /* the 📖 goal row (pure — tests run it): ONE row, today's small lesson */
@@ -157,7 +186,7 @@
      Saturday = community health, 💊 pharma, gerontology, psych, ✅ quality. Only the lessons Abdullah pins as «📌 هالأسبوع»
      on admin.html count (Firestore config/weekLessons {subj:{s:[lesson keys]}}, public read, admin write — rules v11); a subject
      with nothing pinned gives no lesson goal. How they are spread: the 🗓️ study windows below. */
-  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, pharma: 6, quality: 6 };       // Thu 4 · Fri 5 · Sat 6
+  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6 };   // Oct 30: + 🏥 medsurg (Fri), 👴 geri + 🏘️ comm (Sat)       // Thu 4 · Fri 5 · Sat 6
   var DAYN = { 4: ["الخميس", "jeudi"], 5: ["الجمعة", "vendredi"], 6: ["السبت", "samedi"] }, WK = "nursin_weekles_v1";
   function dow(day) { return new Date(Date.parse(day + "T12:00:00Z")).getUTCDay(); }
   function cleanAsg(a) {                                      // {s:[keys]} → only known subjects + real lesson keys
@@ -228,7 +257,7 @@
   function classDayOf(s) { var c = CLASSDAY[s]; return c ? DAYN[c] : null; }
   w.NursinLessons = { list: R.list, parts: P, subjects: R.subjects, SPLIT: SPLIT, fresh: fresh, goals: goals, pick: pick, today: today, row: row, label: label, key: key, base: base,
     isRead: isRead, markRead: markRead, readMap: readMap, subject: subject, splitPage: splitPage, KEY: RK, PKEY: PK,
-    CLASSDAY: CLASSDAY, WIN: WIN, CAP: CAP, TOT: TOT, MAXG: MAXG, dayCap: dayCap, windowOf: windowOf, plan: plan, extra: extra, extraRow: extraRow, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
+    CLASSDAY: CLASSDAY, groups: R.groups || {}, groupOf: groupOf, WIN: WIN, CAP: CAP, TOT: TOT, MAXG: MAXG, dayCap: dayCap, windowOf: windowOf, plan: plan, extra: extra, extraRow: extraRow, todayPlan: todayPlan, weekLes: weekLes, classDayOf: classDayOf, WKEY: WK };
   if (!d || !d.addEventListener) return;
 
   /* ✂️ cut a drawn lesson into its parts (idempotent). el = the lesson's <details>; its body = .tbody */
