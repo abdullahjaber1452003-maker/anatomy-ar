@@ -5,10 +5,14 @@
    - 📖 lesson + 📝 quiz pages: one light bubble per page visit (max 4 a day), dismissable, gone after 14 s.
    - 🌿 «تعبان» or 50+ minutes of continuous activity (no 5-minute gap) → «ارتاح ١٠ دقايق 🌿» + a button that starts a pomodoro break
      (assets/study.js, synced to the other devices); once per 50-minute block.
+   - ☕ Oct 30 2026 (Abdullah 11:08 AM: after the 10-minute break Osman said «بلّش ببريك ١٠ دقايق» again, forever): a rest suggestion is
+     done once a break started / ended / was stopped (any device, nursin_brk_v1 from study.js) or he tapped «⏭️ مش هلّق» / closed it.
+     The day's «تعبان» never asks again after that; the 50-minute count starts over from the break, so only a NEW 50 minutes asks
+     again. While a break runs Osman just says so; right after it: «رجعت مرتاح؟ يلا 💪» + his normal suggestion.
    - after a quiz result (nursin:quizdone) or a tournament match (nursin:dueldone): one short comment.
    Never inside the quiz / challenge / games / timer / tutor / chat / admin screens, and no ad is placed next to it. */
 (function (w, d) {
-  var MK = "nursin_mood_v1", CK = "nursin_cont_v1", SK = "nursin_osmday_v1";
+  var MK = "nursin_mood_v1", CK = "nursin_cont_v1", SK = "nursin_osmday_v1", BK = "nursin_brk_v1", PK = "nursin_pomo_v1";
   var page = (w.location && w.location.pathname || "/index.html").split("/").pop() || "index.html";
   var LESSON = /^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|3d)\.html$/, QUIZ = page === "quiz.html", HOME = page === "index.html" || page === "";
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -18,14 +22,21 @@
   function put(k, v, ss) { try { (ss ? sessionStorage : localStorage).setItem(k, JSON.stringify(v)); } catch (e) {} }
   function today() { var N = w.Nursin; if (N && N.dayKey) try { return N.dayKey(); } catch (e) {} try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut" }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
   function name() { var A = w.NursinFB, p = A && A.profile, n = (p && p.name) || (A && A.user && A.user.displayName) || ""; n = String(n).trim().split(/\s+/)[0] || ""; return n.slice(0, 20); }
-  function mood() { var m = get(MK); return m && m.d === today() ? m.m : ""; }
-  // ⏱️ continuous activity: a gap of 5+ minutes starts a new block (shared by all tabs of this browser)
-  function contMin(now) { var c = get(CK); return c && now - c.l < 5 * 60e3 ? Math.floor((c.l - c.s) / 60e3) : 0; }
+  function moodRec() { var m = get(MK); return m && m.d === today() ? m : null; }
+  function mood() { var m = moodRec(); return m ? m.m : ""; }
+  // ☕ the last break (study.js writes nursin_brk_v1; a break running right now counts as now)
+  function brkLeft(now) { var p = get(PK); return p && p.run && (p.m === "s" || p.m === "l") && +p.end > now ? Math.ceil((p.end - now) / 60e3) : 0; }
+  function restAt(now) { if (brkLeft(now)) return now; var b = get(BK); return b && +b.at > 0 ? Math.min(+b.at, now) : 0; }
+  function markRest(skip) { var now = Date.now(), b = get(BK); if (!b || !(+b.at >= now)) put(BK, skip ? { at: now, s: 1 } : { at: now }); }   // s: «مش هلّق» (no «رجعت مرتاح؟» after it)
+  // ⏱️ continuous activity: a gap of 5+ minutes starts a new block (shared by all tabs of this browser); a break also starts it over
+  function contMin(now, ra) { var c = get(CK); return c && now - c.l < 5 * 60e3 ? Math.max(0, Math.floor((c.l - Math.max(c.s, ra || 0)) / 60e3)) : 0; }
   function touch() { var now = Date.now(), c = get(CK); if (!c || now - c.l >= 5 * 60e3) c = { s: now, l: now, r: 0 }; else c.l = now; put(CK, c); }
   // pure: what Osman says now, from the data (tests call NursinCoach.pick)
   function pick(x) {
     var out = [];
-    if (x.mood === "tired" || x.cont >= 50) return { rest: true, txt: x.mood === "tired" ? T("ولا يهمّك 🌿 ارتاح ١٠ دقايق، اشرب مي، وبعدين منكمّل سوا.", "Pas de souci 🌿 repose-toi 10 minutes, bois de l'eau, puis on continue.") : T("صرلك " + x.cont + " دقيقة عم تدرس بلا وقفة 💪 ارتاح ١٠ دقايق 🌿", "Ça fait " + x.cont + " minutes que tu étudies sans pause 💪 repose-toi 10 minutes 🌿") };
+    if (x.brk > 0) return { brk: true, txt: T("☕ إنت ببريك هلّق (باقي " + x.brk + " د). ارتاح منيح وارجعلي 😉", "☕ Tu es en pause (encore " + x.brk + " min). Repose-toi bien et reviens-moi 😉") };
+    var tired = x.mood === "tired" && !x.rested;          // the day's «تعبان» asks for rest once — never again after a break / «مش هلّق»
+    if (tired || x.cont >= 50) return { rest: true, txt: tired ? T("ولا يهمّك 🌿 ارتاح ١٠ دقايق، اشرب مي، وبعدين منكمّل سوا.", "Pas de souci 🌿 repose-toi 10 minutes, bois de l'eau, puis on continue.") : T("صرلك " + x.cont + " دقيقة عم تدرس بلا وقفة 💪 ارتاح ١٠ دقايق 🌿", "Ça fait " + x.cont + " minutes que tu étudies sans pause 💪 repose-toi 10 minutes 🌿") };
     if (x.tn && x.tn.k === "todo") out.push({ txt: T("⚔️ دورك اليوم بالبطولة" + (x.tn.op ? " ضد " + x.tn.op : "") + ". يلا وريني شطارتك!", "⚔️ C'est ton tour au tournoi aujourd'hui" + (x.tn.op ? " contre " + x.tn.op : "") + ". Montre-moi ce que tu vaux !"), href: "index.html#duel", btn: T("⚔️ العب", "⚔️ Jouer") });
     if (x.due > 0) out.push({ txt: T("🔁 عندك " + x.due + " سؤال مراجعة مستحق اليوم. شو رأيك نراجع ١٠ دقايق؟", "🔁 Tu as " + x.due + " question(s) à réviser aujourd'hui. On révise 10 minutes ?"), href: "quiz.html?t=review", btn: T("🔁 راجع", "🔁 Réviser") });
     if (x.les) out.push({ txt: T("📖 درس اليوم: " + x.les.n + ". خمس دقايق قراءة بيكفّوا لنبلّش.", "📖 Leçon du jour : " + x.les.n + ". Cinq minutes de lecture suffisent pour commencer."), href: x.les.href || "index.html#wkles", btn: T("📖 اقرا", "📖 Lire") });
@@ -34,6 +45,7 @@
     if (x.red) out.push({ txt: T("🔴 «" + x.red.n + "» عم يروح منّك (" + x.red.score + "%). راجعو هلّق بالبطاقات 🃏", "🔴 « " + x.red.n + " » s'efface (" + x.red.score + " %). Révise-la maintenant avec les cartes 🃏"), href: fcHref(x.red), btn: T("🃏 راجعو", "🃏 Réviser") });
     var first = out[0] || { txt: x.min > 0 ? T("⏱️ درست اليوم " + x.min + " دقيقة. كمّل هيك 👏", "⏱️ Tu as étudié " + x.min + " min aujourd'hui. Continue comme ça 👏") : T("يلا نبلّش بشي خفيف: كويز ١٠ أسئلة 📝", "On commence léger : un quiz de 10 questions 📝"), href: x.min > 0 ? "" : "quiz.html", btn: x.min > 0 ? "" : T("📝 كويز", "📝 Quiz") };
     if (out.length && x.min > 0) first.sub = T("⏱️ درست اليوم " + x.min + " د", "⏱️ " + x.min + " min aujourd'hui");
+    if (x.back) { first = Object.assign({}, first); first.txt = T("رجعت مرتاح؟ يلا 💪 ", "Reposé ? Allez 💪 ") + first.txt; first.back = true; }
     return first;
   }
   function data() {
@@ -42,9 +54,11 @@
     var S = w.NursinSRS, due = S && S.count ? S.count() : 0, wk = get("nursin_weak_v1"), weak = wk && wk.items ? Object.keys(wk.items).length : 0;
     var tn = get("nursin_tn_v1"); if (!tn || tn.d !== today()) tn = null;
     var st = get("nursin_stact_v1"), min = st && st.d === today() ? Math.floor(Math.max(st.s || 0, st.r || 0) / 60) : 0;
-    var m = mood();
+    var mr = moodRec(), m = mr ? mr.m : "", now = Date.now(), ra = restAt(now), bl = brkLeft(now), br = get(BK), sk = !!(br && br.s && +br.at === ra);
+    // a «تعبان» saved before Oct 30 has no time: the loop he reported came from it, so it counts as already rested
+    var rested = m === "tired" && (!mr.t || (ra > 0 && ra >= mr.t));
     var R = w.NursinRet, wk1 = R && R.weakest ? R.weakest(1)[0] : null;
-    return { mood: m, cont: contMin(Date.now()), tn: tn, due: due, les: les, weak: weak, min: min, red: wk1 && wk1.score < 40 ? wk1 : null };
+    return { mood: m, rested: rested, brk: bl, back: !bl && !sk && ra > 0 && now - ra < 30 * 60e3, cont: contMin(now, ra), tn: tn, due: due, les: les, weak: weak, min: min, red: wk1 && wk1.score < 40 ? wk1 : null };
   }
   // a lesson's page with its 🃏 cards opening at once (assets/cards.js ?fc=)
   function fcHref(l) { var p = String(l.href).split("#"); return p[0] + "?fc=" + encodeURIComponent(l.id) + (p[1] ? "#" + p[1] : ""); }
@@ -57,8 +71,7 @@
       return '<li><a href="' + esc(fcHref(l)) + '">' + (R.dotHtml ? R.dotHtml(l.score) : "") + '<span>' + esc(t) + '</span><b dir="ltr">' + l.score + "%</b></a></li>";
     }).join("") + "</ul>";
   }
-  var restShown = get("nursin_rest_v1", true) || 0;
-  function restBtn() { return '<button class="btn sm on" type="button" data-osm-rest>' + T("☕ بلّش بريك ١٠ دقايق", "☕ Pause de 10 min") + "</button>"; }
+  function restBtn() { return '<button class="btn sm on" type="button" data-osm-rest>' + T("☕ بلّش بريك ١٠ دقايق", "☕ Pause de 10 min") + '</button> <button class="btn sm" type="button" data-osm-skip>' + T("⏭️ مش هلّق، كمّل", "⏭️ Pas maintenant, on continue") + "</button>"; }
   function bodyHtml(s, big) {
     var b = big ? "btn pri osmgo" : "btn sm on", lbl = function (x) { return big ? T("▶️ ابدأ", "▶️ Commencer") : x; };
     return '<p class="osmtx">' + (big ? '<small class="osmnow">' + esc(T("👉 هلّق اعمل هيدا:", "👉 Maintenant, fais ça :")) + "</small>" : "") + esc(s.txt) + (s.sub ? ' <small>' + esc(s.sub) + "</small>" : "") + "</p>" +
@@ -68,10 +81,11 @@
     el.addEventListener("click", function (e) {
       var t = e.target.closest ? e.target : e.target.parentElement;
       var m = t.closest("[data-mood]");
-      if (m) { put(MK, { d: today(), m: m.getAttribute("data-mood") }); draw(); return; }
-      if (t.closest("[data-osm-rest]")) { if (w.NursinStudy && w.NursinStudy.pomoBreak) w.NursinStudy.pomoBreak(10); el.querySelector(".osmbd").innerHTML = '<p class="osmtx">' + esc(T("⏱️ بلّش البريك. ارجعلي بعد ١٠ دقايق 😉", "⏱️ La pause a commencé. Reviens dans 10 minutes 😉")) + "</p>"; return; }
+      if (m) { put(MK, { d: today(), m: m.getAttribute("data-mood"), t: Date.now() }); draw(); return; }
+      if (t.closest("[data-osm-skip]")) { markRest(1); if (el === card) draw(); else el.remove(); return; }
+      if (t.closest("[data-osm-rest]")) { markRest(); if (w.NursinStudy && w.NursinStudy.pomoBreak) w.NursinStudy.pomoBreak(10); el.querySelector(".osmbd").innerHTML = '<p class="osmtx">' + esc(T("⏱️ بلّش البريك. ارجعلي بعد ١٠ دقايق 😉", "⏱️ La pause a commencé. Reviens dans 10 minutes 😉")) + "</p>"; return; }
       if (t.closest("[data-osm-duel]")) { var du = d.getElementById("duel"); if (du) { du.scrollIntoView({ behavior: w.NursinAnim && w.NursinAnim.reduced() ? "auto" : "smooth", block: "start" }); du.classList.add("pulse"); setTimeout(function () { du.classList.remove("pulse"); }, 1200); } return; }
-      if (t.closest("[data-osm-x]")) { el.remove(); if (HOME) put(SK, { d: today(), x: 1 }); }
+      if (t.closest("[data-osm-x]")) { if (el.querySelector("[data-osm-rest]")) markRest(); el.remove(); if (HOME) put(SK, { d: today(), x: 1 }); }
     });
   }
   var card = null;
@@ -83,13 +97,14 @@
     var ack = m === "good" ? T("حلو! 😊 ", "Super ! 😊 ") : m === "ok" ? T("ماشي، منمشيها خفيفة 🙂 ", "D'accord, on y va doucement 🙂 ") : "";
     // 🏠 Oct 29 11:43 PM: Osman is the FIRST thing on the home page — one clear «هلّق اعمل هيدا» + a big «ابدأ», then 1–2 fading lessons
     card.innerHTML = '<div class="osmhd"><span class="osa" aria-hidden="true">👨‍🏫</span><b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + "</b>" + (m ? '<span class="osmack">' + esc(ack || (m === "tired" ? "🌿" : "")) + "</span>" : "") + "</div>" +
-      (m ? "" : '<p class="osmtx osmhi"><b>' + esc(hi) + "</b></p>" + moods) + '<div class="osmbd">' + bodyHtml(s, true) + "</div>" + (s.rest ? "" : reminders(x.red && s.href === fcHref(x.red) ? x.red.id : ""));
+      (m ? "" : '<p class="osmtx osmhi"><b>' + esc(hi) + "</b></p>" + moods) + '<div class="osmbd">' + bodyHtml(s, true) + "</div>" + (s.rest || s.brk ? "" : reminders(x.red && s.href === fcHref(x.red) ? x.red.id : ""));
   }
   function homeCard() {
     var host = d.getElementById("osmhome"); if (!host) return;
     card = d.createElement("div"); card.className = "osmcard"; card.id = "osmcard"; card.setAttribute("data-nofr", "");
     host.appendChild(card); wire(card); draw();
-    ["nursin:goals", "nursin:srs", "nursin:tourney", "nursin:auth", "nursin:study", "nursin:ret"].forEach(function (ev) { d.addEventListener(ev, function () { if (card && card.isConnected && !card.querySelector("[data-osm-rest]") ) draw(); }); });
+    setInterval(function () { if (card && card.isConnected && brkLeft(Date.now())) draw(); }, 30000);   // ☕ the break's minutes left
+    ["nursin:goals", "nursin:srs", "nursin:tourney", "nursin:auth", "nursin:study", "nursin:ret", "nursin:rest"].forEach(function (ev) { d.addEventListener(ev, function () { if (card && card.isConnected && !card.querySelector("[data-osm-rest]") ) draw(); }); });
   }
   // a light bubble (lesson / quiz pages, comments after a quiz or a match)
   var bub = null, bubT = 0;
@@ -107,9 +122,12 @@
     var s = pick(data()); if (s.href && s.href.split("#")[0] === page && !s.rest) return;   // already where he would send you
     bubble(bodyHtml(s));
   }
+  // once per 50-minute block, counted from the last break (a break starts a new block, so the same block never asks twice)
   function restCheck() {
-    var m = contMin(Date.now()), blk = Math.floor(m / 50);
-    if (m >= 50 && blk > restShown && !d.querySelector(".duelq") && !d.documentElement.classList.contains("duelon")) { restShown = blk; put("nursin_rest_v1", blk, true); bubble(bodyHtml(pick({ cont: m })), 60000); }
+    var now = Date.now(), ra = restAt(now); if (brkLeft(now)) return;
+    var m = contMin(now, ra), blk = Math.floor(m / 50), rs = get("nursin_rest_v2", true);
+    if (!rs || rs.a !== ra) rs = { a: ra, b: 0 };
+    if (m >= 50 && blk > rs.b && !d.querySelector(".duelq") && !d.documentElement.classList.contains("duelon")) { rs.b = blk; put("nursin_rest_v2", rs, true); bubble(bodyHtml(pick({ cont: m })), 60000); }
   }
   // pure: the comment after a result (tests call NursinCoach.after)
   function after(kind, score, total) {
@@ -117,7 +135,7 @@
     if (kind === "duel") return p >= 80 ? T("⚔️ " + score + "/" + total + "! هيك بتربح البطولة 🔥", "⚔️ " + score + "/" + total + " ! C'est comme ça qu'on gagne le tournoi 🔥") : p >= 60 ? T("⚔️ " + score + "/" + total + "، منيح! خلّينا نشوف خصمك 😏", "⚔️ " + score + "/" + total + ", pas mal ! Voyons ton adversaire 😏") : T("⚔️ " + score + "/" + total + "… ولا يهمّك، راجع الأجوبة تحت وبكرا أحسن 💪", "⚔️ " + score + "/" + total + "… pas grave, revois les réponses et demain ça ira mieux 💪");
     return p >= 85 ? T("🔥 " + p + "%! برافو، الأستاذ عثمان فخور فيك", "🔥 " + p + " % ! Bravo, le professeur Osman est fier de toi") : p >= 60 ? T("👍 " + p + "%. منيح! راجع الغلطات تحت، وهني رح يرجعولك بالمراجعة 🔁", "👍 " + p + " %. Bien ! Revois les erreurs, elles reviendront en révision 🔁") : T("💪 " + p + "%. مش مشكلة، اقرا الدرس شي ١٠ دقايق وجرّب كمان مرّة", "💪 " + p + " %. Pas grave, relis le cours 10 minutes et réessaie");
   }
-  w.NursinCoach = { reminders: reminders, fcHref: fcHref, pick: pick, after: after, contMin: contMin };
+  w.NursinCoach = { reminders: reminders, fcHref: fcHref, pick: pick, after: after, contMin: contMin, data: data, restAt: restAt };
   if (!d || !d.addEventListener || !d.body) return;
   ["scroll", "touchstart", "click", "keydown"].forEach(function (ev) { w.addEventListener(ev, function () { touch(); }, { passive: true }); });
   touch();

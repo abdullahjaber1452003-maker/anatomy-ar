@@ -83,6 +83,11 @@
   });
 
   /* ---- ⏱️ pomodoro ---- */
+  // ☕ when a break last ran on this account (Oct 30 2026, Abdullah: Osman kept saying «بلّش ببريك ١٠ دقايق» after the break was over).
+  // assets/coach.js reads it: a rest suggestion is «done» once any break started / ended / was stopped after it — on this device or, through
+  // the synced timer doc, on another one (a finished break is pushed with dev "<id>~b", which fits the v16 rules: dev is a string ≤ 20).
+  var BK = "nursin_brk_v1";
+  function markBrk(at) { at = +at || Date.now(); if (at > Date.now() + 60e3) at = Date.now(); var b = get(BK); if (b && +b.at >= at) return; put(BK, { at: at }); try { if (d && d.dispatchEvent) d.dispatchEvent(new CustomEvent("nursin:rest")); } catch (e) {} }
   function pstate() { var p = get(PK); if (!p || !DUR[p.m]) p = { m: "f", run: false, left: DUR.f, r: 0 }; return p; }
   function left(p) { return Math.max(0, p.run ? p.end - Date.now() : (p.left == null ? DUR[p.m] : p.left)); }
   function mmss(ms) { var s = Math.ceil(ms / 1000), m = Math.floor(s / 60); s %= 60; return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s; }
@@ -94,22 +99,22 @@
       setTimeout(function () { try { c.close(); } catch (e) {} }, 1200);
     } catch (e) {}
   }
-  function pstart() { var p = pstate(); if (p.run) return; p.end = Date.now() + left(p); p.run = true; put(PK, p); pushTimer(p); render(); }
+  function pstart() { var p = pstate(); if (p.run) return; if (p.m !== "f") markBrk(); p.end = Date.now() + left(p); p.run = true; put(PK, p); pushTimer(p); render(); }
   function ppause() { var p = pstate(); if (!p.run) return; p.left = left(p); p.run = false; put(PK, p); pushTimer(p); render(); }
-  function preset() { var p = { m: "f", run: false, left: DUR.f, r: 0 }; put(PK, p); pushTimer(p); render(); }
+  function preset() { var was = pstate().m, p = { m: "f", run: false, left: DUR.f, r: 0 }; if (was !== "f") markBrk(); put(PK, p); pushTimer(p, was !== "f"); render(); }   // ↺ stopping a break counts as the break
   function pdone() {
     var p = pstate(); if (!p.run || Date.now() < p.end) return;
     var was = p.m, own = !syncOn || !p.dev || p.dev === DEV; beep();   // 🔄 another device's run: show the change, its owner gives the points
-    if (!own) { if (was === "f") { p.r = (p.r | 0) + 1; p.m = p.r >= SET ? "l" : "s"; if (p.r >= SET) p.r = 0; p.end = p.end + DUR[p.m]; } else { p.m = "f"; p.run = false; p.left = DUR.f; } put(PK, p); render(); return; }
+    if (!own) { markBrk(); if (was === "f") { p.r = (p.r | 0) + 1; p.m = p.r >= SET ? "l" : "s"; if (p.r >= SET) p.r = 0; p.end = p.end + DUR[p.m]; } else { p.m = "f"; p.run = false; p.left = DUR.f; } put(PK, p); render(); return; }
     if (was === "f") {
       p.r = (p.r | 0) + 1;
       var o = rec(), t = today(o), paid = t.p < POMO_CAP;
       var setDone = p.r >= SET; p.m = setDone ? "l" : "s"; if (setDone) p.r = 0;
-      p.run = true; p.end = Date.now() + DUR[p.m]; put(PK, p); pushTimer(p);
+      p.run = true; p.end = Date.now() + DUR[p.m]; put(PK, p); pushTimer(p); markBrk();
       activity("pomo", paid ? POMO_PTS : 0, "جولة بومودورو", d.getElementById("pomopts"));
       toast(setDone ? REWARD + "<br><small>خلّصت ٤ جولات! بريك طويل ١٥ دقيقة 🌴</small>" : "✅ <b>خلصت جولة تركيز!</b> " + (paid ? "+" + POMO_PTS + " نقاط · " : "") + "هلّق بريك ٥ دقايق ☕", 9000);
     } else {
-      p.m = "f"; p.run = false; p.left = DUR.f; put(PK, p); pushTimer(p);
+      p.m = "f"; p.run = false; p.left = DUR.f; markBrk(); put(PK, p); pushTimer(p, true);
       toast("⏰ <b>خلص البريك!</b> يلا جولة جديدة ▶️", 8000);
     }
     render();
@@ -124,17 +129,17 @@
   var syncOn = false, syncUid = "", unsub = null;
   function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db && A.fs.onSnapshot ? A : null; }
   function tref(A) { return A.fs.doc(A.db, "users", A.user.uid, "timer", "current"); }
-  function timerDoc(p, now) { return { m: p.m, run: !!p.run, end: p.run ? Math.round(p.end) : 0, left: p.run ? 0 : Math.round(left(p)), r: p.r | 0, dev: DEV, at: now }; }
+  function timerDoc(p, now, brk) { return { m: p.m, run: !!p.run, end: p.run ? Math.round(p.end) : 0, left: p.run ? 0 : Math.round(left(p)), r: p.r | 0, dev: DEV + (brk ? "~b" : ""), at: now }; }
   // pure: a remote doc → the local state it means (tests call NursinStudy.fromDoc)
   function fromDoc(x) {
     var m = DUR[x && x.m] ? x.m : "f", q = { m: m, run: !!(x && x.run), r: (x && x.r) | 0, at: +(x && x.at) || 0, dev: String((x && x.dev) || "") };
     if (q.run && +x.end > 0) q.end = +x.end; else { q.run = false; q.left = Math.max(0, Math.min(DUR[m], x && x.left != null ? +x.left : DUR[m])); }
     return q;
   }
-  function pushTimer(p) {
+  function pushTimer(p, brk) {
     var A = fbA(); if (!A || !syncOn) return;
     var now = Date.now(); p.at = now; p.dev = DEV; try { localStorage.setItem(PK, JSON.stringify(p)); } catch (e) {}
-    var o = timerDoc(p, now); o.t = A.fs.serverTimestamp();
+    var o = timerDoc(p, now, brk); o.t = A.fs.serverTimestamp();
     A.fs.setDoc(tref(A), o).catch(function (e) { if (e && e.code === "permission-denied") syncOn = false; });
   }
   function startSync() {
@@ -146,10 +151,12 @@
       if (s.metadata && s.metadata.hasPendingWrites) return;
       var x = s.data() || {};
       if ((+x.at || 0) <= (p.at || 0)) { if ((p.at || 0) > (+x.at || 0) && p.dev === DEV) pushTimer(p); return; }   // ours is newer (changed offline)
-      var q = fromDoc(x); try { localStorage.setItem(PK, JSON.stringify(q)); } catch (e) {} render();
+      var q = fromDoc(x); try { localStorage.setItem(PK, JSON.stringify(q)); } catch (e) {} brkSeen(x); render();
     }, function () { syncOn = false; });
   }
-  function pomoBreak(min) { var p = pstate(); p.m = "s"; p.run = true; p.end = Date.now() + (min || 5) * MIN; put(PK, p); pushTimer(p); render(); }
+  // pure-ish: a synced doc that shows a break (running / paused) or a break that just ended elsewhere → the break counts here too
+  function brkSeen(x) { if (!x) return false; if (x.m === "s" || x.m === "l") { markBrk(Math.min(Date.now(), Math.max(+x.at || 0, x.run ? Date.now() : 0))); return true; } if (/~b$/.test(String(x.dev || ""))) { markBrk(+x.at || Date.now()); return true; } return false; }
+  function pomoBreak(min) { markBrk(); var p = pstate(); p.m = "s"; p.run = true; p.end = Date.now() + (min || 5) * MIN; put(PK, p); pushTimer(p); render(); }
   function pomoHtml(mini) {
     var p = pstate(), t = today(rec()), dots = "";
     for (var i = 0; i < SET; i++) dots += '<i class="' + (i < (p.r | 0) ? "on" : "") + '"></i>';
@@ -256,7 +263,7 @@
     var sv = 0, siv = setInterval(function () { sv++; if (fbA()) { clearInterval(siv); startSync(); } else if (sv > 60) clearInterval(siv); }, 1000);
     d.addEventListener("nursin:auth", function () { setTimeout(startSync, 300); });
   }
-  w.NursinStudy = { pomoBreak: pomoBreak, fromDoc: fromDoc, timerDoc: timerDoc, hit: hit, today: today, streakNow: streakNow, activity: activity, toast: toast, REWARD: REWARD, POMO_PTS: POMO_PTS, POMO_CAP: POMO_CAP, GAME_CAP: GAME_CAP, DUR: DUR, rec: rec, render: render };
+  w.NursinStudy = { pomoBreak: pomoBreak, fromDoc: fromDoc, timerDoc: timerDoc, brkSeen: brkSeen, markBrk: markBrk, hit: hit, today: today, streakNow: streakNow, activity: activity, toast: toast, REWARD: REWARD, POMO_PTS: POMO_PTS, POMO_CAP: POMO_CAP, GAME_CAP: GAME_CAP, DUR: DUR, rec: rec, render: render };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
