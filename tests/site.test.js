@@ -2639,6 +2639,8 @@ test('🧠 Build 2 text tools: Arabic folding + French accents, and key-point co
   assert.ok(R.cover('Diabète (سكري)', 'عندو diabete').ok, 'accent-free French counts');
   const res = R.check([{ t: 'Œdème papillaire = HTIC' }, { t: 'ممنوع ponction lombaire' }], 'oedeme papillaire يعني HTIC');
   assert.deepEqual(Array.from(res, x => x.ok), [true, false]);
+  const pts = [{ t: '٣. بيتكوّن عليها جلطة (thrombus)' }, { t: 'Athérosclérose (السبب الأساسي)' }, { t: 'HTA (ضغط)' }, { t: 'Cholestérol عالي' }];
+  assert.deepEqual(Array.from(R.check(pts, 'بيصير thrombus والسبب athérosclérose'), x => x.ok), [true, true, false, false], 'naming the point\'s own French term counts');
 });
 test('🧑‍🏫 علِّم عثمان: same Osman endpoint as the tutor (no worker change), signed-in only, 10 a day, key points from the lesson, local checklist fallback, fr', () => {
   const r = read('assets/retain.js'), t = read('assets/tutor.js');
