@@ -1108,6 +1108,36 @@ details[open]>*:not(summary){animation:dopen .22s ease-out}details.dclosing>*:no
  .fci,.fcbar i,.gt .ge,.btn,.gi,.chip,html.pgout main#main{transition:none!important}.btn:active,.chip:active,.gt:active .ge{transform:none}
  ::view-transition-old(root),::view-transition-new(root){animation:none}}
 
+/* 🧠 Build 2 (Oct 30 2026, assets/retain.js + quiz.js): teach-back, blank page, patient case, weekly mixed exam, sure/guess, why.
+   While one of these sheets is open (or the mixed exam runs), html.rton keeps every ad unit of the page out of sight. */
+html.rton .adx,html.rton .ad-slot{display:none!important}
+.rtrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}.rtrow .btn{flex:1 1 140px;min-width:0;text-align:center;font-weight:700;border-color:var(--tint3);background:var(--tint)}
+.rtrow{padding-top:10px;border-top:1px dashed var(--line)}
+.rtosm{display:flex;gap:10px;align-items:flex-start;background:var(--tint);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 10px}.rtosm p{margin:0;line-height:1.6}
+.rtrep{background:var(--card)}.rtrb{flex:1;min-width:0}.rtrb p{margin:2px 0;line-height:1.6;overflow-wrap:anywhere}.rtrb .ok{color:#15803d;font-weight:700}.rtrb .no{color:var(--red);font-weight:700}.rtrb .fx{color:var(--blue);font-weight:700;margin-top:6px}.rtrb .li{padding-inline-start:10px}
+.rtta{display:block;width:100%;box-sizing:border-box;min-height:150px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;line-height:1.6;background:var(--card);color:var(--ink);resize:vertical}
+.rtta:focus{outline:none;border-color:var(--pri)}.rtshake{animation:rtshake .4s}@keyframes rtshake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.rtnote,.rtauto{color:var(--mut);margin:6px 0}
+.rtsaid{border-inline-start:3px solid var(--line);padding:2px 10px;margin:0 0 10px}.rtsaid small{color:var(--mut);font-weight:700}.rtsaid p{margin:2px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.rtfold{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0}.rtfold summary{cursor:pointer;font-weight:700}
+.rtck{list-style:none;margin:8px 0;padding:0}.rtck li{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:10px;margin:4px 0;line-height:1.5;overflow-wrap:anywhere}.rtck li.ok{background:rgba(22,163,74,.09)}.rtck li.no{background:rgba(185,28,28,.08)}.rtck li span:last-child{flex:1;min-width:0}
+.rtact{flex-wrap:wrap}.rtact .btn{flex:1 1 45%}
+.rttime{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-weight:800;font-size:22px;direction:ltr}.rttime .rtclk{min-width:58px;text-align:center}.rtbar{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden;display:block}.rtbar b{display:block;height:100%;background:var(--pri);transition:width .5s linear}
+.rttime.rtlow{color:var(--red)}.rttime.rtlow .rtbar b{background:var(--red)}
+.rcpt{background:var(--tint);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 10px}.rcpt p{margin:4px 0;line-height:1.65}.rcv{font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
+.rcq{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}.rcq .rcqq{margin:4px 0 6px;line-height:1.6;font-weight:700}
+.cfrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 4px;padding:8px 10px;border-radius:12px;background:var(--tint);border:1px dashed var(--pri)}.cfrow>span{flex:1 1 100%;font-weight:700}.cfrow .btn{flex:1 1 28%;min-width:0;font-weight:700}
+.opt.picked{border-color:var(--pri);box-shadow:0 0 0 2px var(--tint2)}
+.whyq{margin-top:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card)}.whyq .whyqq{font-weight:700;margin:2px 0 4px;line-height:1.6}.whyq .opt{font-size:15px;padding:9px 10px;margin:6px 0}.whyr{margin:4px 0 0;font-weight:700}
+.wxby{list-style:none;padding:0;margin:8px 0}.wxby li{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.wxby li>span:first-child{flex:0 1 46%;min-width:0;overflow-wrap:anywhere}.wxbar{flex:1;height:9px;border-radius:99px;background:var(--line);overflow:hidden;display:block}.wxbar b{display:block;height:100%}.wxbar b.g{background:#16a34a}.wxbar b.y{background:#eab308}.wxbar b.r{background:#dc2626}.wxn{font-weight:800;min-width:38px;text-align:center;direction:ltr}
+.wxready{display:inline-block;background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important;border-radius:999px;padding:1px 9px;font-size:13px;font-weight:800;vertical-align:middle}
+.wxtime{display:flex;align-items:center;gap:8px;margin:6px 0 10px;font-weight:700}.wxtime input{width:20px;height:20px}
+.wxclk{direction:ltr;display:inline-block}.wxclk.low{color:var(--red)}
+#wexhome[hidden],#wexhifz[hidden]{display:none}
+.wexcard{margin:12px 0}.wexcard h2{margin:0 0 6px}
+html[data-theme=night] .rtrb .ok{color:#86efac}html[data-theme=night] .rtrb .no{color:#fca5a5}html[data-theme=night] .rtrb .fx{color:#93c5fd}
+@media (prefers-reduced-motion:reduce){.rtshake{animation:none}.rtbar b{transition:none}}
+
 /* 🌙 «ليلي» — generated from the fixed light colours above (Oct 28): light backgrounds → dark surfaces, dark text → light, light borders → dark; hues kept. Ads untouched. */
 html[data-theme=night] h4{color:#f0c6b8}
 html[data-theme=night] .box.tip{background:#17202b;border-color:#30435a}

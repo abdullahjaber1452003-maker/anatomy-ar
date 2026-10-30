@@ -24,7 +24,7 @@
   }
   function loadQuiz() {
     if (w.QUIZ) return Promise.resolve();
-    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027x"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
+    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027y"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
   }
   // the lesson's own blocks on this page (all its parts), in order
   function blocks(l) {
@@ -49,7 +49,7 @@
       }
       out = tmp;
     }
-    return out.filter(function (el) { return !(el.classList && (el.classList.contains("adx") || el.classList.contains("lsk") || el.classList.contains("lqz") || el.classList.contains("ad-slot") || el.classList.contains("nlrow"))); });   // nlrow = 📝 (assets/notes.js)
+    return out.filter(function (el) { return !(el.classList && (el.classList.contains("adx") || el.classList.contains("lsk") || el.classList.contains("lqz") || el.classList.contains("ad-slot") || el.classList.contains("nlrow") || el.classList.contains("rtrow"))); });   // nlrow = 📝 (assets/notes.js), rtrow = 🧑‍🏫/📃 (assets/retain.js)
   }
   function clean(el) {                                  // a copy without media, scripts, buttons, ads or nested answers
     var c = el.cloneNode(true);
@@ -188,7 +188,8 @@
     if (b.hasAttribute("data-fc")) openCards(l); else openSummary(l);
   });
   d.addEventListener("keydown", function (e) { if (e.key === "Escape" && box) close(); });
-  w.NursinCards = { build: build, summary: summary, openCards: function (id) { var l = byId(id); if (l) openCards(l); }, openSummary: function (id) { var l = byId(id); if (l) openSummary(l); }, mount: mount, current: function () { return box ? cur : null; } };
+  w.NursinCards = { build: build, summary: summary, openCards: function (id) { var l = byId(id); if (l) openCards(l); }, openSummary: function (id) { var l = byId(id); if (l) openSummary(l); }, mount: mount, current: function () { return box ? cur : null; },
+    blocks: blocks, openDeck: function (id, deck) { var l = byId(id); if (l && deck && deck.length) openCards(l, deck); } };   // assets/retain.js: Henderson's key points + 📃/🧑‍🏫 missed points as cards
   function init() {
     mount(); setTimeout(mount, 1500);
     var m = (location.search.match(/[?&]fc=([\w%:-]+)/) || [])[1];
