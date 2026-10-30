@@ -187,6 +187,14 @@
   N.queue=N.queue||[];
   N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||'',weekKey:me.weekKey||'',weekPoints:me.weekPoints|0}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
   N.avatar=function(photo,name,cls){return photo?'<img class="'+(cls||'av')+'" src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" loading="lazy">':'<span class="'+(cls||'av')+' avx" aria-hidden="true">'+esc(Array.from(name||'?')[0])+'</span>';};
+  // 🧑‍⚕️ Oct 31 2026: the picture this student chose on this device (assets/home.js picker): a cartoon avatar (assets/avatars/a01–a12)
+  // or his own photo (a small data URL); else his Google photo. Used by the header badge, 👤 أنا and the home page.
+  N.AVRE=/^a(0[1-9]|1[0-2])$/;
+  N.myPhoto=function(){var a=null;try{a=JSON.parse(localStorage.getItem('nursin_avatar_v1')||'null');}catch(e){}
+    if(a&&N.AVRE.test(a.k||''))return 'assets/avatars/'+a.k+'.webp';
+    if(a&&a.k==='up'&&/^data:image\/(webp|jpeg|png);base64,/.test(a.img||''))return a.img;
+    return (N.me&&N.me.photo)||'';};
+  document.addEventListener('nursin:avatar',function(){N.badge();});
   var slot=null;
   N.badge=function(){
     if(!slot)return;var me=N.me;
@@ -195,7 +203,7 @@
     slot.className='acct in';
     slot.setAttribute('aria-label','ليفلك '+g.level+' · '+g.points+' نقطة'+(streakNow(me)?' · سلسلة '+streakNow(me)+' يوم':'')+' — أصحابي');
     var sk=streakNow(me);
-    slot.innerHTML=N.avatar(me.photo,me.name,'av')+'<span class="lv"><b>Lv '+g.level+(sk?' <span class="stk">🔥'+sk+'</span>':'')+'</b><i class="lvbar"><i style="width:'+g.pct+'%"></i></i></span>';
+    slot.innerHTML=N.avatar(N.myPhoto(),me.name,'av')+'<span class="lv"><b>Lv '+g.level+(sk?' <span class="stk">🔥'+sk+'</span>':'')+'</b><i class="lvbar"><i style="width:'+g.pct+'%"></i></i></span>';
   };
   var bar=document.querySelector('.topbar .bar');
   if(bar){slot=document.createElement('a');slot.href='friends.html';var mb=bar.querySelector('.menu-btn');bar.insertBefore(slot,mb||null);N.badge();}

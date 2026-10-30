@@ -71,12 +71,14 @@ async function ensureProfile(u) {
   const d = snap.exists() ? snap.data() : {};
   const code = d.friendCode || await claimCode(u.uid);
   const points = N.addPoints(d.points || 0, 0);
-  const prof = { name: N.cleanName(u.displayName), photo: String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
+  // 🧑‍⚕️ Oct 31 2026: a cartoon avatar chosen on the home page (users/{uid}.av = "a01"…"a12") is the photo friends / ranking / classes see
+  const av = /^a(0[1-9]|1[0-2])$/.test(d.av || "") ? d.av : "";
+  const prof = { name: N.cleanName(u.displayName), photo: av ? "https://nursin.store/assets/avatars/" + av + ".webp" : String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
   if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
     await setDoc(ref, { ...prof, updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
   if (!snap.exists() || LOGIN_PING === "all") pingAdmin(u, !snap.exists());
   else catchupPing(u, d);
-  profile = { uid: u.uid, ...prof, powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
+  profile = { uid: u.uid, ...prof, av: typeof d.av === "string" ? d.av : "", powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
 }
 

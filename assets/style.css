@@ -271,6 +271,9 @@ html.jsnav .menu-btn{display:inline-grid;place-items:center;flex:0 0 auto}
  .gsheet{position:fixed;z-index:48;background:var(--card);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.2);padding:6px 10px 8px;max-height:75vh;overflow:auto}
 }
 @keyframes gup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+/* 👆 edge swipe «back» indicator (assets/hifz.js, Oct 31 2026) */
+.edgeback{position:fixed;right:4px;top:50%;z-index:70;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:900 24px/1 system-ui,sans-serif;color:#fff;background:rgba(15,118,110,.78);box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .15s}
+.edgeback.ltr{right:auto;left:4px}
 .gscrim{position:fixed;inset:0;z-index:47;background:rgba(15,23,42,.28)}
 @media(min-width:860px){.gscrim{background:transparent}}
 .gsh{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;color:var(--ink)}

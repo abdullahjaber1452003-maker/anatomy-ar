@@ -16,8 +16,8 @@
       return;
     }
     var g = N.progress ? N.progress(me.points | 0) : { level: 1, points: me.points | 0, pct: 0, left: 0 };
-    el.innerHTML = '<div class="meh">' + (N.avatar ? N.avatar(me.photo, me.name, "av meav") : "") + '<div><h2>' + esc(me.name || T("أنا", "Moi")) + '</h2><p class="small"><b>Lv ' + g.level + "</b> · " + esc(T(g.points + " نقطة", g.points + " points")) + (g.left ? " · " + esc(T("باقي " + g.left + " للّيفل الجاي", "encore " + g.left + " pour le niveau suivant")) : "") + "</p>" +
-      '<i class="lvbar mebar"><i style="width:' + (g.pct | 0) + '%"></i></i></div></div><p><a class="btn" href="friends.html">' + esc(T("🏆 الليفل والترتيب", "🏆 Niveau et classement")) + '</a> <a class="btn" href="index.html#duel">' + esc(T("🎁 جوائز البطولة", "🎁 Prix du tournoi")) + "</a></p>";
+    el.innerHTML = '<div class="meh">' + (N.avatar ? N.avatar(N.myPhoto ? N.myPhoto() : me.photo, me.name, "av meav") : "") + '<div><h2>' + esc(me.name || T("أنا", "Moi")) + '</h2><p class="small"><b>Lv ' + g.level + "</b> · " + esc(T(g.points + " نقطة", g.points + " points")) + (g.left ? " · " + esc(T("باقي " + g.left + " للّيفل الجاي", "encore " + g.left + " pour le niveau suivant")) : "") + "</p>" +
+      '<i class="lvbar mebar"><i style="width:' + (g.pct | 0) + '%"></i></i></div></div><p><a class="btn" href="friends.html">' + esc(T("🏆 الليفل والترتيب", "🏆 Niveau et classement")) + '</a> <a class="btn" href="index.html#duel">' + esc(T("🎁 جوائز البطولة", "🎁 Prix du tournoi")) + '</a> <a class="btn" href="index.html#avatar">' + esc(T("🧑‍⚕️ غيّر صورتك", "🧑‍⚕️ Changer d'avatar")) + "</a></p>";
   }
   function push() {
     var el = d.getElementById("mepush"), G = w.NursinGoals; if (!el) return;

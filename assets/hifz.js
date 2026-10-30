@@ -183,7 +183,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261027y", jobs = [];
+    var v = "?v=20261027z", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });
@@ -319,8 +319,50 @@
   w.NursinSearch = { open: openSearch, close: closeSearch, search: search, norm: norm };
   w.NursinAnim = { out: out, reduced: reduced };
 
+  /* 👆 Oct 31 2026 (Abdullah 12:45 AM: «إيماءات التنقل» like iOS): on inner pages a swipe from the RIGHT edge (RTL «back»; the left edge in
+     🇫🇷 LTR) goes back — history.back() when the last page was this site, else the home page. Starts only within 22 px of the edge,
+     needs a mostly horizontal 80 px move, never over a sideways-scrolling box, an open sheet / flashcards / 3D, and not on the home,
+     3D, games or live pages (their own touch and swipes). Nothing changes for vertical scrolling. */
+  var EDGE_SKIP = /^(index|3d|games|live)\.html$/;
+  function edgeBack() {
+    if (EDGE_SKIP.test(page) || !("ontouchstart" in w)) return;
+    var s = null, ind = null;
+    function busy(t) {
+      var h = d.documentElement;
+      if (h.classList.contains("fcon") || h.classList.contains("rton") || h.classList.contains("g3on") || d.querySelector(".gsheet,.srchbox,.obx,.thsheet,.hzsheet,dialog[open]")) return true;
+      for (var el = t; el && el !== d.body && el.nodeType === 1; el = el.parentElement) {
+        if (el.scrollWidth > el.clientWidth + 2) { var ox = getComputedStyle(el).overflowX; if (ox === "auto" || ox === "scroll") return true; }
+        if (/^(INPUT|TEXTAREA|SELECT|MODEL-VIEWER|CANVAS)$/.test(el.tagName)) return true;
+      }
+      return false;
+    }
+    d.addEventListener("touchstart", function (e) {
+      s = null; if (e.touches.length !== 1) return;
+      var t = e.touches[0], rtl = (d.documentElement.getAttribute("dir") || "rtl") !== "ltr", W = w.innerWidth;
+      if (rtl ? t.clientX < W - 22 : t.clientX > 22) return;
+      if (busy(e.target)) return;
+      s = { x: t.clientX, y: t.clientY, t: Date.now(), rtl: rtl, dx: 0 };
+    }, { passive: true });
+    d.addEventListener("touchmove", function (e) {
+      if (!s) return; var t = e.touches[0], dx = (t.clientX - s.x) * (s.rtl ? -1 : 1), dy = t.clientY - s.y;
+      if (Math.abs(dy) > 40 && Math.abs(dy) > dx) { s = null; if (ind) ind.style.opacity = "0"; return; }
+      s.dx = dx;
+      if (dx > 12 && !reduced()) {
+        if (!ind) { ind = d.createElement("div"); ind.className = "edgeback"; ind.setAttribute("aria-hidden", "true"); ind.textContent = s.rtl ? "›" : "‹"; d.body.appendChild(ind); }
+        ind.classList.toggle("ltr", !s.rtl); ind.style.opacity = String(Math.min(1, dx / 80)); ind.style.transform = "translateY(-50%) translateX(" + (s.rtl ? -1 : 1) * Math.min(dx, 90) * 0.5 + "px)"; ind.style.top = s.y + "px";
+      }
+    }, { passive: true });
+    d.addEventListener("touchend", function () {
+      if (ind) ind.style.opacity = "0";
+      if (!s) return; var ok = s.dx >= 80 && Date.now() - s.t < 1500; s = null; if (!ok) return;
+      var same = false; try { same = !!d.referrer && new URL(d.referrer).origin === location.origin; } catch (e) {}
+      if (same && w.history.length > 1) w.history.back(); else location.href = "index.html";
+    }, { passive: true });
+    d.addEventListener("touchcancel", function () { s = null; if (ind) ind.style.opacity = "0"; }, { passive: true });
+  }
   function init() {
     try { backfill(); } catch (e) {}
+    try { edgeBack(); } catch (e) {}
     headerButton(); paintDots(); watchRead();
     w.addEventListener("click", leave); d.addEventListener("click", detailsClose);   // window: after every page script had its say
     d.addEventListener("nursin:ret", function () { paintDots(); homePrio(); mapPage(); });
