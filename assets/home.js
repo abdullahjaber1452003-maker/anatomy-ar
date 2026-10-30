@@ -386,7 +386,7 @@
   }
   var root = null;
   function headHtml() {
-    var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = bell && bell.querySelector(".dot") && getComputedStyle(bell.querySelector(".dot")).display !== "none";
+    var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));       // assets/announce.js: «on» = unread
     return '<div class="hzhd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + avHtml("hzavi") + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
       '<div class="t"><small>' + greet(hourB()) + "</small><b>" + (nm ? esc(nm) + " 👋" : T("يا بطل 👋", "champion 👋")) + "</b></div>" +
       '<a class="hzpill glass" href="me.html" aria-label="' + T("السلسلة: ", "Série : ") + streak() + T(" يوم", " jour(s)") + '"><span aria-hidden="true">🔥</span>' + streak() + "</a>" +
