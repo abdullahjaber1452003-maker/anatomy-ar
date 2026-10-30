@@ -577,6 +577,48 @@ html[data-theme=night] .osmbub{background:#1f2937;color:#e5e7eb}html[data-theme=
 /* 🔎 search + 🃏 cards sheets (Oct 29 batch 1; fixed elements stay above the ad rules) */
 .srch{position:fixed;inset:0;z-index:90;background:rgba(15,23,42,.42);display:flex;justify-content:center;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px 10px;animation:fadein .18s ease-out}
 .fcwrap{position:fixed;inset:0;z-index:95;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease-out}
+/* 📒 ملاحظاتي (Oct 30 2026, assets/notes.js): «📝 ملاحظة» buttons, the note sheet (a .fcwrap like 🃏), notes.html. No ad near any of it. */
+.nbtn{display:inline-flex;align-items:center;gap:4px;position:relative;border:1px solid var(--tint3,#cbd5e1);background:var(--card,#fff);color:var(--ink,#0f172a);border-radius:999px;padding:3px 10px;min-height:32px;font:inherit;font-size:13px;font-weight:700;line-height:1.2;cursor:pointer;box-shadow:none;transition:background .18s,border-color .18s,transform .15s}
+.nbtn:hover{border-color:var(--pri,#0f766e)}.nbtn:active{transform:scale(.96)}
+.nbtn:focus-visible{outline:3px solid var(--pri,#0f766e);outline-offset:2px}
+.nbtn .ndot{display:none;width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 2px var(--card,#fff);position:absolute;top:-2px;inset-inline-end:-2px}
+.nbtn.has{background:#fffbeb;border-color:#f59e0b;color:#92400e}.nbtn.has .ndot{display:block;animation:npop .22s ease-out}
+.nbtn[hidden]{display:none}
+.nb-q{float:left;margin:0 10px 6px 0}html[dir="ltr"] .nb-q{float:right;margin:0 0 6px 10px}
+.nb-q+.qq,.nb-q+.dqq{overflow-wrap:anywhere}
+.nlrow{margin:4px 0 10px;clear:both}
+.nb-c{flex:none;min-height:34px}
+.nwrap{z-index:9500}
+.nbox textarea.nta{display:block;width:100%;box-sizing:border-box;min-height:132px;max-height:46vh;resize:vertical;border:1.5px solid var(--tint3,#cbd5e1);border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;line-height:1.55;background:var(--card,#fff);color:var(--ink,#0f172a)}
+.nbox textarea.nta:focus{outline:none;border-color:var(--pri,#0f766e);box-shadow:0 0 0 3px rgba(15,118,110,.18)}
+.nsrc{margin:0 0 10px;padding:8px 10px;border-radius:12px;background:var(--tint,#f0fdfa);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.nsrc .nwhere{display:block;font-weight:800;color:var(--pri,#0f766e)}.nsrc .nref{display:block;color:var(--ink,#0f172a);max-height:4.5em;overflow:hidden}
+.nmeta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 2px;font-size:12px;color:var(--mut,#64748b)}.ncnt.nfull{color:#b91c1c;font-weight:700}
+.nout{margin:8px 0;padding:8px 10px;border-radius:12px;background:#fff7ed;border:1px dashed #fdba74;font-size:13px;line-height:1.5}
+.nout .btn{margin-inline-start:6px}
+.nact{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}.nact .ndel{margin-inline-end:auto}
+.npick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.npick label{flex:1 1 140px;display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;min-width:0}
+.npick select{font:inherit;font-size:15px;padding:8px;border-radius:10px;border:1.5px solid var(--tint3,#cbd5e1);background:var(--card,#fff);color:var(--ink,#0f172a);max-width:100%}
+.ntoast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9600;max-width:calc(100vw - 32px);background:#0f172a;color:#fff;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:ntin .2s ease-out;transition:opacity .18s}
+.ntoast.nhide{opacity:0}.ntoast[hidden]{display:none}
+@keyframes ntin{from{opacity:0;transform:translate(-50%,10px)}}@keyframes npop{from{transform:scale(0)}}
+/* notes.html */
+.notesapp .nhead h1{margin:6px 0 4px}
+.ntools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+.nsearch{flex:1 1 220px;min-width:0}.nsearch input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--tint3,#cbd5e1);background:var(--card,#fff);color:var(--ink,#0f172a)}
+.nsearch input:focus{outline:none;border-color:var(--pri,#0f766e);box-shadow:0 0 0 3px rgba(15,118,110,.18)}
+.nstat{margin:6px 2px}
+.ngrp{margin:16px 0 6px}.ngrp h2{margin:0 0 6px;font-size:18px}.ngrp h2 small{color:var(--mut,#64748b);font-weight:600}
+.nles3{margin:12px 2px 6px;font-size:15px;color:var(--pri,#0f766e);overflow-wrap:anywhere}
+.nitem{background:var(--card,#fff);border-radius:14px;box-shadow:var(--sh,0 1px 4px rgba(0,0,0,.08));padding:10px 12px;margin:0 0 10px;animation:gup .22s ease-out}
+.nitem .nsrc{margin-bottom:6px}.nitem .nsrc a{color:var(--ink,#0f172a);text-decoration:none}.nitem .nsrc a:hover{text-decoration:underline}
+.ntype{display:inline-block;font-size:11px;font-weight:800;background:var(--card,#fff);border-radius:999px;padding:1px 8px;margin-inline-end:4px;color:var(--pri,#0f766e)}
+.ntext{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 6px;line-height:1.6}
+.nwhen{color:var(--mut,#64748b);margin:0 0 6px}
+.nact2{display:flex;gap:6px;margin:0;flex-wrap:wrap}
+.nempty{text-align:center}.nempty .btn{text-decoration:none}.nempty .nbig{font-size:40px;margin:4px 0}
+.nlink{margin:4px 0 10px}
+@media (prefers-reduced-motion:reduce){.nbtn,.nbtn.has .ndot,.nwrap,.nwrap .fcbox,.ntoast,.nitem{animation:none!important;transition:none!important}}
 .adx{display:none;margin:14px auto;text-align:center;max-width:100%;overflow:hidden}
 .adx.adx-on{display:block}
 .adx.adx-off{display:none}

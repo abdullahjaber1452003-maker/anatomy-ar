@@ -32,7 +32,8 @@
     var h = b("data-theme-open", "🎨", T("المظهر", "Apparence"), T("كلاسيك، ليلي، وردي…", "Classique, nuit, rose…")) +
       b("data-me-lang", "🌐", T("لغة الدراسة", "Langue d'étude"), T("فرنسي وعربي، أو فرنسي بس", "Français + arabe, ou français seulement")) +
       r("friends.html#fpush", "📳", T("إشعارات هالجهاز", "Notifications de cet appareil"), T("رسائل أصحابك + الدروس الجديدة", "Messages de tes amis + nouvelles leçons")) +
-      r("hifzi.html", "🗺️", T("حفظي", "Ma mémoire"), T("الحفظ، نقاط ضعفك والأخطاء الشائعة", "Mémoire, points faibles et erreurs fréquentes"));
+      r("hifzi.html", "🗺️", T("حفظي", "Ma mémoire"), T("الحفظ، نقاط ضعفك والأخطاء الشائعة", "Mémoire, points faibles et erreurs fréquentes")) +
+      r("notes.html", "📒", T("ملاحظاتي", "Mes notes"), T("كل ملاحظاتك مرتّبة حسب المادة والدرس", "Toutes tes notes, rangées par matière et leçon"));
     if (P && P.installable && P.installable()) h += b("data-me-inst", "📲", T("حمّل التطبيق", "Installer l'appli"), T("Nursin متل التطبيق عالتلفون", "Nursin comme une appli sur ton téléphone"));
     h += r("about.html", "ℹ️", T("من نحن", "À propos"), "") + r("privacy.html", "🔒", T("سياسة الخصوصية", "Confidentialité"), "") + r("credits.html", "📚", T("المصادر والتراخيص", "Sources et licences"), "");
     if (owner()) h += r("admin.html", "⚙️", T("لوحة الأدمن", "Administration"), "");

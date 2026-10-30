@@ -213,5 +213,5 @@
   var page=(location.pathname.split('/').pop()||'index.html');
   var me=document.currentScript&&document.currentScript.src,v=(me&&me.split('?')[1])||'',fbOn=false;
   N.loadFB=function(){if(fbOn)return;fbOn=true;var s=document.createElement('script');s.type='module';s.src='assets/fb.js'+(v?'?'+v:'');document.head.appendChild(s);};   // also used by the welcome card (assets/nav.js)
-  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'||page==='admin.html'||page==='chat.html')N.loadFB();
+  if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'||page==='admin.html'||page==='chat.html'||page==='notes.html')N.loadFB();   // 📒 notes.html: sign-in button + account notes
 })(typeof window!=='undefined'?window:this);

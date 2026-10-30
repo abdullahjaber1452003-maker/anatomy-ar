@@ -10,6 +10,7 @@
     if(sel==='all')return QUIZ.slice();
     if(sel==='weak')return W?W.questions():[];
     if(sel==='review')return S?S.questions():[];
+    if(sel==='note')return state&&state.sel==='note'?state.qs.slice():[];   // 📒 «سؤال من ملاحظاتي» (quiz.html?qid=…, assets/notes.js)
     if(QGROUPS[sel])return QUIZ.filter(function(q){return QGROUPS[sel].indexOf(q.t)>=0&&(!les||q.l===les);});
     return QUIZ.filter(function(q){return q.t===sel;});
   }
@@ -58,11 +59,11 @@
     render();
     if(scroll)root.scrollIntoView({block:'start'});
   }
-  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?'🔁 مراجعة اليوم':sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
+  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?'🔁 مراجعة اليوم':sel==='note'?'📒 سؤال من ملاحظاتي':sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
   function render(){
     var s=state,q=s.qs[s.i];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
-    h+='<div class="qcard"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p>';
+    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
     q.o.forEach(function(o,k){h+='<button class="opt" data-k="'+k+'"><span class="l" dir="ltr">'+L[k]+'</span><span>'+o+'</span></button>';});
     h+=p50(s)+'<div id="fb" aria-live="polite"></div><div class="qnav"><span></span><button class="btn pri" id="next" hidden>التالي ←</button></div></div>';
     root.innerHTML=h;
@@ -120,7 +121,7 @@
     if(s.sel==='review'&&S){var rl=S.count();h+='<p>🔁 '+(rl?'باقي '+rl+' للمراجعة اليوم.':'خلصت مراجعة اليوم 🔥')+'</p>';}
     h+=s.cq?'<div id="cqres" class="cqres" aria-live="polite"><p class="small">⏳ عم نحفظ علامتك ونجيب علامات الصف…</p></div><p><a class="btn pri" href="index.html">🏠 رجوع للرئيسية</a></p></div>':s.exam?'<p><a class="btn pri" href="exams.html">📅 رجوع للامتحانات</a></p></div>':s.challenge?'<p><a class="btn pri" href="friends.html">⚔️ رجوع لتحدّياتي</a></p></div>':'<p><button class="btn pri" id="again">جرّب مرّة تانية</button>'+(W&&W.count()&&s.sel!=='weak'?' <button class="btn" id="toweak" type="button">🎯 كويز من أخطائك</button>':'')+'</p></div>';
     if(!s.cq)h+='<div class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>'; // result-screen banner (below the score card, never during questions)
-    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':'cardio.html');h+='<div class="qcard"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+page+'#'+q.t+'">اقرا الدرس ←</a></p></div>';});}
+    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+page+'#'+q.t+'">اقرا الدرس ←</a></p></div>';});}
     root.innerHTML=h;
     try{if(s.sel==='weak'&&W&&W.ran)W.ran();}catch(e){}
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:s.les||null,challenge:s.challenge||null,exam:s.exam||null,cq:s.cq||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}
@@ -157,6 +158,9 @@
     var N=window.Nursin;
     if(!N||!N.me)window.NursinQuiz.message('<p class="qq">⚔️ صاحبك تحدّاك!</p><p><b><a href="friends.html">سجّل دخول بغوغل بصفحة أصحابي</a></b>، والتحدّي بيستنّاك هونيك تحت «تحدّيات إلك».</p>');
     else{root.innerHTML='<div class="qcard"><p>⏳ عم نحمّل التحدّي…</p></div>';chWait=setTimeout(function(){window.NursinQuiz.message('⚠️ ما قدرنا نحمّل التحدّي هلّق. تأكّد من الإنترنت وجرّب كمان مرّة، أو <a href="friends.html">روح لأصحابي</a>.');},20000);}
+  }
+  else if(p.qid&&QUIZ.some(function(q){return q.id===p.qid;})){   // 📒 back from «ملاحظاتي»: that one question
+    state={sel:'note',les:'',qs:QUIZ.filter(function(q){return q.id===p.qid;}),i:0,score:0,wrong:[],grad:0};chips('');render();root.scrollIntoView({block:'start'});
   }
   else start(p.t||'all',p.n?+p.n:(p.t?0:20),!!p.t||location.hash==='#quiz',p.l||'');
 })();

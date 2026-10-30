@@ -24,7 +24,7 @@
   }
   function loadQuiz() {
     if (w.QUIZ) return Promise.resolve();
-    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027r"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
+    return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/quiz-data.js?v=20261027s"; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); });
   }
   // the lesson's own blocks on this page (all its parts), in order
   function blocks(l) {
@@ -37,7 +37,7 @@
       var tmp = []; while (p && (p = p.previousElementSibling)) { if (p.classList && (p.classList.contains("lsk") || p.classList.contains("adx"))) continue; tmp.unshift(p); if (p.tagName === "H3") break; }
       out = tmp;
     }
-    return out.filter(function (el) { return !(el.classList && (el.classList.contains("adx") || el.classList.contains("lsk") || el.classList.contains("lqz") || el.classList.contains("ad-slot"))); });
+    return out.filter(function (el) { return !(el.classList && (el.classList.contains("adx") || el.classList.contains("lsk") || el.classList.contains("lqz") || el.classList.contains("ad-slot") || el.classList.contains("nlrow"))); });   // nlrow = 📝 (assets/notes.js)
   }
   function clean(el) {                                  // a copy without media, scripts, buttons, ads or nested answers
     var c = el.cloneNode(true);
@@ -74,7 +74,7 @@
     var all = []; while (cards.length || hc.length) { if (cards.length) all.push(cards.shift()); if (cards.length) all.push(cards.shift()); if (hc.length) all.push(hc.shift()); }
     return all;
   }
-  var box = null;
+  var box = null, cur = null;                          // cur = what is on screen, for «📝 ملاحظة» in the header (assets/notes.js)
   function close() { if (!box) return; var b = box; box = null; d.documentElement.classList.remove("fcon"); var A = w.NursinAnim; if (A) A.out(b, function () { b.remove(); }); else b.remove(); }
   function shell(cls, title) {
     close();
@@ -87,10 +87,10 @@
   function openCards(l, only) {
     loadQuiz().then(function () {
       var deck = only || build(l), i = 0, ok = 0, wrong = [], id = lid(l);
-      var bd = shell("fcards", "🃏 " + T("بطاقات: ", "Cartes : ") + l.n), n = box.querySelector(".fcn");
+      var bd = shell("fcards", "🃏 " + T("بطاقات: ", "Cartes : ") + l.n), n = box.querySelector(".fcn"); cur = { kind: "cards", l: l, card: null };
       if (!deck.length) { bd.innerHTML = '<p class="small">' + esc(T("ما في محتوى كافي لبطاقات بهالدرس بعد.", "Pas encore assez de contenu pour des cartes dans cette leçon.")) + "</p>"; return; }
       function show(dir) {
-        var c = deck[i]; n.textContent = (i + 1) + " / " + deck.length;
+        var c = deck[i]; n.textContent = (i + 1) + " / " + deck.length; cur = { kind: "cards", l: l, card: c };
         bd.innerHTML = '<div class="fcbar" aria-hidden="true"><i style="width:' + Math.round(100 * i / deck.length) + '%"></i></div>' +
           '<button class="fc' + (dir ? " fcin" : "") + '" type="button" aria-label="' + esc(T("اقلب البطاقة", "Retourner la carte")) + '"><span class="fci"><span class="fcf fcfront"><small>' + esc(T("سؤال", "Question")) + '</small><span class="fct">' + esc(c.front) + '</span><em>' + esc(T("👆 كبوس لتقلبها", "👆 Touche pour retourner")) + '</em></span><span class="fcf fcback"><small>' + esc(T("الجواب", "Réponse")) + '</small><span class="fct">' + c.back + "</span></span></span></button>" +
           '<div class="fcact" hidden><button class="btn fcno" type="button">' + esc(T("ما عرفتها ❌", "Je ne savais pas ❌")) + '</button><button class="btn pri fcok" type="button">' + esc(T("عرفتها ✅", "Je savais ✅")) + "</button></div>";
@@ -104,7 +104,7 @@
         try { card.focus({ preventScroll: true }); } catch (x) {}
       }
       function end() {
-        var RR = R(), s = RR ? RR.score(id) : null;
+        var RR = R(), s = RR ? RR.score(id) : null; cur = { kind: "cards", l: l, card: null };
         n.textContent = "";
         bd.innerHTML = '<div class="fcend"><p class="fcbig">' + (ok === deck.length ? "🎉" : ok >= deck.length / 2 ? "👏" : "💪") + "</p><p><b>" + esc(T("عرفت " + ok + " من " + deck.length, "Tu savais " + ok + " sur " + deck.length)) + "</b></p>" +
           (s != null ? '<p class="small">' + (RR.dotHtml ? RR.dotHtml(s) : "") + " " + esc(T("حفظك لهالدرس هلّق: ", "Ta mémoire de cette leçon : ") + Math.round(s) + "%") + "</p>" : "") +
@@ -149,7 +149,7 @@
     return out.filter(function (s) { return s.items.length; });
   }
   function openSummary(l) {
-    var bd = shell("fsum", "📄 " + T("الخلاصة بصفحة: ", "Résumé en une page : ") + l.n), secs = summary(l);
+    var bd = shell("fsum", "📄 " + T("الخلاصة بصفحة: ", "Résumé en une page : ") + l.n), secs = summary(l); cur = { kind: "sum", l: l };
     box.querySelector(".fcn").innerHTML = '<button class="btn sm fcprint" type="button">' + esc(T("🖨️ اطبع", "🖨️ Imprimer")) + "</button>";
     bd.innerHTML = secs.length ? '<div class="sumdoc"><h2>' + esc(l.n) + "</h2>" + secs.map(function (s) { return (s.h ? "<h3>" + esc(s.h) + "</h3>" : "") + s.items.join(""); }).join("") +
       '<p class="small sumnote">' + esc(T("الخلاصة مأخوذة من نص الدرس نفسو. للتفاصيل ارجع عالدرس.", "Résumé tiré du texte de la leçon. Pour les détails, retourne à la leçon.")) + "</p></div>"
@@ -176,11 +176,13 @@
     if (b.hasAttribute("data-fc")) openCards(l); else openSummary(l);
   });
   d.addEventListener("keydown", function (e) { if (e.key === "Escape" && box) close(); });
-  w.NursinCards = { build: build, summary: summary, openCards: function (id) { var l = byId(id); if (l) openCards(l); }, openSummary: function (id) { var l = byId(id); if (l) openSummary(l); }, mount: mount };
+  w.NursinCards = { build: build, summary: summary, openCards: function (id) { var l = byId(id); if (l) openCards(l); }, openSummary: function (id) { var l = byId(id); if (l) openSummary(l); }, mount: mount, current: function () { return box ? cur : null; } };
   function init() {
     mount(); setTimeout(mount, 1500);
     var m = (location.search.match(/[?&]fc=([\w%:-]+)/) || [])[1];
     if (m) setTimeout(function () { var l = byId(decodeURIComponent(m)); if (l) openCards(l); }, 700);
+    var sm = (location.search.match(/[?&]sum=([\w%:-]+)/) || [])[1];      // 📒 a note on a summary links back with ?sum=<lesson id>
+    if (sm) setTimeout(function () { var l = byId(decodeURIComponent(sm)); if (l) openSummary(l); }, 700);
   }
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(window, document);

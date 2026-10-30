@@ -20,7 +20,7 @@
      with a 5th value need an account: signed out they show 🔒 (as the home tiles did). */
   var G = [
     { k: "home", e: "🏠", n: "الرئيسية", href: "index.html", pages: ["index.html"] },
-    { k: "learn", e: "📚", n: "المواد", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "hifzi.html", "tutor.html"], items: [
+    { k: "learn", e: "📚", n: "المواد", pages: ["cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "3d.html", "hifzi.html", "notes.html", "tutor.html"], items: [
       ["#search", "🔎", "دوّر على درس", "اكتب أي كلمة بالعربي أو بالفرنسي"],
       ["cardio.html", "❤️", "القلب", "12 درس: الجلطة، ECG، القصور، الصدمة"],
       ["neuro.html", "🧠", "الأعصاب", "8 دروس: AVC، HTIC، Glasgow"],
@@ -32,6 +32,7 @@
       ["rea.html", "🚑", "الإنعاش", "غازات الدم ABG: القيم، التفسير، الدور التمريضي"],
       ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"],
       ["hifzi.html", "🗺️", "حفظي", "الحفظ، نقاط ضعفك والأخطاء الشائعة"],
+      ["notes.html", "📒", "ملاحظاتي", "كل ملاحظاتك مرتّبة حسب المادة والدرس"],
       ["tutor.html", "👨‍🏫", "اسأل الأستاذ عثمان", "بيشرحلك أي شي من الدروس"]] },
     { k: "practice", e: "📝", n: "تمارين", pages: ["quiz.html", "exams.html", "live.html", "games.html"], items: [
       ["quiz.html", "📝", "الكويز", "284 سؤال بأسلوب الامتحان مع الشرح"],
