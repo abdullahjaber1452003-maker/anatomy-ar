@@ -227,8 +227,9 @@
     h += '<section class="qcard midsubs"><h2>📚 ' + T("امتحان كامل لكل مادة", "Un examen complet par matière") + '</h2><p class="small">' +
       T("أسئلة من كل دروس المادة بالتساوي، دقيقة لكل سؤال. بالآخر: علامتك، نتيجتك بكل درس وأضعف دروسك. الغلط بيرجعلك بمراجعة بكرا.", "Des questions de toutes les leçons de la matière, à parts égales, une minute par question. À la fin : ton score, ton résultat par leçon et tes leçons faibles. Les erreurs reviennent demain en révision.") + "</p>";
     var g = (NL().groups || {}).medsurg;
+    if (g && ms.length) h += '<h3 class="midgh">' + esc(g.e || "🏥") + " " + esc(T(g.ar, g.fr)) + '</h3><ul class="midlist">' + subjBtn("msall") + ms.filter(function (s) { return subs.indexOf(s) > -1; }).map(subjBtn).join("") + "</ul>" +
+      '<h3 class="midgh">📘 ' + T("باقي المواد", "Les autres matières") + "</h3>";
     h += '<ul class="midlist">' + subs.filter(function (s) { return ms.indexOf(s) < 0; }).map(subjBtn).join("") + "</ul>";
-    if (g && ms.length) h += '<h3 class="midgh">' + esc(g.e || "🏥") + " " + esc(T(g.ar, g.fr)) + '</h3><ul class="midlist">' + subjBtn("msall") + ms.filter(function (s) { return subs.indexOf(s) > -1; }).map(subjBtn).join("") + "</ul>";
     h += "</section>" + weakHtml() + planHtml();
     return h;
   }
