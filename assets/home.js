@@ -383,7 +383,7 @@
     } else if (nA < qs.length) {                        // the next question
       var q = qs[nA];
       h += '<p class="hzoq">' + (nA ? T("👨‍🏫 السؤال التاني:", "👨‍🏫 Deuxième question :") : ack + T("خلّيني اسألك سؤالين سريعين عن «", "Laisse-moi te poser deux questions rapides sur « ") + esc(curName(s)) + T("»", " »")) + '</p><div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + "</small><p>" + esc(q.q) + '</p><div class="hzqo">' +
-        q.o.map(function (o, k) { return '<button type="button" data-hzq="' + esc(q.id) + '" data-k="' + k + '"><span>' + "أبج".charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div></div>";
+        q.o.map(function (o, k) { return '<button type="button" data-hzq="' + esc(q.id) + '" data-k="' + k + '"><span>' + (FR() ? "abc" : "أبج").charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div></div>";
     } else {                                            // both answered
       h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
     }
