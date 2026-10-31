@@ -155,7 +155,11 @@
   function link(n) {                                         // the way back to what the note is about
     var x;
     if (n.refType === "q" && n.refId && n.refId.indexOf("h:") !== 0) return "quiz.html?qid=" + encodeURIComponent(n.refId);   // a bank question opens alone
-    if (n.refType === "lesson") { if (/^3d:/.test(n.refId)) return "3d.html"; x = part(n.refId); if (x) return x.href; }
+    if (n.refType === "lesson") {
+      var hm = /^(.*)~h([A-Za-z0-9]+)$/.exec(n.refId || "");           // 🖍️ a note on a highlight (assets/highlight.js): back to that highlight
+      if (hm) { x = part(hm[1]) || lesson(hm[1].split("#")[0]); if (x) { var hp = x.href.split("#"); return hp[0] + "?hl=" + hm[2] + (hp[1] ? "#" + hp[1] : ""); } }
+      if (/^3d:/.test(n.refId)) return "3d.html"; x = part(n.refId); if (x) return x.href;
+    }
     if (n.refType === "card" || n.refType === "summary") { x = lesson(n.lesson); if (x) return x.href.split("#")[0] + "?" + (n.refType === "card" ? "fc=" : "sum=") + encodeURIComponent(base(x)); }
     x = lesson(n.lesson); if (x) return x.href;
     var s = subjects()[n.subject]; return s && s.page !== "notes.html" ? s.page : "";
@@ -388,6 +392,7 @@
     });
     setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) {} }, 60);
   }
+  API.open = function (meta, from) { open(meta, from); };          // 🖍️ assets/highlight.js: «📝 ملاحظة» on a highlight
   w.addEventListener("keydown", function (e) { if (box && e.key === "Escape") { e.stopPropagation(); e.preventDefault(); close(); } }, true);
   var tT = 0;
   function toast(t) {

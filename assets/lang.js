@@ -11,7 +11,7 @@
      Anything without a confident translation keeps the bilingual text (fallback by design).
    Keys: FNV-1a of the whitespace-normalised string (blocks: of the element's innerHTML). */
 (function (w, d) {
-  var K = "nursin_lang_v1", V = "20261028a", AR = /[\u0600-\u06FF]/;
+  var K = "nursin_lang_v1", V = "20261028b", AR = /[\u0600-\u06FF]/;
   var mode = "ar"; try { mode = localStorage.getItem(K) === "fr" ? "fr" : "ar"; } catch (e) {}
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html?$/, "") || "index";
   /* ⚖️ القانون stays Arabic ALWAYS (Abdullah, Oct 27 2:47 PM): the law page and a law-only quiz are drawn exactly as before (bilingual,
@@ -24,8 +24,8 @@
     quiz: ["quiz", "blanks"], exams: ["quiz"], live: ["quiz"], classes: ["quiz"], friends: ["quiz"], tutor: ["quiz"],
     law: [], mgmt: ["quiz", "mgmt", "blanks"], quality: ["quiz", "quality", "blanks"], pharma: ["quiz", "pharma", "blanks"], rea: ["quiz", "rea"], geri: ["quiz"], community: ["quiz"], medsurg: ["quiz", "medsurg"],
     games: ["quiz", "pharma", "blanks", "ersim"] };
-  var PAGES = { index: 1, cardio: 1, neuro: 1, henderson: 1, quiz: 1, "3d": 1, about: 1, privacy: 1, credits: 1, "404": 1, friends: 1, exams: 1, live: 1, tutor: 1, classes: 1, law: 1, mgmt: 1, quality: 1, pharma: 1, rea: 1, geri: 1, community: 1, medsurg: 1, games: 1, chat: 1, admin: 1, hifzi: 1, me: 1, notes: 1 };
-  var H = {}, U = {}, fre = null, on = false, miss = [];
+  var PAGES = { index: 1, cardio: 1, neuro: 1, henderson: 1, quiz: 1, "3d": 1, about: 1, privacy: 1, credits: 1, "404": 1, friends: 1, exams: 1, live: 1, tutor: 1, classes: 1, law: 1, mgmt: 1, quality: 1, pharma: 1, rea: 1, geri: 1, community: 1, medsurg: 1, games: 1, chat: 1, admin: 1, hifzi: 1, me: 1, notes: 1, highlights: 1 };
+  var H = {}, U = {}, fre = null, on = false, miss = [], mo = null, hushObs = null;
   function norm(s) { return String(s).replace(/\s+/g, " ").trim(); }
   function hash(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36) + "." + s.length.toString(36); }
   function digits(s) { return s.replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }); }
@@ -96,15 +96,21 @@
     pass(d.body, true);
     var q = [], busy = false;
     function flush() { busy = false; var a = q; q = []; a.forEach(function (n) { if (n.isConnected) { if (n.nodeType === 3) { if (n.parentElement) pass(n.parentElement, false); } else pass(n, false); } }); }
-    new MutationObserver(function (ms) {
+    function seen(ms) {
       ms.forEach(function (m) {
         if (m.type === "characterData") q.push(m.target);
         else if (m.type === "attributes") q.push(m.target);
         else for (var i = 0; i < m.addedNodes.length; i++) q.push(m.addedNodes[i]);
       });
       if (!busy && q.length) { busy = true; (w.queueMicrotask || setTimeout)(flush); }
-    }).observe(d.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTR });
+    }
+    mo = new MutationObserver(seen);
+    mo.observe(d.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTR });
+    hushObs = seen;
   }
+  /* 🖍️ assets/highlight.js wraps / unwraps lesson text in <mark>: those DOM changes are not new text to translate (a split Arabic
+     fragment of a law sentence would otherwise be "translated" piece by piece) — what was pending before still is */
+  function hush(fn) { if (!mo) return fn(); hushObs(mo.takeRecords()); try { return fn(); } finally { mo.takeRecords(); } }
   // patch a data bank in place (strings only, by their hash); called at the end of each data file
   function lawKeep(o) {                                   // remember a law item's strings (≥ 12 chars, so short UI words stay free)
     (function walk(v) { if (typeof v === "string") { var n = norm(v); if (n.length >= 12 && AR.test(n)) LAWSET[n] = 1; } else if (v && typeof v === "object") for (var k in v) if (Object.prototype.hasOwnProperty.call(v, k)) walk(v[k]); })(o);
@@ -125,7 +131,7 @@
     var A = w.NursinFB; if (A && A.user && A.fs && A.db) { try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { lang: m }, { merge: true }).catch(function () {}); } catch (e) {} }
     if (!noReload && m !== mode) location.reload();
   }
-  var L = w.Lang = { mode: mode, fr: FR, lawPage: LAWPAGE, isLawText: function (s) { return !!LAWSET[norm(s)]; }, KEY: K, page: page, hash: hash, norm: norm, units: units, look: look,
+  var L = w.Lang = { hush: hush, mode: mode, fr: FR, lawPage: LAWPAGE, isLawText: function (s) { return !!LAWSET[norm(s)]; }, KEY: K, page: page, hash: hash, norm: norm, units: units, look: look,
     add: function (o, ui) { var k; if (ui) { for (k in o) U[k] = o[k]; fre = null; } else for (k in o) H[k] = o[k]; },
     has: function (s) { return look(s) != null; },
     t: function (ar, fr) { return FR && fr ? fr : ar; },

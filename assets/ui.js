@@ -30,7 +30,7 @@
     "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
     "3d.html": ["🧊", "التشريح 3D", "Anatomie 3D", 1], "tutor.html": ["👨‍🏫", "الأستاذ عثمان", "Professeur Osman", 2], "hifzi.html": ["🗺️", "حفظي", "Ma mémoire", 3],
     "quiz.html": ["⚡", "الكويز", "Quiz", 4], "exams.html": ["📅", "الامتحانات", "Examens", 4], "games.html": ["🎮", "الألعاب", "Jeux", 4], "live.html": ["🔴", "تحدّي لايف", "Défi live", 4],
-    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4],
+    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4],
     "me.html": ["👤", "أنا", "Moi", 4], "about.html": ["ℹ️", "من نحن", "À propos", 4], "privacy.html": ["🔒", "الخصوصية", "Confidentialité", 4], "credits.html": ["📜", "المصادر", "Sources", 4],
     "admin.html": ["⚙️", "لوحة الأدمن", "Admin", 4], "404.html": ["🧭", "الصفحة مش موجودة", "Page introuvable", 4]
   };
@@ -54,7 +54,7 @@
       ["friends.html", "👥", "أصحابي", "Amis"], ["chat.html", "💬", "المحادثات", "Messages"], ["classes.html", "🏫", "صفّي", "Ma classe"],
       ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["#online", "🟢", "مين أونلاين", "En ligne"]] },
     { k: "tools", e: "⚙️", ar: "أدواتي", fr: "Mes outils", items: [
-      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
+      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
       ["#search", "🔎", "دوّر", "Chercher"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#theme", "🎨", "المظهر", "Apparence"],
       ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"], ["#install", "📲", "حمّل التطبيق", "Installer l'app"],
       ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["about.html", "ℹ️", "من نحن", "À propos"],
@@ -200,7 +200,8 @@
   function badges() {
     var S = w.NursinSRS, due = S && S.count ? S.count() : 0, wx = false;
     try { var st = w.Retain && w.Retain.wstatus ? w.Retain.wstatus() : null; wx = !!(st && st.ready && !st.done); } catch (e) {}
-    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "" };
+    var pn = w.NursinHL && w.NursinHL.pen && w.NursinHL.pen();                // 🖍️ pen mode on → «شغّال» on its «الكل» item
+    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "", pen: pn ? T("شغّال", "ON") : "" };
   }
   function installable() { var P = w.NursinPWA; try { return !!(P && P.installable && P.installable()); } catch (e) { return false; } }
   function allHtml(only) {
@@ -228,6 +229,9 @@
       case "goals": closeSheet(); var gp = d.querySelector(".gopill"); if (gp) setTimeout(function () { gp.click(); }, 280); else location.href = "me.html"; return;
       case "online": closeSheet(); if (N().me && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; return;
       case "install": closeSheet(); if (w.NursinPWA && w.NursinPWA.install) w.NursinPWA.install(); return;
+      case "pen":                                                                  // 🖍️ assets/highlight.js
+        if (w.NursinHL && w.NursinHL.togglePen) { w.NursinHL.togglePen(); var it = d.querySelector('.hzsheet [data-hz="pen"]'), b2 = badges().pen; if (it) { it.classList.toggle("hl", !!b2); var ie = it.querySelector(".ie"); if (ie) { var em = ie.querySelector("em"); if (b2) { if (!em) { em = d.createElement("em"); ie.appendChild(em); } em.textContent = b2; } else if (em) em.remove(); } } }
+        return;
       case "bell": closeSheet(); var bl = d.querySelector(".topbar .annbell"); if (bl) bl.click(); return;
       case "cards": l = lastLes(); location.href = l ? fcHref(l) : "hifzi.html"; return;
       case "case":
@@ -364,6 +368,8 @@
     b.addEventListener("click", function (e) { e.preventDefault(); goBack(); });
     hav = d.createElement("button"); hav.type = "button"; hav.className = "uiav"; hav.setAttribute("data-hz", "avatar"); hav.setAttribute("aria-label", T("صورتك وحسابك", "Ton avatar et ton compte"));
     bar.appendChild(hav); drawAv();
+    var pb = w.NursinHL && w.NursinHL.headerBtn && w.NursinHL.headerBtn();       // 🖊️ pen mode switch on lesson pages (assets/highlight.js)
+    if (pb) bar.insertBefore(pb, hav);
   }
 
   /* ---------------- clicks anywhere on [data-hz] (nav, header avatar, the home's header / chips / cards) ---------------- */
