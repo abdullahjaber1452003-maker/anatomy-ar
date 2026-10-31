@@ -324,3 +324,18 @@ html.hlpenon body.ui main .tbody{cursor:text}
 .hlnum{color:var(--hzmut);font-size:13px;margin:0 0 8px}
 .hlnav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){mark.hlm.hlflash{animation:none;box-shadow:0 0 0 3px var(--hlc)}.hlpill.hlin,.hltoast{animation:none}mark.hlm{transition:none}}
+
+/* ✏️ «غيّر اسمك» sheet (assets/name.js) — Oct 31 2026 */
+.hznm{margin:0 4px}
+.hznm-l{display:block;font-weight:800;font-size:14px;margin:0 6px 6px}
+body.ui .hznm-in,.hznm-in{display:block;width:100%;box-sizing:border-box;height:52px;padding:0 16px;font-size:17px;font-weight:700}
+.hznm-msg{min-height:22px;margin:6px 6px 2px;font-size:14px;font-weight:800;line-height:1.5}
+.hznm-msg.ok{color:var(--hzacc)}
+.hznm-msg.err{color:#b91c1c}
+html[data-theme=night] .hznm-msg.err{color:#fca5a5}
+.hznm-hint{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px;color:var(--hzmut);margin:0 6px 12px;line-height:1.6}
+.hznm-c{flex:0 0 auto;font-weight:800;font-variant-numeric:tabular-nums}
+.hznm-c.over{color:#b91c1c}
+html[data-theme=night] .hznm-c.over{color:#fca5a5}
+.hznm-in[aria-invalid=true]{border-color:#dc2626}
+.hznmb{align-self:flex-start;margin:5px 0 3px;padding:6px 11px;border-radius:99px;border:1px solid var(--hzedge);background:var(--hzbox);color:var(--hzacc);font:800 12.5px/1.2 "Cairo",sans-serif;cursor:pointer}

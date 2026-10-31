@@ -55,7 +55,7 @@
       ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["#online", "🟢", "مين أونلاين", "En ligne"]] },
     { k: "tools", e: "⚙️", ar: "أدواتي", fr: "Mes outils", items: [
       ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
-      ["#search", "🔎", "دوّر", "Chercher"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#theme", "🎨", "المظهر", "Apparence"],
+      ["#search", "🔎", "دوّر", "Chercher"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"], ["#theme", "🎨", "المظهر", "Apparence"],
       ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"], ["#install", "📲", "حمّل التطبيق", "Installer l'app"],
       ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["about.html", "ℹ️", "من نحن", "À propos"],
       ["privacy.html", "🔒", "الخصوصية", "Confidentialité"], ["credits.html", "📜", "المصادر", "Sources"]] }
@@ -224,6 +224,7 @@
     switch (k) {
       case "search": closeSheet(); if (w.NursinSearch) setTimeout(function () { w.NursinSearch.open(); }, 60); else location.href = "hifzi.html"; return;
       case "avatar": closeSheet(); setTimeout(function () { picker(from); }, 280); return;
+      case "name": closeSheet(); setTimeout(function () { if (w.NursinName) w.NursinName.open(from); else location.href = "me.html"; }, 280); return;   // ✏️ assets/name.js
       case "theme": closeSheet(); if (w.NursinTheme) setTimeout(function () { w.NursinTheme.open(); }, 280); else location.href = "me.html"; return;
       case "lang": if (w.Lang && w.Lang.set) w.Lang.set(FR() ? "ar" : "fr"); return;
       case "goals": closeSheet(); var gp = d.querySelector(".gopill"); if (gp) setTimeout(function () { gp.click(); }, 280); else location.href = "me.html"; return;
@@ -259,12 +260,14 @@
       var lv = "", P = N().progress; try { if (P) { var g = P(me.points); lv = "Lv " + g.level + " · " + g.points + T(" نقطة", " pts"); } } catch (e) {}
       h += '<a class="uirow" href="friends.html"><span class="ie" aria-hidden="true">🏆</span><span><b>' + T("أصحابي والليفل", "Amis et niveau") + "</b><small dir=\"auto\">" + esc(lv || T("نقاطك والترتيب", "Tes points et le classement")) + "</small></span></a>";
     }
+    var nm = w.NursinName ? w.NursinName.current() : { name: me && me.name };       // ✏️ «غيّر اسمك» (assets/name.js)
+    h += '<a class="uirow" href="me.html#ui-name" data-nm-open><span class="ie" aria-hidden="true">✏️</span><span><b>' + T("غيّر اسمك", "Changer ton nom") + "</b><small dir=\"auto\">" + (nm && nm.name ? esc(nm.name) : T("الاسم يلي بيبيّن بالموقع", "Le nom affiché sur le site")) + "</small></span></a>";
     h += '<a class="uirow" href="me.html"><span class="ie" aria-hidden="true">👤</span><span><b>' + T("أنا والإعدادات", "Moi et réglages") + "</b><small>" + T("السلسلة، البومودورو، المظهر، الإشعارات", "Série, pomodoro, apparence, notifications") + "</small></span></a>";
     return h + "</div>";
   }
   function picker(from) {
-    var cur = lsGet(AK) || {}, me = N().me;
-    var h = '<p class="hzpk-now">' + avHtml("hzpkav") + '<span><b>' + (me && me.name ? esc(me.name) : T("صورتك", "Ton avatar")) + "</b><small>" +
+    var cur = lsGet(AK) || {}, me = N().me, nm = w.NursinName ? w.NursinName.current().name : (me && me.name);
+    var h = '<p class="hzpk-now">' + avHtml("hzpkav") + '<span><b dir="auto">' + (nm ? esc(nm) : T("صورتك", "Ton avatar")) + '</b> <button class="hznmb" type="button" data-nm-open aria-label="' + T("غيّر اسمك", "Changer ton nom") + '">✏️ ' + T("غيّر اسمك", "Changer ton nom") + "</button><small>" +
       T("اختار صورة من عندك أو شخصية كرتونية", "Choisis ta photo ou un personnage") + "</small></span></p>" +
       '<div class="hzpk-row"><label class="hzbtn pri"><input type="file" accept="image/*" class="hzfile" hidden>📷 ' + T("صورتي", "Ma photo") + "</label>" +
       '<button class="hzbtn" type="button" data-av="">↩️ ' + T("بلا", "Aucun") + "</button></div>" +
@@ -412,8 +415,8 @@
       }).observe(d.body, { childList: true });
     } catch (e) {}
     // links from other pages: index.html#ui-case etc. run the action here
-    var m = /^#ui-(case|cards|blank|teach|search|avatar|goals|theme)$/.exec(location.hash || "");
-    if (m) setTimeout(function () { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} if (m[1] === "avatar") picker(null); else act(m[1], null); }, 900);
+    var m = /^#ui-(case|cards|blank|teach|search|avatar|goals|theme|name)$/.exec(location.hash || "");
+    if (m) setTimeout(function () { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} if (m[1] === "avatar") picker(null); else if (m[1] === "name") { if (w.NursinName) w.NursinName.open(null); } else act(m[1], null); }, 900);
   }
   w.NursinUI = { ALL: ALL, PAGES: PAGES, info: info, open: openAll, openSheet: openSheet, close: closeSheet, drag: drag, picker: picker, act: act,
     setAvatar: setAvatar, avUrl: avUrl, avHtml: avHtml, myAvatar: myAvatar, AKEY: AK, AVN: AVN, shrink: shrink, pull: pull, fcHref: fcHref,

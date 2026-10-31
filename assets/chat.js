@@ -14,11 +14,21 @@ function soon(e) {
   if (e && e.code !== "permission-denied") console.warn("nursin: chat", e && e.code);
   el.innerHTML = '<div class="qcard"><p class="fbig">💬 المحادثات عم تتجهّز…</p><p>رجاع بعد شوي 🙏</p><p><a class="btn" href="friends.html">🏆 أصحابي</a></p></div>';
 }
+// ✏️ Oct 31 2026 («غيّر اسمك»): a chat doc keeps the names it was opened with (only a group's creator may rewrite them), so names are
+// shown from each person's profile (users/{uid}.name = his chosen name) when it can be read, else the stored copy.
+const FRESH = {};
+const nameOf = (uid, stored) => FRESH[uid] || stored || "";
+async function freshNames(uids) {
+  if (API.user) FRESH[API.user.uid] = myName();
+  try { (await friends()).forEach(f => { if (f && f.uid && f.name) FRESH[f.uid] = API.N.cleanName(f.name); }); } catch (e) {}
+  const { doc, getDoc } = API.fs, need = [...new Set(uids || [])].filter(u => u && !FRESH[u]).slice(0, 40);
+  await Promise.all(need.map(u => getDoc(doc(API.db, "users", u)).then(s => { const n = s.exists() && s.data().name; if (n) FRESH[u] = API.N.cleanName(n); }).catch(() => {})));
+}
 function title(c) {
   if (c.type === "group") return "👥 " + c.name;
   if (c.type === "class") return "🏫 " + c.name;
   const o = c.members.find(m => m !== API.user.uid);
-  return (c.names && c.names[o]) || "صاحب";
+  return nameOf(o, c.names && c.names[o]) || "صاحب";
 }
 const go = q => { history.pushState(null, "", "chat.html" + q); route(); };
 
@@ -51,12 +61,19 @@ async function drawList() {
     (list.length ? '<ul class="clist">' + list.map(c => {
       const l = c.last, unread = l && l.by !== me && ms(l.at) > (s[c.id] || 0);
       const peer = c.type === "dm" ? (c.members || []).find(u => u !== me) : "";   // 🟢 online dot on a DM row
-      return '<li><a class="crow" href="chat.html?c=' + encodeURIComponent(c.id) + '"><b><bdi>' + API.esc(title(c)) + "</bdi>" + (peer && API.pdot ? API.pdot(peer) : "") + "</b>" + (unread ? '<i class="cdot" aria-label="جديد"></i>' : "") +
-        '<small>' + (l ? (c.type === "group" ? "<bdi>" + API.esc(l.name) + "</bdi>: " : "") + API.esc(l.text.slice(0, 70)) : "…") + "</small></a></li>";
+      return '<li><a class="crow" href="chat.html?c=' + encodeURIComponent(c.id) + '"><b><bdi data-ct="' + API.esc(c.id) + '">' + API.esc(title(c)) + "</bdi>" + (peer && API.pdot ? API.pdot(peer) : "") + "</b>" + (unread ? '<i class="cdot" aria-label="جديد"></i>' : "") +
+        '<small>' + (l ? (c.type === "group" ? '<bdi data-cl="' + API.esc(c.id) + '">' + API.esc(nameOf(l.by, l.name)) + "</bdi>: " : "") + API.esc(l.text.slice(0, 70)) : "…") + "</small></a></li>";
     }).join("") + "</ul>" : '<p class="small">لسّا ما في محادثات. كبوس «💬 حكي» حدّ أي صاحب بصفحة أصحابي، أو اعمل مجموعة تدرسو فيها سوا.</p>') +
     '<div id="cpush"></div>';
   $("cnew").addEventListener("click", () => go("?new"));
   if (window.NursinPWA) window.NursinPWA.pushCard($("cpush"), API);   // 🔔 notifications opt-in (assets/pwa.js)
+  // ✏️ then the current names (a friend who renamed himself shows his new name)
+  freshNames(list.flatMap(c => c.type === "dm" ? (c.members || []).filter(u => u !== me) : c.type === "group" && c.last ? [c.last.by] : [])).then(() => {
+    list.forEach(c => {
+      el.querySelectorAll("[data-ct]").forEach(b => { if (b.getAttribute("data-ct") === c.id) b.textContent = title(c); });
+      if (c.type === "group" && c.last) el.querySelectorAll("[data-cl]").forEach(b => { if (b.getAttribute("data-cl") === c.id) b.textContent = nameOf(c.last.by, c.last.name); });
+    });
+  });
 }
 
 /* ---------- DM ---------- */
@@ -86,24 +103,29 @@ async function openRoom(cid) {
   try { const s = await getDoc(doc(API.db, "chats", cid)); if (!s.exists() || !s.data().members.includes(me)) throw { code: "gone" }; c = s.data(); }
   catch (e) { if (e && e.code === "permission-denied" && !(await rulesUp())) return soon(e); el.innerHTML = '<div class="qcard"><p>💬 هالمحادثة مش موجودة أو ما عدت فيها.</p><p><a class="btn" href="chat.html">← المحادثات</a></p></div>'; return; }
   const group = c.type === "group" || c.type === "class", owner = c.type === "group" && c.owner === me;
-  el.innerHTML = '<div class="chead"><a class="btn sm" href="chat.html" id="cback">→</a><b><bdi>' + API.esc(title(c)) + "</bdi>" + (c.type === "dm" && API.pdot ? API.pdot((c.members || []).find(u => u !== me)) : "") + "</b>" +
+  el.innerHTML = '<div class="chead"><a class="btn sm" href="chat.html" id="cback">→</a><b><bdi id="ctitle">' + API.esc(title(c)) + "</bdi>" + (c.type === "dm" && API.pdot ? API.pdot((c.members || []).find(u => u !== me)) : "") + "</b>" +
     (group ? '<button class="btn sm" id="cmem" type="button">👥 ' + c.members.length + "</button>" : "") + "</div>" +
     '<div id="cpanel" hidden></div><ol class="cmsgs" id="cmsgs" aria-live="polite"><li class="small">⏳ …</li></ol>' +
     '<form class="cform" id="cform"><textarea id="ctext" maxlength="500" rows="1" placeholder="اكتب رسالة…" aria-label="رسالة"></textarea><button class="btn pri" type="submit">ابعت</button></form><p class="small" id="cmsg" aria-live="polite"></p>';
   $("cback").addEventListener("click", e => { e.preventDefault(); go(""); });
   if (group) $("cmem").addEventListener("click", () => { const p = $("cpanel"); p.hidden = !p.hidden; if (!p.hidden) drawMembers(cid, c, owner); });
   const box = $("cmsgs");
-  unsub = onSnapshot(query(collection(API.db, "chats", cid, "messages"), orderBy("createdAt", "desc"), limit(50)), snap => {
-    const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse();
+  let msgs = [];
+  const paint = () => {
     const adm = isAdmin();
     box.innerHTML = msgs.length ? msgs.map(m => {
       const mine = m.uid === me;
-      return '<li class="cb' + (mine ? " me" : "") + '">' + (group && !mine ? "<small><bdi>" + API.esc(m.name) + "</bdi></small>" : "") +
+      return '<li class="cb' + (mine ? " me" : "") + '">' + (group && !mine ? "<small><bdi>" + API.esc(nameOf(m.uid, m.name)) + "</bdi></small>" : "") +
         '<span class="ct">' + API.esc(m.text) + "</span>" + (mine || adm ? '<button class="cdel" type="button" data-id="' + API.esc(m.id) + '" aria-label="امحي">🗑</button>' : "") + "</li>";
     }).join("") : '<li class="small">ابدا الحديث 👋 مثلاً: «شو رأيك نبلّش بدرس كذا؟»</li>';
     box.scrollTop = box.scrollHeight;
+  };
+  unsub = onSnapshot(query(collection(API.db, "chats", cid, "messages"), orderBy("createdAt", "desc"), limit(50)), snap => {
+    msgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse();
+    paint();
     markSeen(cid, Math.max(Date.now(), ...msgs.map(m => ms(m.createdAt))));
   }, e => { stop(); soon(e); });
+  freshNames(c.members).then(() => { const t = $("ctitle"); if (t) t.textContent = title(c); if (group) paint(); });   // ✏️ current names
   box.addEventListener("click", async e => {
     const b = e.target.closest(".cdel"); if (!b || !confirm("تمحي هالرسالة؟")) return;
     const last = box.lastElementChild && box.lastElementChild.querySelector(".cdel") === b;
@@ -158,7 +180,7 @@ async function drawMembers(cid, c, owner) {
     try { await updateDoc(doc(API.db, "chats", cid), { members, names }); c.members = members; c.names = names; $("cmem").textContent = "👥 " + members.length; drawMembers(cid, c, owner); }
     catch (e) { console.warn("nursin: chat members", e && e.code); alert("ما زبط هلّق، جرّب بعد شوي."); }
   };
-  p.innerHTML = '<div class="qcard"><ul class="cmemb">' + c.members.map(u => "<li><bdi>" + API.esc((c.names && c.names[u]) || "طالب") + "</bdi>" + (u === c.owner ? " <small>(عامل المجموعة)</small>" : "") +
+  p.innerHTML = '<div class="qcard"><ul class="cmemb">' + c.members.map(u => "<li><bdi>" + API.esc(nameOf(u, c.names && c.names[u]) || "طالب") + "</bdi>" + (u === c.owner ? " <small>(عامل المجموعة)</small>" : "") +
     (owner && u !== me ? ' <button class="rm" type="button" data-uid="' + API.esc(u) + '" aria-label="شيل">✕</button>' : "") + "</li>").join("") + "</ul>" +
     (owner ? (c.members.length < MAXM ? '<p class="small">زيد أصحاب:</p><div id="gpick">⏳ …</div><button class="btn sm" id="gadd" type="button">➕ زيد</button>' : '<p class="small">وصلتو للحد (' + MAXM + ").</p>")
       : c.type === "class" ? '<p class="small">🏫 كل طلاب الصف بيفوتو هون لحالهن، وبيطلعو لمّا يطلعو من الصف.</p>' : '<button class="btn sm" id="gleave" type="button">🚪 اطلع من المجموعة</button>') + "</div>";

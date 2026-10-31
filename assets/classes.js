@@ -237,6 +237,8 @@ export async function deleteClass(cid, cls, api) {
   await F3.deleteDoc(F3.doc(db, "users", me, "myClasses", cid)).catch(() => {});
   return refs.length;
 }
+// ✏️ Oct 31 2026: the owner's current name comes from his member card (refreshed when he renames himself, assets/fb.js setNick); the class doc keeps the old copy
+function ownerNow(members, cls) { const m = (members || []).find(x => x.uid === cls.owner); return (m && m.name) || cls.ownerName; }
 function bitsOf(api) { const p = api.profile || {}; return { name: api.N.cleanName(p.name || api.user.displayName), photo: String(p.photo || "").slice(0, 500), level: Math.max(1, Math.min(1000, api.N.level(p.points))) }; }
 function profileBits() { return bitsOf(A); }
 async function createClass(raw) {
@@ -322,7 +324,7 @@ async function openClass(el, cid) {
   const pb = profileBits(), m0 = members.find(x => x.uid === me);
   if (m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
   el.innerHTML = '<nav class="small"><a href="classes.html">← صفوفي</a></nav>' +
-    '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(cls.ownerName)) + '</bdi></p><div id="ccode"></div></section>' +
+    '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(ownerNow(members, cls))) + '</bdi></p><div id="ccode"></div></section>' +
     '<section class="qcard duel" id="cduel"><h2>⚔️ تحدي اليوم</h2><p class="small">⏳ …</p></section>' +
     '<section class="qcard stboard" id="cstudy" hidden></section>' +
     '<section class="qcard cdq" id="cdq"><h2>❓ سؤال اليوم</h2><div id="cdqb"><p class="small">⏳ …</p></div></section>' +
@@ -553,7 +555,7 @@ async function adminAddStudent(uid, code) {
     });
     C.members.push({ uid, name, photo, level, code: C.cls.code }); C.prof[uid] = p;
     drawMembers(); drawBoard(); drawAwards(); drawRank();
-    $(".chead .small").textContent = C.members.length + (C.members.length === 1 ? " طالب" : " طلاب") + " · صاحب الصف: " + N.cleanName(C.cls.ownerName);
+    $(".chead .small").textContent = C.members.length + (C.members.length === 1 ? " طالب" : " طلاب") + " · صاحب الصف: " + N.cleanName(ownerNow(C.members, C.cls));
     addToast("✅ " + name + " صار بالصف ومجموعة الصف.");
     if ($("#caddcode")) $("#caddcode").value = "";
     pingJoined(A.user, cid, uid);

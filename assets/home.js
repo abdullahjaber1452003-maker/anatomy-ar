@@ -164,7 +164,9 @@
   /* ---------------- the page ---------------- */
   function hourB() { try { return +new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "numeric", hour12: false }).format(new Date()) % 24; } catch (e) { return new Date().getHours(); } }
   function greet(hr) { return hr >= 5 && hr < 12 ? T("صباح الخير ☀️", "Bonjour ☀️") : hr >= 12 && hr < 17 ? T("نهارك سعيد 🌤️", "Bon après-midi 🌤️") : T("مسا الخير 🌙", "Bonsoir 🌙"); }
-  function first() { var A = w.NursinFB, me = N().me, n = (A && A.profile && A.profile.name) || (me && me.name) || ""; return String(n).trim().split(/\s+/)[0].slice(0, 18); }
+  function first() {
+    if (w.NursinName) return w.NursinName.greetName();          // ✏️ a name he chose shows whole; a Google name by its first word (assets/name.js)
+    var A = w.NursinFB, me = N().me, n = (A && A.profile && A.profile.name) || (me && me.name) || ""; return String(n).trim().split(/\s+/)[0].slice(0, 18); }
   function streak() {
     var n = N(), me = n.me, s = 0, St = w.NursinStudy;
     try { if (me && n.streakNow) s = n.streakNow(me) | 0; else if (me && me.sDay) { var dk = today(), y = new Date(dk + "T12:00:00Z"); y.setUTCDate(y.getUTCDate() - 1); s = (me.sDay === dk || me.sDay === y.toISOString().slice(0, 10)) ? me.streak | 0 : 0; } } catch (e) {}
@@ -175,7 +177,7 @@
   function headHtml() {
     var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));       // assets/announce.js: «on» = unread
     return '<div class="hzhd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
-      '<div class="t"><small>' + greet(hourB()) + "</small><b>" + (nm ? esc(nm) + " 👋" : T("يا بطل 👋", "champion 👋")) + "</b></div>" +
+      '<div class="t"><small>' + greet(hourB()) + "</small><b>" + (nm ? "<bdi>" + esc(nm) + "</bdi> 👋" : T("يا بطل 👋", "champion 👋")) + "</b></div>" +
       '<a class="hzpill glass" href="me.html" aria-label="' + T("السلسلة: ", "Série : ") + streak() + T(" يوم", " jour(s)") + '"><span aria-hidden="true">🔥</span>' + streak() + "</a>" +
       (bell ? '<button class="hzcb glass" type="button" data-hz="bell" aria-label="' + T("الإعلانات", "Annonces") + '"><span aria-hidden="true">🔔</span>' + (dot ? '<span class="dot"></span>' : "") + "</button>" : "") + "</div>" +
       '<button class="hzsrch glass" type="button" data-hz="search"><span class="e" aria-hidden="true">🔍</span><span class="ph">' + T("دوّر على درس، سؤال، دوا…", "Cherche une leçon, une question, un médicament…") + "</span></button>";
@@ -210,7 +212,7 @@
     draw();
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:auth", "nursin:wexam", "nursin:theme", "nursin:avatar"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:auth", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });
     w.addEventListener("pageshow", redraw); w.addEventListener("focus", redraw);
     w.addEventListener("storage", function (e) { if (e.key === PK || e.key === AK || e.key === "nursin_ret_v1" || e.key === "nursin_srs_v1") redraw(); });

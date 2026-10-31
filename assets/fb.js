@@ -73,13 +73,34 @@ async function ensureProfile(u) {
   const points = N.addPoints(d.points || 0, 0);
   // 🧑‍⚕️ Oct 31 2026: a cartoon avatar chosen on the home page (users/{uid}.av = "a01"…"a12") is the photo friends / ranking / classes see
   const av = /^a(0[1-9]|1[0-2])$/.test(d.av || "") ? d.av : "";
-  const prof = { name: N.cleanName(u.displayName), photo: av ? "https://nursin.store/assets/avatars/" + av + ".webp" : String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
-  if (!snap.exists() || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
-    await setDoc(ref, { ...prof, updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
+  // ✏️ Oct 31 2026: the name he chose (users/{uid}.nick, assets/name.js) is THE name everywhere; "" / none = his Google name
+  const NM = window.NursinName, pk = NM ? NM.pick(d, u.uid) : { nick: typeof d.nick === "string" && d.nick.length <= 20 ? d.nick : "", write: false };
+  const prof = { name: pk.nick ? pk.nick : N.cleanName(u.displayName), photo: av ? "https://nursin.store/assets/avatars/" + av + ".webp" : String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
+  if (!snap.exists() || pk.write || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
+    await setDoc(ref, { ...prof, ...(pk.write ? { nick: pk.nick } : {}), updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
+  if (pk.write && NM) { const l = NM.local(); if (l && l.n === pk.nick) try { localStorage.setItem(NM.KEY, JSON.stringify({ ...l, uid: u.uid, p: 0 })); } catch (e) {} }
   if (!snap.exists() || LOGIN_PING === "all") pingAdmin(u, !snap.exists());
   else catchupPing(u, d);
-  profile = { uid: u.uid, ...prof, av: typeof d.av === "string" ? d.av : "", powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
+  profile = { uid: u.uid, ...prof, nick: pk.nick || "", av: typeof d.av === "string" ? d.av : "", powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
+}
+
+/* ---------- ✏️ «غيّر اسمك» (assets/name.js): his chosen name → users/{uid}.nick + .name, and the copies he owns ---------- */
+// n = a name assets/name.js already checked, or "" = back to the Google name. Rules: users/{uid} (owner, name < 40) — no change needed.
+async function setNick(n) {
+  if (!user || !profile) return { ok: false, why: "out" };
+  n = typeof n === "string" ? n.slice(0, 20) : "";
+  const name = n || N.cleanName(user.displayName);
+  profile.name = name; profile.nick = n; N.setMe(profile);
+  try { await setDoc(doc(db, "users", user.uid), { nick: n, name, updatedAt: serverTimestamp() }, MERGE); }
+  catch (e) { console.warn("nursin: name", e && e.code); return { ok: false, why: (e && e.code) || "net" }; }
+  // 🟢 presence (friends' «مين أونلاين») and 🏫 his member card in each class carry a copy of the name: refreshed now
+  setDoc(doc(db, "presence", user.uid), { t: serverTimestamp(), n: name.slice(0, 39), ph: String(profile.photo || "").slice(0, 500) }).catch(() => {});
+  try {
+    const mc = await getDocs(query(collection(db, "users", user.uid, "myClasses"), limit(12)));
+    await Promise.all(mc.docs.map(c => updateDoc(doc(db, "classes", c.id, "members", user.uid), { name }).catch(() => {})));
+  } catch (e) {}
+  return { ok: true, name };
 }
 
 /* ---------- 🔥 streak + 🏅 badges: merged into users/{uid} (fields the v4 rules already accept) ---------- */
@@ -527,7 +548,7 @@ const API = {
   db, auth, N, esc, MERGE,
   fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
   get user() { return user; }, get profile() { return profile; },
-  signIn, errText, signInCard, profileWrite, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
+  signIn, errText, signInCard, profileWrite, setNick, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
   addFriend: raw => addFriend(raw),         // 🏫 classmates «➕ أضف صديق» (classes.js)
   pdot, scopeIds                            // 🟢 online dots (classes.js, chat.js) + presence scope (presence.js)
 };
@@ -553,7 +574,8 @@ onAuthStateChanged(auth, async u => {
     await ensureProfile(u);
   } catch (e) {
     console.warn("nursin: profile", e && e.code);
-    profile = { uid: u.uid, name: N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "" };
+    const ln = window.NursinName && window.NursinName.local();   // ✏️ offline: the name he chose on this device for this account
+    profile = { uid: u.uid, name: ln && ln.uid === u.uid && window.NursinName.validate(ln.n).ok ? ln.n : N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "" };
     const box = root || document.getElementById("chat-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
     if (box) { box.innerHTML = '<div class="qcard"><p>⚠️ ما قدرنا نجيب حسابك هلّق. تأكّد من الإنترنت وجرّب بعد شوي.</p><button class="btn" id="fout" type="button">تسجيل الخروج</button></div>'; document.getElementById("fout").addEventListener("click", () => signOut(auth)); }
     ready = true; return;
