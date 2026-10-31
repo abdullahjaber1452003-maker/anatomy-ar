@@ -101,6 +101,13 @@
     if (real.length) return real[0];
     return never.length ? never[h % never.length] : null;
   }
+  // 🔗 an «اربط» question for Osman: one that touches his lesson, else one whose two lessons he has both met (read or scored)
+  function linkPick(links, oid, L, h) {
+    var met = {}; (L || []).forEach(function (l) { if (l.read || l.score != null) met[l.id] = 1; });
+    var a = (links || []).filter(function (q) { return q && q.id && q.ls && oid && q.ls.indexOf(oid) > -1; });
+    if (!a.length) a = (links || []).filter(function (q) { return q && q.id && q.ls && q.ls.every(function (id) { return met[id]; }); });
+    return a.length ? a[(h >> 5) % a.length].id : "";
+  }
   function pick2(qs, h) {                                // 2 questions of a lesson, the same all day
     qs = (qs || []).slice(); if (qs.length <= 2) return qs;
     var i = h % qs.length, j = (i + 1 + (h >> 7) % (qs.length - 1)) % qs.length; if (j === i) j = (i + 1) % qs.length;
@@ -140,8 +147,11 @@
     L.filter(function (l) { return l.score != null; }).sort(function (a, b) { return a.score - b.score; }).forEach(function (l) { oc.push(l.id); });
     var oid = ""; for (var i = 0; i < oc.length && !oid; i++) if ((qids[oc[i]] || []).length >= 2) oid = oc[i];
     if (!oid) { var any = L.filter(function (l) { return (qids[l.id] || []).length >= 2; }); if (any.length) oid = any[h % any.length].id; }
-    var ol = byId[oid] || cur;
-    add({ k: "osm", e: "🧑‍🏫", id: ol ? ol.id : "", n: ol ? ol.n : "", qs: oid ? pick2(qids[oid], h) : [] }, 0);
+    var ol = byId[oid] || cur, oq = oid ? pick2(qids[oid], h) : [];
+    // 🔗 every other day Osman's 2nd question is an «اربط» one (an old lesson tied to this one / to one he studied) — still 2 questions
+    var lk = (h >> 3) % 2 === 0 ? linkPick(x.links, oid, L, h) : "";
+    if (lk && oq.length) oq = [oq[0], lk];
+    add({ k: "osm", e: "🧑‍🏫", id: ol ? ol.id : "", n: ol ? ol.n : "", qs: oq, lk: lk || undefined }, 0);
     // 💪 one lesson from his own mistakes, else the most faded one
     var onPath = [cur && cur.id, cls[0] && cls[0].id, oid].filter(Boolean);
     var wk = weakPick(x.weak, onPath), wl = wk ? byId[wk.id] : null;
@@ -185,7 +195,7 @@
   function tnNow() { var tn = lsGet("nursin_tn_v1"); return tn && tn.d === today() ? tn : null; }
   function weakNow() {                                   // mistakes per lesson (assets/weak.js items × the quiz bank)
     var it = (w.Weak && w.Weak.items ? w.Weak.items() : (lsGet("nursin_weak_v1") || {}).items) || {}, R = w.NursinRet, by = {};
-    (w.QUIZ || []).forEach(function (q) { var e = it[q.id]; if (!e) return; var id = R && R.ofQ ? R.ofQ(q) : null; if (!id) return; var b = by[id] || (by[id] = { id: id, miss: 0, cnt: 0 }); b.miss += e.miss | 0 || 1; b.cnt++; });
+    (w.QUIZ || []).concat(w.LINKQ || []).forEach(function (q) { var e = it[q.id]; if (!e) return; (q.ls || [R && R.ofQ ? R.ofQ(q) : null]).forEach(function (id) { if (!id) return; var b = by[id] || (by[id] = { id: id, miss: 0, cnt: 0 }); b.miss += e.miss | 0 || 1; b.cnt++; }); });
     return Object.keys(by).map(function (k) { return by[k]; });
   }
   function qidsNow() { var R = w.NursinRet, m = {}; (w.QUIZ || []).forEach(function (q) { var id = R && R.ofQ ? R.ofQ(q) : null; if (id && q.id) (m[id] || (m[id] = [])).push(q.id); }); return m; }
@@ -203,7 +213,7 @@
     var L = lessonsNow(), S = w.NursinSRS, RT = w.Retain, wx = { ready: false, done: false }, us = U().usage ? U().usage() : (lsGet("nursin_use_v1") || { f: {} }), tn = tnNow();
     try { var st = RT && RT.wstatus ? RT.wstatus() : null; if (st) wx = { ready: !!st.ready, done: !!st.done }; } catch (e) {}
     return { day: today(), hm: hmB(), due: S && S.count ? S.count() : 0, last: lastNow(L), lessons: L, today: todayNow(), qids: qidsNow(), weak: weakNow(), use: us.f || {}, since: us.s || 0,
-      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [] };
+      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }) };
   }
   function plan() {
     var p = lsGet(PK), dk = today();
@@ -288,7 +298,7 @@
     var d2 = r.done || {}, a2 = r.ans || {}, j;
     out.done = out.done || {}; out.ans = out.ans || {};
     for (j in d2) if (keys[j] && !out.done[j]) { out.done[j] = +d2[j] || Date.now(); ch = true; }
-    for (j in a2) if (out.ans[j] == null && /^q\d{3}$/.test(j)) { out.ans[j] = a2[j] | 0; ch = true; }
+    for (j in a2) if (out.ans[j] == null && /^(?:q\d{3}|k\d{2,3})$/.test(j)) { out.ans[j] = a2[j] | 0; ch = true; }
     if (r.cls && !out.cls) { out.cls = 1; ch = true; }
     return { p: out, ch: ch };
   }
@@ -359,7 +369,7 @@
      quiz bank, answered here: ✅/❌ + the explanation, like a real quiz answer (weak points, reviews and the lesson's memory move). */
   var MK = "nursin_mood_v1", fbQ = "", openK = "";
   function moodNow() { var m = lsGet(MK); return m && m.d === today() ? m.m : ""; }
-  function qById(id) { var Q = w.QUIZ || []; for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
+  function qById(id) { var Q = (w.QUIZ || []).concat(w.LINKQ || []); for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
   function osmPrompt(s) { var n = curName(s); return T("اشرحلي بالمختصر أهم نقاط درس «" + n + "»، وبعدين اسألني سؤال واحد عليه", "Explique-moi en bref les points clés de la leçon « " + n + " », puis pose-moi une question dessus"); }
   function osmHtml(p, s, st) {
     var A = p.ans || {}, qs = (s.qs || []).map(qById).filter(Boolean), m = moodNow(), C = w.NursinCoach, cp = null, nm = first();
@@ -377,12 +387,12 @@
     var fq = fbQ ? qById(fbQ) : null;
     if (fq && A[fq.id] != null) {                       // the answer just given: ✅/❌ + why
       var ok = A[fq.id] === fq.a;
-      h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح! برافو", "✅ Correct ! Bravo") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + esc(fq.x) + "</p>" : "") + "</div>";
+      h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح! برافو", "✅ Correct ! Bravo") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + (fq.ls ? T("🔗 الرابط: ", "🔗 Le lien : ") : "") + esc(fq.x) + "</p>" : "") + "</div>";
       if (nA >= qs.length) h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
       h += '<div class="hzoa">' + (nA < qs.length ? '<button type="button" class="go" data-hznext>' + T("السؤال التاني", "Question suivante") + " " + CHEV + "</button>" : '<button type="button" class="go" data-hznext>' + T("خلصنا", "Terminé") + " ✓</button>").replace("data-hznext>" + T("خلصنا", "Terminé"), "data-hznext data-end>" + T("خلصنا", "Terminé")) + "</div>";
     } else if (nA < qs.length) {                        // the next question
       var q = qs[nA];
-      h += '<p class="hzoq">' + (nA ? T("👨‍🏫 السؤال التاني:", "👨‍🏫 Deuxième question :") : ack + T("خلّيني اسألك سؤالين سريعين عن «", "Laisse-moi te poser deux questions rapides sur « ") + esc(curName(s)) + T("»", " »")) + '</p><div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + "</small><p>" + esc(q.q) + '</p><div class="hzqo">' +
+      h += '<p class="hzoq">' + (nA ? (q.ls ? T("🔗 سؤال «اربط»: درس قديم مع درس جديد", "🔗 Question « Relier » : une ancienne leçon avec une nouvelle") : T("👨‍🏫 السؤال التاني:", "👨‍🏫 Deuxième question :")) : ack + T("خلّيني اسألك سؤالين سريعين عن «", "Laisse-moi te poser deux questions rapides sur « ") + esc(curName(s)) + T("»", " »")) + '</p><div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + "</small>" + (q.ls && w.NursinX ? w.NursinX.linkLine(q) : "") + "<p>" + esc(q.q) + '</p><div class="hzqo">' +
         q.o.map(function (o, k) { return '<button type="button" data-hzq="' + esc(q.id) + '" data-k="' + k + '"><span>' + (FR() ? "abc" : "أبج").charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div></div>";
     } else {                                            // both answered
       h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
@@ -493,7 +503,7 @@
       var ok = k === q.a;
       try { if (w.Weak) w.Weak.record(q, ok); } catch (x) {}
       try { if (w.NursinSRS) w.NursinSRS.record(q, ok); } catch (x) {}
-      try { var R = w.NursinRet, id = R && R.ofQ ? R.ofQ(q) : null; if (id && R.apply) R.apply(id, ok ? "ok" : "bad"); } catch (x) {}
+      try { var R = w.NursinRet, id = R && R.ofQ ? R.ofQ(q) : null; if (id && R.apply) R.apply(id, ok ? "ok" : "bad"); if (q.ls && R.apply) q.ls.forEach(function (y) { R.apply(y, ok ? "ok" : "bad"); }); } catch (x) {}   // 🔗 both lessons
       draw(); return;
     }
     if ((b = t.closest("[data-hznext]"))) { fbQ = ""; if (b.hasAttribute("data-end")) openK = ""; draw(); return; }

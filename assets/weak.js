@@ -21,16 +21,16 @@
     items:function(){return load().items;},
     count:function(){return Object.keys(load().items).length;},
     has:function(q){return !!load().items[qid(q)];},
-    questions:function(){var it=load().items;return(window.QUIZ||[]).filter(function(q){return !!it[qid(q)];});},
+    questions:function(){var it=load().items;return(window.QUIZ||[]).concat(window.LINKQ||[]).filter(function(q){return !!it[qid(q)];});},
     topics:function(){
       var it=load().items,by={};
-      (window.QUIZ||[]).forEach(function(q){var e=it[qid(q)];if(!e)return;var t=by[q.t]||(by[q.t]={t:q.t,n:0,miss:0});t.n++;t.miss+=e.miss;});
+      (window.QUIZ||[]).concat(window.LINKQ||[]).forEach(function(q){var e=it[qid(q)];if(!e)return;var t=by[q.t]||(by[q.t]={t:q.t,n:0,miss:0});t.n++;t.miss+=e.miss;});
       return Object.keys(by).map(function(k){return by[k];}).sort(function(a,b){return b.n-a.n||b.miss-a.miss;});
     },
     reset:function(){save({v:1,items:{}});},
     ran:function(){var d=load();d.ran=Date.now();save(d);},          /* a weak-points quiz finished (✅ أهدافك اليوم reads it) */
     ranAt:function(){return +load().ran||0;},
-    page:function(t){var G=window.QGROUPS||{};return (G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':t==='mgmt'?'mgmt.html':t==='quality'?'quality.html':t==='pharma'?'pharma.html':t==='rea'?'rea.html':t==='geri'?'geri.html':t==='comm'?'community.html':t==='medsurg'?'medsurg.html':'cardio.html';},
+    page:function(t){var G=window.QGROUPS||{};return t==='link'?'quiz.html?t=link':(G.neuro||[]).indexOf(t)>=0?'neuro.html':t==='henderson'?'henderson.html':t==='law'?'law.html':t==='mgmt'?'mgmt.html':t==='quality'?'quality.html':t==='pharma'?'pharma.html':t==='rea'?'rea.html':t==='geri'?'geri.html':t==='comm'?'community.html':t==='medsurg'?'medsurg.html':'cardio.html';},
     /* بيرسم قسم "نقاط ضعفك" جوّا el. opts.onStart(sel): شو يصير لما يكبس (إذا ما في، بيروح عـ quiz.html?t=weak).
        Abdullah (Oct 26, 12:34–12:35 PM): اللائحة بتضل ظاهرة (شو نقاط ضعفك وقدّيش)، بس أي كبسة على القسم أو على
        «🎯 ابدأ كويز نقاط ضعفي» بتبلّش كويز نقاط الضعف دغري. ما في محي ولا اختيار. السؤال بيطلع بعد صح مرّتين ورا بعض. */

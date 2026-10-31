@@ -47,6 +47,7 @@
     { k: "train", e: "🧠", ar: "التدريب والمراجعة", fr: "Entraînement et révision", items: [
       ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
       ["#case", "🩺", "حالة مريض", "Cas clinique"], ["quiz.html#weak", "🎯", "نقاط ضعفك", "Points faibles"], ["hifzi.html", "🗺️", "حفظي", "Ma mémoire"],
+      ["quiz.html?t=link", "🔗", "اربط", "Relier"], ["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"],
       ["#cards", "🃏", "البطاقات", "Cartes"], ["#blank", "📃", "الورقة البيضا", "Page blanche"], ["#teach", "🧑‍🏫", "علِّم عثمان", "Enseigne à Osman"],
       ["quiz.html#blanks", "✍️", "عبّي الفراغ", "Trous"], ["exams.html", "📅", "الامتحانات", "Examens"], ["law.html#classquiz", "📝", "كويز الصف", "Quiz de classe"]] },
     { k: "friends", e: "👥", ar: "مع رفقاتك", fr: "Avec tes amis", items: [

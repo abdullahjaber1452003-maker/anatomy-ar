@@ -31,9 +31,9 @@
     return "next";
   }
   function due(x, day) { day = day || today(); return Object.keys(x.items).filter(function (k) { return x.items[k].d <= day; }); }
-  function bank() { var m = {}; (w.QUIZ || []).forEach(function (q) { m[q.id] = q; }); return m; }
+  function bank() { var m = {}; (w.QUIZ || []).concat(w.LINKQ || []).forEach(function (q) { m[q.id] = q; }); return m; }   // + 🔗 «اربط» (assets/link-data.js)
   function record(q, ok, hard) {
-    if (!q || !q.id || !/^q\d{3}$/.test(q.id)) return "none";
+    if (!q || !q.id || !/^(?:q\d{3}|k\d{2,3})$/.test(q.id)) return "none";
     var x = load(), r = step(x, q.id, ok, today(), Date.now(), hard);
     if (r !== "none" && r !== "early") save(x);
     return r;
@@ -42,7 +42,7 @@
   function merge(remote) {
     var x = load(), ch = false;
     Object.keys(remote || {}).forEach(function (k) {
-      var r = remote[k]; if (!/^q\d{3}$/.test(k) || !r || typeof r.d !== "string") return;
+      var r = remote[k]; if (!/^(?:q\d{3}|k\d{2,3})$/.test(k) || !r || typeof r.d !== "string") return;
       var l = x.items[k]; if (!l || (r.m | 0) > (l.m | 0)) { x.items[k] = { s: Math.min(3, Math.max(0, r.s | 0)), d: r.d, m: r.m | 0 }; ch = true; }
     });
     if (ch) save(x);
@@ -58,6 +58,6 @@
     questions: function () { var b = bank(); return due(load()).map(function (k) { return b[k]; }).filter(Boolean); },
     items: function () { return load().items; },
     merge: merge,
-    add: function (qids) { var x = load(), day = today(), now = Date.now(), n = 0; (qids || []).forEach(function (k) { if (/^q\d{3}$/.test(k) && !x.items[k]) { x.items[k] = { s: 0, d: addDays(day, 1), m: now }; n++; } }); if (n) save(x); return n; }
+    add: function (qids) { var x = load(), day = today(), now = Date.now(), n = 0; (qids || []).forEach(function (k) { if (/^(?:q\d{3}|k\d{2,3})$/.test(k) && !x.items[k]) { x.items[k] = { s: 0, d: addDays(day, 1), m: now }; n++; } }); if (n) save(x); return n; }
   };
 })(window, document);

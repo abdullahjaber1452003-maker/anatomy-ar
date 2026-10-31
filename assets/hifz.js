@@ -117,14 +117,18 @@
     var st = lsGet("nursin_stact_v1"), ct = lsGet("nursin_cont_v1"), min = st && st.d === day ? Math.floor(Math.max(st.s || 0, st.r || 0) / 60) : 0;
     var last = Math.max(ct && ct.l || 0, lsGet("nursin_lastact_v1") || 0), S = w.NursinSRS, wk = weakest(1, now)[0] || null, c = counts(now);
     return { stAt: last | 0 ? Math.floor(last) : 0, stDay: day, stMin: Math.min(1440, min | 0), stDue: S && S.count ? Math.min(400, S.count() | 0) : 0, stRed: c.red,
-      stWeak: wk ? String(wk.n).slice(0, 80) : "", stWeakId: wk ? wk.id : "", stWeakHref: wk ? String(wk.href).slice(0, 120) : "", stWeakPct: wk ? wk.score : -1, stTn: tnPending() };
+      stWeak: wk ? String(wk.n).slice(0, 80) : "", stWeakId: wk ? wk.id : "", stWeakHref: wk ? String(wk.href).slice(0, 120) : "", stWeakPct: wk ? wk.score : -1, stTn: tnPending(),
+      // 🌅 worker v10's «سؤال الصبح»: up to 8 question ids it may pick from (his mistakes first, then today's reviews) + his language
+      stMq: w.NursinX && w.NursinX.mqPool ? w.NursinX.mqPool(8) : [], stLang: w.Lang && w.Lang.fr ? "fr" : "ar" };
   }
 
   /* ---------------- events ---------------- */
   d.addEventListener("nursin:answer", function (e) {
     var x = e.detail || {}; if (!x.qid) return;
-    var q = null; (w.QUIZ || []).some(function (y) { if (y.id === x.qid) { q = y; return true; } return false; });
-    apply(ofQ(q), x.ok ? "ok" : "bad"); lsSet("nursin_lastact_v1", Date.now());
+    var q = null; (w.QUIZ || []).concat(w.LINKQ || []).some(function (y) { if (y.id === x.qid) { q = y; return true; } return false; });
+    if (q && q.ls) q.ls.forEach(function (id) { apply(id, x.ok ? "ok" : "bad"); });   // 🔗 «اربط»: both lessons it ties together (assets/link-data.js)
+    else apply(ofQ(q), x.ok ? "ok" : "bad");
+    lsSet("nursin_lastact_v1", Date.now());
   });
   d.addEventListener("nursin:flash", function (e) { var x = e.detail || {}; apply(x.id, x.ok ? "fok" : "fbad"); lsSet("nursin_lastact_v1", Date.now()); });
   d.addEventListener("nursin:lesson-read", function (e) { var x = e.detail || {}; if (x.k) apply(String(x.k).split("#")[0], "read"); });
@@ -183,7 +187,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261028f", jobs = [];
+    var v = "?v=20261028g", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });

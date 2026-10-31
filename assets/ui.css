@@ -339,3 +339,33 @@ html[data-theme=night] .hznm-msg.err{color:#fca5a5}
 html[data-theme=night] .hznm-c.over{color:#fca5a5}
 .hznm-in[aria-invalid=true]{border-color:#dc2626}
 .hznmb{align-self:flex-start;margin:5px 0 3px;padding:6px 11px;border-radius:99px;border:1px solid var(--hzedge);background:var(--hzbox);color:var(--hzacc);font:800 12.5px/1.2 "Cairo",sans-serif;cursor:pointer}
+
+/* 🔗 «اربط» + 🧠 «حيلة حفظ» + 🌅 «سؤال الصبح» (assets/extra.js) — Oct 31 2026, 20261028g. No blur, no ads. */
+.xqbox{margin:0 2px 8px}
+.xqintro{font-weight:700;line-height:1.7;margin:0 4px 10px}
+.xqn{font-size:13px;color:var(--hzmut);margin:0 4px 4px;font-weight:700}
+.xq .qq{font-size:17px;line-height:1.75;margin:6px 4px 10px;font-weight:700}
+.xq .opt{margin:8px 0}
+.xlnk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 2px 4px;font-size:13px;font-weight:800;color:var(--hzacc);line-height:1.6}
+.xlnk a{color:inherit;text-decoration:none;background:var(--hzbox);border:1px solid var(--hzedge);border-radius:99px;padding:3px 10px}
+.xlx{font-weight:800;color:var(--hzacc)}
+.xqact{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.xqend{width:100%;margin:0 0 4px;font-weight:800}
+.hzsheet.xqs .hzshb,.hzsheet.xtks .hzshb{max-height:min(78vh,720px);overflow:auto}
+details.xtrk{margin:14px 0 10px;border-radius:18px;border:1px solid var(--hzedge,rgba(13,148,136,.25));background:linear-gradient(135deg,rgba(250,204,21,.13),rgba(13,148,136,.08));overflow:hidden}
+details.xtrk>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;font-weight:800;font-size:15.5px}
+details.xtrk>summary::-webkit-details-marker{display:none}
+details.xtrk>summary small{flex:0 0 auto;min-width:24px;text-align:center;border-radius:99px;padding:1px 8px;background:var(--hzbox,rgba(255,255,255,.6));font-size:12.5px}
+details.xtrk>summary::after{content:"▾";font-size:13px;opacity:.7;transition:transform .2s}
+details.xtrk[open]>summary::after{transform:rotate(180deg)}
+.xtkb{padding:0 12px 10px}
+.xtk{background:var(--uisurf,rgba(255,255,255,.7));border:1px solid var(--hzedge,rgba(0,0,0,.08));border-radius:14px;padding:10px 12px;margin:8px 0}
+.xtt{margin:0 0 4px;font-size:13px;font-weight:800;color:var(--hzacc,#0d9488)}
+.xtm{margin:0 0 6px;font-size:16.5px;font-weight:800;line-height:1.7}
+.xtk ul{margin:0;padding-inline-start:20px;line-height:1.85;font-size:15px}
+.xtchips{margin:6px 0 10px}
+#tricks{margin:22px 0}
+#tricks details.xtrk>summary span{font-size:14.5px}
+html[data-theme=night] details.xtrk{background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(45,212,191,.07))}
+html[data-theme=night] .xtk{background:rgba(255,255,255,.05)}
+@media (prefers-reduced-motion:reduce){details.xtrk>summary::after{transition:none}}
