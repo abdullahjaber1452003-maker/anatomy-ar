@@ -93,7 +93,57 @@ export function page(API) {
     try { await deleteDoc(ref); msg("🗑️ انمحى الإعلان."); show(); window.NursinAnn && window.NursinAnn.refresh(); } catch (e) { err(e); }
   });
   show();
-  if (window.NursinLessons) weekPicker(API, el); else window.addEventListener("load", () => weekPicker(API, el), { once: true });
+  if (window.NursinLessons) { hwAdmin(API, el); weekPicker(API, el); } else window.addEventListener("load", () => { hwAdmin(API, el); weekPicker(API, el); }, { once: true });
+}
+
+/* 📌 «زيد وظيفة» (Abdullah, Oct 31 2026 11:57 PM: «ذكّر الطلاب ضمن المسار بوظيفة المس / الـ devoir»): the admin adds a homework
+   (what, subject, due date, optional note) → homework/{id} {title, subj, due, note, at, by}; every signed-in student sees a «📌 وظيفة»
+   step in «مسار اليوم» until the due date passes (assets/homework.js + assets/home.js). List + delete here. Needs rules v20 (a refused
+   save / read says so here; the students' path just shows nothing until then). */
+function hwAdmin(API, el) {
+  const { doc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } = API.fs, esc = API.esc || (s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])));
+  const L = window.NursinLessons, S = (L && L.subjects) || {};
+  const box = document.createElement("div"); box.className = "qcard hwadm"; box.id = "hwadm";
+  const td = (() => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } })();
+  const opts = '<option value="">— ' + "كل المواد" + " —</option>" + Object.keys(S).map(k => '<option value="' + esc(k) + '">' + esc((S[k].e ? S[k].e + " " : "") + (S[k].ar || k)) + "</option>").join("");
+  box.innerHTML = '<h2>📌 زيد وظيفة</h2><p class="small">بتطلع خطوة «📌 وظيفة» بمسار اليوم عند كل الطلاب لحدّ يوم التسليم، وكل طالب بيعلّم «سلّمتها ✅» لحالو.</p>' +
+    '<label class="fl">شو الوظيفة؟ <input id="hwt" type="text" maxlength="120" placeholder="مثلاً: devoir Med-Surg — حالة مريض صفحة 12"></label>' +
+    '<label class="fl">المادة <select id="hws">' + opts + "</select></label>" +
+    '<label class="fl">يوم التسليم <input id="hwd" type="date" min="' + td + '"></label>' +
+    '<label class="fl">ملاحظة (اختياري) <textarea id="hwn" rows="2" maxlength="300" placeholder="مثلاً: بخط اليد، ورقة A4"></textarea></label>' +
+    '<p class="fbtns"><button class="btn pri" id="hwadd" type="button">📌 زيد الوظيفة</button></p><p class="small" id="hwmsg" aria-live="polite"></p><h3>الوظايف</h3><ul class="hwlist" id="hwlist"><li class="small">⏳ …</li></ul>';
+  const $ = id => box.querySelector("#" + id), msg = t => { $("hwmsg").textContent = t; };
+  const denied = e => e && e.code === "permission-denied";
+  async function list() {
+    const ul = $("hwlist");
+    try {
+      const s = await getDocs(collection(API.db, "homework")), rows = [];
+      s.forEach(d => { const x = d.data() || {}; rows.push({ id: d.id, title: String(x.title || ""), subj: String(x.subj || ""), due: String(x.due || ""), note: String(x.note || "") }); });
+      rows.sort((a, b) => (a.due < b.due ? 1 : a.due > b.due ? -1 : 0));
+      ul.innerHTML = rows.length ? rows.map(r => '<li class="' + (r.due < td ? "past" : "") + '"><b>' + esc(r.title) + "</b><small> · " + esc(r.subj ? ((S[r.subj] || {}).ar || r.subj) : "كل المواد") + " · التسليم " + esc(r.due.split("-").reverse().slice(0, 2).map(Number).join("/")) + (r.due < td ? " (خلص)" : "") + (r.note ? " · " + esc(r.note) : "") + '</small> <button class="btn sm" type="button" data-hwdel="' + esc(r.id) + '">🗑️ امحي</button></li>').join("") : '<li class="small">ما في وظايف لهلّق.</li>';
+    } catch (e) { ul.innerHTML = '<li class="small">' + (denied(e) ? "⏳ لازم تنشر قواعد Firestore v20 أوّل (الملف يلي بعتلك ياه)، وبعدين بتبيّن الوظايف هون." : "⚠️ ما قدرنا نجيب الوظايف.") + "</li>"; }
+  }
+  $("hwadd").addEventListener("click", async () => {
+    const title = $("hwt").value.trim(), subj = $("hws").value, due = $("hwd").value, note = $("hwn").value.trim();
+    if (!title) return msg("اكتب شو الوظيفة أوّل.");
+    if (!/^\d{4}-\d\d-\d\d$/.test(due)) return msg("اختار يوم التسليم.");
+    if (due < td) return msg("يوم التسليم لازم يكون اليوم أو بعدو.");
+    msg("⏳ …"); $("hwadd").disabled = true;
+    try {
+      const id = "hw" + Date.now().toString(36);
+      await setDoc(doc(API.db, "homework", id), { title: title.slice(0, 120), subj: subj.slice(0, 20), due, note: note.slice(0, 300), at: serverTimestamp(), by: API.user.uid });
+      $("hwt").value = ""; $("hwn").value = ""; msg("✅ انضافت. الطلاب بيشوفوها بمسار اليوم."); list();
+      if (window.NursinHW) window.NursinHW.fetch();
+    } catch (e) { msg(denied(e) ? "⏳ لازم تنشر قواعد Firestore v20 أوّل (الملف يلي بعتلك ياه)، وبعدين بيزبط الحفظ." : "⚠️ ما انحفظت، جرّب كمان مرّة."); }
+    $("hwadd").disabled = false;
+  });
+  box.addEventListener("click", async e => {
+    const b = e.target.closest("[data-hwdel]"); if (!b) return;
+    if (!confirm("تمحي هالوظيفة؟")) return;
+    try { await deleteDoc(doc(API.db, "homework", b.dataset.hwdel)); msg("🗑️ انمحت."); list(); if (window.NursinHW) window.NursinHW.fetch(); } catch (x) { msg(denied(x) ? "⏳ لازم تنشر قواعد v20 أوّل." : "⚠️ ما انمحت."); }
+  });
+  const first = el.querySelector(".qcard"); if (first && first.nextSibling) el.insertBefore(box, first.nextSibling); else el.appendChild(box);
+  list();
 }
 
 /* 📌 «دروس هالأسبوع» (Abdullah, Oct 27 3:35 PM): per subject, which lessons count this week. The students' daily lesson goals

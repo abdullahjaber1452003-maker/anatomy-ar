@@ -369,3 +369,55 @@ details.xtrk[open]>summary::after{transform:rotate(180deg)}
 html[data-theme=night] details.xtrk{background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(45,212,191,.07))}
 html[data-theme=night] .xtk{background:rgba(255,255,255,.05)}
 @media (prefers-reduced-motion:reduce){details.xtrk>summary::after{transition:none}}
+
+/* ---- 🎯 «امتحان الفصل 16/11» (assets/midterm.js on midterm.html + the mock exam result on quiz.html, Nov 1 2026): no ads, no blur ---- */
+.midapp{display:flex;flex-direction:column;gap:12px}
+.midhero{text-align:center}
+.midhero h1{font-size:20px;margin:2px 0 8px}
+.midk{margin:0;font-weight:900;color:var(--hzacc,#0f766e);font-size:13.5px}
+.midcd{display:flex;justify-content:center;gap:8px;margin:6px 0 10px;direction:ltr}
+.midu{display:flex;flex-direction:column;align-items:center;min-width:62px;padding:9px 6px 7px;border-radius:16px;background:var(--hzbox);border:1px solid var(--hzedge);box-shadow:inset 0 1px 0 var(--hzhi)}
+.midu b{font-size:26px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--hzink)}
+.midu small{font-size:11px;font-weight:800;color:var(--hzmut)}
+.midover{font-size:18px;font-weight:900}
+.midtoday{margin:6px 0 0;font-weight:800;font-size:14px}
+.midlist{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.midsub{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:16px;background:var(--hzbox);border:1px solid var(--hzedge)}
+.midsub .e{font-size:22px;font-family:"Noto Color Emoji","Apple Color Emoji",sans-serif}
+.midsub .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.midsub .tx b{font-size:14.5px;line-height:1.35}
+.midsub .tx small{font-size:11.5px;color:var(--hzmut);font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.midsub .btn{white-space:nowrap}
+.midgh{margin:14px 0 2px;font-size:15px}
+.midbest{display:inline-block;font-size:12px;font-weight:900;padding:3px 8px;border-radius:999px;white-space:nowrap;background:rgba(15,118,110,.12);color:#0f766e}
+.midbest.g{background:rgba(22,163,74,.14);color:#15803d}.midbest.y{background:rgba(234,179,8,.18);color:#a16207}.midbest.r{background:rgba(220,38,38,.12);color:#b91c1c}.midbest.none{background:var(--hztrack);color:var(--hzmut)}
+html[data-theme=night] .midbest{color:#5eead4}html[data-theme=night] .midbest.g{color:#86efac}html[data-theme=night] .midbest.y{color:#fde047}html[data-theme=night] .midbest.r{color:#fca5a5}
+.middays{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.midday{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:14px;background:var(--hzbox);border:1px solid var(--hzedge)}
+.midday .dp{font-size:11px;font-weight:800;color:var(--hzmut);padding:2px 7px;border-radius:99px;background:var(--hztrack)}
+.midall summary{cursor:pointer;font-weight:900;margin:10px 0 4px}
+.midday label{display:flex;align-items:center;gap:6px;font-weight:900;font-size:13px;white-space:nowrap}
+.midday input{width:20px;height:20px;accent-color:#0f766e}
+.midday .dw{font-size:13.5px;font-weight:700}
+.midday .dgo{display:flex;flex-wrap:wrap;gap:6px}
+.midday.cur{border:2px solid var(--hzacc,#0f766e)}
+.midday.dn{opacity:.72}
+.midday.miss .dl{color:#b91c1c}html[data-theme=night] .midday.miss .dl{color:#fca5a5}
+.midplan h2 small{font-size:13px;color:var(--hzmut)}
+.midwl{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.midwl li{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.midls ul{margin:6px 0;padding-inline-start:18px;font-size:13px}
+.midbyl{list-style:none;margin:6px 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.midbyl li{display:grid;grid-template-columns:1fr 70px auto;gap:8px;align-items:center;font-size:13px}
+.midbyl li a{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.midbyl .midbar{display:block;height:8px;border-radius:99px;background:var(--hztrack);overflow:hidden;direction:ltr}
+.midbyl .midbar i{display:block;height:100%;border-radius:99px}
+.midbyl .midbar i.g{background:#22c55e}.midbyl .midbar i.y{background:#eab308}.midbyl .midbar i.r{background:#ef4444}
+.midbestl{font-weight:800}
+.midres .midwl a,.midweak .midwl a{font-size:14.5px}
+.hwadm label.fl{display:flex;flex-direction:column;gap:5px;margin:10px 0;font-weight:800;font-size:14px}
+.hwadm label.fl input,.hwadm label.fl select,.hwadm label.fl textarea{width:100%;box-sizing:border-box;font:inherit;font-weight:600;padding:10px 12px;border-radius:14px;border:1px solid var(--hzline,rgba(15,40,44,.14));background:var(--uifield,#fff);color:inherit}
+.hwlist{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.hwlist li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:9px 11px;border-radius:14px;background:var(--hzbox);border:1px solid var(--hzedge)}
+.hwlist li b{flex:1 1 100%;font-size:14px}.hwlist li small{flex:1;font-size:12px;color:var(--hzmut)}
+.hwlist li.past{opacity:.6}

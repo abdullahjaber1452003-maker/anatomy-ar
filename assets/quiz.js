@@ -87,11 +87,11 @@
     render();
     if(scroll)root.scrollIntoView({block:'start'});
   }
-  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?'🔁 مراجعة اليوم':sel==='note'?'📒 سؤال من ملاحظاتي':sel==='mixed'?'📝 '+T2('الامتحان الأسبوعي المختلط','Examen mixte de la semaine'):sel==='link'?T2('🔗 اربط: درس قديم مع جديد','🔗 Relier : ancienne et nouvelle leçon'):sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
+  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?'🔁 مراجعة اليوم':sel==='note'?'📒 سؤال من ملاحظاتي':sel==='mixed'?'📝 '+T2('الامتحان الأسبوعي المختلط','Examen mixte de la semaine'):sel==='link'?T2('🔗 اربط: درس قديم مع جديد','🔗 Relier : ancienne et nouvelle leçon'):sel==='mid'?'🎯 '+T2('امتحان الفصل: ','Examen : ')+(window.NursinMid&&state?NursinMid.subjName(state.subj):''):sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
   function render(){
     var s=state,q=s.qs[s.i];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>'+(s.timed?'<b class="wxclk"></b> · ':'')+'سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
-    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span>'+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+'<p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
+    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(q._l?midLn(q._l):(QTOP[q.t]||q.t))+'</span>'+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+'<p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
     q.o.forEach(function(o,k){h+='<button class="opt" data-k="'+k+'"><span class="l" dir="ltr">'+L[k]+'</span><span>'+o+'</span></button>';});
     h+=p50(s)+'<div id="fb" aria-live="polite"></div><div class="qnav"><span></span><button class="btn pri" id="next" hidden>التالي ←</button></div></div>';
     root.innerHTML=h;
@@ -103,7 +103,7 @@
   // ✂️ 50/50 power-up (signed-in only, once per quiz; never in exams or challenges)
   function p50(s){
     var N=window.Nursin;if(!N||!N.me||!N.use5050)return '';
-    if(s.exam||s.challenge||s.cq)return '<p class="p50row"><button class="btn p50" type="button" disabled>✂️ 50/50</button> <small>مش مسموح '+(s.exam?'بالامتحان':s.cq?'بكويز الصف':'بالتحدّي')+'</small></p>';
+    if(s.exam||s.challenge||s.cq||s.mid)return '<p class="p50row"><button class="btn p50" type="button" disabled>✂️ 50/50</button> <small>مش مسموح '+(s.exam||s.mid?'بالامتحان':s.cq?'بكويز الصف':'بالتحدّي')+'</small></p>';
     if(s.used50)return '<p class="p50row"><button class="btn p50" type="button" disabled>✂️ 50/50</button> <small>استعملتو بهالكويز</small></p>';
     var n=N.puAvail(N.me);
     if(n>0)return '<p class="p50row"><button class="btn p50" id="p50" type="button">✂️ احذف جواب غلط <b>('+n+')</b></button></p>';
@@ -145,12 +145,13 @@
     var sr=S?S.record(q,ok):'none';   // 🔁 spaced repetition: wrong = back tomorrow; right on a due review = next step
     var guessed=ok&&conf==='guess';
     if(guessed){if(S&&S.hard){S.hard(q);sr='guess';}if(W){W.record(q,false);rec='guessed';}}   // 🎯 right but guessed = scheduled exactly like a wrong answer
+    if(s.mid&&q._l){var lb=s.byL[q._l]||(s.byL[q._l]=[0,0]);lb[1]++;if(ok)lb[0]++;}   // 🎯 امتحان الفصل: per lesson
     if(s.by&&RT){var lid=window.NursinRet&&window.NursinRet.ofQ?window.NursinRet.ofQ(q):null,lx=null;(window.NLESSONS&&NLESSONS.list||[]).forEach(function(x){if(x.s+':'+(x.l||x.t)===lid)lx=x;});var sk=lx?RT.groupOf(lx.s):q.t;var bb=s.by[sk]||(s.by[sk]=[0,0]);bb[1]++;if(ok)bb[0]++;}
     try{document.dispatchEvent(new CustomEvent('nursin:answer',{detail:{qid:q.id,ok:ok,set:s.sel}}));}catch(e){}   // ⚠️ class + site counters (assets/qstats.js)
     refresh();
     var O=window.Osman,om=O?(ok?O.right():O.wrong()):'';   // 👨‍🏫 الأستاذ عثمان (assets/osman.js)
     $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(guessed?'<p class="small wtag cfnote">🤔 '+T2('حزّرتها صح؟ رح ترجعلك بمراجعة بكرا وبنقاط ضعفك متل الغلط.','Trouvée au hasard ? Elle revient demain en révision et dans tes points faibles, comme une erreur.')+'</p>':conf==='sure'&&!ok?'<p class="small wtag cfnote">⚠️ '+T2('كنت متأكد وطلع غلط: انتبه لهالنقطة بالذات.','Tu étais sûr(e) et c\'était faux : fais bien attention à ce point.')+'</p>':'')+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
-      (!S||guessed?'':!ok?'<p class="small wtag">🔁 رح يرجعلك بكرا بمراجعة اليوم</p>':sr==='next'?'<p class="small wtag">🔁 برافو، بيرجع بعد '+S.STEPS[S.items()[q.id].s]+' أيام</p>':sr==='done'?'<p class="small wtag">🎉 خلص من المراجعة (حفظتو)</p>':'<p class="small srsh"><button class="btn sm" id="srhard" type="button">😓 صعبة، رجّعلي ياها</button></p>');
+      (!S||guessed||(s.mid&&q._k!=='q')?'':!ok?'<p class="small wtag">🔁 رح يرجعلك بكرا بمراجعة اليوم</p>':sr==='next'?'<p class="small wtag">🔁 برافو، بيرجع بعد '+S.STEPS[S.items()[q.id].s]+' أيام</p>':sr==='done'?'<p class="small wtag">🎉 خلص من المراجعة (حفظتو)</p>':'<p class="small srsh"><button class="btn sm" id="srhard" type="button">😓 صعبة، رجّعلي ياها</button></p>');
     var hb=$('#srhard');if(hb)hb.addEventListener('click',function(){S.hard(q);hb.parentNode.innerHTML='🔁 تمام، بترجعلك بكرا';refresh();});
     // ❓ «ليش؟» — only after a right answer, never in timed/scored modes; nothing at all when the question has no why-question
     var y=ok&&RT&&RT.confOn(s)&&!s.timed?RT.whyFor(q,conf==='guess'):null;
@@ -173,10 +174,56 @@
     root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
   }
+
+  /* 🎯 «امتحان الفصل 16/11» (Oct 31 2026, assets/midterm.js): quiz.html?t=mid&s=<subject> — an intro card, then a timed exam (1 min per
+     question) from ALL the subject's lessons, balanced per lesson; no 50/50, no «متأكد؟», no «ليش؟». Bank answers go to نقاط ضعفك + مراجعة
+     بكرا as usual. The result: score, per-lesson table, «أضعف دروسك» with links, best score saved (assets/midterm.js result()). No ad here. */
+  function midLn(id){var M=window.NursinMid,l=M&&M.lessonInfo?M.lessonInfo(id):null;return l?l.n:id;}
+  function midIntro(subj,scroll){
+    var M=window.NursinMid;state=null;chips('');adsOff(true);
+    if(!M||(subj!=='weak'&&!M.lessonsOf(subj).length)){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما لقينا هالمادة.','Matière introuvable.')+'</p><p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a></p></div>';return;}
+    root.innerHTML='<div class="qcard"><p>⏳ …</p></div>';
+    M.loadCases().then(function(){
+      var n=+(params().n)||0,qs=M.build(subj,n?{n:n}:null),b=M.load().best[subj],ls=subj==='weak'?[]:M.lessonsOf(subj),left=M.daysLeft();
+      if(!qs.length){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما في أسئلة كفاية بعد.','Pas encore assez de questions.')+'</p></div>';return;}
+      var h='<div class="qcard midintro"><p class="midk">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+(M.active()?' · '+T2('باقي '+left+' يوم','J-'+left):'')+'</p><h2>'+(M.EMO[subj]||'📘')+' '+esc(M.subjName(subj))+'</h2>'+
+        '<p>'+T2(qs.length+' سؤال · '+qs.length+' دقيقة'+(ls.length?' · من كل الـ '+ls.length+(ls.length===1?' درس':' دروس')+' بالتساوي':''),qs.length+' questions · '+qs.length+' minutes'+(ls.length?' · de toutes les '+ls.length+' leçon(s), à parts égales':''))+'</p>'+
+        (b?'<p class="small">🏅 '+T2('أحسن علامة إلك: ','Ton meilleur score : ')+b.p+'%</p>':'')+
+        '<p class="small">'+T2('متل الامتحان الحقيقي: بلا 50/50، والوقت عم يمشي. الغلط بيرجعلك بمراجعة بكرا وبنقاط ضعفك.','Comme le vrai examen : pas de 50/50, et le temps tourne. Les erreurs reviennent demain en révision et dans tes points faibles.')+'</p>'+
+        (ls.length?'<details class="midls"><summary>'+T2('الدروس الداخلة','Les leçons incluses')+'</summary><ul>'+ls.map(function(l){return '<li>'+esc(l.n)+'</li>';}).join('')+'</ul></details>':'')+
+        '<p><button class="btn pri" id="midgo" type="button">⏱️ '+T2('ابدأ الامتحان','Commencer l\'examen')+'</button> <a class="btn" href="midterm.html">'+T2('رجوع','Retour')+'</a></p></div>';
+      root.innerHTML=h;
+      $('#midgo').addEventListener('click',function(){
+        clearInterval(tmr);adsOff(true);
+        state={sel:'mid',subj:subj,les:'',qs:qs,i:0,score:0,wrong:[],grad:0,mid:true,byL:{},timed:Date.now()+qs.length*60000};
+        render();root.scrollIntoView({block:'start'});
+      });
+      if(scroll)root.scrollIntoView({block:'start'});
+    });
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function midDone(s,pct){
+    var M=window.NursinMid,ans=0,k;for(k in s.byL)ans+=s.byL[k][1];
+    var r=M?M.result(s.subj,s.score,s.qs.length,s.byL):{pct:pct,best:false,prev:null,weak:[]};
+    try{document.dispatchEvent(new CustomEvent('nursin:quizdone',{detail:{score:s.score,total:s.qs.length,pct:pct,sel:'mid'}}));}catch(e){}
+    var rows=Object.keys(s.byL).map(function(id){var v=s.byL[id];return {id:id,ok:v[0],n:v[1],p:Math.round(100*v[0]/v[1])};}).sort(function(a,b){return a.p-b.p;});
+    var h='<div class="qcard score midres"><p>🎯 '+T2('نتيجة امتحان الفصل','Résultat de l\'examen')+' · '+esc(M?M.subjName(s.subj):'')+': <b>'+s.score+' / '+s.qs.length+'</b> ('+pct+'%)</p>'+
+      '<p>'+(pct>=85?T2('ممتاز 🔥 إنت جاهز لهالمادة','Excellent 🔥 tu es prêt(e) pour cette matière'):pct>=60?T2('منيح 👍 راجع أضعف دروسك تحت','Bien 👍 revois tes leçons faibles ci-dessous'):T2('لازم مراجعة 💪 ابدأ بأضعف دروسك تحت','Il faut réviser 💪 commence par tes leçons faibles ci-dessous'))+'</p>'+
+      '<p class="midbestl">🏅 '+(r.best?(r.prev==null?T2('أوّل علامة إلك بهالمادة: '+pct+'%','Ton premier score dans cette matière : '+pct+' %'):T2('علامة جديدة أحسن من '+r.prev+'%! 🎉','Nouveau record, mieux que '+r.prev+' % ! 🎉')):T2('أحسن علامة إلك: '+r.prev+'%','Ton meilleur score : '+r.prev+' %'))+'</p>'+
+      (s.timeUp&&ans<s.qs.length?'<p class="small">⏱️ '+T2('خلص الوقت: ما لحقت '+(s.qs.length-ans)+' سؤال.','Temps écoulé : '+(s.qs.length-ans)+' question(s) sans réponse.')+'</p>':'')+
+      '<h3>'+T2('نتيجتك بكل درس','Ton résultat par leçon')+'</h3><ul class="midbyl">'+rows.map(function(x){var l=M&&M.lessonInfo(x.id);return '<li><a href="'+esc(l?l.href:'#')+'">'+esc(l?l.n:x.id)+'</a><span class="midbar"><i class="'+(x.p>=85?'g':x.p>=60?'y':'r')+'" style="width:'+Math.max(4,x.p)+'%"></i></span><b>'+x.ok+'/'+x.n+'</b></li>';}).join('')+'</ul>'+
+      '<h3>💪 '+T2('أضعف دروسك','Tes leçons les plus faibles')+'</h3>'+(r.weak.length?'<ul class="midwl">'+r.weak.slice(0,4).map(function(x){var l=M&&M.lessonInfo(x.id);return l?'<li><a href="'+esc(l.href)+'">📖 '+esc(l.n)+'</a> <span class="midbest r">'+x.p+'%</span></li>':'';}).join('')+'</ul>':'<p>🔥 '+T2('ما في ولا درس تحت ٧٠٪، برافو!','Aucune leçon sous 70 %, bravo !')+'</p>')+
+      (s.wrong.length?'<p class="small">🔁 '+T2('الأسئلة اللي غلطت فيها رجعت لـ «مراجعة اليوم» بكرا ولنقاط ضعفك.','Les questions ratées reviennent demain dans « Révision du jour » et dans tes points faibles.')+'</p>':'')+
+      '<p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a> <a class="btn" href="quiz.html?t=mid&amp;s='+esc(s.subj)+'">'+T2('جرّب مرّة تانية','Réessayer')+'</a></p></div>';
+    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var l=M&&q._l?M.lessonInfo(q._l):null;h+='<div class="qcard"'+(q._k==='q'?' data-qid="'+q.id+'"':'')+'><span class="qtopic">'+esc(l?l.n:'')+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div>'+(l?'<p><a href="'+esc(l.href)+'">'+T2('اقرا الدرس ←','Lire la leçon →')+'</a></p>':'')+'</div>';});}
+    root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
+    try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:'mid',les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
+  }
   function done(){
     clearInterval(tmr);
     var s=state;if(!s)return;var pct=Math.round(100*s.score/s.qs.length);
     if(s.sel==='mixed')return mixedDone(s,pct);
+    if(s.sel==='mid')return midDone(s,pct);
     try{document.dispatchEvent(new CustomEvent('nursin:quizdone',{detail:{score:s.score,total:s.qs.length,pct:pct,sel:s.sel}}));}catch(e){}   // 👨‍🏫 Osman's short comment (assets/coach.js)
     var h='<div class="qcard score"><p>النتيجة: <b>'+s.score+' / '+s.qs.length+'</b> ('+pct+'%)</p><p>'+(pct>=85?'ممتاز 🔥':pct>=60?'منيح 👍 راجع الغلطات تحت':'لازم مراجعة 💪 اقرا الدرس وجرّب مرّة تانية')+'</p>';
     if(W){var left=W.count();
@@ -227,5 +274,6 @@
   else if(p.qid&&QUIZ.concat(window.LINKQ||[]).some(function(q){return q.id===p.qid;})){   // 📒 back from «ملاحظاتي»: that one question
     state={sel:'note',les:'',qs:QUIZ.concat(window.LINKQ||[]).filter(function(q){return q.id===p.qid;}),i:0,score:0,wrong:[],grad:0};chips('');render();root.scrollIntoView({block:'start'});
   }
+  else if(p.t==='mid')midIntro(p.s||'',true);   // 🎯 امتحان الفصل (assets/midterm.js)
   else start(p.t||'all',p.n?+p.n:(p.t?0:20),!!p.t||location.hash==='#quiz',p.l||'');
 })();

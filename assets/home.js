@@ -67,7 +67,7 @@
      and the laptop share one path for the day. HomePath.build is pure (tests). */
   var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6 };   // = assets/lessons.js
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
-  var ORDER = { osm: 0, cls: 1, imp: 2, duel: 3, rev: 4, today: 5, cont: 5, "new": 5, quiz: 6, weak: 7, fade: 7, "case": 8, use: 9, wex: 10, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
+  var ORDER = { osm: 0, cls: 1, hw: 1.5, imp: 2, mid: 2.5, duel: 3, rev: 4, today: 5, cont: 5, "new": 5, quiz: 6, weak: 7, fade: 7, "case": 8, use: 9, wex: 10, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
   var FEATS = ["games", "cards", "cases", "quiz", "highlights", "notes"], NEVER = ["games", "cards", "cases", "quiz"];
   function skey(s) { return s.k + ":" + (s.id || s.ik || s.f || ""); }
   function dayOf(ts) { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts)); } catch (e) { return new Date(ts + 2 * 36e5).toISOString().slice(0, 10); } }
@@ -125,6 +125,9 @@
     if (cls.length) add({ k: "cls", e: "🏫", id: cls[0].id, n: cls[0].n, href: cls[0].href, id2: cls[1] ? cls[1].id : "", n2: cls[1] ? cls[1].n : "" }, 1);
     // ⭐ today's exams / class exam / سؤال اليوم / class quiz + the tournament round
     (x.imp || []).slice(0, 2).forEach(function (g) { if (g && g.ik) add({ k: "imp", e: g.e || "📅", ik: g.ik, n: g.n || "", s: g.s || "", href: g.href || "index.html" }, 2); });
+    // 📌 the teacher's homework (admin → homework/, assets/homework.js) until its due date · 🎯 ONE «تحضير امتحان الفصل» step until Nov 15 (assets/midterm.js)
+    (x.hw || []).slice(0, 2).forEach(function (w0) { if (w0 && w0.id) add({ k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw" }, 1); });
+    if (x.mid && x.mid.k === "mid") add({ k: "mid", e: "🎯", id: x.mid.id, s: x.mid.s, s2: x.mid.s2 || "", light: x.mid.light | 0, left: x.mid.left | 0, href: x.mid.href }, 2);
     if (x.tn) add({ k: "duel", e: "⚔️", op: x.tn.op || "", href: "index.html#duel" }, 2);
     var due = x.due | 0;
     if (due > 0) add({ k: "rev", e: "🔁", base: due, n: Math.min(due, 10), href: "quiz.html?t=review" + (due > 10 ? "&n=10" : "") }, 3);
@@ -192,6 +195,8 @@
     var G = w.NursinGoals, gl = []; try { gl = G && G.list ? G.list() || [] : []; } catch (e) {}
     return gl.filter(function (g) { return /^(ex:|cls:|dq$)/.test(String(g.k)); }).concat(cqItems).map(function (g) { return { ik: String(g.k || g.id || g.n), e: g.e || "📝", n: g.n || "", s: g.s || "", href: g.href || "", done: !!g.done }; });
   }
+  function midNow() { var M = w.NursinMid; try { return M && M.step ? M.step(today()) : null; } catch (e) { return null; } }
+  function hwNow() { var H = w.NursinHW; try { return H && H.open ? H.open(today()) : []; } catch (e) { return []; } }
   function tnNow() { var tn = lsGet("nursin_tn_v1"); return tn && tn.d === today() ? tn : null; }
   function weakNow() {                                   // mistakes per lesson (assets/weak.js items × the quiz bank)
     var it = (w.Weak && w.Weak.items ? w.Weak.items() : (lsGet("nursin_weak_v1") || {}).items) || {}, R = w.NursinRet, by = {};
@@ -213,7 +218,7 @@
     var L = lessonsNow(), S = w.NursinSRS, RT = w.Retain, wx = { ready: false, done: false }, us = U().usage ? U().usage() : (lsGet("nursin_use_v1") || { f: {} }), tn = tnNow();
     try { var st = RT && RT.wstatus ? RT.wstatus() : null; if (st) wx = { ready: !!st.ready, done: !!st.done }; } catch (e) {}
     return { day: today(), hm: hmB(), due: S && S.count ? S.count() : 0, last: lastNow(L), lessons: L, today: todayNow(), qids: qidsNow(), weak: weakNow(), use: us.f || {}, since: us.s || 0,
-      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }) };
+      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }), mid: midNow(), hw: hwNow() };
   }
   function plan() {
     var p = lsGet(PK), dk = today();
@@ -228,7 +233,7 @@
     function ins(s) {
       s.at = now; p.steps.push(s); p.steps.sort(function (a, b) { return ORDER[a.k] - ORDER[b.k]; }); ch = true;
       while (p.steps.length > MAXS) {           // drop the lightest step not done yet (never Osman / class / ⭐)
-        var drop = -1; p.steps.forEach(function (t, i) { if (/^(osm|cls|imp|duel)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
+        var drop = -1; p.steps.forEach(function (t, i) { if (/^(osm|cls|imp|duel|mid|hw)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
         if (drop < 0) break; p.steps.splice(drop, 1);
       }
     }
@@ -240,6 +245,8 @@
     var keys = {}; p.steps.forEach(function (s) { keys[skey(s)] = 1; });
     impNow().forEach(function (g) { var s = { k: "imp", e: g.e, ik: g.ik, n: g.n, s: g.s, href: g.href, pr: 2 }; if (!g.done && !keys[skey(s)] && p.steps.filter(function (t) { return t.k === "imp"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
     var tn = tnNow(); if (tn && tn.k === "todo" && !keys["duel:"]) ins({ k: "duel", e: "⚔️", op: tn.op || "", href: "index.html#duel", pr: 2 });
+    hwNow().forEach(function (w0) { var s = { k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw", pr: 1 }; if (!keys[skey(s)] && p.steps.filter(function (t) { return t.k === "hw"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
+    var mi = midNow(); if (mi && !p.steps.some(function (t) { return t.k === "mid"; })) { mi.pr = 2; ins(mi); }
     if (ch) { lsSet(PK, p); push(p); }
     return p;
   }
@@ -266,6 +273,8 @@
       case "wex": try { var st = w.Retain && w.Retain.wstatus ? w.Retain.wstatus() : null; return !!(st && st.done); } catch (e) { return false; }
       case "imp": var g = impNow().filter(function (y) { return y.ik === s.ik; })[0]; return !!(g && g.done);
       case "duel": var tn = tnNow(); return !!(tn && tn.k && tn.k !== "todo");
+      case "mid": var M = w.NursinMid; return !!(M && M.stepDone && M.stepDone(s.id, 0));
+      case "hw": var HW = w.NursinHW; return !!(HW && HW.isDone(s.id));
       case "use": if (s.f === "games") { var o = lsGet("nursin_study_v1"); if (o && o.td === p.d && (o.tg | 0) > 0) return true; } return useAt(s.f) > at;
       case "game": var o2 = lsGet("nursin_study_v1"); return !!(o2 && o2.td === p.d && (o2.tg | 0) > 0) || useAt("games") > at;
       case "cards": return useAt("cards") > at || (vis > 0 && back(vis));
@@ -330,6 +339,12 @@
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
       case "cls": return { tag: T("🏫 رجعت من المعهد", "🏫 De retour de l'institut"), t: T("راجع درس اليوم: ", "Révise la leçon du jour : ") + nm, sub: s.id2 ? T("وكمان «", "Et aussi « ") + esc(curName(s, s.id2, s.n2)) + T("»", " »") : T("مرّ عليه وهوّي بعدو سخن", "Pendant que c'est encore frais"), min: 8 };
       case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: esc(s.n), sub: esc(s.s || ""), min: 10 };
+      case "mid": var M = w.NursinMid, sn = function (k) { return esc(M && M.subjName ? M.subjName(k) : k); };
+        return { tag: T("🎯 امتحان الفصل · باقي " + (s.left | 0) + " يوم", "🎯 Examen · J-" + (s.left | 0)), t: s.light || s.s === "weak" ? T("تحضير امتحان الفصل: مراجعة خفيفة + ١٠ أسئلة", "Préparation de l'examen : révision légère + 10 questions") : T("تحضير امتحان الفصل: امتحان كامل ", "Préparation de l'examen : examen complet ") + sn(s.s),
+          sub: s.s2 ? T("بخطة اليوم كمان: ", "Aussi au plan du jour : ") + sn(s.s2) : s.light || s.s === "weak" ? T("من أضعف دروسك", "Sur tes leçons faibles") : T("أسئلة من كل الدروس، مع وقت", "Des questions de toutes les leçons, chronométré"), min: s.light || s.s === "weak" ? 10 : (M && M.sizeOf ? M.sizeOf(s.s) : 20) };
+      case "hw": var SB = ((w.NLESSONS || {}).subjects || {})[s.subj] || null;
+        return { tag: T("📌 تذكير بالوظيفة", "📌 Rappel de devoir"), t: T("وظيفة: ", "Devoir : ") + esc(s.n) + " " + T("(التسليم ", "(à rendre le ") + dueTxt(s.due) + ")",
+          sub: [SB ? esc(T(SB.ar, SB.fr || SB.ar)) : esc(s.subj || ""), esc(s.note || "")].filter(Boolean).join(" · "), min: 2 };
       case "duel": return { tag: T("⭐ البطولة", "⭐ Le tournoi"), t: T("⚔️ دورك اليوم بالبطولة", "⚔️ C'est ton tour au tournoi") + (s.op ? T(" ضد ", " contre ") + "<bdi>" + esc(s.op) + "</bdi>" : ""), sub: T("٥ أسئلة بـ٨ دقايق، الرابح بيطلع عالدور الجاي", "5 questions en 8 minutes, le gagnant passe au tour suivant"), min: 4 };
       case "rev": return { tag: T("⭐ مراجعة", "⭐ Révision"), t: T("🔁 " + s.n + " أسئلة مراجعة", "🔁 " + s.n + " questions à réviser"), sub: T("مستحقّين اليوم من حفظك", "Prévues aujourd'hui dans ta mémoire"), min: Math.max(3, Math.round(s.n * 0.6)) };
       case "today": return { tag: T("⭐ درس اليوم", "⭐ Leçon du jour"), t: "📖 " + nm, sub: s.more ? T("+" + s.more + " من دروس هالأسبوع", "+" + s.more + " des leçons de la semaine") : T("قراية قصيرة من جدول صفّك", "Une courte lecture du programme de ta classe"), min: 6 };
@@ -348,6 +363,10 @@
       case "qall": return { tag: T("كويز", "Quiz"), t: T("⚡ كويز 10 أسئلة", "⚡ Quiz de 10 questions"), sub: T("من كل المواد", "Toutes les matières"), min: 5 };
       default: return { tag: T("بطاقات", "Cartes"), t: T("🃏 بطاقات سريعة", "🃏 Cartes rapides"), sub: "", min: 3 };
     }
+  }
+  function dueTxt(day) {                               // «الخميس 5/11»
+    if (!/^\d{4}-\d\d-\d\d$/.test(day || "")) return esc(day || ""); var dt = new Date(day + "T12:00:00Z");
+    return T(["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][dt.getUTCDay()], ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."][dt.getUTCDay()]) + " " + dt.getUTCDate() + "/" + (dt.getUTCMonth() + 1);
   }
   function ring(done, tot, size) {
     size = size || 50; var r = size / 2 - 3, c = 2 * Math.PI * r, f = tot ? done / tot : 0;
@@ -416,11 +435,16 @@
       if (s.bonus && st !== "done") st += " bonus";
       h += '<li class="hzst ' + st + (s.k === "osm" ? " hzosmst" : "") + '"><span class="nd" aria-hidden="true"><i>' + (D[k] ? "✓" : s.e) + "</i></span>";
       if (s.k === "osm" && ((st.indexOf("now") === 0) || openK === k || (fbQ && s.qs && s.qs.indexOf(fbQ) > -1))) { h += osmHtml(p, s, st.indexOf("now") === 0 ? "now" : D[k] ? "done" : "todo") + "</li>"; continue; }
+      if (s.k === "hw") {                               // 📌 homework: not a link — the text + his own «سلّمتها ✅»
+        h += '<div class="bx hzhwbx" id="hw"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : "") + "</span></span><b>" + x.t + "</b>" + (x.sub ? "<small>" + x.sub + "</small>" : "") +
+          '<button type="button" class="btn sm hzhwok' + (D[k] ? " on" : "") + '" data-hzhw="' + esc(s.id) + '" aria-pressed="' + (D[k] ? "true" : "false") + '">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button></div></li>";
+        continue;
+      }
       var duel = s.k === "duel";
       h += (duel ? '<button type="button" class="bx" data-hzduel data-step="' + esc(k) + '">' : '<a class="bx" href="' + esc(s.href) + '" data-step="' + esc(k) + '">') + '<span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' +
         (D[k] ? T("✅ خلصت", "✅ Fait") : "~" + x.min + T(" د", " min")) + "</span></span>" +
         (st.indexOf("now") === 0 ? "<h3>" + x.t + "</h3>" + (x.sub ? "<p>" + x.sub + "</p>" : "") + '<span class="nowft"><small>' + T("الخطوة ", "Étape ") + (i + 1) + T(" من ", " sur ") + tot + '</small><span class="go">' + (dn ? T("كمّل", "Continuer") : T("ابدأ", "Commencer")) + " " + CHEV + "</span></span>"
-          : "<b>" + x.t + "</b>" + (x.sub && s.k !== "osm" && (s.k === "weak" || s.k === "use" || s.k === "cls" || s.k === "imp") ? "<small>" + x.sub + "</small>" : "")) + (duel ? "</button>" : "</a>") + "</li>";
+          : "<b>" + x.t + "</b>" + (x.sub && s.k !== "osm" && (s.k === "weak" || s.k === "use" || s.k === "cls" || s.k === "imp" || s.k === "mid") ? "<small>" + x.sub + "</small>" : "")) + (duel ? "</button>" : "</a>") + "</li>";
     }
     h += "</ol>";
     return h;
@@ -464,6 +488,7 @@
     var R = w.NursinRet, c = null; try { c = R && R.counts ? R.counts() : null; } catch (e) {}
     var tn = tnNow();
     return '<button type="button" class="hzft" data-hzduel><span aria-hidden="true">⚔️</span><span><b>' + T("بطولة صفّك", "Le tournoi de ta classe") + "</b><small>" + esc(tn && tn.txt ? tn.txt : T("الجدول، الترتيب والجوائز", "Tableau, classement et prix")) + "</small></span></button>" +
+      (w.NursinMid && w.NursinMid.active() ? '<a class="hzft hzmidft" href="midterm.html"><span aria-hidden="true">🎯</span><span><b>' + T("امتحان الفصل", "Examen de mi-semestre") + "</b><small>" + T("باقي " + w.NursinMid.daysLeft() + " يوم · الإثنين 16/11", "J-" + w.NursinMid.daysLeft() + " · lundi 16/11") + "</small></span></a>" : "") +
       '<a class="hzft" href="hifzi.html"><span aria-hidden="true">🗺️</span><span><b>' + T("حفظي", "Ma mémoire") + "</b><small>" + (c ? '<i class="rdot r-green"></i>' + c.green + ' <i class="rdot r-yellow"></i>' + c.yellow + ' <i class="rdot r-red"></i>' + c.red : T("خريطة حفظك لكل الدروس", "La carte de ta mémoire")) + "</small></span></a>";
   }
   var parts = null;
@@ -506,6 +531,10 @@
       try { var R = w.NursinRet, id = R && R.ofQ ? R.ofQ(q) : null; if (id && R.apply) R.apply(id, ok ? "ok" : "bad"); if (q.ls && R.apply) q.ls.forEach(function (y) { R.apply(y, ok ? "ok" : "bad"); }); } catch (x) {}   // 🔗 both lessons
       draw(); return;
     }
+    if ((b = t.closest("[data-hzhw]"))) {                // 📌 «سلّمتها ✅» (tap again to undo)
+      var hid = b.getAttribute("data-hzhw"), HW = w.NursinHW; if (!HW) return; var on = !HW.isDone(hid); HW.tick(hid, on);
+      if (!on && p.done) delete p.done["hw:" + hid]; save(p); draw(); return;
+    }
     if ((b = t.closest("[data-hznext]"))) { fbQ = ""; if (b.hasAttribute("data-end")) openK = ""; draw(); return; }
     if ((b = t.closest("[data-hzduel]"))) { var dk = b.getAttribute("data-step"); if (dk) { p.vis = p.vis || {}; p.vis[dk] = Date.now(); lsSet(PK, p); } else if (parts && !parts.duel.hidden) { parts.duel.hidden = true; return; } openDuel(); return; }
     var a = t.closest("a[data-step]"); if (!a) return;
@@ -519,7 +548,7 @@
     draw();
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });

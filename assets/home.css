@@ -126,3 +126,10 @@ html[dir=ltr] .hzoa .go svg{transform:scaleX(-1)}
 .hzduelbox #duel{margin:0}
 @media (max-width:360px){.hzfoot{padding-inline-start:0}}
 .hzst.done .hzosm{opacity:1}.hzst.done .hzosm b{text-decoration:none}
+
+/* ---- 📌 homework step + 🎯 midterm card (Nov 1 2026, assets/homework.js + assets/midterm.js) ---- */
+.hzhwbx{display:flex;flex-direction:column;gap:4px}
+.hzhwbx .hzhwok{align-self:flex-start;margin-top:4px}
+.hzhwbx .hzhwok.on{background:rgba(22,163,74,.14);color:#15803d;border-color:transparent}
+html[data-theme=night] .hzhwbx .hzhwok.on{color:#86efac}
+.hzfoot .hzmidft{grid-column:1/-1}
