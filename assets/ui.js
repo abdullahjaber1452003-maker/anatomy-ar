@@ -73,7 +73,7 @@
     return src.map(function (l, i) {
       var id = l.s + ":" + (l.l || l.t), r = list[i] && list[i].id === id ? list[i] : null;
       var read = false; try { read = LS && LS.isRead ? !!LS.isRead(l, rm) : false; } catch (e) {}
-      return { id: id, s: l.s, t: l.t, l: l.l || "", n: l.n, href: l.href, score: r ? r.score : null, read: read, q: l.l ? (qc[l.t + "|" + l.l] | 0) : (byT[l.t] | 0) };
+      return { id: id, s: l.s, t: l.t, l: l.l || "", n: l.n, href: l.href, score: r ? r.score : null, read: read, q: l.l ? (qc[l.t + "|" + l.l] | 0) : (byT[l.t] | 0) , added: l.added || "" };
     });
   }
   function lastNow(L) {
@@ -247,7 +247,7 @@
       var b = e.target.closest && e.target.closest("[data-hz]"); if (b) { e.preventDefault(); act(b.getAttribute("data-hz"), from); return; }
       var a = e.target.closest && e.target.closest("a.it"); if (!a) return;
       var hr = a.getAttribute("href");
-      if (hr === "index.html#duel" && page === "index.html") { e.preventDefault(); closeSheet(); var du = d.getElementById("duel"); if (du) du.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }); return; }
+      if (hr === "index.html#duel" && page === "index.html") { e.preventDefault(); closeSheet(); if (w.HomePath && w.HomePath.openDuel) { w.HomePath.openDuel(); return; } var du = d.getElementById("duel"); if (du) du.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }); return; }
       if (hr.split("#")[0] === page && hr.indexOf("#") > 0) closeSheet();                 // same page, another section: just close
     });
     return s;
@@ -415,13 +415,48 @@
       }).observe(d.body, { childList: true });
     } catch (e) {}
     // links from other pages: index.html#ui-case etc. run the action here
+    try { useWire(); } catch (e) {}
     var m = /^#ui-(case|cards|blank|teach|search|avatar|goals|theme|name)$/.exec(location.hash || "");
     if (m) setTimeout(function () { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} if (m[1] === "avatar") picker(null); else if (m[1] === "name") { if (w.NursinName) w.NursinName.open(null); } else act(m[1], null); }, 900);
+  }
+  /* 🎮 last-used dates (Abdullah, Oct 31 2026 7:48 PM: «يقترح… هذا المستخدم يلو يومين ملعب شي او ما فتح هيدا الشي يفوت على يصير» —
+     what wasn't opened for 2 days joins «🧭 مسار اليوم», assets/home.js). Kept on this device only: localStorage nursin_use_v1
+     {s: first day this was counted (ms), f: {games, cards, cases, quiz, notes, highlights, tutor: last use ms}}. Counted from real use:
+     a finished game round / the games page, a flashcard answered (nursin:flash), a patient case opened (Retain.openCase), a quiz
+     finished (nursin:quiz-done) or the quiz page, the notes / highlights / tutor pages. Old records fill it the first time
+     (nursin_study_v1 games of a day, notes and highlights saved). No network, no ads. */
+  var UK = "nursin_use_v1", UF = ["games", "cards", "cases", "quiz", "notes", "highlights", "tutor"];
+  function useGet() { var o = null; try { o = JSON.parse(localStorage.getItem(UK) || "null"); } catch (e) {} if (!o || typeof o !== "object" || !o.f || typeof o.f !== "object") o = { s: 0, f: {} }; return o; }
+  function useSet(o) { try { localStorage.setItem(UK, JSON.stringify(o)); } catch (e) {} }
+  function useMark(f, t) {
+    if (UF.indexOf(f) < 0) return; var o = useGet(); t = t || Date.now();
+    if (!o.s) o.s = t; if (!(o.f[f] >= t)) { o.f[f] = t; useSet(o); try { d.dispatchEvent(new CustomEvent("nursin:use", { detail: { f: f } })); } catch (e) {} }
+  }
+  function useFill() {                                  // first run: what the older records already know
+    var o = useGet(); if (o.s) return; o.s = Date.now();
+    function ls(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+    function mx(obj, pick) { var m = 0; try { for (var k in obj) { var v = pick(obj[k]); if (+v > m) m = +v; } } catch (e) {} return m; }
+    var st = ls("nursin_study_v1"); if (st && st.td && (st.tg | 0) > 0) { var t = Date.parse(st.td + "T12:00:00Z"); if (t) o.f.games = Math.max(o.f.games || 0, t); }
+    var nt = ls("nursin_notes_v1"), nm = nt && nt.n ? mx(nt.n, function (x) { return x && (x.updatedAt || x.createdAt); }) : 0; if (nm) o.f.notes = nm;
+    var hl = ls("nursin_hl_v1"), hm = hl && hl.h ? mx(hl.h, function (x) { return x && (x.u || x.y || x.t); }) : 0; if (hm) o.f.highlights = hm;
+    useSet(o);
+  }
+  function useWire() {
+    try { useFill(); } catch (e) {}
+    var pf = { "games.html": "games", "quiz.html": "quiz", "notes.html": "notes", "highlights.html": "highlights", "tutor.html": "tutor" }[page];
+    if (pf && pf !== "quiz" && pf !== "games") useMark(pf);
+    if (/[?&]fc=/.test(location.search || "")) useMark("cards");
+    if (/[?&]case=/.test(location.search || "")) useMark("cases");
+    d.addEventListener("nursin:flash", function () { useMark("cards"); });
+    d.addEventListener("nursin:quiz-done", function () { useMark("quiz"); });
+    d.addEventListener("nursin:study", function () { var st = null; try { st = JSON.parse(localStorage.getItem("nursin_study_v1") || "null"); } catch (e) {} if (st && (st.tg | 0) > 0 && st.td === (N().dayKey ? N().dayKey() : st.td)) useMark("games"); });
+    if (page === "games.html") setTimeout(function () { useMark("games"); }, 20000);   // 20 s on the games page counts as playing
+    (function wrapCase(n) { var R = w.Retain; if (R && R.openCase && !R.openCase.__use) { var o = R.openCase; R.openCase = function () { useMark("cases"); return o.apply(this, arguments); }; R.openCase.__use = 1; } else if (n < 20) setTimeout(function () { wrapCase(n + 1); }, 500); })(0);
   }
   w.NursinUI = { ALL: ALL, PAGES: PAGES, info: info, open: openAll, openSheet: openSheet, close: closeSheet, drag: drag, picker: picker, act: act,
     setAvatar: setAvatar, avUrl: avUrl, avHtml: avHtml, myAvatar: myAvatar, AKEY: AK, AVN: AVN, shrink: shrink, pull: pull, fcHref: fcHref,
     lessonsNow: lessonsNow, lastNow: lastNow, lastLes: lastLes, caseLes: caseLes, blobTo: blobTo, navCur: navCur, navHome: navHome, focusMode: focusMode,
-    busyRound: busyRound, isOpen: function () { return !!sh; }, page: page };
+    busyRound: busyRound, isOpen: function () { return !!sh; }, page: page, use: useMark, usage: useGet, UKEY: UK };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
