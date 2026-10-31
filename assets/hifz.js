@@ -183,7 +183,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261027z", jobs = [];
+    var v = "?v=20261028a", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });
@@ -329,7 +329,7 @@
     var s = null, ind = null;
     function busy(t) {
       var h = d.documentElement;
-      if (h.classList.contains("fcon") || h.classList.contains("rton") || h.classList.contains("g3on") || d.querySelector(".gsheet,.srchbox,.obx,.thsheet,.hzsheet,dialog[open]")) return true;
+      if (h.classList.contains("fcon") || h.classList.contains("rton") || h.classList.contains("g3on") || h.classList.contains("uifocus") || d.querySelector(".gsheet,.srchbox,.obx,.thsheet,.hzsheet,dialog[open]")) return true;
       for (var el = t; el && el !== d.body && el.nodeType === 1; el = el.parentElement) {
         if (el.scrollWidth > el.clientWidth + 2) { var ox = getComputedStyle(el).overflowX; if (ox === "auto" || ox === "scroll") return true; }
         if (/^(INPUT|TEXTAREA|SELECT|MODEL-VIEWER|CANVAS)$/.test(el.tagName)) return true;
