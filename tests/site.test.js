@@ -3811,7 +3811,7 @@ test('📌 homework flow with Osman: offer → teach (site lessons, short parts 
   assert.ok(!K.flowContext(s, hw).includes('نقاط الجواب المتوقّع'), 'offer: no key');
   K.setStage(s, 'teach'); s.hist.push({ role: 'user', text: 'إيه اشرحلي' }, { role: 'assistant', text: 'جزء ١ … قلّي كمّل 👇' }); s.tp = 1; K.save(s);
   const t = K.flowContext(s, hw);
-  for (const k of ['[المرحلة: الشرح]', 'قلّي كمّل 👇', 'هيدا الجزء رقم 2 من 6', 'ممنوع تحلّ الوظيفة', 'كل كلمة فرنسية معها معناها بالعربي', 'Glasgow', 'HTIC', 'BAV', 'Massage cardiaque', 'Respirer (يتنفّس)', 'صفحة neuro.html#htic', 'شكل الجواب يلي بيطلبو الأستاذ']) assert.ok(t.includes(k), 'teach: ' + k);
+  for (const k of ['[المرحلة: الشرح]', 'قلّي كمّل 👇', 'هيدا الجزء رقم 2 من 6', 'ممنوع تحلّ الوظيفة', 'ما في بهدلة ولا موعظة', 'كل كلمة فرنسية معها معناها بالعربي', 'Glasgow', 'HTIC', 'BAV', 'Massage cardiaque', 'Respirer (يتنفّس)', 'صفحة neuro.html#htic', 'شكل الجواب يلي بيطلبو الأستاذ']) assert.ok(t.includes(k), 'teach: ' + k);
   assert.ok(!t.includes('نقاط الجواب المتوقّع') && !t.includes('لازم تكتب هيك'), 'teach: the model answer is NOT shown before he tries');
   s.tp = 5; assert.ok(K.flowContext(s, hw).includes('هلّق جرّب انت حلّ ✍️'), 'last part hands over to him');
   // resume: a new page load gets the same session
@@ -3823,7 +3823,7 @@ test('📌 homework flow with Osman: offer → teach (site lessons, short parts 
   assert.ok(msg.includes('🩺 الحالة 1') && msg.includes('Coma Glasgow 8, méningite') && msg.includes('🩺 الحالة 2') && msg.includes('(ما كتبت شي)') && msg.length < 3500, 'his answer, case by case');
   const s3 = K.setStage(K.load(hw.id), 'correct'); K.save(s3);
   const c = K.flowContext(s3, hw);
-  for (const k of ['[المرحلة: التصحيح]', '✅ شو كتب صح', '❌ شو ناقص', '«لازم تكتب هيك:»', 'باسمها بالفرنسي + معناها بالعربي', 'نقاط الجواب المتوقّع', 'Diagnostic', 'Besoins perturbés de Henderson', 'Diagnostics infirmiers', 'Interventions / Soins infirmiers', 'Surveillance', '30 compressions', 'Côte fracturée']) assert.ok(c.includes(k), 'correct: ' + k);
+  for (const k of ['[المرحلة: التصحيح]', '✅ صح: شو كتب صح', '❌ ناقص أو غلط', '📝 لازم تكتب هيك:', '⭐ العلامة: x/10', 'ابدأ فيه دايماً', 'باسمها بالفرنسي + معناها بالعربي', 'نقاط الجواب المتوقّع', 'Diagnostic', 'Besoins perturbés de Henderson', 'Diagnostics infirmiers', 'Interventions / Soins infirmiers', 'Surveillance', '30 compressions', 'Côte fracturée']) assert.ok(c.includes(k), 'correct: ' + k);
   assert.ok(c.length < 24000, 'fits: ' + c.length);
   K.setStage(s3, 'done'); K.save(s3); assert.strictEqual(K.load(hw.id).stage, 'done');
   assert.strictEqual(K.reset(hw.id).stage, 'offer'); assert.ok(!K.has(hw.id), 'start over');
@@ -3840,6 +3840,6 @@ test('📌 homework flow with Osman: offer → teach (site lessons, short parts 
   assert.ok(ctx.NURSIN_TUTOR_EXTRA.rcp.startsWith('⚠️ هيدا مش من دروس الصف'), 'general knowledge is marked as such');
   // the page wiring: steps, buttons, saved answers, fr
   const js = read('assets/tutor.js');
-  for (const k of ["['teach',TX('👍 إيه، اشرحلي'", "['more',TX('▶️ كمّل'", "['try',TX('✍️ هلّق بجرّب حلّ'", "data-hwa=\"check\"", "K.answersMsg(HW.hw,ans),{max:3500}", "['retry',TX('✍️ صلّح جوابي وجرّب كمان'", "HW.s.ans[t.getAttribute('data-i')]=t.value;K.save(HW.s);", "K.setStage(s,'correct')", "HW.s.tp=(HW.s.tp|0)+1", 'Corrige-moi', 'À toi d’essayer']) assert.ok(js.includes(k), 'tutor.js ' + k);
+  for (const k of ["['teach',TX('👍 إيه، اشرحلي'", "['more',TX('▶️ كمّل'", "['try',TX('✍️ هلّق بجرّب حلّ'", "data-hwa=\"check\"", "K.answersMsg(HW.hw,ans),{max:3500}", "['retry',TX('✍️ صلّح جوابي وجرّب كمان'", "HW.s.ans[t.getAttribute('data-i')]=t.value;K.save(HW.s);", "K.setStage(s,'correct')", "HW.s.tp=(HW.s.tp|0)+1", ".replace(/`+/g,'')", 'Corrige-moi', 'À toi d’essayer']) assert.ok(js.includes(k), 'tutor.js ' + k);
   assert.ok(read('assets/tutor.css').includes('.thwtry{') && read('assets/tutor.css').includes('html[data-theme=night] .thwtry'), 'styles light + dark');
 });
