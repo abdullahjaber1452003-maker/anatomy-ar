@@ -3663,5 +3663,6 @@ test('🖼️ diagrams: «رسومات الدروس» on حفظي lists them all
   const h = read('hifzi.html'), js = read('assets/diagrams.js');
   assert.ok(h.includes('<section id="ndggal"') && h.includes('<script src="assets/diagrams.js?v=20261028j" defer></script>'), 'section + script on hifzi');
   assert.ok(js.includes('getElementById("ndggal")') && js.includes('"رسومات الدروس", "Schémas des leçons"') && js.includes('"🖼️ رسومات", "🖼️ Schémas"') && js.includes('lessonHref(a)'), 'gallery drawn in both languages');
+  assert.ok(js.includes('classList.contains("gl-out")') && read('assets/ui.css').includes('html.gl-out .ndgth img{filter:blur'), 'signed out: thumbnails locked like the lessons (gate.js)');
   assert.ok(!/adx|bauval|adsbygoogle\.push/.test(h.slice(h.indexOf('<main'), h.indexOf('</main>'))), 'no ad in حفظي');
 });
