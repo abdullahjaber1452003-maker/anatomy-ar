@@ -208,6 +208,7 @@
     }
     function TX(ar,fr){return w.Lang&&w.Lang.fr?fr:ar;}
     function esc2(s){return esc(s);}
+    function nw(t){return esc(t).replace(/\([^()]{1,40}\)/g,function(m){return '<span style="white-space:nowrap">'+m+'</span>';});}   // a mixed fr/ar title: «(…)» never split across lines
     function dmy(day){return (+String(day).slice(8,10))+'/'+(+String(day).slice(5,7));}
     /* the bar on top of the chat: in homework mode its title + the 3 steps; otherwise, when a homework is open, Osman offers it */
     function hwBar(){
@@ -217,7 +218,7 @@
       if(HW){
         var st=HW.s.stage,ix={offer:0,teach:1,'try':2,correct:3,done:4}[st]||0,lab=[TX('الشرح','Explication'),TX('جرّب حلّ','Essaie'),TX('التصحيح','Correction')];
         b.className='thwbar thwon';
-        b.innerHTML='<div class="thwh"><b>📌 <bdi>'+esc2(HW.hw.title)+'</bdi></b><small>📅 '+esc2(TX('التسليم ','À rendre le '))+dmy(HW.hw.due)+'</small></div>'+
+        b.innerHTML='<div class="thwh"><b>📌 <bdi>'+nw(HW.hw.title)+'</bdi></b><small>📅 '+esc2(TX('التسليم ','À rendre le '))+dmy(HW.hw.due)+'</small></div>'+
           '<ol class="thwst">'+lab.map(function(l,i){var c=ix>i+1||(i===2&&ix>=4)?'done':ix===i+1?'on':'';return '<li class="'+c+'"><span>'+(c==='done'?'✓':(i+1))+'</span>'+esc2(l)+'</li>';}).join('')+'</ol>'+
           '<div class="thwbl"><a class="tlink" href="homework.html?id='+encodeURIComponent(HW.hw.id)+'">📄 '+esc2(TX('الأسئلة وصورة الورقة','Questions et photo'))+'</a><button type="button" class="tlink" data-hwa="exit">✖ '+esc2(TX('المحادثة العادية','Discussion normale'))+'</button></div>';
       }else{
@@ -225,7 +226,7 @@
         if(!L.length)return;
         var h=L[0],again=K.has(h.id);
         b.className='thwbar thwsug';
-        b.innerHTML='<p>📌 '+esc2(TX('عندك وظيفة: ','Tu as un devoir : '))+'<b><bdi>'+esc2(h.title)+'</bdi></b> <small>('+esc2(TX('التسليم ','à rendre le '))+dmy(h.due)+')</small><br>'+
+        b.innerHTML='<p>📌 '+esc2(TX('عندك وظيفة: ','Tu as un devoir : '))+'<b><bdi>'+nw(h.title)+'</bdi></b> <small>('+esc2(TX('التسليم ','à rendre le '))+dmy(h.due)+')</small><br>'+
           esc2(again?TX('كمّلها معي من وين وقفنا 👇','On continue là où on s’est arrêtés 👇'):TX('بدّك اشرحلك الوظيفة ونفهم الدرس تبعها، وبعدين بتجرّب تحلّ؟','Tu veux que je t’explique le devoir et sa leçon, puis tu essaies ?'))+'</p>'+
           '<a class="btn pri sm thwgo" href="tutor.html?hw='+encodeURIComponent(h.id)+'" data-hwgo="'+esc2(h.id)+'">🧑‍🏫 '+esc2(again?TX('كمّل الوظيفة مع عثمان','Continuer avec Osman'):TX('اشرحلي مع عثمان','Explique-moi avec Osman'))+'</a>';
       }
