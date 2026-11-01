@@ -167,7 +167,9 @@ window.NURSIN_DIAGRAMS = [
       DG.map(function (x, i) { var s = SUBJ[x.s] || ["📚", x.s, x.s], a = x.at[0];
         return '<div class="ndgcard"><button type="button" class="ndgth" data-i="' + i + '" aria-label="' + esc(T("كبّر الرسمة: ", "Agrandir le schéma : ") + title(x)) + '"><img src="' + src(x) + '" alt="' + esc(alt(x)) + '" width="' + x.w + '" height="' + x.h + '" loading="lazy" decoding="async"></button>' +
           '<p class="ndgct"><b>' + esc(title(x)) + '</b><small>' + s[0] + " " + esc(FR() ? s[2] : s[1]) + '</small></p><a class="btn sm" href="' + esc(lessonHref(a)) + '">📖 ' + esc(T("الدرس", "La leçon")) + "</a></div>"; }).join("") + "</div>";
-    [].forEach.call(g.querySelectorAll(".ndgth"), function (b) { b.addEventListener("click", function () { open(DG[+b.getAttribute("data-i")], b); }); });
+    [].forEach.call(g.querySelectorAll(".ndgth"), function (b) { b.addEventListener("click", function () {
+      if (d.documentElement.classList.contains("gl-out")) { var a = b.parentNode.querySelector("a"); if (a) location.href = a.href; return; }   // 🔒 signed out: lessons are locked (gate.js) → its lesson asks to sign in
+      open(DG[+b.getAttribute("data-i")], b); }); });
     var nl = d.querySelector(".nlink");
     if (nl && !nl.querySelector("[data-ndgl]")) { var l = d.createElement("a"); l.className = "btn sm"; l.href = "#ndggal"; l.setAttribute("data-ndgl", ""); l.setAttribute("data-nofr", ""); l.textContent = T("🖼️ رسومات", "🖼️ Schémas"); nl.appendChild(d.createTextNode(" ")); nl.appendChild(l); }
   }
