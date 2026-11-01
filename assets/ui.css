@@ -421,3 +421,48 @@ html[data-theme=night] .midbest{color:#5eead4}html[data-theme=night] .midbest.g{
 .hwlist li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:9px 11px;border-radius:14px;background:var(--hzbox);border:1px solid var(--hzedge)}
 .hwlist li b{flex:1 1 100%;font-size:14px}.hwlist li small{flex:1;font-size:12px;color:var(--hzmut)}
 .hwlist li.past{opacity:.6}
+
+/* ---- 🛠️ «شو بدك نضيف أو نعدّل؟» suggestion box (suggest.html + the admin card «🛠️ الاقتراحات», Nov 1 2026): no ads, no blur ---- */
+.sgapp{display:flex;flex-direction:column;gap:12px}
+.sghero h1{font-size:20px;margin:2px 0 6px;line-height:1.4}
+.sglab{display:block;margin:12px 0 6px;font-weight:800;font-size:14px}
+.sgreq{color:#dc2626}
+.sgchips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sgchip{font:inherit;color:var(--hzink);display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:18px;border:1.5px solid var(--hzedge);background:var(--hzbox);box-shadow:inset 0 1px 0 var(--hzhi);cursor:pointer;min-height:44px;text-align:center;-webkit-tap-highlight-color:transparent;transition:transform .25s cubic-bezier(.34,1.56,.64,1),background-color .15s,border-color .15s}
+.sgchip:active{transform:scale(.96)}
+.sgchip .e{font-size:24px;line-height:1.1;font-family:"Noto Color Emoji","Apple Color Emoji",sans-serif}
+.sgchip b{font-size:14.5px;font-weight:900}
+.sgchip small{font-size:10.5px;line-height:1.3;color:var(--hzmut);font-weight:700}
+.sgchip.on{border-color:var(--hzacc,#0f766e);background:var(--hzaccsoft,rgba(15,118,110,.12));box-shadow:0 0 0 3px var(--hzaccsoft,rgba(15,118,110,.12))}
+.sgin{display:block;width:100%;box-sizing:border-box;font:inherit;font-weight:600;padding:10px 12px;border-radius:14px;border:1px solid var(--hzline,rgba(15,40,44,.14));background:var(--uifield,#fff);color:inherit}
+textarea.sgin{resize:vertical;min-height:110px;line-height:1.6}
+.sgcnt{margin:4px 0 0;text-align:end}
+.sgsend{width:100%;min-height:48px;font-size:16px}
+.sgmsg.ok{color:#15803d;font-weight:800}
+.sgnote{padding:10px 12px;border-radius:14px;background:rgba(234,179,8,.14);color:inherit;font-weight:700}
+.sglist{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.sgitem{padding:11px 12px;border-radius:16px;background:var(--hzbox);border:1px solid var(--hzedge)}
+.sgrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.sgt,.sgs,.sgnew{display:inline-block;font-size:12px;font-weight:900;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sgt{background:var(--hztrack,rgba(0,0,0,.06));color:var(--hzink)}
+.sgs-new{background:rgba(37,99,235,.12);color:#1d4ed8}.sgs-doing{background:rgba(234,179,8,.18);color:#a16207}.sgs-done{background:rgba(22,163,74,.14);color:#15803d}
+.sgnew{background:#dc2626;color:#fff}
+.sgtx{margin:8px 0 4px;white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:14.5px}
+.sgmeta{margin:0;color:var(--hzmut)}
+.sgreply{margin-top:8px;padding:9px 11px;border-radius:14px;border-inline-start:4px solid var(--hzacc,#0f766e);background:var(--hzaccsoft,rgba(15,118,110,.1));white-space:pre-wrap;word-break:break-word;line-height:1.6;font-size:14px}
+.sgwho{font-size:13px;margin-inline-start:auto}
+.sgfil{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}.sgfil::-webkit-scrollbar{display:none}
+.sgfil .chip,.sgst .chip{flex:0 0 auto;white-space:nowrap;font-size:13px;padding:6px 11px;min-height:36px;cursor:pointer;font-family:inherit}
+.sgfil .chip.on,.sgst .chip.on{border-color:var(--hzacc,#0f766e);background:var(--hzaccsoft,rgba(15,118,110,.12));color:var(--hzacc,#0f766e)}
+.sgfil .chip small{opacity:.7}
+.sgst{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.sgrep{min-height:64px!important}
+.sgbadge{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:#dc2626;color:#fff;font-size:13px;font-weight:900;vertical-align:middle}
+html[data-theme=night] .sgs-new{background:rgba(96,165,250,.18);color:#93c5fd}
+html[data-theme=night] .sgs-doing{background:rgba(250,204,21,.16);color:#fde047}
+html[data-theme=night] .sgs-done{background:rgba(74,222,128,.16);color:#86efac}
+html[data-theme=night] .sgmsg.ok{color:#86efac}
+html[data-theme=night] .sgreq{color:#f87171}
+html[data-theme=night] .sgfil .chip.on,html[data-theme=night] .sgst .chip.on{color:#5eead4}
+html.fr .sgchip small{font-size:10px}
+@media (prefers-reduced-motion:reduce){.sgchip{transition:none}}

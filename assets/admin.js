@@ -93,7 +93,69 @@ export function page(API) {
     try { await deleteDoc(ref); msg("🗑️ انمحى الإعلان."); show(); window.NursinAnn && window.NursinAnn.refresh(); } catch (e) { err(e); }
   });
   show();
-  if (window.NursinLessons) { hwAdmin(API, el); weekPicker(API, el); } else window.addEventListener("load", () => { hwAdmin(API, el); weekPicker(API, el); }, { once: true });
+  if (window.NursinLessons) { hwAdmin(API, el); weekPicker(API, el); sugAdmin(API, el); } else window.addEventListener("load", () => { hwAdmin(API, el); weekPicker(API, el); sugAdmin(API, el); }, { once: true });
+}
+
+/* 🛠️ «الاقتراحات» (Abdullah, Oct 31 2026 11:39 PM: «صندوق اقتراحات … الطالب بس يقترح ما حدا غيرو هوي بيشوف وأنا»): every entry of
+   suggest.html («شو بدك نضيف أو نعدّل؟»), newest first, with the student's name; filter by type / status; set the status
+   (🆕 جديد / 🔧 عم نشتغل عليه / ✅ تم), write a reply the student sees under his own entry, delete. Badge = how many are still «جديد».
+   Needs rules v21 (until then the read is refused and this card says so). Helpers + labels: window.NursinSug (assets/suggest.js). */
+function sugAdmin(API, el) {
+  const X = window.NursinSug; if (!X) return;
+  const { doc, updateDoc, deleteDoc, collection, getDocs, query, orderBy, limit, serverTimestamp } = API.fs, T = X.T, esc = X.esc;
+  const box = document.createElement("div"); box.className = "qcard sgadm"; box.id = "sgadm";
+  let all = null, f = { type: "", status: "" }, err = "";
+  const chip = (k, v, label, n) => '<button type="button" class="chip sm' + (f[k] === v ? " on" : "") + '" data-sgf="' + k + '" data-v="' + v + '" aria-pressed="' + (f[k] === v) + '">' + label + (n != null ? " <small>" + n + "</small>" : "") + "</button>";
+  function draw() {
+    const c = X.counts(all || []), badge = c.new ? '<span class="sgbadge" title="' + esc(T("جديد", "Nouveau")) + '">' + c.new + "</span>" : "";
+    let h = '<h2>🛠️ ' + esc(T("الاقتراحات", "Propositions")) + " " + badge + '</h2><p class="small">' + esc(T("كل شي بعتو الطلاب من «🛠️ شو بدك نضيف أو نعدّل؟». الطالب بيشوف بس اقتراحاتو هو، والحالة والرد يلي بتكتبو.", "Tout ce que les étudiants envoient depuis « 🛠️ Qu'est-ce qu'on ajoute ou modifie ? ». Chaque étudiant ne voit que ses propositions, avec le statut et ta réponse.")) + "</p>";
+    if (err) return box.innerHTML = h + '<p class="small sgnote">' + esc(err) + '</p><p class="fbtns"><button class="btn sm" type="button" data-sgre>🔄 ' + esc(T("جرّب كمان مرّة", "Réessayer")) + "</button></p>";
+    if (!all) return box.innerHTML = h + '<p class="small">⏳ …</p>';
+    h += '<div class="sgfil">' + chip("type", "", T("الكل", "Tout"), c.all) + X.TYPES.map(t => chip("type", t.k, t.e + " " + esc(T(t.ar, t.fr)), c[t.k])).join("") + "</div>" +
+      '<div class="sgfil">' + chip("status", "", T("كل الحالات", "Tous les statuts")) + Object.keys(X.STATUS).map(s => chip("status", s, X.STATUS[s].e + " " + esc(T(X.STATUS[s].ar, X.STATUS[s].fr)), c[s])).join("") + "</div>";
+    const rows = X.filter(all, f);
+    h += rows.length ? '<ul class="sglist">' + rows.map(x => '<li class="sgitem" data-sgid="' + esc(x.id) + '"><div class="sgrow">' + X.typeChip(x.type) + X.statusChip(x.status) + '<b class="sgwho" data-nofr dir="auto">👤 ' + esc(x.name || T("طالب", "Étudiant")) + "</b></div>" +
+      '<p class="sgtx" data-nofr dir="auto">' + esc(x.text) + "</p>" +
+      '<p class="small sgmeta">' + esc(X.when(x.at)) + (x.subj ? " · " + esc(X.areaName(x.subj)) : "") + "</p>" +
+      '<div class="sgst" role="group" aria-label="' + esc(T("الحالة", "Statut")) + '">' + Object.keys(X.STATUS).map(s => '<button type="button" class="chip sm' + (x.status === s ? " on" : "") + '" data-sgset="' + s + '" aria-pressed="' + (x.status === s) + '">' + X.STATUS[s].e + " " + esc(T(X.STATUS[s].ar, X.STATUS[s].fr)) + "</button>").join("") + "</div>" +
+      '<textarea class="sgin sgrep" rows="2" maxlength="' + X.MAX + '" placeholder="' + esc(T("ردّك عالطالب (بيشوفو تحت اقتراحو)…", "Ta réponse (l'étudiant la voit sous sa proposition)…")) + '">' + esc(x.reply) + "</textarea>" +
+      '<p class="fbtns"><button class="btn sm pri" type="button" data-sgreply>💬 ' + esc(T("احفظ الرد", "Enregistrer la réponse")) + '</button> <button class="btn sm" type="button" data-sgdel>🗑️ ' + esc(T("امحي", "Supprimer")) + '</button></p><p class="small sgimsg" aria-live="polite"></p></li>').join("") + "</ul>"
+      : '<p class="small sgempty">' + esc(all.length ? T("ما في شي بهالفلتر.", "Rien avec ce filtre.") : T("لسّا ما في اقتراحات. أوّل ما يبعت حدا بيبيّن هون.", "Aucune proposition pour l'instant.")) + "</p>";
+    box.innerHTML = h;
+  }
+  async function load() {
+    err = "";
+    try {
+      let s;
+      try { s = await getDocs(query(collection(API.db, X.COLL), orderBy("at", "desc"), limit(300))); }
+      catch (e) { if (X.denied(e)) throw e; s = await getDocs(collection(API.db, X.COLL)); }
+      const out = []; s.forEach(d => { const c = X.clean(d.id, d.data()); if (c) out.push(c); });
+      all = X.sortNew(out);
+    } catch (e) { all = null; err = X.denied(e) ? X.rulesMsg(true) : T("⚠️ ما قدرنا نجيب الاقتراحات هلّق.", "⚠️ Impossible de charger les propositions."); }
+    draw();
+  }
+  box.addEventListener("click", async e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.hasAttribute("data-sgre")) { box.innerHTML = '<p class="small">⏳ …</p>'; return load(); }
+    if (t.dataset.sgf) { f[t.dataset.sgf] = t.dataset.v; return draw(); }
+    const li = t.closest("[data-sgid]"); if (!li) return;
+    const id = li.dataset.sgid, x = (all || []).find(r => r.id === id); if (!x) return;
+    const say = s => { const m = li.querySelector(".sgimsg"); if (m) m.textContent = s; };
+    const ref = doc(API.db, X.COLL, id), fail = e2 => say(X.denied(e2) ? X.rulesMsg(true) : T("⚠️ ما زبط، جرّب كمان مرّة.", "⚠️ Échec, réessaie."));
+    try {
+      if (t.dataset.sgset) { if (x.status === t.dataset.sgset) return; await updateDoc(ref, { status: t.dataset.sgset }); x.status = t.dataset.sgset; draw(); return; }
+      if (t.hasAttribute("data-sgreply")) {
+        const r = Array.from(li.querySelector(".sgrep").value.trim()).slice(0, X.MAX).join("");
+        const ch = { reply: r, rAt: serverTimestamp() }; if (r && x.status === "new") ch.status = "doing";
+        t.disabled = true; await updateDoc(ref, ch); x.reply = r; x.rAt = Date.now(); if (ch.status) x.status = ch.status; draw();
+        const li2 = box.querySelector('[data-sgid="' + CSS.escape(id) + '"] .sgimsg'); if (li2) li2.textContent = r ? T("✅ انحفظ الرد. الطالب بيشوفو هلّق.", "✅ Réponse enregistrée.") : T("✅ انمحى الرد.", "✅ Réponse effacée.");
+        return;
+      }
+      if (t.hasAttribute("data-sgdel")) { if (!confirm(T("تمحي هالاقتراح؟", "Supprimer cette proposition ?"))) return; await deleteDoc(ref); all = all.filter(r => r.id !== id); draw(); }
+    } catch (e2) { t.disabled = false; fail(e2); }
+  });
+  el.insertBefore(box, el.firstChild);
+  load();
 }
 
 /* 📌 «زيد وظيفة» (Abdullah, Oct 31 2026 11:57 PM: «ذكّر الطلاب ضمن المسار بوظيفة المس / الـ devoir»): the admin adds a homework

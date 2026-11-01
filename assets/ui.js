@@ -30,7 +30,7 @@
     "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
     "3d.html": ["🧊", "التشريح 3D", "Anatomie 3D", 1], "tutor.html": ["👨‍🏫", "الأستاذ عثمان", "Professeur Osman", 2], "hifzi.html": ["🗺️", "حفظي", "Ma mémoire", 3],
     "quiz.html": ["⚡", "الكويز", "Quiz", 4], "exams.html": ["📅", "الامتحانات", "Examens", 4], "midterm.html": ["🎯", "امتحان الفصل", "Examen de mi-semestre", 4], "games.html": ["🎮", "الألعاب", "Jeux", 4], "live.html": ["🔴", "تحدّي لايف", "Défi live", 4],
-    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4],
+    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4], "suggest.html": ["🛠️", "اقتراحاتك", "Tes idées", 4],
     "me.html": ["👤", "أنا", "Moi", 4], "about.html": ["ℹ️", "من نحن", "À propos", 4], "privacy.html": ["🔒", "الخصوصية", "Confidentialité", 4], "credits.html": ["📜", "المصادر", "Sources", 4],
     "admin.html": ["⚙️", "لوحة الأدمن", "Admin", 4], "404.html": ["🧭", "الصفحة مش موجودة", "Page introuvable", 4]
   };
@@ -55,7 +55,7 @@
       ["friends.html", "👥", "أصحابي", "Amis"], ["chat.html", "💬", "المحادثات", "Messages"], ["classes.html", "🏫", "صفّي", "Ma classe"],
       ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["#online", "🟢", "مين أونلاين", "En ligne"]] },
     { k: "tools", e: "⚙️", ar: "أدواتي", fr: "Mes outils", items: [
-      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
+      ["suggest.html", "🛠️", "اقتراحاتك", "Tes idées"], ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
       ["#search", "🔎", "دوّر", "Chercher"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"], ["#theme", "🎨", "المظهر", "Apparence"],
       ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"], ["#install", "📲", "حمّل التطبيق", "Installer l'app"],
       ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["about.html", "ℹ️", "من نحن", "À propos"],
