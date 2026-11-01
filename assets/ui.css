@@ -298,6 +298,9 @@ mark.hlm.hlflash{animation:hlflash 1.2s ease-in-out 2}
 .hlpill .hldot,.hlpill .hlc,.hlpill .hlrm,.hlpill .hlnote{min-width:44px;min-height:44px;border-radius:999px;background:var(--uisoft,rgba(255,255,255,.5));display:inline-flex;align-items:center;justify-content:center;font-size:19px}
 .hlpill .hlnote{padding:0 12px;gap:4px;font-size:15px}
 .hlpill .hlnote b{font-weight:800}
+/* 28r: the phone dropped its selection → the pill stays a few seconds and shows the remembered words */
+.hlpill .hlprev{flex:1 0 100%;max-width:min(330px,calc(100vw - 40px));margin:0 auto -2px;padding:0 6px;font-size:13px;font-weight:600;line-height:1.5;text-align:center;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hlpill.hlghost{border-style:dashed}
 .hlpill .hlpal{display:flex;gap:4px;flex-basis:100%;justify-content:center}
 .hlpill.hlpm{flex-wrap:nowrap;gap:4px}.hlpill.hlpm .hlpal{flex-basis:auto;gap:2px}.hlpill.hlpm .hlc{min-width:36px;min-height:42px;background:transparent}.hlpill.hlpm .hlnote{padding:0 10px}
 .hlsep{width:1px;align-self:stretch;margin:6px 2px;background:var(--hzline,rgba(0,0,0,.12))}
@@ -308,6 +311,9 @@ html[data-theme=night] .hlsw{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28)}
 .hlpill .hlc[aria-pressed=true]{background:var(--hzaccsoft,rgba(15,118,110,.12))}
 .hltoast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:58;max-width:calc(100vw - 32px);width:max-content;text-align:center;background:#0f172a;color:#fff;border-radius:18px;padding:9px 16px;font:700 14px/1.5 "Cairo",system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:hlin .2s ease-out;transition:opacity .2s}
 .hltoast.hlout{opacity:0}.hltoast[hidden]{display:none}
+/* 28r: the toast never takes a tap, and moves up while the 🖍️ pill is docked at the bottom */
+.hltoast{pointer-events:none}
+html.hlpillon .hltoast{bottom:auto;top:calc(72px + env(safe-area-inset-top))}
 html.uion body.ui .hltoast{bottom:calc(100px + env(safe-area-inset-bottom))}
 html.uion.uifocus body.ui .hltoast,html.uion.uinavaway body.ui .hltoast{bottom:calc(16px + env(safe-area-inset-bottom))}
 body.ui .topbar .uipen{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--hzedge);background:var(--uisoft);color:inherit;font-size:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}

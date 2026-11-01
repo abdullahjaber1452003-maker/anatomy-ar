@@ -337,6 +337,7 @@
 
   /* ---------------- the pill ---------------- */
   var pill = null, mode = "", cur = null, curMark = null, palOpen = false, touchAt = 0, lastSel = null;
+  var ghost = false, ghostT = 0, outAt = 0, GHOST_MS = 9000;    // 28r: the phone dropped its selection → the pill stays a few seconds
   function swatch(c, on) { return '<i class="hlsw hl-' + c + (on ? " on" : "") + '" aria-hidden="true"></i>'; }
   function palHtml(active) {
     return '<div class="hlpal" role="group" aria-label="' + esc(T("الألوان", "Couleurs")) + '">' + COLORS.map(function (x) {
@@ -347,7 +348,7 @@
     var c = color();
     if (mode === "sel") {
       var onHl = cur && cur.root && overlaps(spansIn(cur.root), cur.s, cur.e).length;
-      return '<button type="button" class="hlgo" data-a="go" aria-label="' + esc(T("علّم ب", "Surligner en ") + cdef(c)) + '"><span class="hlpen hl-' + c + '" aria-hidden="true">🖍️</span><b>' + esc(T("علّم", "Surligner")) + "</b></button>" +
+      return (ghost && cur && cur.q ? '<span class="hlprev" dir="auto">«' + esc(cut(cur.q.replace(/\s+/g, " "), 60)) + (cur.q.length > 60 ? "…" : "") + "»</span>" : "") + '<button type="button" class="hlgo" data-a="go" aria-label="' + esc(T("علّم ب", "Surligner en ") + cdef(c)) + '"><span class="hlpen hl-' + c + '" aria-hidden="true">🖍️</span><b>' + esc(T("علّم", "Surligner")) + "</b></button>" +
         '<button type="button" class="hldot" data-a="pal" aria-expanded="' + palOpen + '" aria-label="' + esc(T("غيّر اللون (هلّق: ", "Changer la couleur (actuelle : ") + cname(c) + ")") + '">' + swatch(c, true) + "</button>" +
         (onHl ? '<button type="button" class="hlrm" data-a="rm" aria-label="' + esc(T("امحي التعليم", "Effacer le surlignage")) + '">🧽</button>' : "") +
         (palOpen ? palHtml(c) : "");
@@ -363,42 +364,80 @@
     d.body.appendChild(pill);
     // keep the selection while the pill is touched (the cached range is used anyway)
     ["pointerdown", "mousedown"].forEach(function (ev) { pill.addEventListener(ev, function (e) { touchAt = Date.now(); if (e.type === "mousedown" || e.pointerType === "mouse") e.preventDefault(); }); });
-    pill.addEventListener("touchstart", function () { touchAt = Date.now(); }, { passive: true });
+    // 28r (Abdullah, Nov 1 11:29 PM: «علّمت و ما انضاف على تعليماتي… لازم افقس على زر القلم»): on phones the button acts on the TOUCH
+    // itself — touchstart is cancelled (so iOS/Android keep the selection and no tap is eaten to dismiss it), touchend marks.
+    // The click stays as the fallback (mouse, or a phone that still sends one), never twice.
+    var tDown = null;
+    pill.addEventListener("touchstart", function (e) {
+      touchAt = Date.now(); var b = e.target.closest && e.target.closest("button"), t = e.touches && e.touches[0];
+      tDown = b && t ? { b: b, x: t.clientX, y: t.clientY } : null; if (b && e.cancelable) e.preventDefault();
+    }, { passive: false });
+    pill.addEventListener("touchmove", function (e) { var t = e.touches && e.touches[0]; if (tDown && t && (Math.abs(t.clientX - tDown.x) > 14 || Math.abs(t.clientY - tDown.y) > 14)) tDown = null; }, { passive: true });
+    pill.addEventListener("touchcancel", function () { tDown = null; }, { passive: true });
+    pill.addEventListener("touchend", function (e) { touchAt = Date.now(); var x = tDown; tDown = null; if (!x || !x.b.isConnected) return; if (e.cancelable) e.preventDefault(); act(x.b); }, { passive: false });
     pill.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest("button"); if (!b) return; e.preventDefault(); e.stopPropagation(); touchAt = Date.now();
-      var a = b.getAttribute("data-a"), c = b.getAttribute("data-c");
-      if (mode === "sel") {
-        if (a === "go" && cur) { mark(cur, color()); endSel(); hide(); return; }
-        if (a === "pal") { palOpen = !palOpen; draw(); return; }
-        if (c && cur) { setPref("c", c); penPaint(); mark(cur, c); endSel(); hide(); toast(T("🖍️ صار لونك: ", "🖍️ Ta couleur : ") + cname(c)); return; }
-        if (a === "rm" && cur) { erase(cur); endSel(); hide(); return; }
-      } else if (mode === "mark" && curMark) {
-        if (c) { setPref("c", c); put(st, owner, { id: curMark, c: c }); recolorDom(curMark, c); done(); hide(); return; }
-        if (a === "del") { drop(curMark); done(T("🧽 انمحى التعليم", "🧽 Surlignage effacé")); hide(); return; }
-        if (a === "note") { var h = find(st, owner, curMark); hide(); if (h) noteFor(h, b); return; }
-      }
+      if (Date.now() - actAt < 700) return;                // the touch already did it
+      act(b);
     });
     return pill;
   }
-  function draw() { ensurePill().innerHTML = pillHtml(); pill.classList.toggle("hlpm", mode === "mark"); place(); }
+  var actAt = 0;
+  function act(b) {
+    actAt = Date.now(); touchAt = actAt;
+    var a = b.getAttribute("data-a"), c = b.getAttribute("data-c");
+    if (mode === "sel") {
+      if (a === "go" && cur) { mark(cur, color()); endSel(); hide(); toast(T("🖍️ انحفظ بـ«تعليماتي»", "🖍️ Ajouté à « Mes surlignages »")); return; }
+      if (a === "pal") { palOpen = !palOpen; draw(); return; }
+      if (c && cur) { setPref("c", c); penPaint(); mark(cur, c); endSel(); hide(); toast(T("🖍️ صار لونك: ", "🖍️ Ta couleur : ") + cname(c)); return; }
+      if (a === "rm" && cur) { erase(cur); endSel(); hide(); return; }
+    } else if (mode === "mark" && curMark) {
+      if (c) { setPref("c", c); put(st, owner, { id: curMark, c: c }); recolorDom(curMark, c); done(); hide(); return; }
+      if (a === "del") { drop(curMark); done(T("🧽 انمحى التعليم", "🧽 Surlignage effacé")); hide(); return; }
+      if (a === "note") { var h = find(st, owner, curMark); hide(); if (h) noteFor(h, b); return; }
+    }
+  }
+  function draw() { ensurePill().innerHTML = pillHtml(); pill.classList.toggle("hlpm", mode === "mark"); pill.classList.toggle("hlghost", ghost && mode === "sel"); place(); }
   function rectNow() {
     if (mode === "mark") { var ms = d.querySelectorAll('mark.hlm[data-hl="' + curMark + '"]'); if (!ms.length) return null; var a = ms[0].getBoundingClientRect(), b = ms[ms.length - 1].getBoundingClientRect(); return { top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom), left: Math.min(a.left, b.left), right: Math.max(a.right, b.right) }; }
     var s = w.getSelection && w.getSelection(); if (s && s.rangeCount && !s.isCollapsed) { var r = s.getRangeAt(0).getBoundingClientRect(); if (r && (r.width || r.height)) return r; }
     return cur && cur.rect;
   }
   var coarse = false; try { coarse = w.matchMedia("(pointer:coarse)").matches; } catch (e) {}
+  // phones: while text is selected the pill is DOCKED at the bottom (above the glass nav), away from the phone's own Copy/Share menu
+  // and the selection handles, which both hug the selection; at the top when the selection itself is down there (28r)
+  function dockTop(r, ph) {
+    var vh = w.innerHeight, nt = vh - 12, nav = d.querySelector(".hznav");
+    if (nav) { var nr = nav.getBoundingClientRect(); if (nr.height && nr.top > vh / 2 && nr.top < vh) nt = nr.top; }
+    var top = nt - ph - 10;
+    if (r && r.bottom > top - 28 && r.top > 64 + ph + 40) { var hd = d.querySelector(".hzhead,header"), hb = hd ? hd.getBoundingClientRect().bottom : 0; top = Math.max(64, (hb > 0 && hb < vh / 3 ? hb : 56) + 10); }
+    return Math.max(8, Math.min(top, vh - ph - 8));
+  }
   function place() {
     if (!pill || pill.hidden) return;
     var r = rectNow(); if (!r) { hide(); return; }
     var vw = w.innerWidth, vh = w.innerHeight, pw = pill.offsetWidth, ph = pill.offsetHeight, gap = coarse ? 34 : 12;   // under the selection handles; the phone's own menu sits above
-    var top = r.bottom + gap, nav = 96;
-    if (top + ph > vh - nav) top = r.top - ph - (coarse ? 56 : 12);                 // no room under it: over it (above the phone's menu)
-    top = Math.max(64, Math.min(top, vh - ph - 12));
-    var left = (r.left + r.right) / 2 - pw / 2; left = Math.max(8, Math.min(left, vw - pw - 8));
+    var top, left;
+    if (coarse && mode === "sel") { top = dockTop(r, ph); left = (vw - pw) / 2; }
+    else {
+      top = r.bottom + gap; var nav = 96;
+      if (top + ph > vh - nav) top = r.top - ph - (coarse ? 56 : 12);                 // no room under it: over it (above the phone's menu)
+      top = Math.max(64, Math.min(top, vh - ph - 12));
+      left = (r.left + r.right) / 2 - pw / 2;
+    }
+    left = Math.max(8, Math.min(left, vw - pw - 8));
     pill.style.top = Math.round(top) + "px"; pill.style.left = Math.round(left) + "px";
   }
-  function show(m) { mode = m; ensurePill(); pill.hidden = false; draw(); pill.classList.remove("hlin"); void pill.offsetWidth; pill.classList.add("hlin"); }
-  function hide() { if (!pill || pill.hidden) return; pill.hidden = true; mode = ""; cur = null; curMark = null; palOpen = false; }
+  function show(m) {
+    var was = pill && !pill.hidden && mode === m; mode = m; ghost = false; clearTimeout(ghostT); ensurePill(); pill.hidden = false; draw();
+    d.documentElement.classList.toggle("hlpillon", coarse && m === "sel");   // the toast moves up out of the docked pill's way
+    if (!was) { pill.classList.remove("hlin"); void pill.offsetWidth; pill.classList.add("hlin"); }      // no replay while the handles move
+  }
+  function hide() { ghost = false; clearTimeout(ghostT); d.documentElement.classList.remove("hlpillon"); if (!pill || pill.hidden) return; pill.hidden = true; mode = ""; cur = null; curMark = null; palOpen = false; }
+  // the selection vanished while the pill was up. On phones that is very often the touch MEANT for 🖍️: iOS/Android drop their
+  // selection first, and that touch may never reach the page. Before 28r the pill hid itself here → nothing was ever saved.
+  // Now it stays (with the remembered words) for a few seconds; a touch anywhere else, a new selection or the time closes it.
+  function keepGhost() { ghost = true; clearTimeout(ghostT); ghostT = setTimeout(function () { if (ghost) hide(); }, GHOST_MS); draw(); }
   function endSel() { try { var s = w.getSelection(); if (s) s.removeAllRanges(); } catch (e) {} lastSel = null; }
   w.addEventListener("scroll", function () { if (pill && !pill.hidden) w.requestAnimationFrame(place); }, { passive: true });
   w.addEventListener("resize", function () { if (pill && !pill.hidden) place(); });
@@ -413,13 +452,17 @@
     var a = d.activeElement; if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)) return null;
     var o = offsets(root, rg); if (!o) return null;
     var rect = rg.getBoundingClientRect();
-    return { root: root, k: keyOf(root), s: o[0], e: o[1], rect: rect };
+    return { root: root, k: keyOf(root), s: o[0], e: o[1], rect: rect, q: o[2].slice(o[0], o[1]) };
   }
   function onSel() {
     clearTimeout(sT);
     sT = setTimeout(function () {
       var x = readSel();
-      if (!x) { if (mode === "sel" && Date.now() - touchAt > 700) hide(); return; }
+      if (!x) {
+        if (mode !== "sel" || !cur || ghost) return;
+        if (outAt > touchAt && Date.now() - outAt < 700) { hide(); return; }       // the student touched somewhere else on purpose
+        keepGhost(); return;                                                    // nothing touched / the pill touched: keep it
+      }
       lastSel = x;
       if (pen()) { if (down) return; mark(x, color()); endSel(); hide(); return; }     // 🖊️ pen mode: marked by itself, no pill
       cur = x; palOpen = false; show("sel");
@@ -427,7 +470,11 @@
   }
   if (LPAGES[page]) {
     d.addEventListener("selectionchange", onSel);
-    d.addEventListener("pointerdown", function (e) { if (!pill || !pill.contains(e.target)) down = true; }, true);
+    d.addEventListener("pointerdown", function (e) {
+      if (pill && pill.contains(e.target)) return;
+      down = true; outAt = Date.now();
+      if (ghost && mode === "sel") hide();                                     // the remembered selection is closed by any other touch
+    }, true);
     var up = function () { if (!down) return; down = false; if (pen() || mode !== "mark") onSel(); };
     d.addEventListener("pointerup", up, true); d.addEventListener("pointercancel", function () { down = false; }, true);
     d.addEventListener("touchend", up, true);
