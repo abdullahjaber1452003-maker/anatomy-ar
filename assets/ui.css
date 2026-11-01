@@ -559,3 +559,7 @@ html[data-theme=night] .hwmore{color:#5eead4}
 html[data-theme=night] .hwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
 .hwbtns .btn.hwosm,.hwact .btn.hwosm{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent}
 html[data-theme=night] .hwbtns .btn.hwosm,html[data-theme=night] .hwact .btn.hwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
+
+/* 🏥 غرفة الطوارئ link on rea.html: both languages in the HTML, html.fr picks one (data-nofr keeps the translator off it) */
+.erlk-fr{display:none}html.fr .erlk-fr{display:inline}html.fr .erlk-ar{display:none}
+.sqz.errlk{background:linear-gradient(135deg,#b91c1c,#ea580c);color:#fff}.sqz.errlk:hover,.sqz.errlk:focus-visible{background:linear-gradient(135deg,#991b1b,#c2410c)}html.gl-lock .sqz.errlk b::after{content:none}.sqz.errlk small{color:rgba(255,255,255,.9)}
