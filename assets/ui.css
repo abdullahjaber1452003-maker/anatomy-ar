@@ -466,3 +466,42 @@ html[data-theme=night] .sgreq{color:#f87171}
 html[data-theme=night] .sgfil .chip.on,html[data-theme=night] .sgst .chip.on{color:#5eead4}
 html.fr .sgchip small{font-size:10px}
 @media (prefers-reduced-motion:reduce){.sgchip{transition:none}}
+
+/* 🖼️ رسومات الدروس (assets/diagrams.js, 20261028j): a tinted glass card inside the lesson text, tap = fullscreen viewer (no blur) */
+figure.ndg{margin:16px -8px 14px;max-width:none;padding:6px 6px 6px;border-radius:20px;border:1px solid var(--hzedge,rgba(13,148,136,.22));background:var(--hzbox,linear-gradient(150deg,rgba(255,255,255,.82),rgba(255,255,255,.6)));box-shadow:var(--hzshadow,0 10px 30px rgba(16,40,48,.10));-webkit-user-select:none;user-select:none}
+figure.ndg .ndgb{position:relative;display:block;width:100%;padding:0;margin:0;border:0;background:none;cursor:zoom-in;border-radius:14px;overflow:hidden;-webkit-tap-highlight-color:transparent}
+figure.ndg .ndgb:focus-visible{outline:3px solid var(--hzacc,#0f766e);outline-offset:2px}
+figure.ndg img{display:block;width:100%;height:auto;max-width:520px;margin:0 auto;border-radius:12px}
+figure.ndg .ndgz{position:absolute;top:8px;left:8px;width:34px;height:34px;display:grid;place-items:center;border-radius:99px;background:rgba(15,31,34,.72);color:#fff;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+@media (min-width:600px){figure.ndg{margin:18px auto 16px;max-width:532px;padding:8px}}
+figure.ndg figcaption{margin:8px 4px 2px;text-align:center;line-height:1.5}
+figure.ndg figcaption b{display:block;font-size:14.5px;font-weight:800;color:var(--hzink,#0f1f22)}
+figure.ndg figcaption small{display:block;font-size:12px;color:var(--hzmut,#5a6e71)}
+html.ndgon,html.ndgon body{overflow:hidden!important}
+.ndgv{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:#eef4f3;color:#0f1f22;animation:ndgin .18s ease-out}
+html[data-theme=night] .ndgv{background:#05171a;color:#ecfbf8}
+.ndgvh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;border-bottom:1px solid rgba(127,127,127,.22)}
+.ndgvh b{flex:1;min-width:0;font-size:14.5px;font-weight:800;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ndgvt{display:flex;gap:6px;flex:0 0 auto}
+.ndgvt button{width:42px;height:42px;border-radius:99px;border:1px solid rgba(127,127,127,.3);background:rgba(255,255,255,.75);color:inherit;font-size:17px;line-height:1;cursor:pointer}
+html[data-theme=night] .ndgvt button{background:rgba(255,255,255,.08)}
+.ndgvt .ndgvx{background:#0f1f22;color:#fff;border-color:transparent;font-weight:800}
+html[data-theme=night] .ndgvt .ndgvx{background:#ecfbf8;color:#05171a}
+.ndgvs{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-x pan-y;text-align:center}
+.ndgvs.grab{cursor:grabbing}
+.ndgvs img{display:inline-block;max-width:none;height:auto;vertical-align:top;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ndgvhint{margin:0;padding:6px 12px calc(8px + env(safe-area-inset-bottom));font-size:12px;text-align:center;opacity:.75}
+.ndgv.zoomed .ndgvhint{display:none}
+@keyframes ndgin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ndgv{animation:none}}
+.ndggal{margin:22px 0 10px}
+.ndggal h2 small{font-size:13px;border-radius:99px;padding:1px 9px;background:var(--hzaccsoft,rgba(15,157,143,.12));vertical-align:middle}
+.ndggrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+@media (min-width:700px){.ndggrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ndgcard{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:18px;border:1px solid var(--hzedge,rgba(13,148,136,.22));background:var(--hzbox,rgba(255,255,255,.7))}
+.ndgth{display:block;padding:0;border:0;background:none;border-radius:12px;overflow:hidden;cursor:zoom-in;height:150px}
+.ndgth img{display:block;width:100%;height:150px;object-fit:cover;object-position:top}
+.ndgct{margin:0;line-height:1.35}
+.ndgct b{display:block;font-size:13px;font-weight:800}
+.ndgct small{display:block;font-size:11.5px;color:var(--hzmut,#5a6e71)}
+.ndgcard .btn{align-self:flex-start;margin-top:auto}
