@@ -30,7 +30,7 @@
     "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
     "3d.html": ["🧊", "التشريح 3D", "Anatomie 3D", 1], "tutor.html": ["👨‍🏫", "الأستاذ عثمان", "Professeur Osman", 2], "hifzi.html": ["🗺️", "حفظي", "Ma mémoire", 3],
     "quiz.html": ["⚡", "الكويز", "Quiz", 4], "exams.html": ["📅", "الامتحانات", "Examens", 4], "midterm.html": ["🎯", "امتحان الفصل", "Examen de mi-semestre", 4], "games.html": ["🎮", "الألعاب", "Jeux", 4], "live.html": ["🔴", "تحدّي لايف", "Défi live", 4],
-    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4], "suggest.html": ["🛠️", "اقتراحاتك", "Tes idées", 4],
+    "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4], "suggest.html": ["🛠️", "اقتراحاتك", "Tes idées", 4], "homework.html": ["📌", "الوظائف", "Devoirs", 4],
     "me.html": ["👤", "أنا", "Moi", 4], "about.html": ["ℹ️", "من نحن", "À propos", 4], "privacy.html": ["🔒", "الخصوصية", "Confidentialité", 4], "credits.html": ["📜", "المصادر", "Sources", 4],
     "admin.html": ["⚙️", "لوحة الأدمن", "Admin", 4], "404.html": ["🧭", "الصفحة مش موجودة", "Page introuvable", 4]
   };
@@ -45,7 +45,7 @@
       ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."],
       ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"]] },
     { k: "train", e: "🧠", ar: "التدريب والمراجعة", fr: "Entraînement et révision", items: [
-      ["midterm.html", "🎯", "امتحان الفصل 16/11", "Examen 16/11"], ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
+      ["midterm.html", "🎯", "امتحان الفصل 16/11", "Examen 16/11"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"], ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
       ["#case", "🩺", "حالة مريض", "Cas clinique"], ["quiz.html#weak", "🎯", "نقاط ضعفك", "Points faibles"], ["hifzi.html", "🗺️", "حفظي", "Ma mémoire"],
       ["quiz.html?t=link", "🔗", "اربط", "Relier"], ["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"],
       ["#cards", "🃏", "البطاقات", "Cartes"], ["#blank", "📃", "الورقة البيضا", "Page blanche"], ["#teach", "🧑‍🏫", "علِّم عثمان", "Enseigne à Osman"],
@@ -202,7 +202,8 @@
     var S = w.NursinSRS, due = S && S.count ? S.count() : 0, wx = false;
     try { var st = w.Retain && w.Retain.wstatus ? w.Retain.wstatus() : null; wx = !!(st && st.ready && !st.done); } catch (e) {}
     var pn = w.NursinHL && w.NursinHL.pen && w.NursinHL.pen();                // 🖍️ pen mode on → «شغّال» on its «الكل» item
-    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "", pen: pn ? T("شغّال", "ON") : "" };
+    var hwn = 0; try { var HWX = w.NursinHW; hwn = HWX && HWX.open ? HWX.open().length : 0; } catch (e) {}   // 📌 homework not handed in yet (index / homework.html)
+    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "", pen: pn ? T("شغّال", "ON") : "", hw: hwn > 0 ? String(hwn) : "" };
   }
   function installable() { var P = w.NursinPWA; try { return !!(P && P.installable && P.installable()); } catch (e) { return false; } }
   function allHtml(only) {

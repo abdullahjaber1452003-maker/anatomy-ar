@@ -26,14 +26,14 @@ window.NURSIN_DIAGRAMS = [
 ];
 
 (function (w, d) {
-  var V = "20261028k", DG = w.NURSIN_DIAGRAMS || [];
+  var V = "20261028l", DG = w.NURSIN_DIAGRAMS || [];
   var page = (location.pathname.split("/").pop() || "index.html");
   var INJ = ".nlrow,.rtrow,.xtrk,.glk-card,.lqz,.lsk,.prq,.ndg,[class*='adx'],ins,script,style";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(a, f) { return FR() ? f : a; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function norm(s) { return String(s || "").replace(/\s+/g, " ").trim(); }
-  function src(x) { return "assets/diagrams/" + x.f + "?v=" + V; }
+  function src(x) { return x.url ? x.url : "assets/diagrams/" + x.f + "?v=" + V; }   // x.url: another picture in the same viewer (📌 homework.html: the teacher's photo)
   function title(x) { return FR() ? x.fr : x.ar; }
   function alt(x) { return FR() ? x.altfr : x.alt; }
 

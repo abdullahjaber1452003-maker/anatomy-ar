@@ -343,8 +343,9 @@
         return { tag: T("🎯 امتحان الفصل · باقي " + (s.left | 0) + " يوم", "🎯 Examen · J-" + (s.left | 0)), t: s.light || s.s === "weak" ? T("تحضير امتحان الفصل: مراجعة خفيفة + ١٠ أسئلة", "Préparation de l'examen : révision légère + 10 questions") : T("تحضير امتحان الفصل: امتحان كامل ", "Préparation de l'examen : examen complet ") + sn(s.s),
           sub: s.s2 ? T("بخطة اليوم كمان: ", "Aussi au plan du jour : ") + sn(s.s2) : s.light || s.s === "weak" ? T("من أضعف دروسك", "Sur tes leçons faibles") : T("أسئلة من كل الدروس، مع وقت", "Des questions de toutes les leçons, chronométré"), min: s.light || s.s === "weak" ? 10 : (M && M.sizeOf ? M.sizeOf(s.s) : 20) };
       case "hw": var SB = ((w.NLESSONS || {}).subjects || {})[s.subj] || null;
-        return { tag: T("📌 تذكير بالوظيفة", "📌 Rappel de devoir"), t: T("وظيفة: ", "Devoir : ") + esc(s.n) + " " + T("(التسليم ", "(à rendre le ") + dueTxt(s.due) + ")",
-          sub: [SB ? esc(T(SB.ar, SB.fr || SB.ar)) : esc(s.subj || ""), esc(s.note || "")].filter(Boolean).join(" · "), min: 2 };
+        var HR = w.NursinHW && w.NursinHW.raw ? w.NursinHW.raw(s.id) : null, hn = (HR && HR.notefr && T("", "fr")) ? HR.notefr : s.note;   // built-in homework: its own French note
+        return { tag: T("📌 تذكير بالوظيفة", "📌 Rappel de devoir"), t: T("وظيفة: ", "Devoir : ") + "<bdi data-nofr>" + esc(s.n).replace(/\([^()]{1,40}\)/g, function (m) { return '<span style="white-space:nowrap">' + m + "</span>"; }) + "</bdi>",   // Nov 1 2026: the teacher's title as written (isolated, never word-translated), the due date on its own line
+          sub: ["📅 " + T("التسليم ", "À rendre le ") + dueTxt(s.due), SB ? esc(T(SB.ar, SB.fr || SB.ar)) : esc(s.subj || ""), hn ? "<span data-nofr>" + esc(hn) + "</span>" : ""].filter(Boolean).join(" · "), min: 2 };
       case "duel": return { tag: T("⭐ البطولة", "⭐ Le tournoi"), t: T("⚔️ دورك اليوم بالبطولة", "⚔️ C'est ton tour au tournoi") + (s.op ? T(" ضد ", " contre ") + "<bdi>" + esc(s.op) + "</bdi>" : ""), sub: T("٥ أسئلة بـ٨ دقايق، الرابح بيطلع عالدور الجاي", "5 questions en 8 minutes, le gagnant passe au tour suivant"), min: 4 };
       case "rev": return { tag: T("⭐ مراجعة", "⭐ Révision"), t: T("🔁 " + s.n + " أسئلة مراجعة", "🔁 " + s.n + " questions à réviser"), sub: T("مستحقّين اليوم من حفظك", "Prévues aujourd'hui dans ta mémoire"), min: Math.max(3, Math.round(s.n * 0.6)) };
       case "today": return { tag: T("⭐ درس اليوم", "⭐ Leçon du jour"), t: "📖 " + nm, sub: s.more ? T("+" + s.more + " من دروس هالأسبوع", "+" + s.more + " des leçons de la semaine") : T("قراية قصيرة من جدول صفّك", "Une courte lecture du programme de ta classe"), min: 6 };
@@ -436,8 +437,9 @@
       h += '<li class="hzst ' + st + (s.k === "osm" ? " hzosmst" : "") + '"><span class="nd" aria-hidden="true"><i>' + (D[k] ? "✓" : s.e) + "</i></span>";
       if (s.k === "osm" && ((st.indexOf("now") === 0) || openK === k || (fbQ && s.qs && s.qs.indexOf(fbQ) > -1))) { h += osmHtml(p, s, st.indexOf("now") === 0 ? "now" : D[k] ? "done" : "todo") + "</li>"; continue; }
       if (s.k === "hw") {                               // 📌 homework: not a link — the text + his own «سلّمتها ✅»
-        h += '<div class="bx hzhwbx" id="hw"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : "") + "</span></span><b>" + x.t + "</b>" + (x.sub ? "<small>" + x.sub + "</small>" : "") +
-          '<button type="button" class="btn sm hzhwok' + (D[k] ? " on" : "") + '" data-hzhw="' + esc(s.id) + '" aria-pressed="' + (D[k] ? "true" : "false") + '">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button></div></li>";
+        h += '<div class="bx hzhwbx" id="hw"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : "") + "</span></span><b data-nofr>" + x.t + "</b>" + (x.sub ? "<small data-nofr>" + x.sub + "</small>" : "") +
+          '<span class="hzhwbt"><a class="btn sm hzhwgo" href="homework.html?id=' + encodeURIComponent(s.id) + '" data-step="' + esc(k) + '">' + T("📄 الأسئلة", "📄 Questions") + "</a>" +   // Nov 1 2026: opens the homework page (questions + the teacher's photo)
+          '<button type="button" class="btn sm hzhwok' + (D[k] ? " on" : "") + '" data-hzhw="' + esc(s.id) + '" aria-pressed="' + (D[k] ? "true" : "false") + '">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button></span></div></li>";
         continue;
       }
       var duel = s.k === "duel";
