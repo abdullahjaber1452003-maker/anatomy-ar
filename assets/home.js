@@ -439,6 +439,7 @@
       if (s.k === "hw") {                               // 📌 homework: not a link — the text + his own «سلّمتها ✅»
         h += '<div class="bx hzhwbx" id="hw"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : "") + "</span></span><b data-nofr>" + x.t + "</b>" + (x.sub ? "<small data-nofr>" + x.sub + "</small>" : "") +
           '<span class="hzhwbt"><a class="btn sm hzhwgo" href="homework.html?id=' + encodeURIComponent(s.id) + '" data-step="' + esc(k) + '">' + T("📄 الأسئلة", "📄 Questions") + "</a>" +   // Nov 1 2026: opens the homework page (questions + the teacher's photo)
+          '<a class="btn sm hzhwosm" href="tutor.html?hw=' + encodeURIComponent(s.id) + '" data-step="' + esc(k) + '">' + T("🧑‍🏫 اشرحلي مع عثمان", "🧑‍🏫 Explique-moi avec Osman") + "</a>" +   // Nov 1 2026 (28m): Osman explains it, he tries, Osman corrects
           '<button type="button" class="btn sm hzhwok' + (D[k] ? " on" : "") + '" data-hzhw="' + esc(s.id) + '" aria-pressed="' + (D[k] ? "true" : "false") + '">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button></span></div></li>";
         continue;
       }

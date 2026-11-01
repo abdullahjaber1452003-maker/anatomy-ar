@@ -134,6 +134,8 @@ html[dir=ltr] .hzoa .go svg{transform:scaleX(-1)}
 .hzhwbx .hzhwbt{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}.hzhwbx .hzhwbt .btn{margin-top:0;min-height:38px;display:inline-flex;align-items:center;text-decoration:none}
 .hzhwbx .hzhwgo{background:var(--hzaccsoft,rgba(15,118,110,.12));color:var(--hzacc,#0f766e);border-color:transparent;font-weight:800}
 html[data-theme=night] .hzhwbx .hzhwgo{color:#5eead4}
+.hzhwbx .hzhwbt .btn.hzhwosm{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent;font-weight:800}
+html[data-theme=night] .hzhwbx .hzhwbt .btn.hzhwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
 .hzhwbx .hzhwok.on{background:rgba(22,163,74,.14);color:#15803d;border-color:transparent}
 html[data-theme=night] .hzhwbx .hzhwok.on{color:#86efac}
 .hzfoot .hzmidft{grid-column:1/-1}

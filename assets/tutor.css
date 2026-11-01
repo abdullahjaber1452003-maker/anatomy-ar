@@ -33,3 +33,33 @@ html[data-theme=night] .terr .tb{background:#2b2317;border-color:#5a4630}
 html[data-theme=night] .tspk[aria-pressed=true]{background:#301a1a;border-color:#5a3030}
 html[data-theme=night] .tform textarea{background:var(--card)}
 html[data-theme=night] .tok .tb{background:#182d23;border-color:#305a46}
+
+/* 📌 «اشرحلي الوظيفة» mode (Nov 1 2026, 28m): the bar on top, the step chips, the action buttons and the «جرّب حلّ» card — glass, no ads */
+.thwbar{border:1px solid rgba(15,118,110,.22);border-radius:14px;padding:9px 11px;background:linear-gradient(135deg,rgba(15,118,110,.09),rgba(13,148,136,.04));display:flex;flex-direction:column;gap:7px}
+.thwbar p{margin:0;line-height:1.7;font-size:15px}
+.thwbar .thwgo{align-self:flex-start;text-decoration:none;display:inline-flex;align-items:center;min-height:38px}
+.thwh{display:flex;flex-direction:column;gap:2px}.thwh b{font-size:15px;line-height:1.5;overflow-wrap:anywhere}.thwh small{color:var(--mut);font-size:13px}
+.thwst{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.thwst li{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:700;padding:5px 4px;border-radius:999px;background:rgba(100,116,139,.1);color:var(--mut);white-space:nowrap}
+.thwst li span{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:rgba(100,116,139,.22);font-size:11px}
+.thwst li.on{background:#0f766e;color:#fff}.thwst li.on span{background:rgba(255,255,255,.25)}
+.thwst li.done{background:rgba(22,163,74,.14);color:#15803d}.thwst li.done span{background:rgba(22,163,74,.25)}
+.thwbl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+.thwact{display:flex;flex-wrap:wrap;gap:7px;padding:0 6px 0 34px}
+.thwact .btn{min-height:38px;font-size:14px}
+.thwtry{margin:0 6px;padding:11px;border-radius:14px;border:1px solid rgba(15,118,110,.25);background:#fff;display:flex;flex-direction:column;gap:9px}
+.thwtt{margin:0;line-height:1.7}.thwhint{margin:0;font-size:13px;color:var(--mut);line-height:1.6}
+.thwq{display:flex;flex-direction:column;gap:4px}.thwq span{font-size:14px;line-height:1.6;color:var(--mut)}
+.thwq textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:110px;font:inherit;font-size:16px;line-height:1.6;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+.thwq textarea:focus{outline:3px solid #f59e0b;outline-offset:1px}
+.thwmsg{margin:0;color:#b45309;font-weight:700}.thwmsg[hidden]{display:none}
+.thwbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.thwoffer .tb{border-color:rgba(15,118,110,.35)}
+html[data-theme=night] .thwbar{background:linear-gradient(135deg,rgba(45,212,191,.10),rgba(15,118,110,.06));border-color:rgba(45,212,191,.25)}
+html[data-theme=night] .thwst li{background:rgba(148,163,184,.12)}
+html[data-theme=night] .thwst li.on{background:#0d9488;color:#fff}
+html[data-theme=night] .thwst li.done{background:rgba(34,197,94,.16);color:#86efac}
+html[data-theme=night] .thwtry{background:var(--card);border-color:rgba(45,212,191,.25)}
+html[data-theme=night] .thwq textarea{background:#102020}
+html[data-theme=night] .thwmsg{color:#fbbf24}
+html[dir=ltr] .thwact{padding:0 34px 0 6px}

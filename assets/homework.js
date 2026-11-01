@@ -4,7 +4,7 @@
    ONE step per homework in «مسار اليوم» (assets/home.js) — «📌 وظيفة: … (التسليم <date>)» — until the due date has passed, with a
    «سلّمتها ✅» tick of his own (localStorage nursin_hwdone_v1, mirrored on users/{uid}.hwDone — the owner may merge a field, no rule).
    Until rules v20 are published the read is refused → an empty list → no step, no error.
-   Nov 1 2026 (20261028l): + built-in homework (assets/homework-static.js) for everyone, merged + deduped with the admin's; homework.html
+   Nov 1 2026 (20261028m): + built-in homework (assets/homework-static.js) for everyone, merged + deduped with the admin's; homework.html
    («📌 الوظائف») = the list / one homework with its questions + the teacher's photo (drawn here when #hw-app exists). */
 (function (w, d) {
   "use strict";
@@ -20,7 +20,7 @@
     return { id: cut(id, 40), title: t, subj: cut(String(x.subj || ""), 20), due: due, note: cut(String(x.note || "").trim(), MAXN) };
   }
   function fsList() { var x = lsGet(K); return x && Array.isArray(x.list) ? x.list : []; }
-  /* Nov 1 2026 (20261028l): built-in homework (assets/homework-static.js, window.NURSIN_HW_STATIC) shows for EVERY student, no Firestore
+  /* Nov 1 2026 (20261028m): built-in homework (assets/homework-static.js, window.NURSIN_HW_STATIC) shows for EVERY student, no Firestore
      needed. Merged with the admin's list: a Firestore one with the same id, or the same due date and a title that is the same / holds one
      of the built-in's `match` words, is the SAME homework → only the built-in shows (it has the questions) and either tick counts (ids). */
   function nt(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\u0600-\u06ff]+/g, " ").trim(); }
@@ -90,13 +90,15 @@
   function ttl(t) { return "<bdi>" + esc(t).replace(/\([^()]{1,40}\)/g, function (m) { return '<span class="hwnw">' + m + "</span>"; }) + "</bdi>"; }   // mixed fr/ar title: isolated, «(…)» never split across lines
   function tickBtn(h) { var on = isDone(h.id);
     return '<button type="button" class="btn sm hwok' + (on ? " on" : "") + '" data-hwtick="' + esc(h.id) + '" aria-pressed="' + on + '">' + (on ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button>"; }
+  /* 🧑‍🏫 Nov 1 2026 (28m, Abdullah 5:29 PM): Osman explains the homework + its lesson, the student tries, Osman corrects (tutor.html?hw=<id>) */
+  function osmBtn(h, big) { return '<a class="btn sm hwosm' + (big ? " big" : "") + '" href="tutor.html?hw=' + encodeURIComponent(h.id) + '">' + T("🧑‍🏫 اشرحلي مع عثمان", "🧑‍🏫 Explique-moi avec Osman") + "</a>"; }
   function meta(h) { var n = daysLeft(h.due);
     return '<p class="hwmeta"><span class="hwdue">📅 ' + esc(T("التسليم ", "À rendre ") + dueTxt(h.due)) + '</span><span class="hwleft' + (n <= 1 ? " soon" : "") + '">' + esc(leftTxt(n)) + "</span>" + (h.subj ? '<span class="hwsub">' + esc(subjName(h.subj)) + "</span>" : "") + "</p>"; }
   function noteOf(h, R) { var t = R && FR() && R.notefr ? R.notefr : h.note; return t ? '<p class="hwnote">' + esc(t) + "</p>" : ""; }
   function card(h) {
     var R = raw(h.id), q = R && R.cases ? R.cases.reduce(function (a, c) { return a + (c.q || []).length; }, 0) : 0;
     return '<li class="qcard hwcard' + (isDone(h.id) ? " done" : "") + '"><a class="hwopen" href="homework.html?id=' + encodeURIComponent(h.id) + '"><b class="hwt">📌 ' + ttl(h.title) + "</b>" + meta(h) + noteOf(h, R) +
-      (R && R.cases ? '<span class="hwmore">📄 ' + esc(T("افتح الأسئلة", "Voir les questions")) + (R.img ? " + 📷 " + esc(T("صورة الورقة", "la feuille")) : "") + "</span>" : "") + "</a>" + tickBtn(h) + "</li>";
+      (R && R.cases ? '<span class="hwmore">📄 ' + esc(T("افتح الأسئلة", "Voir les questions")) + (R.img ? " + 📷 " + esc(T("صورة الورقة", "la feuille")) : "") + "</span>" : "") + "</a>" + '<span class="hwbtns">' + osmBtn(h) + tickBtn(h) + "</span></li>";
   }
   function listView(app) {
     var L = open(today(), true);
@@ -115,7 +117,7 @@
     } else body += '<p class="small">' + esc(T("الأستاذ ما حطّ الأسئلة هون، شوف ورقة الصف.", "Les questions ne sont pas ici : regarde la feuille de la classe.")) + "</p>";
     var im = R && R.img;
     app.innerHTML = '<p class="hwback"><a class="btn sm" href="homework.html">' + esc(T("→ كل الوظائف", "← Tous les devoirs")) + "</a></p>" +
-      '<article class="qcard hwone"><h1 class="hwt">📌 ' + ttl(h.title) + "</h1>" + meta(h) + noteOf(h, R) + '<div class="hwact">' + tickBtn(h) + (im ? '<a class="btn sm hwph" href="#hwphoto">📷 ' + esc(T("صورة الورقة", "La feuille")) + "</a>" : "") + "</div>" + body + "</article>" +
+      '<article class="qcard hwone"><h1 class="hwt">📌 ' + ttl(h.title) + "</h1>" + meta(h) + noteOf(h, R) + '<div class="hwact">' + osmBtn(h, 1) + tickBtn(h) + (im ? '<a class="btn sm hwph" href="#hwphoto">📷 ' + esc(T("صورة الورقة", "La feuille")) + "</a>" : "") + "</div>" + body + "</article>" +
       (im ? '<figure class="qcard hwfig" id="hwphoto"><button type="button" class="hwimg" data-hwzoom aria-label="' + esc(T("كبّر الصورة: ", "Agrandir la photo : ") + T(im.ar, im.fr)) + '"><img src="' + esc(im.src) + '" alt="' + esc(T(im.alt || im.ar, im.altfr || im.fr)) + '" width="' + (im.w | 0) + '" height="' + (im.h | 0) + '" decoding="async"><span class="hwzb" aria-hidden="true">🔍</span></button><figcaption>📷 ' + esc(T(im.ar, im.fr)) + " · " + esc(T("اكبس عالصورة لتكبّرها", "Touche la photo pour l'agrandir")) + "</figcaption></figure>" : "");
   }
   function param(n) { var m = (location.search || "").match(new RegExp("[?&]" + n + "=([^&]+)")); try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return ""; } }

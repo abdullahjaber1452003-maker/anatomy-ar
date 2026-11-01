@@ -36,7 +36,7 @@
     return out;
   }
   function isBusy(t){return !t||typeof t!=='string'||/^\s*صار في مشكلة/.test(t);}
-  function trim(h){return (h||[]).filter(function(m){return m&&(m.role==='user'||m.role==='assistant')&&typeof m.text==='string';}).slice(-KEEP);}
+  function trim(h,n){return (h||[]).filter(function(m){return m&&(m.role==='user'||m.role==='assistant')&&typeof m.text==='string';}).slice(-(n||KEEP));}
   function today(){var N=w.Nursin;if(N&&N.dayKey)return N.dayKey();var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
   /* العدّاد اليومي {d:يوم، n:أسئلة، u:كم مرّة فتح بإعلان}؛ بيرجع صفر كل يوم */
   function cRead(store,day){try{var c=JSON.parse(store.getItem(CKEY)||'null');if(c&&c.d===day)return {n:c.n|0,u:Math.min(MAX_UNLOCKS,c.u|0)};}catch(e){}return {n:0,u:0};}
@@ -130,10 +130,12 @@
     var chat=log.parentNode;
     var hist=[],busy=false,tts=('speechSynthesis' in w)&&typeof w.SpeechSynthesisUtterance==='function',speakingBtn=null;
     try{hist=trim(JSON.parse(sessionStorage.getItem(HKEY)||'[]'));}catch(e){hist=[];}
-    function save(){hist=trim(hist);try{sessionStorage.setItem(HKEY,JSON.stringify(hist));}catch(e){}}
+    /* 📌 homework mode (tutor.html?hw=<id>, Nov 1 2026): its own thread, saved per homework in localStorage by assets/tutor-know.js so he resumes */
+    var K=w.TutorKnow||null,HW=null,hwBox=null;
+    function save(){if(HW){hist=trim(hist,K.HMAX);HW.s.hist=hist.slice();K.save(HW.s);return;}hist=trim(hist);try{sessionStorage.setItem(HKEY,JSON.stringify(hist));}catch(e){}}
     function lsafe(){try{return w.localStorage;}catch(e){return {getItem:function(){return null;},setItem:function(){}};}}
     function showLeft(){
-      var q=quota(lsafe(),today());left.textContent='· باقيلك '+q.left+' سؤال اليوم';
+      var q=quota(lsafe(),today());left.setAttribute('data-nofr','');left.textContent=w.Lang&&w.Lang.fr?'· il te reste '+q.left+' question'+(q.left>1?'s':'')+' aujourd’hui':'· باقيلك '+q.left+' سؤال اليوم';
       if(!q.left&&q.canUnlock){var b=document.createElement('button');b.type='button';b.className='tlink tadbtn';b.textContent=AD_LABEL;b.addEventListener('click',function(){adScreen(null);});left.appendChild(document.createTextNode(' '));left.appendChild(b);}
     }
     /* شاشة الإعلان: نفس شكل شاشة صفحة الـ 3D (gate3d)، وحدة Adsterra 300x250 بـ iframe لحالها، عدّ 15 ثانية، «كمّل» = +5 */
@@ -185,6 +187,7 @@
       if(role==='user')b.textContent=text;else b.innerHTML=fmt(text);   // fmt escapes first
       if(role!=='user'){var who=document.createElement('span');who.className='twho';who.setAttribute('aria-hidden','true');who.textContent='👨‍🏫';d.appendChild(who);}
       d.appendChild(b);
+      if(!/twelcome/.test(opts.cls||'')||HW)d.setAttribute('data-nofr','');   // Osman's / the student's own words are never word-translated (🇫🇷 mode: Osman already answers in French)
       if(role==='assistant'&&tts&&!opts.noVoice){
         var s=document.createElement('button');s.type='button';s.className='btn tspk';s.textContent='🔊 اسمع';s.setAttribute('aria-pressed','false');s.setAttribute('aria-label','اسمع الجواب بالصوت');
         s.addEventListener('click',function(){speak(text,s);});b.appendChild(s);
@@ -192,10 +195,105 @@
       log.appendChild(d);if(opts.top)log.scrollTop=Math.max(0,d.offsetTop-8);else scroll();return d;
     }
     function renderAll(){
-      stopSpeak();log.innerHTML='';
+      stopSpeak();log.innerHTML='';hwBar();
+      if(HW){
+        bubble('assistant',K.offerText(HW.hw),{noVoice:true,cls:'twelcome thwoffer'});
+        hist.forEach(function(m){bubble(m.role,m.text);});
+        chips.hidden=true;chat.classList.remove('tempty');newBtn.hidden=false;newBtn.textContent=TX('↺ بلّش الوظيفة من جديد','↺ Recommencer le devoir');showLeft();hwUI();return;
+      }
+      newBtn.textContent=TX('🗑 محادثة جديدة','🗑 Nouvelle conversation');
       bubble('assistant','أهلا! أنا **الأستاذ عثمان** 👨‍🏫\nاسألني عن أي درس (القلب، الأعصاب، Henderson…) وبشرحلك خطوة خطوة، أو قلّي «اعملّي كويز» 💪',{noVoice:true,cls:'twelcome'});
       hist.forEach(function(m){bubble(m.role,m.text);});
       chips.hidden=hist.length>0;chat.classList.toggle('tempty',!hist.length);newBtn.hidden=!hist.length;showLeft();
+    }
+    function TX(ar,fr){return w.Lang&&w.Lang.fr?fr:ar;}
+    function esc2(s){return esc(s);}
+    function dmy(day){return (+String(day).slice(8,10))+'/'+(+String(day).slice(5,7));}
+    /* the bar on top of the chat: in homework mode its title + the 3 steps; otherwise, when a homework is open, Osman offers it */
+    function hwBar(){
+      if(hwBox){hwBox.remove();hwBox=null;}
+      if(!K)return;
+      var b=document.createElement('div');b.setAttribute('data-nofr','');
+      if(HW){
+        var st=HW.s.stage,ix={offer:0,teach:1,'try':2,correct:3,done:4}[st]||0,lab=[TX('الشرح','Explication'),TX('جرّب حلّ','Essaie'),TX('التصحيح','Correction')];
+        b.className='thwbar thwon';
+        b.innerHTML='<div class="thwh"><b>📌 <bdi>'+esc2(HW.hw.title)+'</bdi></b><small>📅 '+esc2(TX('التسليم ','À rendre le '))+dmy(HW.hw.due)+'</small></div>'+
+          '<ol class="thwst">'+lab.map(function(l,i){var c=ix>i+1||(i===2&&ix>=4)?'done':ix===i+1?'on':'';return '<li class="'+c+'"><span>'+(c==='done'?'✓':(i+1))+'</span>'+esc2(l)+'</li>';}).join('')+'</ol>'+
+          '<div class="thwbl"><a class="tlink" href="homework.html?id='+encodeURIComponent(HW.hw.id)+'">📄 '+esc2(TX('الأسئلة وصورة الورقة','Questions et photo'))+'</a><button type="button" class="tlink" data-hwa="exit">✖ '+esc2(TX('المحادثة العادية','Discussion normale'))+'</button></div>';
+      }else{
+        var L=[];try{L=K.hwList().filter(function(h){return !h.done;});}catch(e){}
+        if(!L.length)return;
+        var h=L[0],again=K.has(h.id);
+        b.className='thwbar thwsug';
+        b.innerHTML='<p>📌 '+esc2(TX('عندك وظيفة: ','Tu as un devoir : '))+'<b><bdi>'+esc2(h.title)+'</bdi></b> <small>('+esc2(TX('التسليم ','à rendre le '))+dmy(h.due)+')</small><br>'+
+          esc2(again?TX('كمّلها معي من وين وقفنا 👇','On continue là où on s’est arrêtés 👇'):TX('بدّك اشرحلك الوظيفة ونفهم الدرس تبعها، وبعدين بتجرّب تحلّ؟','Tu veux que je t’explique le devoir et sa leçon, puis tu essaies ?'))+'</p>'+
+          '<a class="btn pri sm thwgo" href="tutor.html?hw='+encodeURIComponent(h.id)+'" data-hwgo="'+esc2(h.id)+'">🧑‍🏫 '+esc2(again?TX('كمّل الوظيفة مع عثمان','Continuer avec Osman'):TX('اشرحلي مع عثمان','Explique-moi avec Osman'))+'</a>';
+      }
+      chat.insertBefore(b,log);hwBox=b;
+    }
+    function clearAct(){[].forEach.call(log.querySelectorAll('.thwact,.thwtry'),function(x){x.remove();});}
+    function actRow(btns){
+      var r=document.createElement('div');r.className='thwact';r.setAttribute('data-nofr','');
+      r.innerHTML=btns.map(function(x){return '<button type="button" class="btn sm'+(x[2]?' pri':'')+'" data-hwa="'+x[0]+'">'+esc2(x[1])+'</button>';}).join('');
+      log.appendChild(r);return r;
+    }
+    /* what he can do next, under the last message — per step */
+    function hwUI(keep){
+      clearAct();if(!HW||busy)return;hwBar();
+      var s=HW.s,last=hist.length?hist[hist.length-1]:null;
+      if(last&&last.role==='user')return;                  // waiting for / retrying Osman's answer
+      if(s.stage==='offer')actRow([['teach',TX('👍 إيه، اشرحلي','👍 Oui, explique-moi'),1],['try',TX('✍️ بدّي جرّب لحالي أوّل','✍️ Je veux essayer seul(e) d’abord')]]);
+      else if(s.stage==='teach')actRow([['more',TX('▶️ كمّل','▶️ Continue'),1],['try',TX('✍️ هلّق بجرّب حلّ','✍️ J’essaie maintenant')]]);
+      else if(s.stage==='try')tryCard();
+      else if(s.stage==='correct')actRow([['retry',TX('✍️ صلّح جوابي وجرّب كمان','✍️ Je corrige et je réessaie'),1],['reteach',TX('🔁 اشرحلي من جديد','🔁 Réexplique-moi')],['done',TX('✅ فهمت، خلصت','✅ Compris, c’est fini')]]);
+      else if(s.stage==='done'){
+        var m=bubble('assistant',TX('👏 برافو! هلّق عندك الجواب بشكل الأستاذ. انقلو عالورقة بإيدك وسلّمها '+dmy(HW.hw.due)+' 💪','👏 Bravo ! Recopie ta réponse à la main et rends-la le '+dmy(HW.hw.due)+' 💪'),{noVoice:true,cls:'tok thwact'});
+        m.setAttribute('data-nofr','');
+        actRow([['retry',TX('✍️ جرّب كمان مرّة','✍️ Réessayer')],['reset',TX('↺ من الأوّل','↺ Depuis le début')]]);
+      }
+      if(!keep)scroll();
+    }
+    function tryCard(){
+      var qs=K.questions(HW.hw),a=HW.s.ans||{},c=document.createElement('div');c.className='thwtry';c.setAttribute('data-nofr','');
+      c.innerHTML='<p class="thwtt">✍️ <b>'+esc2(TX('هلّق جرّب انت حلّ','À toi d’essayer'))+'</b> — '+esc2(TX('اكتب جوابك على كل حالة. مش مشكلة إذا مش كامل، أنا بصحّحلك 💪','Écris ta réponse pour chaque cas. Pas grave si c’est incomplet, je te corrige 💪'))+'</p>'+
+        '<p class="thwhint">'+esc2(TX('رتّبو هيك: Diagnostic · Besoins de Henderson (بالاسم) · Diagnostics infirmiers · Soins infirmiers · Surveillance','Organise-la ainsi : Diagnostic · Besoins de Henderson (par leur nom) · Diagnostics infirmiers · Soins infirmiers · Surveillance'))+'</p>'+
+        qs.map(function(q,i){return '<label class="thwq"><b>🩺 '+esc2(TX(q.n,q.nfr))+'</b><span dir="auto">'+esc2(q.q)+'</span><textarea rows="5" maxlength="'+K.AMAX+'" data-i="'+i+'" dir="auto" placeholder="'+esc2(TX('جوابك هون…','Ta réponse ici…'))+'">'+esc2(a[i]||'')+'</textarea></label>';}).join('')+
+        '<p class="thwmsg" hidden></p><div class="thwbtns"><button type="button" class="btn pri" data-hwa="check">📨 '+esc2(TX('صحّحلي','Corrige-moi'))+'</button><button type="button" class="btn sm" data-hwa="teach">📖 '+esc2(TX('رجّعني عالشرح','Retour à l’explication'))+'</button></div>';
+      c.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.hasAttribute('data-i')){HW.s.ans[t.getAttribute('data-i')]=t.value;K.save(HW.s);}});
+      log.appendChild(c);
+    }
+    function hwAct(a){
+      if(!HW||busy)return;var s=HW.s;
+      if(a==='exit'){exitHw();return;}
+      if(a==='teach'||a==='reteach'){K.setStage(s,'teach');save();send(a==='reteach'?TX('ما فهمت منيح، اشرحلي من جديد بطريقة أبسط','Je n’ai pas bien compris, réexplique-moi plus simplement'):(hist.length?TX('رجّعني عالشرح، كمّل من وين وقفنا','Reviens à l’explication, continue où on s’est arrêtés'):TX('إيه، اشرحلي الوظيفة والدرس تبعها 🙏','Oui, explique-moi le devoir et sa leçon 🙏')));hwBar();return;}
+      if(a==='more'){send(TX('كمّل','Continue'));return;}
+      if(a==='try'||a==='retry'){K.setStage(s,'try');save();hwUI();var f=log.querySelector('.thwtry textarea');if(f){f.scrollIntoView({block:'center'});}return;}
+      if(a==='check'){
+        var ans=s.ans||{},any=Object.keys(ans).some(function(k){return String(ans[k]||'').trim();});
+        if(!any){var m=log.querySelector('.thwmsg');if(m){m.hidden=false;m.textContent=TX('اكتب شي أوّل 🙂 حتى لو مش كامل','Écris quelque chose d’abord 🙂 même incomplet');}var t=log.querySelector('.thwtry textarea');if(t)t.focus();return;}
+        K.setStage(s,'correct');save();send(K.answersMsg(HW.hw,ans),{max:3500});hwBar();return;
+      }
+      if(a==='done'){K.setStage(s,'done');save();hwUI();return;}
+      if(a==='reset'){HW.s=K.reset(HW.id);hist=[];renderAll();return;}
+    }
+    function enterHw(id){
+      if(!K)return false;var hw=K.hwGet(id);
+      if(!hw){bubble('assistant',TX('📌 هالوظيفة خلص وقتها أو مش موجودة. شوف «📌 الوظائف».','📌 Ce devoir est terminé ou introuvable. Regarde « 📌 Devoirs ».'),{noVoice:true,cls:'terr'});return false;}
+      stopSpeak();HW={id:hw.id,hw:hw,s:K.load(hw.id)};hist=trim(HW.s.hist,K.HMAX);
+      try{if(w.NursinUI&&w.NursinUI.use)w.NursinUI.use('tutor');}catch(e){}
+      renderAll();return true;
+    }
+    function exitHw(){
+      HW=null;try{history.replaceState(null,'',location.pathname);}catch(e){}
+      try{hist=trim(JSON.parse(sessionStorage.getItem(HKEY)||'[]'));}catch(e){hist=[];}
+      renderAll();
+    }
+    function addChips(){
+      if(!K||chips.querySelector('.thwchip'))return;
+      [TX('📌 شو عندي وظيفة؟','📌 J’ai quel devoir ?'),TX('🎯 امتى الامتحان؟','🎯 L’examen, c’est quand ?'),TX('🧭 شو باقي من مساري؟','🧭 Il me reste quoi dans mon parcours ?'),TX('💪 شو أضعف دروسي؟','💪 Mes leçons les plus faibles ?')].reverse().forEach(function(t){
+        var c=document.createElement('button');c.type='button';c.className='chip thwchip';c.setAttribute('data-nofr','');c.textContent=t;chips.insertBefore(c,chips.firstChild);
+      });
+      chips.scrollLeft=0;setTimeout(function(){chips.scrollLeft=0;},60);   // the new chips first (inserting before the old ones would keep those in view)
     }
 
     /* حساب الطالب الحيّ (نتايج الامتحانات + الصفوف) من Firebase إذا مسجّل دخول؛ بينحفظ ٣ دقايق، وما منستنّاه أكتر من ٥ ثواني */
@@ -220,7 +318,9 @@
       return Promise.race([got,wait(5000).then(function(){return null;})]);
     }
     document.addEventListener('nursin:me',function(){if(w.NursinFB&&w.NursinFB.user)fetchLive();});
-    function context(lv){return buildContext(gather(w.Nursin||{},lv));}
+    /* + what the site knows today (📌 homework with its questions, 🎯 midterm, 🧭 today's path) and, in homework mode, the step + the lessons behind it */
+    function know(){if(!K)return '';var s='';try{s='\n'+K.block(K.gather());if(HW)s+='\n'+K.flowContext(HW.s,HW.hw);}catch(e){}return s;}
+    function context(lv){return buildContext(gather(w.Nursin||{},lv))+know();}
     /* 👨‍🏫 الأستاذ عثمان: his persona goes first in the context the worker appends to its system text (assets/osman.js; scolding part only with «تعليقات الأستاذ عثمان» on) */
     function persona(){var O=w.Osman;return O&&O.persona?O.persona()+'\n':'';}
     function call(){
@@ -242,17 +342,17 @@
       var typing=bubble('assistant','',{noVoice:true,cls:'ttyping'});
       typing.querySelector('.tb').innerHTML='<span class="tdots" aria-label="الأستاذ عم يكتب"><i></i><i></i><i></i></span>';
       call().catch(function(){return wait(RETRY_MS).then(call);}).then(function(text){
-        typing.remove();hist.push({role:'assistant',text:text});save();bubble('assistant',text,{top:true});setBusy(false);
+        typing.remove();hist.push({role:'assistant',text:text});if(HW&&HW.s.stage==='teach')HW.s.tp=(HW.s.tp|0)+1;save();bubble('assistant',text,{top:true});setBusy(false);hwUI(true);
       },function(){
         typing.remove();
         var d=bubble('assistant',BUSY,{noVoice:true,cls:'terr'});
         var r=document.createElement('button');r.type='button';r.className='btn pri tretry';r.textContent='🔄 جرّب كمان مرّة';
         r.addEventListener('click',function(){if(busy)return;d.remove();ask();});
-        d.querySelector('.tb').appendChild(r);setBusy(false);
+        d.querySelector('.tb').appendChild(r);setBusy(false);hwUI();
       });
     }
-    function send(text){
-      text=String(text||'').trim().slice(0,1000);if(!text||busy)return;
+    function send(text,opt){
+      text=String(text||'').trim().slice(0,(opt&&opt.max)||1000);if(!text||busy)return;
       if(!signedIn()){var lc=document.querySelector('#main .glk-card');if(lc)lc.scrollIntoView({block:'center'});return;}   // 🔒 tutor locked while signed out (assets/gate.js)
       var st=lsafe(),day=today();
       var q=quota(st,day);
@@ -272,7 +372,7 @@
       // last turn was an unanswered user question (failed earlier)? replace it
       if(hist.length&&hist[hist.length-1].role==='user')hist.pop();
       hist.push({role:'user',text:text});save();
-      chips.hidden=true;chat.classList.remove('tempty');newBtn.hidden=false;bubble('user',text);inp.value='';grow();showLeft();ask();
+      chips.hidden=true;chat.classList.remove('tempty');newBtn.hidden=false;clearAct();bubble('user',text);inp.value='';grow();showLeft();ask();
     }
     function grow(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';}
 
@@ -280,9 +380,16 @@
     inp.addEventListener('input',grow);
     inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&!/Android|iPhone|iPad/i.test(navigator.userAgent)){e.preventDefault();send(inp.value);}});
     chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(b)send(b.textContent);});
-    newBtn.addEventListener('click',function(){if(busy)return;hist=[];save();renderAll();inp.focus();});
+    newBtn.addEventListener('click',function(){if(busy)return;if(HW){hwAct('reset');return;}hist=[];save();renderAll();inp.focus();});
+    chat.addEventListener('click',function(e){
+      var t=e.target,b=t.closest&&t.closest('[data-hwa]');if(b){e.preventDefault();hwAct(b.getAttribute('data-hwa'));return;}
+      var g=t.closest&&t.closest('[data-hwgo]');if(g){e.preventDefault();var id=g.getAttribute('data-hwgo');try{history.replaceState(null,'','?hw='+encodeURIComponent(id));}catch(x){}enterHw(id);}
+    });
+    document.addEventListener('nursin:hw',function(){if(HW){var h=K.hwGet(HW.id);if(h)HW.hw=h;}hwBar();});   // the admin's Firestore homework arrived
     w.addEventListener('pagehide',stopSpeak);
-    renderAll();
+    addChips();renderAll();
+    // 📌 opened from the homework page / the path's 📌 step: tutor.html?hw=<id>
+    try{var hp=new URLSearchParams(location.search).get('hw');if(hp)enterHw(String(hp).slice(0,60));}catch(e){}
     // prefilled question from a link (classes «اسأل الأستاذ عن هالموضوع»): put it in the box, the student presses send
     try{var pq=new URLSearchParams(location.search).get('q');if(pq){inp.value=String(pq).slice(0,500);grow();}}catch(e){}
   }

@@ -509,7 +509,7 @@ html.gl-out .ndgth::after{content:"🔒";position:absolute;inset:0;display:grid;
 .ndgct small{display:block;font-size:11.5px;color:var(--hzmut,#5a6e71)}
 .ndgcard .btn{align-self:flex-start;margin-top:auto}
 
-/* 📌 homework.html «الوظائف» (Nov 1 2026, 20261028l): list + one homework with its questions typed out + the teacher's photo */
+/* 📌 homework.html «الوظائف» (Nov 1 2026, 20261028m): list + one homework with its questions typed out + the teacher's photo */
 .hwapp{display:flex;flex-direction:column;gap:10px}
 .hwhero h1,.hwone h1{font-size:20px;margin:2px 0 6px;line-height:1.45}
 .hwlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
@@ -552,3 +552,8 @@ html[data-theme=night] .hwmore{color:#5eead4}
 .hwact{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.hwact .btn{min-height:40px;display:inline-flex;align-items:center;text-decoration:none}
 .hwfig{scroll-margin-top:80px}
 .hwnw{white-space:nowrap}
+/* 🧑‍🏫 «اشرحلي مع عثمان» on the homework list + page (Nov 1 2026, 28m) */
+.hwbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.hwbtns .hwok{align-self:center}
+.hwosm{display:inline-flex;align-items:center;min-height:40px;text-decoration:none;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent;font-weight:800}
+.hwosm:hover{color:#fff;filter:brightness(1.05)}
+html[data-theme=night] .hwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
