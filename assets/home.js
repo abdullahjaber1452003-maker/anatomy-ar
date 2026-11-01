@@ -511,7 +511,7 @@
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      root.innerHTML = '<div class="hztop"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
         '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
       parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);

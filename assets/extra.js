@@ -10,7 +10,7 @@
    No ads here; every sheet adds html.rton (page ads hidden while it is open). French = the items' own fr copies (Lang.fr). */
 (function (w, d) {
   "use strict";
-  var V = "20261028s", MQK = "nursin_mq_v1";
+  var V = "20261028t", MQK = "nursin_mq_v1";
   var page = ((w.location && w.location.pathname) || "/index.html").split("/").pop() || "index.html";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }

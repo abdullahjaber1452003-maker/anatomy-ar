@@ -107,7 +107,7 @@
   function menuGroups() {
     var rows = { learn: [], study: [], community: [], account: [] }, seen = {}, cur = "", st = lsGet(MENU) || {}, o = st.o || {};
     G.forEach(function (g) { (g.items || []).forEach(function (it) { if (seen[it[0]]) return; seen[it[0]] = 1; var k = mgOf(it[0]); rows[k].push(row(it)); if (it[0] === page) cur = k; }); });
-    rows.study.push(row(["games.html#room", "🏥", "غرفة الطوارئ", "امشِ لعند المريض"]));
+    rows.study.push(row(["games.html#live", "🔴", "حالة لايف", "حالة وحدة لكل الطلاب"])); rows.study.push(row(["games.html#room", "🏥", "غرفة الطوارئ", "امشِ لعند المريض"]));
     rows.community.push(row(["suggest.html", "🛠️", "اقتراحاتك", "شو بدك نضيف أو نعدّل؟"]));
     rows.account.push(row(["me.html", "👤", "أنا والإعدادات", ""]));
     moreList().forEach(function (h) { rows.account.push(h); });
