@@ -314,7 +314,8 @@ async function play(el, cid, pair, qs, done) {
     clearInterval(timer);
     const score = qs.reduce((n, q, i) => n + (st.picks[i] === q.a ? 1 : 0), 0);
     sh.innerHTML = '<div class="dqbox"><h2>⚔️ خلص التحدي</h2><p class="dres">علامتك <b>' + score + "/" + NQ + '</b></p><p class="small" id="dsave">⏳ عم نحفظ…</p><ol class="dfix">' +
-      qs.map((q, i) => '<li class="' + (st.picks[i] === q.a ? "ok" : "no") + '">' + esc(q.q) + "<br><b>✔ " + esc(q.o[q.a]) + "</b>" + (st.picks[i] !== q.a ? " <small>" + (st.picks[i] >= 0 ? "❌ <span>" + esc(q.o[st.picks[i]]) + "</span>" : "⏰ خلص الوقت") + "</small>" : "") + "</li>").join("") +
+      qs.map((q, i) => '<li class="' + (st.picks[i] === q.a ? "ok" : "no") + '">' + esc(q.q) + "<br><b>✔ " + esc(q.o[q.a]) + "</b>" + (st.picks[i] !== q.a ? " <small>" + (st.picks[i] >= 0 ? "❌ <span>" + esc(q.o[st.picks[i]]) + "</span>" : "⏰ خلص الوقت") + "</small>" : "") +
+        (window.NursinAsk ? window.NursinAsk.slot(window.NursinAsk.fromQ(q, { graded: true, answered: true, pick: st.picks[i], surface: "duel" })) : "") + "</li>").join("") +   // 🙋 «اسأل عثمان» per question, only on the result (assets/ask.js)
       '</ol><button class="btn pri" type="button" data-dclose>رجوع</button></div>';
     sh.querySelector("[data-dclose]").addEventListener("click", () => { sh.remove(); document.documentElement.classList.remove("duelon"); done(); });
     const msg = sh.querySelector("#dsave");

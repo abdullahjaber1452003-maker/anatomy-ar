@@ -132,10 +132,17 @@
     if (ms) t = setTimeout(fire, ms);
   }
   function addMiss(m) { if (replaying) return; for (var j = 0; j < miss.length; j++) if (miss[j].k === m.k) { miss[j].y = m.y; return; } miss.push(m); }
+  // 🙋 «اسأل عثمان» (Nov 1 2026, assets/ask.js): a timed game is graded, so only here, on the round's mistakes (answered), never mid-round
+  function askSlot(m) {
+    var X = w.NursinAsk, rv = m.rv || {}; if (!X) return "";
+    var bq = rv.t === "fill" ? rv.b || {} : rv;
+    return X.slot({ k: "g:" + m.k, qid: (rv.q && rv.q.id) || (bq.id && /^q\d/.test(bq.id) ? bq.id : ""), q: rv.t === "fill" ? bq.s : rv.q || m.q, o: rv.t === "fill" ? bq.o || [] : rv.o || [], kind: rv.t === "fill" ? "blank" : "mcq",
+      graded: true, answered: true, pick: m.y, ans: m.r, x: rv.x || "", t: bq.t || "", surface: "games" });
+  }
   function missHtml(list, again) {
     if (!list.length) return '<p class="small gmok">👌 ولا غلطة بهالجولة!</p>';
     return '<div class="gmiss"><h3>📋 أخطاءك (' + list.length + ")</h3><ol>" + list.map(function (m) {
-      return '<li><div class="gmq">' + m.q + '</div><div class="small">❌ إنت: <span class="gy">' + m.y + '</span> ← ✅ الصح: <b class="gr">' + m.r + "</b></div></li>"; }).join("") +
+      return '<li><div class="gmq">' + m.q + '</div><div class="small">❌ إنت: <span class="gy">' + m.y + '</span> ← ✅ الصح: <b class="gr">' + m.r + "</b></div>" + askSlot(m) + "</li>"; }).join("") +
       '</ol><div class="sbtns"><button class="btn on" type="button" data-review="1">🎯 ' + (again ? "راجعن مرّة تانية" : "راجع أخطاءك") + '</button></div><p class="small">المراجعة بلا وقت وبلا نقاط.</p></div>';
   }
   // replay only the mistakes: multiple choice (quiz questions, terms) or the fill-in sentence again

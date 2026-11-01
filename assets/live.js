@@ -209,6 +209,9 @@ function mark(S) {
   else if (!over) h = '<div class="expl' + (mine === q.a ? "" : " w") + '">' + (mine === q.a ? "✅ <b>صح!</b>" : "❌ <b>غلط</b>") + " · ناطرين " + oname + "…</div>";
   else h = '<div class="expl' + (mine === q.a ? "" : " w") + '">' + (mine === q.a ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + "abcd"[q.a] + "</b> — ") + q.x + "</div>" + osmLine(mine === q.a, q);
   if (fb.dataset.h !== h) { fb.dataset.h = h; fb.innerHTML = h; }
+  // 🙋 «اسأل عثمان» (assets/ask.js): a live match is graded, so only once this question is over (answered + revealed)
+  const X = window.NursinAsk, lb = $("#lbody", S.el);
+  if (X && lb && over) X.mount(lb, X.fromQ(q, { graded: true, answered: true, pick: mine != null ? mine : -1, surface: "live" }));
 }
 async function answer(S, k) {
   const r = S.r, i = r.idx;

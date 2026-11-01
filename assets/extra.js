@@ -10,7 +10,7 @@
    No ads here; every sheet adds html.rton (page ads hidden while it is open). French = the items' own fr copies (Lang.fr). */
 (function (w, d) {
   "use strict";
-  var V = "20261028p", MQK = "nursin_mq_v1";
+  var V = "20261028q", MQK = "nursin_mq_v1";
   var page = ((w.location && w.location.pathname) || "/index.html").split("/").pop() || "index.html";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -91,6 +91,7 @@
       else if (cur.rec === "graduated") h += '<p class="small wtag">' + T("🎉 طلع من نقاط ضعفك", "🎉 Sortie de tes points faibles") + "</p>";
       h += '<div class="xqact">' + (cur.i + 1 < n ? '<button class="btn pri" type="button" data-xnext>' + T("التالي ←", "Suivante →") + "</button>" : (o.end ? o.end(cur) : "")) + "</div>";
     }
+    if (w.NursinAsk) h += w.NursinAsk.slot(w.NursinAsk.fromQ(q, { answered: cur.ans != null, pick: cur.ans != null ? cur.ans : undefined, surface: "sheet:" + (o.set || "") }));   // 🙋 «اسأل عثمان» (assets/ask.js): free practice, a hint before answering
     h += "</div>";
     box.innerHTML = h;
   }

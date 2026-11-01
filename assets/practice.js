@@ -70,6 +70,8 @@
       else h += '<form class="ptype"><input class="pin" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="اكتب الكلمة الناقصة" aria-label="الكلمة الناقصة"><button class="btn pri" type="submit">تأكّد ✓</button></form>';
       h += '<div class="pfb" aria-live="polite"></div></div>';
       el.innerHTML = h;
+      var askC = function (ans, given) { return { k: "b:" + (q.id || q.s), q: q.s, o: q.o || [], kind: "blank", t: q.t, answered: !!ans, ans: q.a, pick: given, surface: "blanks" }; };   // 🙋 assets/ask.js (free practice: a hint before answering)
+      if (w.NursinAsk) w.NursinAsk.mount(el.querySelector(".qcard"), askC(false));
       function done(ok, given) {
         if (ok) st.ok++;
         el.querySelectorAll(".opt").forEach(function (b) { b.disabled = true; if (b.getAttribute("data-o") === q.a) b.classList.add("ok"); else if (b.getAttribute("data-o") === given && !ok) b.classList.add("bad"); });
@@ -77,6 +79,7 @@
         el.querySelector(".pgap").textContent = q.a; el.querySelector(".pgap").classList.add(ok ? "pok" : "pbad");
         el.querySelector(".pfb").innerHTML = '<div class="expl">' + (ok ? "✅ صح!" : "❌ الجواب: <b>" + esc(q.a) + "</b>") + '</div>' + (w.Osman ? (ok ? w.Osman.right() : w.Osman.wrong()) : "") + '<p><button class="btn pri" type="button" data-next>' + (st.i + 1 < st.qs.length ? "التالي ←" : "النتيجة ←") + '</button></p>';
         el.querySelector("[data-next]").onclick = function () { st.i++; draw(); };
+        if (w.NursinAsk) w.NursinAsk.mount(el.querySelector(".qcard"), askC(true, given));
       }
       el.querySelectorAll(".opt").forEach(function (b) { b.onclick = function () { var g = b.getAttribute("data-o"); done(g === q.a, g); }; });
       var f = el.querySelector(".ptype");
@@ -124,14 +127,17 @@
     }
     el.querySelectorAll(".pcard").forEach(function (card) {
       var i = +card.getAttribute("data-i"), c = L.cq[i], ans = card.querySelector(".pans");
-      card.querySelector("[data-show]").onclick = function () { ans.hidden = false; this.disabled = true; total(); };
+      var askC = function () { return { k: "cq:" + k + ":" + i, q: c.q, kind: "open", t: "law", l: k, answered: !ans.hidden, ans: c.pts.join(" · "), pick: card.querySelector(".pta").value.trim(), surface: "classquiz" }; };   // 🙋 assets/ask.js
+      var askUp = function () { if (w.NursinAsk) w.NursinAsk.mount(card, askC()); };
+      askUp(); card.querySelector(".pta").addEventListener("change", askUp);
+      card.querySelector("[data-show]").onclick = function () { ans.hidden = false; this.disabled = true; total(); askUp(); };
       ans.addEventListener("change", function () { var n = ans.querySelectorAll("input:checked").length; got[i] = n; ans.querySelector(".pscore").textContent = n + "/" + c.pts.length; total(); });
       card.querySelector("[data-fix]").onclick = function () {
         var b = this, out = card.querySelector(".pai"), v = card.querySelector(".pta").value.trim();
         if (v.length < 5) { out.innerHTML = '<p class="small">✍️ اكتب جوابك أوّل.</p>'; return; }
         if (!fixesLeft()) { out.innerHTML = '<p class="small">خلصوا التصحيحات لليوم (' + FIX_MAX + '). استعمل «شوف الجواب» 👀</p>'; return; }
         b.disabled = true; out.innerHTML = '<p class="small">⏳ عم صحّح…</p>';
-        aiFix(c.q, c.pts, v).then(function (t) { useFix(); out.innerHTML = '<div class="expl pfix">' + esc(t).replace(/\n/g, "<br>") + '</div>'; ans.hidden = false; card.querySelector("[data-show]").disabled = true; total(); },
+        aiFix(c.q, c.pts, v).then(function (t) { useFix(); out.innerHTML = '<div class="expl pfix">' + esc(t).replace(/\n/g, "<br>") + '</div>'; ans.hidden = false; card.querySelector("[data-show]").disabled = true; total(); askUp(); },
           function () { out.innerHTML = '<p class="small">⚠️ ما قدرت صحّح هلّق، جرّب بعد شوي أو استعمل «شوف الجواب».</p>'; })
           .then(function () { b.disabled = false; });
       };

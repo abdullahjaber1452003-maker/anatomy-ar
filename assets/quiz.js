@@ -8,6 +8,10 @@
   var RT=window.Retain,tmr=0;
   function T2(ar,fr){return RT&&RT.T?RT.T(ar,fr):ar;}
   function adsOff(on){document.documentElement.classList.toggle('rton',!!on);}   // no ad on screen during / after the mixed exam
+  // 🙋 «اسأل عثمان» (Nov 1 2026, assets/ask.js): under every question; graded modes (📅 exams, 🎯 midterm, 📝 class quiz, ⚔️ challenge, the timed weekly exam) only once it is answered
+  function graded(s){return !!(s&&(s.exam||s.challenge||s.cq||s.mid||s.sel==='mixed'||s.sel==='exam'||s.sel==='challenge'||s.sel==='cq'));}
+  function askUp(s,q,k){var A=window.NursinAsk,c=root.querySelector('.qcard[data-qid]');if(!A||!c)return;A.mount(c,A.fromQ(q,{graded:graded(s),answered:k!=null,pick:k,surface:'quiz:'+s.sel}));}
+  function askSlot(s,q){var A=window.NursinAsk;return A?A.slot(A.fromQ(q,{graded:true,answered:true,pick:s.picks&&s.picks[q.id]!=null?s.picks[q.id]:undefined,surface:'review:'+s.sel})):'';}
   function refresh(){if(W&&panel)W.render(panel,{onStart:function(sel){start(sel,sel==='all'?20:0,true);}});rv();}
   // 🔁 «مراجعة اليوم (N)» (Oct 28 8:32 PM): only the questions due today in the spaced-repetition list (assets/srs.js)
   function rv(){var b=document.getElementById('qrev');if(!b||!S)return;var n=S.count();b.hidden=false;b.innerHTML='🔁 مراجعة اليوم <b class="rvn">('+n+')</b>';b.classList.toggle('hot',n>0);b.title=n?'':'ما في شي للمراجعة اليوم';}
@@ -99,6 +103,7 @@
     if(s.timed){clearInterval(tmr);tmr=setInterval(tick,1000);tick();}
     var pb=$('#p50');if(pb)pb.addEventListener('click',use50);
     $('#next').addEventListener('click',function(){s.i++;if(s.i<s.qs.length)render();else done();});
+    askUp(s,q);
   }
   // ✂️ 50/50 power-up (signed-in only, once per quiz; never in exams or challenges)
   function p50(s){
@@ -139,7 +144,7 @@
     if(root.querySelector('.opt[disabled]:not(.gone)'))return;
     var pr=root.querySelector('.p50row');if(pr)pr.remove();
     root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;if(kk===q.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
-    if(ok)s.score++;else s.wrong.push(q);
+    if(ok)s.score++;else s.wrong.push(q);(s.picks||(s.picks={}))[q.id]=k;
     if(q.t==='ecg'||q.t==='arythmies'){s.eN=(s.eN|0)+1;if(ok)s.eOk=(s.eOk|0)+1;}   // for the «ملك الـ ECG» badge
     var rec=W?W.record(q,ok):null;if(rec==='graduated')s.grad++;
     var sr=S?S.record(q,ok):'none';   // 🔁 spaced repetition: wrong = back tomorrow; right on a due review = next step
@@ -158,6 +163,7 @@
     if(y){var wb=document.createElement('div');wb.className='whyq';wb.innerHTML='<p class="whyqq">❓ '+y.q+'</p>'+y.o.map(function(o,j){return '<button class="opt" type="button" data-w="'+j+'"><span class="l" dir="ltr">'+L[j]+'</span><span>'+o+'</span></button>';}).join('')+'<p class="small whyr" aria-live="polite"></p>';
       $('#fb').appendChild(wb);
       wb.addEventListener('click',function(e){var b=e.target.closest('.opt');if(!b||b.disabled)return;var j=+b.dataset.w,good=j===y.a;wb.querySelectorAll('.opt').forEach(function(o){var jj=+o.dataset.w;o.disabled=true;if(jj===y.a)o.classList.add('ok');else if(jj===j)o.classList.add('bad');});wb.querySelector('.whyr').textContent=good?T2('✅ بالظبط، هيدا السبب.','✅ Exactement, c\'est la raison.'):T2('❌ السبب الصح هوّي ('+L[y.a]+'). رجاع اقرا الشرح فوق.','❌ La bonne raison est ('+L[y.a]+'). Relis l\'explication au-dessus.');});}
+    askUp(s,q,k);
     var nx=$('#next');nx.hidden=false;nx.textContent=s.i+1<s.qs.length?'التالي ←':'شوف النتيجة 🏁';nx.focus();
   }
   // 📝 the mixed exam's result: per مادة, saved for the week (assets/retain.js), mistakes already sent to tomorrow's review; no ad here
@@ -170,7 +176,7 @@
       '<h3>'+T2('نتيجتك بكل مادة','Ton résultat par matière')+'</h3>'+RT.bySubjHtml(s.by)+
       (s.wrong.length?'<p class="small">🔁 '+T2('الأسئلة اللي غلطت فيها ('+s.wrong.length+') رجعت لـ «مراجعة اليوم» بكرا ولنقاط ضعفك.','Les questions ratées ('+s.wrong.length+') reviennent demain dans « Révision du jour » et dans tes points faibles.')+'</p>':'')+
       '<p><a class="btn pri" href="hifzi.html">🗺️ '+T2('حفظي','Ma mémoire')+'</a> <a class="btn" href="quiz.html?t=review">🔁 '+T2('مراجعة اليوم','Révision du jour')+'</a></p></div>';
-    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):'cardio.html';h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p></div>';});}
+    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):'cardio.html';h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
   }
@@ -215,7 +221,7 @@
       '<h3>💪 '+T2('أضعف دروسك','Tes leçons les plus faibles')+'</h3>'+(r.weak.length?'<ul class="midwl">'+r.weak.slice(0,4).map(function(x){var l=M&&M.lessonInfo(x.id);return l?'<li><a href="'+esc(l.href)+'">📖 '+esc(l.n)+'</a> <span class="midbest r">'+x.p+'%</span></li>':'';}).join('')+'</ul>':'<p>🔥 '+T2('ما في ولا درس تحت ٧٠٪، برافو!','Aucune leçon sous 70 %, bravo !')+'</p>')+
       (s.wrong.length?'<p class="small">🔁 '+T2('الأسئلة اللي غلطت فيها رجعت لـ «مراجعة اليوم» بكرا ولنقاط ضعفك.','Les questions ratées reviennent demain dans « Révision du jour » et dans tes points faibles.')+'</p>':'')+
       '<p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a> <a class="btn" href="quiz.html?t=mid&amp;s='+esc(s.subj)+'">'+T2('جرّب مرّة تانية','Réessayer')+'</a></p></div>';
-    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var l=M&&q._l?M.lessonInfo(q._l):null;h+='<div class="qcard"'+(q._k==='q'?' data-qid="'+q.id+'"':'')+'><span class="qtopic">'+esc(l?l.n:'')+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div>'+(l?'<p><a href="'+esc(l.href)+'">'+T2('اقرا الدرس ←','Lire la leçon →')+'</a></p>':'')+'</div>';});}
+    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var l=M&&q._l?M.lessonInfo(q._l):null;h+='<div class="qcard"'+(q._k==='q'?' data-qid="'+q.id+'"':'')+'><span class="qtopic">'+esc(l?l.n:'')+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div>'+(l?'<p><a href="'+esc(l.href)+'">'+T2('اقرا الدرس ←','Lire la leçon →')+'</a></p>':'')+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:'mid',les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
   }
@@ -233,7 +239,7 @@
     if(s.sel==='review'&&S){var rl=S.count();h+='<p>🔁 '+(rl?'باقي '+rl+' للمراجعة اليوم.':'خلصت مراجعة اليوم 🔥')+'</p>';}
     h+=s.cq?'<div id="cqres" class="cqres" aria-live="polite"><p class="small">⏳ عم نحفظ علامتك ونجيب علامات الصف…</p></div><p><a class="btn pri" href="index.html">🏠 رجوع للرئيسية</a></p></div>':s.exam?'<p><a class="btn pri" href="exams.html">📅 رجوع للامتحانات</a></p></div>':s.challenge?'<p><a class="btn pri" href="friends.html">⚔️ رجوع لتحدّياتي</a></p></div>':'<p><button class="btn pri" id="again">جرّب مرّة تانية</button>'+(W&&W.count()&&s.sel!=='weak'?' <button class="btn" id="toweak" type="button">🎯 كويز من أخطائك</button>':'')+'</p></div>';
     if(!s.cq)h+='<div class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>'; // result-screen banner (below the score card, never during questions)
-    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':q.t==='geri'?'geri.html':q.t==='comm'?'community.html':q.t==='medsurg'?'medsurg.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p></div>';});}
+    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':q.t==='geri'?'geri.html':q.t==='comm'?'community.html':q.t==='medsurg'?'medsurg.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;
     try{if(s.sel==='weak'&&W&&W.ran)W.ran();}catch(e){}
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:s.les||null,challenge:s.challenge||null,exam:s.exam||null,cq:s.cq||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}

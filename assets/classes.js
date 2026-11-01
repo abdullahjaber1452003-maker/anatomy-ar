@@ -436,7 +436,7 @@ function dqDraw(box, q, ans, dk, note) {
   if (mine) {
     goalDone("dq");
     h += q.o.map((o, k) => '<div class="opt' + (k === q.a ? " ok" : k === mine.pick ? " bad" : "") + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></div>").join("") +
-      '<div class="expl' + (mine.ok ? "" : " w") + '">' + (mine.ok ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + L[q.a] + "</b> — ") + q.x + "</div>" + osmLine(mine.ok) + (note || "") + info + '<p class="small">سؤال جديد بكرا ⏰</p>';
+      '<div class="expl' + (mine.ok ? "" : " w") + '">' + (mine.ok ? "✅ <b>صح!</b> " : "❌ <b>الجواب الصح: " + L[q.a] + "</b> — ") + q.x + "</div>" + osmLine(mine.ok) + (window.NursinAsk ? window.NursinAsk.slot(window.NursinAsk.fromQ(q, { graded: true, answered: true, pick: mine.pick, surface: "class-dq" })) : "") + (note || "") + info + '<p class="small">سؤال جديد بكرا ⏰</p>';   // 🙋 «اسأل عثمان» only once he answered (assets/ask.js)
   } else {
     h += q.o.map((o, k) => '<button class="opt" type="button" data-k="' + k + '"><span class="l" dir="ltr">' + L[k] + "</span><span>" + o + "</span></button>").join("") + '<p class="small">جواب واحد بس، فكّر منيح 🤔</p><p id="dqmsg" class="small" aria-live="polite"></p>' + info;
   }

@@ -391,6 +391,8 @@
   function moodNow() { var m = lsGet(MK); return m && m.d === today() ? m.m : ""; }
   function qById(id) { var Q = (w.QUIZ || []).concat(w.LINKQ || []); for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
   function osmPrompt(s) { var n = curName(s); return T("اشرحلي بالمختصر أهم نقاط درس «" + n + "»، وبعدين اسألني سؤال واحد عليه", "Explique-moi en bref les points clés de la leçon « " + n + " », puis pose-moi une question dessus"); }
+  /* 🙋 «اسأل عثمان» (Nov 1 2026, assets/ask.js) under Osman's path question: free practice, so a hint before answering, the why after */
+  function askS(q, k) { var X = w.NursinAsk; return X && q ? X.slot(X.fromQ(q, { answered: k != null, pick: k != null ? k : undefined, surface: "path" })) : ""; }
   function osmHtml(p, s, st) {
     var A = p.ans || {}, qs = (s.qs || []).map(qById).filter(Boolean), m = moodNow(), C = w.NursinCoach, cp = null, nm = first();
     try { cp = C && C.pick && C.data ? C.pick(C.data()) : null; } catch (e) {}
@@ -408,12 +410,13 @@
     if (fq && A[fq.id] != null) {                       // the answer just given: ✅/❌ + why
       var ok = A[fq.id] === fq.a;
       h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح! برافو", "✅ Correct ! Bravo") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + (fq.ls ? T("🔗 الرابط: ", "🔗 Le lien : ") : "") + esc(fq.x) + "</p>" : "") + "</div>";
+      h += askS(fq, A[fq.id]);   // 🙋 «اسأل عثمان» (assets/ask.js) under the answered question
       if (nA >= qs.length) h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
       h += '<div class="hzoa">' + (nA < qs.length ? '<button type="button" class="go" data-hznext>' + T("السؤال التاني", "Question suivante") + " " + CHEV + "</button>" : '<button type="button" class="go" data-hznext>' + T("خلصنا", "Terminé") + " ✓</button>").replace("data-hznext>" + T("خلصنا", "Terminé"), "data-hznext data-end>" + T("خلصنا", "Terminé")) + "</div>";
     } else if (nA < qs.length) {                        // the next question
       var q = qs[nA];
       h += '<p class="hzoq">' + (nA ? (q.ls ? T("🔗 سؤال «اربط»: درس قديم مع درس جديد", "🔗 Question « Relier » : une ancienne leçon avec une nouvelle") : T("👨‍🏫 السؤال التاني:", "👨‍🏫 Deuxième question :")) : ack + T("خلّيني اسألك سؤالين سريعين عن «", "Laisse-moi te poser deux questions rapides sur « ") + esc(curName(s)) + T("»", " »")) + '</p><div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + "</small>" + (q.ls && w.NursinX ? w.NursinX.linkLine(q) : "") + "<p>" + esc(q.q) + '</p><div class="hzqo">' +
-        q.o.map(function (o, k) { return '<button type="button" data-hzq="' + esc(q.id) + '" data-k="' + k + '"><span>' + (FR() ? "abc" : "أبج").charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div></div>";
+        q.o.map(function (o, k) { return '<button type="button" data-hzq="' + esc(q.id) + '" data-k="' + k + '"><span>' + (FR() ? "abc" : "أبج").charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div>" + askS(q) + "</div>";
     } else {                                            // both answered
       h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
     }
