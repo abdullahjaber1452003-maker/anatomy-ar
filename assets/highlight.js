@@ -488,10 +488,13 @@
   }
 
   /* ---------------- 📝 a note on a highlight (assets/notes.js) ---------------- */
+  function hlMeta(h) {                                       // the note of a highlight (its 📝 and its 🙋 answers live there)
+    var txt = h.q2 ? h.q + " … " + h.q2 : h.q;
+    return { refType: "lesson", refId: (h.lk || h.pg) + (h.pt ? "#" + h.pt : "") + "~h" + h.id, refText: "🖍️ " + cut(txt.replace(/\s+/g, " "), 280), subject: h.sj || pageSubject(h.pg), lesson: h.lk || "" };
+  }
   function noteFor(h, from) {
     var N = w.NursinNotes; if (!N || !N.open) return;
-    var txt = h.q2 ? h.q + " … " + h.q2 : h.q;
-    N.open({ refType: "lesson", refId: (h.lk || h.pg) + (h.pt ? "#" + h.pt : "") + "~h" + h.id, refText: "🖍️ " + cut(txt.replace(/\s+/g, " "), 280), subject: h.sj || pageSubject(h.pg), lesson: h.lk || "" }, from);
+    var m = hlMeta(h); N.open({ refType: "lesson", refId: m.refId, refText: m.refText, subject: m.subject, lesson: m.lesson }, from);
   }
 
   /* ---------------- 🖊️ pen mode switch (header button on lesson pages, «الكل» item) ---------------- */
@@ -572,7 +575,7 @@
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 
   /* ================= highlights.html «🖍️ تعليماتي» ================= */
-  var filt = "", pageOn = false;
+  var filt = "", pageOn = pageOn || false;   // 28s: boot() may already have run pageInit() above (deferred script) — keep its true
   function subjName(k) { var N = w.NursinNotes; if (N && N.subjName) return N.subjName(k); var s = (R().subjects || {})[k]; return s ? T(s.ar, s.fr) : T("عام", "Général"); }
   function lessonName(h) {
     var N = w.NursinNotes, n = h.lk ? (N && N.lessonName ? N.lessonName(h.lk) : ((lessonOf(h.lk) || {}).n || h.lk)) : (R().subjects[h.sj] ? T(R().subjects[h.sj].ar, R().subjects[h.sj].fr) : h.pg);
@@ -607,11 +610,22 @@
     pageDraw();
   }
   function pageRepaint() { if (pageOn) pageDraw(); }
+  d.addEventListener("nursin:notes", function () { if (pageOn) pageDraw(); });   // 🙋 an answer saved into a highlight's note
   function sorted(all) {
     return all.slice().sort(function (a, b) { return (a.sj > b.sj ? 1 : a.sj < b.sj ? -1 : 0) || (a.lk > b.lk ? 1 : a.lk < b.lk ? -1 : 0) || (a.pt - b.pt) || (a.k > b.k ? 1 : a.k < b.k ? -1 : 0) || (a.s - b.s); });
   }
+  /* 🙋 28s: under each highlight, its note (Osman's answers included, assets/notes.js textHtml) + «اسأل عثمان» about the highlighted words */
+  function hlNoteRow(x) {
+    var N = w.NursinNotes; if (!N || !N.idFor) return "";
+    var m = hlMeta(x), id = N.idFor(m.refType, m.refId), n = N.find && N.state ? N.find(N.state(), N.owner ? N.owner() : "", id) : null;
+    m.id = id;
+    return '<div class="hlnx">' + (n && n.text && N.textHtml ? '<div class="hlnote2"><p class="hlnh small">📝 ' + esc(T("ملاحظتك", "Ta note")) + "</p>" + N.textHtml(n.text) + "</div>" : "") +
+      '<div class="naskslot" data-surface="highlights" data-meta="' + esc(JSON.stringify(m)) + '"></div></div>';
+  }
+  var pdT = 0;
   function pageDraw() {
     var app = d.getElementById("hl-app"); if (!app) return;
+    if (w.NursinAsk && w.NursinAsk.typing && w.NursinAsk.typing(app)) { clearTimeout(pdT); pdT = setTimeout(pageDraw, 1500); return; }   // someone typing a question: redraw after
     var all = mine(), cnt = {}; all.forEach(function (h) { cnt[h.c] = (cnt[h.c] || 0) + 1; });
     var shown = sorted(all.filter(function (h) { return !filt || h.c === filt; }));
     var h = '<div class="hlhead"><h1>🖍️ ' + esc(T("تعليماتي", "Mes surlignages")) + ' <span class="hlcount">' + all.length + "</span></h1>" +
@@ -630,13 +644,14 @@
         L.forEach(function (x) {
           h += '<li class="hlitem hlc-' + x.c + '"><a class="hlgoto" href="' + esc(link(x)) + '"><span class="hlq" dir="auto"><mark class="hlm hl-' + x.c + '">' + esc(textOf(x)) + "</mark></span>" +
             '<span class="hlmeta">' + (x.pt ? esc(T("الجزء ", "Partie ") + x.pt) + " · " : "") + (x.lg === "fr" ? '<span class="hlfr">FR</span> · ' : "") + esc(when(x.t)) + " · " + esc(T("افتح بالدرس ←", "Ouvrir dans la leçon →")) + "</span></a>" +
-            '<button type="button" class="hldel" data-id="' + esc(x.id) + '" aria-label="' + esc(T("امحي", "Supprimer")) + '">🗑️</button></li>';
+            '<button type="button" class="hldel" data-id="' + esc(x.id) + '" aria-label="' + esc(T("امحي", "Supprimer")) + '">🗑️</button>' + hlNoteRow(x) + "</li>";
         });
         h += "</ul>";
       });
       h += "</section>";
     });
     app.innerHTML = h;
+    if (w.NursinAsk && w.NursinAsk.noteHydrate) w.NursinAsk.noteHydrate(app);
   }
   /* 🔁 review: one highlight at a time, big, in the shared glass sheet (swipe sideways / buttons) */
   function review() {

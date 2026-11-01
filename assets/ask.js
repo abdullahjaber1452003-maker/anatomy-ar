@@ -14,7 +14,7 @@
 (function (w, d) {
   var API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var CKEY = "nursin_tutor_day_v1", LIMIT = 15, BONUS = 5, MAX_UNLOCKS = 3, SKEY = "nursin_ask_v1", KEEP = 8, MAXK = 40, MAXQ = 500, TIMEOUT = 40000, SNIP = 2200;
-  var V = "20261028r", L3 = "abcdef";
+  var V = "20261028s", L3 = "abcdef";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -312,14 +312,192 @@
     m.sv = 1; thSet(c.k, t); repaint(c.k);
   }
 
+  /* ---------- 📒 «🙋 اسأل عثمان» عن ملاحظة / تعليمة (28s — Abdullah, Nov 1 2026 11:35–11:37 PM: «لمن بحط ملاحظة عن شي ممكن كمان
+     اني بكون كاتب شي بدي اعرفه بعدين ف بسأله عنه فرد مرة») ----------
+     • While WRITING a note (the 📝 sheet of assets/notes.js, on every page), on every note card of 📒 notes.html and on every highlight
+       card of 🖍️ highlights.html: «🙋 اسأل عثمان» + an optional field «شو بدك تعرف؟». Empty → Osman answers what the note asks /
+       explains it (a highlight: explains the highlighted words).
+     • Same endpoint, same plain persona (no roast / proverb), same daily quota and «باقي N سؤال اليوم» as the question box above.
+     • The answer is SAVED IN THE NOTE ITSELF: appended to its text as «🙋 <question>\n🧑‍🏫 عثمان: <answer>» (NursinNotes.withOsman,
+       ≤ 2000 characters) — the notes doc keeps exactly the 8 fields rules v17…v21 accept, so it syncs with NO rules change. A follow-up
+       appends one more block. A highlight's answer goes into that highlight's own note (id l_<lesson>#<part>~h<id>, like its 📝).
+     • 🔒 A note opened from a graded question that is not answered yet (no «🙋» box on that card) cannot ask: same anti-cheat as above;
+       an unanswered practice question → hint only (NOREVEAL). */
+  var NRULES = "[مهمّتك هلّق: «🙋 اسأل عثمان» عن ملاحظة] الطالب كتب ملاحظة بـ «📒 ملاحظاتي» على موقع nursin وكبس «اسأل عثمان». جوابك رح ينحفظ تحت ملاحظتو:" +
+    "\n- إذا كتب سؤال، جاوبو عليه. إذا ما كتب سؤال: جاوب عن الشي اللي الملاحظة عم تسأل عنه أو بدّو يعرفو، وإذا الملاحظة مش سؤال اشرحها ببساطة وصحّحها إذا فيها غلط." +
+    "\n- جواب قصير (٣ لـ ٥ أسطر، أقل من ٥٠٠ حرف)، عربي لبناني سهل، بلا عناوين. ابدأ دغري بالجواب: بلا «أهلاً» ولا «يا ابني» ولا «بخصوص سؤالك»." +
+    "\n- كل مصطلح فرنسي (أو إنكليزي) اكتب حدّو معناه بالعربي بين قوسين، مثلاً: Infarctus (جلطة قلبية)." +
+    "\n- اعتمد على نص الدرس من الموقع تحت إذا موجود. إذا قلت شي مش موجود بالدرس، قول إنّو «معلومة عامة»." +
+    "\n- بلا بهدلة، بلا مواعظ ولا حِكم ولا أمثال، بلا مزح عالطالب: شرح لطيف ومباشر بس.";
+  var HRULES = "\n[تعليمة] الملاحظة عن جملة علّمها الطالب (🖍️) بالدرس: إذا ما سأل شي، اشرحلو هالجملة ببساطة وشو أهمّيتها.";
+  var NNOREVEAL = "\n[⚠️ مهم كتير] الملاحظة عن سؤال الطالب لسّا ما جاوب عليه. ممنوع تقلّو الجواب الصح أو إذا خيار معيّن صح أو غلط: عطيه تلميح بس، وإذا طلب الجواب قلّو بلطف «جاوب إنت أوّل، وبعدين بشرحلك ليش».";
+  var NTYPE = { q: "سؤال", lesson: "درس", card: "بطاقة", summary: "خلاصة", free: "ملاحظة حرّة" };
+  function isHl(m) { return !!(m && m.refType === "lesson" && /~h[A-Za-z0-9]+$/.test(m.refId || "")); }
+  /* info = {meta, text (the note now), q (what they ask, may be empty), qc (a normalised question ctx | null)} */
+  function noteContextText(info, snip) {
+    var m = info.meta || {}, N = w.NursinNotes, qc = info.qc;
+    var s = persona() + "\n" + NRULES + (isHl(m) ? HRULES : "") + (qc && !qc.answered ? NNOREVEAL : "");
+    s += "\n\n[ملاحظة الطالب" + (/(🧑‍🏫|👨‍🏫)/.test(info.text || "") ? " (مع أجوبتك القديمة تحتها)" : "") + "]\n" + (String(info.text || "").trim() || "(لسّا فاضية)");
+    if (m.refText) s += "\n[الملاحظة مكتوبة على " + (isHl(m) ? "جملة معلّمة بالدرس" : (NTYPE[m.refType] || "شي")) + "] " + txt(m.refText).replace(/^🖍️\s*/, "");
+    if (N && N.subjName && m.subject && m.subject !== "other") s += "\n[المادة] " + N.subjName(m.subject) + (m.lesson && N.lessonName ? " › " + N.lessonName(m.lesson) : "");
+    if (qc && qc.q) {
+      s += "\n[السؤال]\n" + qc.q;
+      if (qc.o && qc.o.length) s += "\n[الخيارات]\n" + qc.o.map(function (o, i) { return L3.charAt(i) + ") " + o; }).join("\n");
+      if (qc.answered) { s += "\n[جواب الطالب] " + (qc.pick || "—"); if (qc.ans) s += "\n[الجواب الصح] " + qc.ans; if (qc.x) s += "\n[شرح الموقع] " + qc.x; }
+    }
+    if (snip && snip.n) s += "\n\n[الدرس على الموقع: " + snip.n + "]" + (snip.text ? "\n" + snip.text : "");
+    return s;
+  }
+  function noteAskLine(info) {
+    var q = String(info.q || "").trim();
+    if (q) return q;
+    return isHl(info.meta) ? T("اشرحلي هالجملة اللي علّمتها", "Explique-moi la phrase que j'ai surlignée") : T("جاوبني عن ملاحظتي (أو اشرحلي ياها)", "Réponds à ma note (ou explique-la-moi)");
+  }
+  function notePayload(info, snip) {
+    var line = noteAskLine(info), qc = info.qc;
+    if (snip && snip.text) snip = { n: snip.n, text: pick(snip.text, [info.text, (info.meta || {}).refText, line, qc ? qc.q : ""].join(" "), SNIP) };
+    return { messages: [{ role: "user", text: line.slice(0, MAXQ) }], context: noteContextText(info, snip) };
+  }
+  function noteLesson(info) {
+    var m = info.meta || {}, qc = info.qc;
+    if (qc && (qc.lid || qc.t)) return { lid: qc.lid, t: qc.t, l: qc.l };
+    var lk = m.lesson || ""; if (!lk && isHl(m)) lk = String(m.refId).replace(/#.*$|~h.*$/, "");
+    return { lid: lk };
+  }
+  var NS = {};                                              // per note id (this page): {open, busy, draft, msg, err, last}
+  function nst(id) { return NS[id] || (NS[id] = { open: false, busy: false, draft: "", msg: "", err: 0, last: "" }); }
+  function noteChips(src) {
+    var m = src.meta();
+    return isHl(m) ? [T("اشرحلي هالجملة", "Explique cette phrase"), T("ليش هيدي مهمّة؟", "Pourquoi c'est important ?"), T("شو معنى الكلمة الفرنسية؟", "Que veulent dire les mots difficiles ?")]
+      : [T("اشرحلي ملاحظتي", "Explique ma note"), T("زيدني معلومة مهمّة", "Ajoute une info importante"), T("شو معنى الكلمة الفرنسية؟", "Que veulent dire les mots difficiles ?")];
+  }
+  function npaint(el) {
+    var src = el._nsrc, id = src.id, s = nst(id), b = el.querySelector(".askb"), box = el.querySelector(".askbox");
+    b.setAttribute("aria-expanded", s.open ? "true" : "false"); box.hidden = !s.open; el.classList.toggle("open", !!s.open);
+    b.innerHTML = '<span aria-hidden="true">🙋</span> ' + esc(T("اسأل عثمان", "Demande à Osman")) + (s.busy ? ' <small class="askn">…</small>' : "");
+    if (!s.open) return;
+    el.querySelector(".askleft").textContent = signedIn() && !src.lock ? leftText() : "";
+    var hint = el.querySelector(".askhint");
+    hint.hidden = false;
+    hint.textContent = src.lock ? "" : isHl(src.meta()) ? T("👨‍🏫 عثمان بيشرحلك الجملة اللي علّمتها، وجوابو بينحفظ بملاحظتها 📒", "👨‍🏫 Osman t'explique ta phrase surlignée ; sa réponse est enregistrée dans sa note 📒")
+      : T("👨‍🏫 عثمان بيقرا ملاحظتك وبيجاوب، وجوابو بينحفظ تحتها 📒", "👨‍🏫 Osman lit ta note et répond ; sa réponse est enregistrée dessous 📒");
+    hint.hidden = !hint.textContent;
+    var h = "";
+    if (s.busy) h += '<div class="askm asko askty"><span class="aska" aria-hidden="true">👨‍🏫</span><div><span class="tdots" aria-label="' + esc(T("عثمان عم يكتب", "Osman écrit")) + '"><i></i><i></i><i></i></span></div></div>';
+    else if (s.last && src.inline) h += '<div class="askm asko"><span class="aska" aria-hidden="true">👨‍🏫</span><div><p>' + fmt(s.last) + '</p><p class="askact nasaved">✅ ' + esc(T("انحفظ تحت ملاحظتك", "Enregistré sous ta note")) + "</p></div></div>";
+    else if (s.last) h += '<p class="small nasaved">✅ ' + esc(T("انحفظ جواب عثمان تحت الملاحظة", "Réponse d'Osman enregistrée sous la note")) + "</p>";
+    if (s.msg) h += '<div class="askm asko aske"><span class="aska" aria-hidden="true">👨‍🏫</span><div><p>' + fmt(s.msg) + "</p>" + (s.err === 2 && !s.busy ? '<p class="askact"><button type="button" class="btn sm askretry">🔄 ' + esc(T("جرّب كمان مرّة", "Réessayer")) + "</button></p>" : "") + "</div></div>";
+    el.querySelector(".askth").innerHTML = h;
+    var lock = el.querySelector(".asklock"), f = el.querySelector(".askf"), ch = el.querySelector(".askchips");
+    if (src.lock) { lock.hidden = false; f.hidden = true; ch.hidden = true; lock.innerHTML = '<p class="small">🔒 ' + esc(src.lock) + "</p>"; return; }
+    if (!signedIn()) {
+      lock.hidden = false; f.hidden = true; ch.hidden = true;
+      lock.innerHTML = '<p class="small">🔒 ' + esc(T("عثمان بس للي عندن حساب. سجّل دخول بغوغل (ببلاش) وبيجاوبك هون.", "Osman répond aux élèves connectés. Connecte-toi avec Google (gratuit).")) + '</p><button class="btn glk-go askgo" type="button">' + esc(T("تسجيل الدخول بغوغل", "Se connecter avec Google")) + "</button>";
+      return;
+    }
+    lock.hidden = true; f.hidden = false; ch.hidden = !!s.busy;
+    ch.innerHTML = noteChips(src).map(function (x) { return '<button type="button" class="askchip">' + esc(x) + "</button>"; }).join("");
+    f.querySelector("button").disabled = !!s.busy;
+  }
+  function nlive(id) { return [].filter.call(d.querySelectorAll(".naskw"), function (e) { return e._nsrc && e._nsrc.id === id; }); }
+  function nrepaint(id) { nlive(id).forEach(npaint); }
+  function noteText(src) { var N = w.NursinNotes; if (src.text) return src.text(); var n = N && N.find && N.state ? N.find(N.state(), N.owner ? N.owner() : "", src.id) : null; return n ? n.text : ""; }
+  /* → "" (ok to ask) or the reason in words */
+  function noteBlock(src, q) {
+    var N = w.NursinNotes, m = src.meta(), base = noteText(src);
+    if (src.lock) return src.lock;
+    if (!String(base).trim() && !String(q || "").trim() && !isHl(m) && !(m.refType === "q" || m.refType === "card")) return T("اكتب ملاحظتك أو سؤالك أوّل ✍️", "Écris d'abord ta note ou ta question ✍️");
+    if (N && N.room && N.room(base) < 160) return T("الملاحظة قرّبت تتعبّى (٢٠٠٠ حرف) 📒 امحي شي منها أو اعمل ملاحظة حرّة جديدة وسأل عثمان فيها.", "La note est presque pleine (2000 caractères) 📒 Raccourcis-la ou crée une nouvelle note libre.");
+    return "";
+  }
+  function noteSend(el, text) {
+    var src = el._nsrc, id = src.id, s = nst(id), q = String(text || "").trim().slice(0, MAXQ);
+    if (s.busy) return false;
+    if (!signedIn()) { npaint(el); return false; }
+    var why = noteBlock(src, q); s.msg = ""; s.err = 0;
+    if (why) { s.msg = why; s.err = 1; s.open = true; nrepaint(id); return false; }
+    var qa = quota();
+    if (!qa.left) { s.msg = T("خلصو أسئلة عثمان لليوم 🙏 (" + qa.cap + " سؤال). بكرا منكمّل، أو افتح ٥ زيادة بإعلان قصير من صفحة **الأستاذ عثمان** 👨‍🏫", "Plus de questions pour Osman aujourd’hui 🙏 (" + qa.cap + "). On continue demain, ou débloque 5 de plus avec une courte pub sur la page **Professeur Osman** 👨‍🏫"); s.err = 1; s.open = true; nrepaint(id); return true; }
+    if (src.before) try { src.before(); } catch (e) {}
+    use(); s.q = q; s.open = true; s.last = ""; s.draft = "";
+    noteAsk(src);
+    return true;
+  }
+  function noteAsk(src) {
+    var id = src.id, s = nst(id), q = s.q || "";
+    s.busy = true; nrepaint(id);
+    var info = function () { return { meta: src.meta(), text: noteText(src), q: q, qc: src.qc || null }; };
+    var go = function (snip) {
+      var ctl = ("AbortController" in w) ? new AbortController() : null, tm = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT);
+      return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(notePayload(info(), snip)), signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (j) { clearTimeout(tm); var x = j && j.text; if (!x || typeof x !== "string" || /^\s*صار في مشكلة/.test(x)) throw new Error("busy"); return x.trim(); }, function (e) { clearTimeout(tm); throw e; });
+    };
+    timeout(lessonText(noteLesson(info())), 3500).then(function (snip) {
+      return go(snip).catch(function () { return new Promise(function (r) { setTimeout(r, 2500); }).then(function () { return go(snip); }); });
+    }).then(function (x) {
+      s.busy = false;
+      var N = w.NursinNotes, nt = N && N.withOsman ? N.withOsman(noteText(src), q, x, FR()) : null;
+      if (nt == null) { refund(); s.msg = T("ما في محل بالملاحظة لجواب عثمان (٢٠٠٠ حرف) 📒", "Plus de place dans la note pour la réponse (2000 caractères) 📒"); s.err = 1; nrepaint(id); return; }
+      N.put(N.state(), N.owner ? N.owner() : "", Object.assign({}, src.meta(), { id: id }), nt);
+      if (N.commit) N.commit(); else { try { w.localStorage.setItem(N.KEY, JSON.stringify(N.state())); } catch (e) {} if (N.flush) N.flush(); }
+      s.last = x; s.q = "";
+      if (src.after) try { src.after(nt); } catch (e) {}
+      nrepaint(id);
+      try { d.dispatchEvent(new CustomEvent("nursin:ask", { detail: { k: "note:" + id, note: id, surface: src.surface || "note" } })); } catch (e) {}
+    }, function () {
+      s.busy = false; refund();
+      s.msg = T("الأستاذ مشغول هلّق، جرّب كمان شوي 🙏 (ما انحسب عليك)", "Le professeur est occupé, réessaie dans un instant 🙏 (pas compté)"); s.err = 2; nrepaint(id);
+    });
+  }
+  function nbuild(src) {
+    var el = d.createElement("div"); el.className = "askw naskw"; el.setAttribute("data-nofr", ""); el._nsrc = src;
+    el.innerHTML = '<button type="button" class="askb" aria-expanded="false"></button>' +
+      '<div class="askbox" hidden role="region" aria-label="' + esc(T("اسأل عثمان", "Demande à Osman")) + '"><div class="askhd"><b>👨‍🏫 ' + esc(T("الأستاذ عثمان", "Professeur Osman")) + '</b><small class="askleft"></small><button type="button" class="askx" aria-label="' + esc(T("سكّر", "Fermer")) + '">✕</button></div>' +
+      '<p class="askhint small"></p><div class="askth" aria-live="polite"></div><div class="asklock" hidden></div><div class="askchips"></div>' +
+      '<form class="askf" autocomplete="off"><textarea rows="1" maxlength="' + MAXQ + '" placeholder="' + esc(T("شو بدك تعرف؟ (اختياري)", "Que veux-tu savoir ? (facultatif)")) + '" aria-label="' + esc(T("شو بدك تعرف؟", "Que veux-tu savoir ?")) + '"></textarea>' +
+      '<button class="btn pri askgo2" type="submit">' + esc(T("اسأل", "Demander")) + " ➤</button></form></div>";
+    var f = el.querySelector(".askf"), ta = f.querySelector("textarea");
+    el.querySelector(".askb").addEventListener("click", function (e) { e.preventDefault(); var s = nst(el._nsrc.id); s.open = !s.open; if (!s.open) { s.msg = ""; } npaint(el); });
+    el.querySelector(".askx").addEventListener("click", function (e) { e.preventDefault(); var s = nst(el._nsrc.id); s.open = false; s.msg = ""; npaint(el); });
+    ta.value = nst(src.id).draft || ""; ta.addEventListener("input", function () { nst(el._nsrc.id).draft = ta.value; });
+    var go = function () { if (noteSend(el, ta.value)) ta.value = ""; };
+    f.addEventListener("submit", function (e) { e.preventDefault(); go(); });
+    ta.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing && !/Android|iPhone|iPad/i.test(navigator.userAgent)) { e.preventDefault(); go(); } });
+    el.addEventListener("click", function (e) {
+      var x = e.target.closest && e.target.closest(".askchip"); if (x) { noteSend(el, x.textContent); return; }
+      var r = e.target.closest && e.target.closest(".askretry"); if (r) { var s = nst(el._nsrc.id); s.msg = ""; noteSend(el, s.q || ""); }
+    });
+    return el;
+  }
+  /* host gets the widget at its end; src = {id, meta() (refType/refId/refText/subject/lesson), text()?, before()?, after(newText)?, qc?, lock?, inline?, surface?} */
+  function noteMount(host, src) {
+    if (!host || !host.querySelector || !src || !src.id) return null;
+    var el = null, kids = host.children || [];
+    for (var i = 0; i < kids.length; i++) if (kids[i].classList && kids[i].classList.contains("naskw")) el = kids[i];
+    if (!el) { el = nbuild(src); host.appendChild(el); }
+    el._nsrc = src; npaint(el); return el;
+  }
+  /* <div class="naskslot" data-meta="{…note meta with id…}"> drawn by notes.html / highlights.html lists */
+  function noteHydrate(root) {
+    [].forEach.call((root || d).querySelectorAll(".naskslot[data-meta]"), function (sl) {
+      if (sl.querySelector(".naskw")) return;
+      var m = null; try { m = JSON.parse(sl.getAttribute("data-meta")); } catch (e) {} if (!m || !m.id) return;
+      noteMount(sl, { id: m.id, meta: function () { return m; }, surface: sl.getAttribute("data-surface") || "notes" });
+    });
+  }
+  function typing(root) { var a = d.activeElement; return !!(a && a.tagName === "TEXTAREA" && a.value && a.closest && a.closest(".naskw") && (!root || root.contains(a))); }   // a half-typed question survives a redraw
+
   w.NursinAsk = { API: API, LIMIT: LIMIT, CKEY: CKEY, SKEY: SKEY, norm: norm, fromQ: fromQ, visible: visible, slot: slot, mount: mount, hydrate: hydrate,
     payload: payload, contextText: contextText, persona: persona, strip: strip, pick: pick, lessonOf: lessonOf, lessonText: lessonText, quota: quota, use: use, refund: refund, leftText: leftText, chips: chips, signedIn: signedIn };
+  w.NursinAsk.noteMount = noteMount; w.NursinAsk.noteHydrate = noteHydrate; w.NursinAsk.notePayload = notePayload; w.NursinAsk.noteContextText = noteContextText;
+  w.NursinAsk.noteBlock = noteBlock; w.NursinAsk.noteState = nst; w.NursinAsk.typing = typing; w.NursinAsk.isHl = isHl; w.NursinAsk.noteLesson = noteLesson;
   if (!d || !d.addEventListener) return;
   var hT = 0;
   function init() {
-    hydrate();
-    try { new MutationObserver(function () { if (hT) return; hT = setTimeout(function () { hT = 0; hydrate(); }, 30); }).observe(d.body, { childList: true, subtree: true }); } catch (e) {}
-    var all = function () { [].forEach.call(d.querySelectorAll(".askw"), function (el) { if (el._ask) paint(el); }); };
+    hydrate(); noteHydrate();
+    try { new MutationObserver(function () { if (hT) return; hT = setTimeout(function () { hT = 0; hydrate(); noteHydrate(); }, 30); }).observe(d.body, { childList: true, subtree: true }); } catch (e) {}
+    var all = function () { [].forEach.call(d.querySelectorAll(".askw"), function (el) { if (el._ask) paint(el); else if (el._nsrc) npaint(el); }); };
     d.addEventListener("nursin:gate", all); d.addEventListener("nursin:auth", all); d.addEventListener("nursin:me", all);
     w.addEventListener("storage", function (e) { if (e.key === CKEY) all(); });
   }

@@ -165,14 +165,53 @@
     var s = subjects()[n.subject]; return s && s.page !== "notes.html" ? s.page : "";
   }
 
+  /* ---------------- 🙋 Osman's answers inside a note (28s, assets/ask.js) ----------------
+     Kept INSIDE the note's text — the doc keeps exactly the 8 fields rules v17…v21 accept (text ≤ 2000), so it syncs with no new rules:
+       <the student's note>\n\n🙋 <what they asked, if they wrote something>\n🧑‍🏫 عثمان: <answer>      (each follow-up = one more block)
+     The 28q «💾 احفظ بملاحظاتي» blocks («👨‍🏫 عثمان: …») read the same way. */
+  var OSM = /^(?:🧑‍🏫|👨‍🏫)\s?(?:عثمان|Osman)\s?:\s?/, ASKL = /^🙋\s?/;
+  function osmAns(a) { return String(a == null ? "" : a).replace(/\r\n?/g, "\n").replace(/`+/g, "").replace(/^\s{0,3}#{1,6}\s+/gm, "").replace(/\*\*/g, "").replace(/^(\s*)[*\-]\s+/gm, "$1• ").replace(/\n\s*\n+/g, "\n").trim(); }
+  function osmBlock(q, a, fr) { q = oneLine(q); return (q ? "🙋 " + q + "\n" : "") + "🧑‍🏫 " + (fr ? "Osman : " : "عثمان: ") + osmAns(a); }
+  function room(base) { return MAXT - String(base == null ? "" : base).replace(/\s+$/, "").length; }
+  /* the note + one more answer, ≤ MAXT (a long answer is cut on a word with «…»); null = no room left */
+  function withOsman(base, q, a, fr) {
+    base = String(base == null ? "" : base).replace(/\s+$/, "");
+    var sep = base ? "\n\n" : "", blk = osmBlock(q, a, fr), left = MAXT - base.length - sep.length;
+    if (!osmAns(a)) return null;
+    if (blk.length > left) { if (left < 60) return null; blk = blk.slice(0, left - 1).replace(/\s+\S*$/, "") + "…"; }
+    return base + sep + blk;
+  }
+  /* text → [{k:"t", t} | {k:"o", q, a}] (the student's words / Osman's blocks), in order */
+  function parts(text) {
+    var out = [];
+    String(text == null ? "" : text).replace(/\r\n?/g, "\n").split(/\n[ \t]*\n+/).forEach(function (p) {
+      var L = p.split("\n"), oi = -1, i;
+      for (i = 0; i < L.length; i++) if (OSM.test(L[i])) { oi = i; break; }
+      var head = oi > 0 ? L.slice(0, oi) : [];
+      if (oi >= 0 && head.every(function (x) { return ASKL.test(x); })) {
+        out.push({ k: "o", q: head.map(function (x) { return x.replace(ASKL, ""); }).join(" ").trim(), a: [L[oi].replace(OSM, "")].concat(L.slice(oi + 1)).join("\n").trim() });
+      } else if (out.length && out[out.length - 1].k === "t") out[out.length - 1].t += "\n\n" + p;
+      else out.push({ k: "t", t: p });
+    });
+    return out.filter(function (x) { return x.k === "o" || x.t.trim(); });
+  }
+  function textHtml(text) {
+    return parts(text).map(function (x) {
+      if (x.k === "t") return '<p class="ntext">' + esc(x.t) + "</p>";
+      return '<div class="nosm">' + (x.q ? '<p class="nosq"><span aria-hidden="true">🙋</span> ' + esc(x.q) + "</p>" : "") +
+        '<div class="nosa"><span class="nosi" aria-hidden="true">🧑‍🏫</span><p><b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + "</b><br>" + esc(x.a) + "</p></div></div>";
+    }).join("");
+  }
+
   var API = w.NursinNotes = { KEY: KEY, MAXT: MAXT, MAXR: MAXR, norm: norm, enc: enc, idFor: idFor, clean: clean, blank: blank, load: load, list: list, find: find, put: put, remove: remove,
-    mergeGuest: mergeGuest, applyRemote: applyRemote, pending: pending, matches: matches, ofQ: ofQ, link: link, lessonName: lessonName, subjName: subjName };
+    mergeGuest: mergeGuest, applyRemote: applyRemote, pending: pending, matches: matches, ofQ: ofQ, link: link, lessonName: lessonName, subjName: subjName,
+    withOsman: withOsman, room: room, parts: parts, textHtml: textHtml, osmBlock: osmBlock };
   if (!d || !d.addEventListener || !d.createElement) return;
 
   /* ---------------- live state + sync ---------------- */
   var st = load(), owner = "", authKnown = false, unsub = null, sync = { err: "", busy: false, timer: 0, online: true };
   function fb() { var A = w.NursinFB; return A && A.user && A.fs && A.db && A.fs.collection ? A : null; }
-  function save() { persist(st); repaint(); }
+  function save() { persist(st); repaint(); try { d.dispatchEvent(new CustomEvent("nursin:notes")); } catch (e) {} }
   function status() {
     if (!owner) return "local";
     var p = pending(st, owner), g = list(st, owner).some(function (n) { return n.g; });
@@ -236,7 +275,7 @@
   w.addEventListener("offline", function () { repaint(); });
   d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible" && owner) { listen(); flush(); } });
   setInterval(function () { if (owner && status() === "pending") flush(); }, 60000);
-  w.addEventListener("storage", function (e) { if (e.key === KEY) { st = load(); repaint(); } });
+  w.addEventListener("storage", function (e) { if (e.key === KEY) { st = load(); repaint(); try { d.dispatchEvent(new CustomEvent("nursin:notes")); } catch (x) {} } });
 
   /* ---------------- the 📝 button ---------------- */
   function btn(meta, cls, label) {
@@ -366,12 +405,27 @@
     box.innerHTML = '<div class="fcbox nbox"><div class="fchd"><b>' + esc(cur ? T("📝 ملاحظتك", "📝 Ta note") : free ? T("➕ ملاحظة حرّة", "➕ Note libre") : T("📝 ملاحظة جديدة", "📝 Nouvelle note")) + '</b><button class="fcx" type="button" aria-label="' + esc(T("سكّر", "Fermer")) + '">✕</button></div>' +
       src + pick + '<textarea class="nta" rows="6" maxlength="' + MAXT + '" placeholder="' + esc(T("اكتب شو بدّك تتذكّر عن هالشي…", "Écris ce que tu veux retenir…")) + '" aria-label="' + esc(T("نص الملاحظة", "Texte de la note")) + '"></textarea>' +
       '<p class="nmeta"><span class="ncnt" dir="ltr"></span><span class="nsync">' + syncLine() + "</span></p>" + outBanner() +
-      '<div class="fcact nact">' + (cur ? '<button class="btn ndel" type="button">' + esc(T("🗑️ امحي", "🗑️ Supprimer")) + "</button>" : "") + '<button class="btn ncancel" type="button">' + esc(T("إلغاء", "Annuler")) + '</button><button class="btn pri nsave" type="button">' + esc(T("💾 حفظ", "💾 Enregistrer")) + "</button></div></div>";
+      '<div class="naskhost"></div><div class="fcact nact">' + (cur ? '<button class="btn ndel" type="button">' + esc(T("🗑️ امحي", "🗑️ Supprimer")) + "</button>" : "") + '<button class="btn ncancel" type="button">' + esc(T("إلغاء", "Annuler")) + '</button><button class="btn pri nsave" type="button">' + esc(T("💾 حفظ", "💾 Enregistrer")) + "</button></div></div>";
     d.body.appendChild(box);
     var ta = box.querySelector(".nta"), cnt = box.querySelector(".ncnt");
     ta.value = cur ? cur.text : "";
     function count() { cnt.textContent = ta.value.length + " / " + MAXT; cnt.classList.toggle("nfull", ta.value.length >= MAXT); }
     ta.addEventListener("input", count); count();
+    /* 🙋 «اسأل عثمان» while writing (28s, assets/ask.js): the note so far is the question/context; his answer is appended to it and saved.
+       A note opened from a graded question that is not answered yet (that card has no «🙋» box) cannot ask (same anti-cheat as 28q). */
+    var myBox = box, card = meta.refType === "q" && from && from.closest ? from.closest(".qcard, .cq, .dqbox") : null, aw = null;
+    if (card) [].forEach.call(card.querySelectorAll(".askw"), function (x) { if (x._ask && !aw) aw = x; });
+    function curMeta() {
+      var m = meta;
+      if (free && box === myBox) { var sv = box.querySelector(".nsubj").value, lv = box.querySelector(".nles").value; m = Object.assign({}, meta, { subject: sv, lesson: lv, refText: lv ? lessonName(lv) : "" }); }
+      return Object.assign({}, m, { id: id });
+    }
+    var AK = w.NursinAsk, ah = box.querySelector(".naskhost");
+    if (AK && AK.noteMount && ah) AK.noteMount(ah, { id: id, meta: curMeta, inline: true, surface: "note-sheet", qc: aw ? aw._ask : null,
+      lock: card && !aw ? T("بالامتحان عثمان بيجاوب عن هالسؤال بس بعد ما تجاوب. ملاحظتك بتنحفظ عادي 👍", "En examen, Osman répond sur cette question seulement après ta réponse. Ta note s'enregistre quand même 👍") : "",
+      text: function () { return box === myBox ? ta.value : ((find(st, owner, id) || {}).text || ""); },
+      before: function () { if (box === myBox && ta.value.trim()) { put(st, owner, curMeta(), ta.value); save(); flush(); } },
+      after: function (nt) { if (box === myBox) { ta.value = nt; count(); } else toast(T("🧑‍🏫 جواب عثمان انحفظ بملاحظتك 📒", "🧑‍🏫 Réponse d'Osman enregistrée dans ta note 📒")); } });
     if (free) {
       var ss = box.querySelector(".nsubj"), ls = box.querySelector(".nles");
       var fill = function () { var L = lessonsOf(ss.value); ls.innerHTML = '<option value="">' + esc(T("عام (بلا درس)", "Général (sans leçon)")) + "</option>" + L.map(function (x) { return '<option value="' + esc(x.k) + '"' + (x.k === meta.lesson ? " selected" : "") + ">" + esc(x.n) + "</option>"; }).join(""); ls.disabled = !L.length; };
@@ -405,8 +459,10 @@
   var qv = "", drawnOnce = false;
   function fmt(t) { var x = new Date(t), p = function (n) { return (n < 10 ? "0" : "") + n; }; return p(x.getDate()) + "/" + p(x.getMonth() + 1) + "/" + x.getFullYear() + " " + p(x.getHours()) + ":" + p(x.getMinutes()); }
   var TYPEN = { q: ["❓ سؤال", "❓ Question"], lesson: ["📖 درس", "📖 Leçon"], card: ["🃏 بطاقة", "🃏 Carte"], summary: ["📄 خلاصة", "📄 Résumé"], free: ["🗒️ ملاحظة حرّة", "🗒️ Note libre"] };
+  var pdT = 0;
   function pageDraw() {
     var el = d.getElementById("notes-app"); if (!el) return;
+    if (w.NursinAsk && w.NursinAsk.typing && w.NursinAsk.typing(el)) { clearTimeout(pdT); pdT = setTimeout(pageDraw, 1500); return; }   // 🙋 someone typing a question: redraw after
     if (!authKnown && !drawnOnce) { el.innerHTML = '<p class="small nload">⏳ ' + esc(T("عم نجيب ملاحظاتك…", "Chargement de tes notes…")) + "</p>"; return; }
     var all = list(st, owner), S = subjects(), order = Object.keys(S), groups = {};
     var head = el.querySelector(".nhead");
@@ -449,14 +505,16 @@
           var href = link(n), ty = TYPEN[n.refType] || TYPEN.free;
           h += '<article class="nitem" data-id="' + esc(n.id) + '">' +
             (n.refType !== "free" && n.refText ? '<p class="nsrc"><span class="ntype">' + esc(T(ty[0], ty[1])) + "</span> " + (href ? '<a href="' + esc(href) + '">' + esc(n.refText) + " ←</a>" : esc(n.refText)) + "</p>" : '<p class="nsrc"><span class="ntype">' + esc(T(ty[0], ty[1])) + "</span>" + (href ? ' <a href="' + esc(href) + '">' + esc(lessonName(n.lesson)) + " ←</a>" : "") + "</p>") +
-            '<p class="ntext">' + esc(n.text) + "</p>" +
+            textHtml(n.text) +
             '<p class="small nwhen">🕒 ' + esc(T("انكتبت ", "Créée le ")) + '<span dir="ltr">' + fmt(n.createdAt) + "</span>" + (n.updatedAt - n.createdAt > 60000 ? " · ✏️ " + esc(T("تعدّلت ", "modifiée le ")) + '<span dir="ltr">' + fmt(n.updatedAt) + "</span>" : "") + (owner && n.d ? " · ⏳" : "") + "</p>" +
-            '<p class="nact2"><button class="btn sm nedit" type="button">' + esc(T("✏️ عدّل", "✏️ Modifier")) + '</button><button class="btn sm ndel2" type="button">' + esc(T("🗑️ امحي", "🗑️ Supprimer")) + "</button></p></article>";
+            '<p class="nact2"><button class="btn sm nedit" type="button">' + esc(T("✏️ عدّل", "✏️ Modifier")) + '</button><button class="btn sm ndel2" type="button">' + esc(T("🗑️ امحي", "🗑️ Supprimer")) + "</button></p>" +
+            '<div class="naskslot" data-surface="notes" data-meta="' + esc(JSON.stringify({ id: n.id, refType: n.refType, refId: n.refId, refText: n.refText, subject: n.subject, lesson: n.lesson })) + '"></div></article>';
         });
       });
       h += "</section>";
     });
     L.innerHTML = h;
+    if (w.NursinAsk && w.NursinAsk.noteHydrate) w.NursinAsk.noteHydrate(L);
   }
 
   /* ---------------- wiring ---------------- */
@@ -469,5 +527,6 @@
   }
   API.open = function (meta) { open(meta, null, meta.refType === "free"); };
   API.status = status; API.state = function () { return st; }; API.owner = function () { return owner; }; API.flush = flush; API.mount = mount;
+  API.commit = function () { save(); flush(); };                   // 🙋 assets/ask.js wrote into st (an answer under a note): keep + show + send
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

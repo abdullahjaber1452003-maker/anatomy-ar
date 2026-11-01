@@ -622,3 +622,17 @@ html[data-theme=night] .askth .asku p{color:#04201d}
 .askf .btn{white-space:nowrap;min-height:44px}
 .asklock{margin-top:8px}.asklock .btn{margin-top:6px}
 @media (prefers-reduced-motion:reduce){.askty .tdots i{animation:none}}
+
+/* 📒🙋 28s: «اسأل عثمان» about a note / a highlight + his answers shown inside the note (assets/ask.js, notes.js, highlight.js) — glass tokens, night follows */
+.nosm{margin:6px 0 8px;padding:8px 10px;border-radius:14px;background:var(--uisoft,rgba(255,255,255,.55));border:1px solid var(--hzline,rgba(15,40,44,.08));color:var(--hzink,inherit);min-width:0}
+.nosq{margin:0 0 4px;font-weight:700;color:var(--hzacc,#0f766e);line-height:1.6;overflow-wrap:anywhere}
+.nosa{display:flex;gap:8px;align-items:flex-start;min-width:0}.nosi{font-size:1.2rem;line-height:1.6;flex:0 0 auto}
+.nosa p{margin:0;white-space:pre-wrap;line-height:1.75;overflow-wrap:anywhere;min-width:0}
+.nosa p b{color:var(--hzacc,#0f766e);font-size:.82rem}
+.naskw{margin:8px 0 2px}.naskw .askf textarea{min-height:44px}
+.nasaved{color:var(--hzacc,#0f766e);font-weight:700;margin:4px 0 0}
+.nbox .naskhost{margin:2px 0 8px}
+.hlitem{flex-wrap:wrap}
+.hlitem .hlnx{flex:1 0 100%;padding:0 12px 10px;min-width:0;box-sizing:border-box}
+.hlitem .hlnx .naskw{margin-top:0}
+.hlnote2{margin:0 0 6px}.hlnote2 .hlnh{margin:0 0 2px;color:var(--hzmut,#64748b)}.hlnote2 .ntext{margin:2px 0 4px}
