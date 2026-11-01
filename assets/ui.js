@@ -36,30 +36,37 @@
   };
   function info(p) { var x = PAGES[p || page] || ["📄", "nursin", "nursin", 4]; return { e: x[0], ar: x[1], fr: x[2], tab: x[3], up: x[4] || "index.html" }; }
 
-  /* ---------------- «الكل»: every page of the site (tests check none is missing) — [href, emoji, ar, fr, badge-key] ---------------- */
+  /* ---------------- «الكل»: every page of the site (tests check none is missing) — [href, emoji, ar, fr, badge-key] ----------------
+     🗂️ Nov 1 2026 10:34 PM (Abdullah: «قصّر القائمة… قسّمها لأربع مجموعات قابلة للطي: الدروس، أدوات التعلم (3D، كويز، امتحانات)، المجتمع، حساب»):
+     four folding groups. Each header = emoji + name + count (+ the badges of its items, so «جديد» / counts still show when it is closed);
+     a tap opens / closes it (smooth), the choice is kept in localStorage (nursin_menu_v1); the group of the current page opens by itself,
+     and with no choice kept yet the first group is the open one. Nothing was removed — every old link is still in one of the four. */
   var ALL = [
     { k: "learn", e: "📚", ar: "الدروس", fr: "Les leçons", items: [
       ["medsurg.html", "🏥", "Med-Surg", "Med-Surg"], ["cardio.html", "🫀", "القلب", "Cardio"], ["neuro.html", "🧠", "الأعصاب", "Neuro"],
       ["henderson.html", "🧩", "Henderson", "Henderson"], ["medsurg.html#iv", "💉", "التسريب", "Perfusion"], ["rea.html", "🚑", "الإنعاش", "Réa"],
       ["pharma.html", "💊", "الأدوية", "Pharmaco"], ["law.html", "⚖️", "القانون", "Législation"], ["mgmt.html", "🏢", "الإدارة", "Management"],
-      ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."],
-      ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"]] },
-    { k: "train", e: "🧠", ar: "التدريب والمراجعة", fr: "Entraînement et révision", items: [
-      ["midterm.html", "🎯", "امتحان الفصل 16/11", "Examen 16/11"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"], ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
+      ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."]] },
+    { k: "study", e: "🧠", ar: "أدوات التعلّم", fr: "Outils d'étude", items: [
+      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"], ["quiz.html", "⚡", "كويز", "Quiz"],
+      ["midterm.html", "🎯", "امتحان الفصل 16/11", "Examen 16/11"], ["exams.html", "📅", "الامتحانات", "Examens"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"],
+      ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#room", "🏥", "غرفة الطوارئ", "Salle d'urgence", "nw"],
+      ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
       ["#case", "🩺", "حالة مريض", "Cas clinique"], ["quiz.html#weak", "🎯", "نقاط ضعفك", "Points faibles"], ["hifzi.html", "🗺️", "حفظي", "Ma mémoire"],
-      ["quiz.html?t=link", "🔗", "اربط", "Relier"], ["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"],
-      ["#cards", "🃏", "البطاقات", "Cartes"], ["#blank", "📃", "الورقة البيضا", "Page blanche"], ["#teach", "🧑‍🏫", "علِّم عثمان", "Enseigne à Osman"],
-      ["quiz.html#blanks", "✍️", "عبّي الفراغ", "Trous"], ["exams.html", "📅", "الامتحانات", "Examens"], ["law.html#classquiz", "📝", "كويز الصف", "Quiz de classe"]] },
-    { k: "friends", e: "👥", ar: "مع رفقاتك", fr: "Avec tes amis", items: [
-      ["index.html#duel", "🏆", "البطولة", "Tournoi"], ["live.html", "🔴", "تحدّي لايف", "Défi live"], ["games.html", "🎮", "الألعاب", "Jeux"],
-      ["friends.html", "👥", "أصحابي", "Amis"], ["chat.html", "💬", "المحادثات", "Messages"], ["classes.html", "🏫", "صفّي", "Ma classe"],
-      ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["#online", "🟢", "مين أونلاين", "En ligne"]] },
-    { k: "tools", e: "⚙️", ar: "أدواتي", fr: "Mes outils", items: [
-      ["suggest.html", "🛠️", "اقتراحاتك", "Tes idées"], ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"], ["#goals", "✅", "أهداف اليوم", "Objectifs"],
-      ["#search", "🔎", "دوّر", "Chercher"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"], ["#theme", "🎨", "المظهر", "Apparence"],
-      ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"], ["#install", "📲", "حمّل التطبيق", "Installer l'app"],
-      ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["about.html", "ℹ️", "من نحن", "À propos"],
-      ["privacy.html", "🔒", "الخصوصية", "Confidentialité"], ["credits.html", "📜", "المصادر", "Sources"]] }
+      ["#cards", "🃏", "البطاقات", "Cartes"], ["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"], ["quiz.html?t=link", "🔗", "اربط", "Relier"],
+      ["#blank", "📃", "الورقة البيضا", "Page blanche"], ["#teach", "🧑‍🏫", "علِّم عثمان", "Enseigne à Osman"],
+      ["quiz.html#blanks", "✍️", "عبّي الفراغ", "Trous"], ["law.html#classquiz", "📝", "كويز الصف", "Quiz de classe"],
+      ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"],
+      ["#goals", "✅", "أهداف اليوم", "Objectifs"], ["#search", "🔎", "دوّر", "Chercher"]] },
+    { k: "community", e: "👥", ar: "المجتمع", fr: "Communauté", items: [
+      ["classes.html", "🏫", "صفّي", "Ma classe"], ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["friends.html", "👥", "أصحابي", "Amis"],
+      ["#online", "🟢", "مين أونلاين", "En ligne"], ["live.html", "🔴", "تحدّي لايف", "Défi live"], ["index.html#duel", "🏆", "البطولة", "Tournoi"],
+      ["chat.html", "💬", "المحادثات", "Messages"], ["suggest.html", "🛠️", "اقتراحاتك", "Tes idées"]] },
+    { k: "account", e: "👤", ar: "حسابي", fr: "Mon compte", items: [
+      ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"],
+      ["#theme", "🎨", "المظهر", "Apparence"], ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"],
+      ["#install", "📲", "حمّل التطبيق", "Installer l'app"], ["privacy.html", "🔒", "الخصوصية", "Confidentialité"], ["about.html", "ℹ️", "من نحن", "À propos"],
+      ["credits.html", "📜", "المصادر", "Sources"]] }
   ];
   var ADMIN = ["admin" + ".html", "🛠️", "لوحة الأدمن", "Admin"];     // shown to the owner only (assets/nav.js did the same in ☰)
   function owner() { var A = w.NursinFB, u = A && A.user; return !!(u && u.email === OWNER && u.emailVerified); }
@@ -203,22 +210,59 @@
     try { var st = w.Retain && w.Retain.wstatus ? w.Retain.wstatus() : null; wx = !!(st && st.ready && !st.done); } catch (e) {}
     var pn = w.NursinHL && w.NursinHL.pen && w.NursinHL.pen();                // 🖍️ pen mode on → «شغّال» on its «الكل» item
     var hwn = 0; try { var HWX = w.NursinHW; hwn = HWX && HWX.open ? HWX.open().length : 0; } catch (e) {}   // 📌 homework not handed in yet (index / homework.html)
-    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "", pen: pn ? T("شغّال", "ON") : "", hw: hwn > 0 ? String(hwn) : "" };
+    var nw = Date.now() < NEWTILL ? T("جديد", "Nouveau") : "";                       // 🏥 the walkable ER room (Nov 1) is «جديد» for two weeks
+    return { due: due > 0 ? String(due) : "", wex: wx ? T("جاهز", "Prêt") : "", pen: pn ? T("شغّال", "ON") : "", hw: hwn > 0 ? String(hwn) : "", nw: nw };
   }
   function installable() { var P = w.NursinPWA; try { return !!(P && P.installable && P.installable()); } catch (e) { return false; } }
+  /* 🗂️ the four folding groups (Nov 1 2026): which group holds a page, which groups are open, the toggle */
+  var MENU = "nursin_menu_v1", NEWTILL = Date.UTC(2026, 10, 15);
+  function menuState() { try { var o = JSON.parse(localStorage.getItem(MENU) || "null"); if (o && typeof o === "object" && o.o && typeof o.o === "object") return o; } catch (e) {} return { o: {} }; }
+  function menuSave(k, open) { var s = menuState(); s.o[k] = !!open; s.at = Date.now(); try { localStorage.setItem(MENU, JSON.stringify(s)); } catch (e) {} }
+  function groupOf(p) {                                                 // the group of a page = the group of its plain link (no ?query / #part)
+    p = String(p || page).toLowerCase(); if (p === "admin.html") return "account";
+    for (var i = 0; i < ALL.length; i++) for (var j = 0; j < ALL[i].items.length; j++) { var h = ALL[i].items[j][0]; if (h === p) return ALL[i].k; }
+    return "";
+  }
+  function isOpen(k, i, cur, st) {
+    if (cur && k === cur) return true;                                  // the current page's group always opens
+    if (Object.prototype.hasOwnProperty.call(st.o, k)) return !!st.o[k];
+    return cur ? false : i === 0;                                       // nothing kept yet: the first group (or the current one)
+  }
+  function groupItems(g) {
+    var items = g.items.filter(function (it) { return it[0] !== "#install" || installable(); });
+    if (g.k === "account" && owner()) items = items.concat([ADMIN]);
+    return items;
+  }
+  function tile(it, b) {
+    var bd = it[4] ? b[it[4]] : "", isBtn = it[0].charAt(0) === "#", here = !isBtn && it[0] === page;
+    var inner = '<span class="ie" aria-hidden="true">' + it[1] + (bd ? "<em>" + esc(bd) + "</em>" : "") + "</span><b>" + esc(T(it[2], it[3])) + "</b>";
+    return isBtn ? '<button type="button" class="it' + (bd ? " hl" : "") + '" data-hz="' + it[0].slice(1) + '">' + inner + "</button>"
+      : '<a class="it' + (bd ? " hl" : "") + (here ? " here" : "") + '" href="' + esc(it[0]) + '"' + (here ? ' aria-current="page"' : "") + ">" + inner + "</a>";
+  }
+  function groupHtml(g, i, b, cur, st) {
+    var items = groupItems(g), id = "hzg-" + g.k, open = isOpen(g.k, i, cur, st);
+    var bds = items.filter(function (it) { return it[4] && b[it[4]]; }).map(function (it) { return '<em data-b="' + it[4] + '">' + it[1] + " " + esc(b[it[4]]) + "</em>"; }).join("");
+    return '<section class="hzgrp hzfold' + (open ? " open" : "") + (cur === g.k ? " cur" : "") + '" data-g="' + g.k + '"><h3><button type="button" class="hzgh" id="' + id + '-h" aria-expanded="' + open + '" aria-controls="' + id + '">' +
+      '<span class="ge" aria-hidden="true">' + g.e + '</span><span class="gtx"><span class="gl1"><span class="gn">' + esc(T(g.ar, g.fr)) + '</span><span class="gc" aria-label="' + items.length + " " + T("رابط", "liens") + '">' + items.length + "</span></span>" +
+      (bds ? '<span class="gbd">' + bds + "</span>" : "") + '</span><span class="gcv" aria-hidden="true"></span></button></h3>' +
+      '<div class="hzgw" id="' + id + '" role="region" aria-labelledby="' + id + '-h"' + (open ? "" : " inert") + '><div class="hzgwi"><div class="hzgr">' + items.map(function (it) { return tile(it, b); }).join("") + "</div></div></div></section>";
+  }
+  function toggleGroup(btn) {
+    var s = btn && btn.closest ? btn.closest(".hzfold") : null; if (!s) return false;
+    var open = !s.classList.contains("open"), wr = s.querySelector(".hzgw");
+    s.classList.toggle("open", open); btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (wr) { if (open) wr.removeAttribute("inert"); else wr.setAttribute("inert", ""); }
+    menuSave(s.getAttribute("data-g"), open);
+    if (open && s.scrollIntoView) setTimeout(function () { try { s.scrollIntoView({ block: "nearest", behavior: reduced() ? "auto" : "smooth" }); } catch (e) {} }, 340);
+    return open;
+  }
   function allHtml(only) {
-    var b = badges();
+    var b = badges(), st = menuState(), cur = groupOf(page);
     return '<button class="hzsrch hzsrch-s" type="button" data-hz="search"><span class="e" aria-hidden="true">🔍</span><span class="ph">' + T("دوّر على درس، سؤال، دوا…", "Cherche une leçon, une question, un médicament…") + "</span></button>" +
-      ALL.filter(function (g) { return !only || g.k === only; }).map(function (g) {
-        var items = g.items.filter(function (it) { return it[0] !== "#install" || installable(); });
-        if (g.k === "tools" && owner()) items = items.concat([ADMIN]);
-        return '<section class="hzgrp"><h3>' + g.e + " " + T(g.ar, g.fr) + (g.k === "learn" ? "<small>" + T("13 مادة", "13 matières") + "</small>" : "") + '</h3><div class="hzgr">' + items.map(function (it) {
-          var bd = it[4] ? b[it[4]] : "", isBtn = it[0].charAt(0) === "#", here = !isBtn && it[0] === page;
-          var inner = '<span class="ie" aria-hidden="true">' + it[1] + (bd ? "<em>" + esc(bd) + "</em>" : "") + "</span><b>" + esc(T(it[2], it[3])) + "</b>";
-          return isBtn ? '<button type="button" class="it' + (bd ? " hl" : "") + '" data-hz="' + it[0].slice(1) + '">' + inner + "</button>"
-            : '<a class="it' + (bd ? " hl" : "") + (here ? " here" : "") + '" href="' + esc(it[0]) + '"' + (here ? ' aria-current="page"' : "") + ">" + inner + "</a>";
-        }).join("") + "</div></section>";
-      }).join("");
+      (only ? ALL.filter(function (g) { return g.k === only; }).map(function (g) {          // «المواد» (the nav's 📚): that one group, flat
+        var items = groupItems(g);
+        return '<section class="hzgrp"><h3>' + g.e + " " + T(g.ar, g.fr) + "<small>" + items.length + " " + T("مادة", "matières") + '</small></h3><div class="hzgr">' + items.map(function (it) { return tile(it, b); }).join("") + "</div></section>";
+      }).join("") : '<div class="hzfolds">' + ALL.map(function (g, i) { return groupHtml(g, i, b, cur, st); }).join("") + "</div>");
   }
   // the hash-items of «الكل»: buttons that reuse what the site already has
   function act(k, from) {
@@ -246,6 +290,7 @@
   function openAll(only, from) {
     var s = openSheet("hzall", only ? T("📚 المواد", "📚 Les matières") : T("كل شي بالموقع", "Tout le site"), allHtml(only), from);
     s.addEventListener("click", function (e) {
+      var gh = e.target.closest && e.target.closest(".hzgh"); if (gh) { e.preventDefault(); toggleGroup(gh); return; }     // 🗂️ open / close a group
       var b = e.target.closest && e.target.closest("[data-hz]"); if (b) { e.preventDefault(); act(b.getAttribute("data-hz"), from); return; }
       var a = e.target.closest && e.target.closest("a.it"); if (!a) return;
       var hr = a.getAttribute("href");
@@ -455,7 +500,7 @@
     if (page === "games.html") setTimeout(function () { useMark("games"); }, 20000);   // 20 s on the games page counts as playing
     (function wrapCase(n) { var R = w.Retain; if (R && R.openCase && !R.openCase.__use) { var o = R.openCase; R.openCase = function () { useMark("cases"); return o.apply(this, arguments); }; R.openCase.__use = 1; } else if (n < 20) setTimeout(function () { wrapCase(n + 1); }, 500); })(0);
   }
-  w.NursinUI = { ALL: ALL, PAGES: PAGES, info: info, open: openAll, openSheet: openSheet, close: closeSheet, drag: drag, picker: picker, act: act,
+  w.NursinUI = { ALL: ALL, PAGES: PAGES, info: info, open: openAll, groupOf: groupOf, menuState: menuState, allHtml: allHtml, toggleGroup: toggleGroup, openSheet: openSheet, close: closeSheet, drag: drag, picker: picker, act: act,
     setAvatar: setAvatar, avUrl: avUrl, avHtml: avHtml, myAvatar: myAvatar, AKEY: AK, AVN: AVN, shrink: shrink, pull: pull, fcHref: fcHref,
     lessonsNow: lessonsNow, lastNow: lastNow, lastLes: lastLes, caseLes: caseLes, blobTo: blobTo, navCur: navCur, navHome: navHome, focusMode: focusMode,
     busyRound: busyRound, isOpen: function () { return !!sh; }, page: page, use: useMark, usage: useGet, UKEY: UK };

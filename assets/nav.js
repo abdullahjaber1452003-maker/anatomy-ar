@@ -81,7 +81,8 @@
     return '<a class="gi" href="' + href + '"' + (here ? ' aria-current="page"' : "") + ">" + inner + "</a>";
   }
   function owner() { var A = w.NursinFB, u = A && A.user; return !!(u && u.email === OWNER && u.emailVerified); }
-  function moreItems() {
+  function moreItems() { return moreList().join(""); }
+  function moreList() {
     var P = w.NursinPWA, a = [];
     if (P && P.installable && P.installable()) { var it = P.instText ? P.instText(P.kind(), !!(w.Lang && w.Lang.fr)) : { btn: "📲 حمّل التطبيق", sub: "Nursin متل التطبيق عالتلفون" };   // 📲 Oct 27 3:35 PM
       a.push('<button class="gi pwainst" type="button" data-nofr><span class="gie" aria-hidden="true">📲</span><span class="git"><b>' + esc(it.btn.replace(/^📲\s*/, "")) + "</b><small>" + esc(it.sub) + "</small></span></button>"); }
@@ -90,7 +91,37 @@
     a.push(langRow());   // 👨‍🏫 Osman is always on now (no switch, Oct 27 2:48 PM)
     a.push(row(["about.html", "ℹ️", "من نحن", ""]), row(["privacy.html", "🔒", "سياسة الخصوصية", ""]), row(["credits.html", "📚", "المصادر والتراخيص", ""]));
     if (owner()) a.push(row(["admin" + ".html", "⚙️", "لوحة الأدمن", "إعلانات + إشعارات + دروس هالأسبوع"]));
-    return a.join("");
+    return a;
+  }
+  /* 🗂️ ☰ without the glass shell (Nov 1 2026, Abdullah: «قسّمها لأربع مجموعات قابلة للطي»): every page in four folding groups —
+     📚 الدروس · 🧠 أدوات التعلّم · 👥 المجتمع · 👤 حسابي — the same groups, the same kept choice (nursin_menu_v1) as «الكل» in assets/ui.js */
+  var MENU = "nursin_menu_v1";
+  var MG = [{ k: "learn", e: "📚", n: "الدروس" }, { k: "study", e: "🧠", n: "أدوات التعلّم" }, { k: "community", e: "👥", n: "المجتمع" }, { k: "account", e: "👤", n: "حسابي" }];
+  function mgOf(href) {
+    var p = href.split(/[?#]/)[0];
+    if (href === "#online" || href === "index.html#duel" || ["friends.html", "chat.html", "classes.html", "live.html", "suggest.html"].indexOf(p) > -1) return "community";
+    if (["me.html", "about.html", "privacy.html", "credits.html", "admin.html"].indexOf(p) > -1) return "account";
+    if (LESSON[p] && p !== "3d.html" && (href === p || /#iv$/.test(href))) return "learn";      // a lesson page itself (its quizzes → tools)
+    return "study";
+  }
+  function menuGroups() {
+    var rows = { learn: [], study: [], community: [], account: [] }, seen = {}, cur = "", st = lsGet(MENU) || {}, o = st.o || {};
+    G.forEach(function (g) { (g.items || []).forEach(function (it) { if (seen[it[0]]) return; seen[it[0]] = 1; var k = mgOf(it[0]); rows[k].push(row(it)); if (it[0] === page) cur = k; }); });
+    rows.study.push(row(["games.html#room", "🏥", "غرفة الطوارئ", "امشِ لعند المريض"]));
+    rows.community.push(row(["suggest.html", "🛠️", "اقتراحاتك", "شو بدك نضيف أو نعدّل؟"]));
+    rows.account.push(row(["me.html", "👤", "أنا والإعدادات", ""]));
+    moreList().forEach(function (h) { rows.account.push(h); });
+    if (!cur) { var pk = mgOf(page); cur = pk === "study" && !seen[page] ? "" : pk; }          // home / pages outside the lists: the first group
+    return MG.map(function (g, i) {
+      var open = g.k === cur || (Object.prototype.hasOwnProperty.call(o, g.k) ? !!o[g.k] : (!cur && i === 0));
+      return '<div class="gacc' + (open ? " open" : "") + '" data-mg="' + g.k + '"><button class="gi gah" type="button" aria-expanded="' + open + '" aria-controls="gmg-' + g.k + '"><span class="gie" aria-hidden="true">' + g.e + '</span><span class="git"><b>' + esc(g.n) + " <small>(" + rows[g.k].length + ")</small></b></span><span class=\"gcv\" aria-hidden=\"true\">▾</span></button>" +
+        '<div class="gab" id="gmg-' + g.k + '"' + (open ? "" : " hidden") + ">" + rows[g.k].join("") + "</div></div>";
+    }).join("");
+  }
+  function mgToggle(b) {
+    var box = b.closest(".gacc"), open = !box.classList.contains("open"), body = box.querySelector(".gab");
+    box.classList.toggle("open", open); b.setAttribute("aria-expanded", open ? "true" : "false"); if (body) body.hidden = !open;
+    var st = lsGet(MENU) || {}; st.o = st.o || {}; st.o[box.getAttribute("data-mg")] = open; st.at = Date.now(); lsSet(MENU, st);
   }
   // 👨‍🏫 «تعليقات الأستاذ عثمان» switch (assets/osman.js, localStorage nursin_osman_v1, default on)
   function osmOn() { try { return localStorage.getItem("nursin_osman_v1") !== "0"; } catch (e) { return true; } }
@@ -119,12 +150,12 @@
   function openSheet(key, btn) {
     var again = openKey === key; closeSheet(); if (again) return;
     var g = null; for (var i = 0; i < G.length; i++) if (G[i].k === key) g = G[i];
-    var title = g ? g.e + " " + g.n : "☰ المزيد", body = g ? g.items.map(row).join("") : moreItems();
+    var title = g ? g.e + " " + g.n : "☰ القائمة", body = g ? g.items.map(row).join("") : menuGroups();
     scrim = d.createElement("div"); scrim.className = "gscrim"; scrim.addEventListener("click", closeSheet);
     sheet = d.createElement("div"); sheet.className = "gsheet"; sheet.id = "gsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", title.replace(/^\S+\s/, ""));
     sheet.innerHTML = '<div class="gsh"><b>' + esc(title) + '</b><button class="gx" type="button" aria-label="سكّر">✕</button></div><nav class="gil">' + body + "</nav>";
     sheet.querySelector(".gx").addEventListener("click", function () { var b = closeSheet(); if (b) b.focus(); });
-    sheet.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a.gi,[data-search-open]"); if (a) closeSheet(); if (e.target.closest && e.target.closest("[data-online]")) { closeSheet(); if (signedIn() && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; } var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
+    sheet.addEventListener("click", function (e) { var ah = e.target.closest && e.target.closest(".gah"); if (ah) { mgToggle(ah); return; } var a = e.target.closest && e.target.closest("a.gi,[data-search-open]"); if (a) closeSheet(); if (e.target.closest && e.target.closest("[data-online]")) { closeSheet(); if (signedIn() && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; } var o = e.target.closest && e.target.closest(".osmsw"); if (o) osmFlip(o); var lg = e.target.closest && e.target.closest(".lgb"); if (lg && w.Lang && lg.getAttribute("aria-checked") !== "true") w.Lang.set(lg.getAttribute("data-lang")); });
     d.body.appendChild(scrim); d.body.appendChild(sheet);
     if (desk() && btn) {                                   // dropdown under the clicked item (RTL: align its right edge)
       var r = btn.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
@@ -152,7 +183,10 @@
     if (mb) {                                              // ☰ = «المزيد» (drops app.js's old toggle of #nav)
       var nb = mb.cloneNode(true); nb.setAttribute("aria-controls", "gsheet"); nb.setAttribute("aria-haspopup", "dialog"); nb.setAttribute("aria-label", "المزيد"); nb.setAttribute("aria-expanded", "false");
       mb.parentNode.replaceChild(nb, mb);
-      nb.addEventListener("click", function () { openSheet("more", nb); });
+      nb.addEventListener("click", function () {                         // 🗂️ Nov 1 2026: ☰ = the same four folding groups as «الكل»
+        var U = w.NursinUI; if (U && U.open && d.body.classList.contains("ui")) { closeSheet(); U.open("", nb); return; }
+        openSheet("more", nb);
+      });
     }
     d.addEventListener("keydown", function (e) { if (e.key === "Escape" && sheet) { var b = closeSheet(); if (b) b.focus(); } });
     w.addEventListener("resize", function () { if (sheet && desk()) closeSheet(); });
@@ -355,6 +389,6 @@
     buildNav(); remember(); continueCard();
     whenQuiet(startWelcome);
   }
-  w.NursinNav = { groups: G, due: due, open: openSheet, close: closeSheet, classCard: classCard, lastLesson: lastLesson };
+  w.NursinNav = { groups: G, menuGroups: menuGroups, due: due, open: openSheet, close: closeSheet, classCard: classCard, lastLesson: lastLesson };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(window, document);

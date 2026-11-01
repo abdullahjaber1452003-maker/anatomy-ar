@@ -283,6 +283,11 @@ html.jsnav .menu-btn{display:inline-grid;place-items:center;flex:0 0 auto}
 .gi:hover,.gi:focus-visible{background:var(--tint)}.gi[aria-current]{background:var(--tint2)}
 .gie{flex:0 0 40px;height:40px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:21px}
 .git{display:flex;flex-direction:column;min-width:0}.git b{font-size:16px}.git small{font-size:13px;color:var(--mut)}
+/* 🗂️ ☰ in four folding groups (assets/nav.js menuGroups, Nov 1 2026) */
+.gacc{border-bottom:1px solid var(--line)}.gacc:last-child{border-bottom:0}
+.gah .git{flex:1 1 auto}.gah .git small{display:inline;font-weight:700}.gah .gcv{transition:transform .25s;color:var(--mut)}.gacc.open .gah .gcv{transform:rotate(180deg)}
+.gab{padding:0 0 6px 0}.gab[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.gah .gcv{transition:none}}
 /* 👋 welcome card: a small card at the bottom (never a full-screen wall, never an ad inside) */
 .obx{position:fixed;left:10px;right:10px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:49;max-width:440px;margin:0 auto;background:var(--card);color:var(--ink);border:1px solid var(--tint3);border-radius:18px;box-shadow:0 10px 36px rgba(0,0,0,.22);padding:14px 16px 10px;max-height:70vh;overflow:auto;animation:gup .25s ease-out;transition:opacity .25s,transform .25s}
 @media(min-width:860px){.obx{bottom:22px;right:22px;left:auto;width:400px}}
