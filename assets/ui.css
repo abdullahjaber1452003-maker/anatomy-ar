@@ -557,3 +557,5 @@ html[data-theme=night] .hwmore{color:#5eead4}
 .hwosm{display:inline-flex;align-items:center;min-height:40px;text-decoration:none;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent;font-weight:800}
 .hwosm:hover{color:#fff;filter:brightness(1.05)}
 html[data-theme=night] .hwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
+.hwbtns .btn.hwosm,.hwact .btn.hwosm{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent}
+html[data-theme=night] .hwbtns .btn.hwosm,html[data-theme=night] .hwact .btn.hwosm{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
