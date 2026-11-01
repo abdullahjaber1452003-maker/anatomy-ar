@@ -170,6 +170,7 @@
   }
   function start() {
     app = d.getElementById("sg-app"); if (!app) return;
+    lsSet("nursin_sug_open_v1", Date.now());                // 🛠️ the home card's «جديد» badge goes away once the student has been here
     var dr = lsGet(DRAFT); if (dr && typeOf(dr.type)) st.type = dr.type;
     draw(); wire();
     d.addEventListener("nursin:auth", function (e) { st.settled = true; st.list = null; st.err = ""; draw(); if (e.detail && e.detail.signedIn) load(); });

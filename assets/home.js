@@ -491,19 +491,30 @@
       (w.NursinMid && w.NursinMid.active() ? '<a class="hzft hzmidft" href="midterm.html"><span aria-hidden="true">🎯</span><span><b>' + T("امتحان الفصل", "Examen de mi-semestre") + "</b><small>" + T("باقي " + w.NursinMid.daysLeft() + " يوم · الإثنين 16/11", "J-" + w.NursinMid.daysLeft() + " · lundi 16/11") + "</small></span></a>" : "") +
       '<a class="hzft" href="hifzi.html"><span aria-hidden="true">🗺️</span><span><b>' + T("حفظي", "Ma mémoire") + "</b><small>" + (c ? '<i class="rdot r-green"></i>' + c.green + ' <i class="rdot r-yellow"></i>' + c.yellow + ' <i class="rdot r-red"></i>' + c.red : T("خريطة حفظك لكل الدروس", "La carte de ta mémoire")) + "</small></span></a>";
   }
+  // 🛠️ Nov 1 2026 7:34 AM (Abdullah: the suggestion box «المفروض تكون مبيّنة بس في محل رئيسي», not hidden under «الكل»): one clear card
+  // right AFTER «🧭 مسار اليوم» (outside the path, never a step, no ad next to it) → suggest.html. Shown signed-out too (suggest.html asks
+  // for the sign-in). «جديد» badge until the student has opened suggest.html once (assets/suggest.js sets SUGK).
+  var SUGK = "nursin_sug_open_v1";
+  function sugHtml() {
+    var fresh = !lsGet(SUGK);
+    return '<a class="hzsug" href="suggest.html" data-hzsug><span class="hzsugi" aria-hidden="true">🛠️</span><span class="hzsugt"><b>' +
+      T("اقتراحاتك — شو بدك نضيف أو نعدّل؟", "Tes idées — on ajoute ou on change quoi ?") + (fresh ? ' <em class="hzsugn">' + T("جديد", "Nouveau") + "</em>" : "") + "</b><small>" +
+      T("➕ إضافة · ✏️ تعديل · 🐞 مشكلة — منقرا كل اقتراح ومنردّ عليك", "➕ Ajout · ✏️ Modif · 🐞 Bug — on lit tout et on te répond") + '</small></span><span class="hzsuga" aria-hidden="true">' + T("◀", "▶") + "</span></a>";
+  }
   var parts = null;
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
       root.innerHTML = '<div class="hztop"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
-        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsubw"></div>';
-      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), subs: root.querySelector(".hzsubw") };
+        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
+      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
     parts.top.innerHTML = headHtml() + chipsHtml();
     parts.pin.innerHTML = pathHtml(p);
     parts.foot.innerHTML = footHtml();
+    parts.sug.innerHTML = sugHtml();
     parts.subs.innerHTML = subsHtml();
   }
   function openDuel(scroll) {
@@ -560,7 +571,7 @@
     if (location.hash === "#duel") setTimeout(function () { openDuel(); }, 500);
   }
   var UI = U();
-  w.HomePath = { build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
