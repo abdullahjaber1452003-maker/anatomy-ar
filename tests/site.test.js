@@ -4218,7 +4218,7 @@ test('🖍️ 28r (Abdullah, Nov 1 11:29 PM «علّمت و ما انضاف عل
   assert.ok(js.includes('function dockTop(r, ph)') && js.includes('d.querySelector(".hznav")') && js.includes('if (coarse && mode === "sel") { top = dockTop(r, ph); left = (vw - pw) / 2; }'), 'docked on phones');
   assert.ok(js.includes('d.documentElement.classList.toggle("hlpillon", coarse && m === "sel")') && js.includes('d.documentElement.classList.remove("hlpillon")'), 'html.hlpillon while docked');
   const css = read('assets/ui.css');
-  assert.ok(css.includes('.hltoast{pointer-events:none}') && css.includes('html.hlpillon .hltoast{bottom:auto;top:calc(72px + env(safe-area-inset-top))}'), 'the toast never takes the tap and moves up while the pill is docked');
+  assert.ok(css.includes('.hltoast{pointer-events:none}') && css.includes('html.hlpillon .hltoast{bottom:auto!important;top:calc(72px + env(safe-area-inset-top))!important}') && css.indexOf('html.hlpillon .hltoast{') > css.indexOf('html.uion.uifocus body.ui .hltoast'), 'the toast never takes the tap and moves up while the pill is docked');
   assert.ok(css.indexOf('.hltoast{pointer-events:none}') > css.indexOf('.hltoast{position:fixed'), 'after the toast rule');
   assert.ok(css.includes('.hlpill .hlprev{') && css.includes('.hlpill.hlghost{border-style:dashed}'), 'preview + ghost style');
   assert.ok(!/backdrop-filter/.test(css.slice(css.indexOf('/* 28r'), css.indexOf('/* 28r') + 600)), 'no extra blur');
