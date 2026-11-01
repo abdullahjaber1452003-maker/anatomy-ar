@@ -99,7 +99,7 @@ window.NURSIN_DIAGRAMS = [
     if (V0) close(true);
     var o = d.createElement("div"); o.className = "ndgv"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", title(x));
     o.setAttribute("data-nohl", ""); o.setAttribute("data-nofr", ""); o.setAttribute("dir", FR() ? "ltr" : "rtl");
-    o.innerHTML = '<div class="ndgvh"><b>' + esc(title(x)) + '</b><span class="ndgvt"><button type="button" class="ndgvo" aria-label="' + T("صغّر", "Réduire") + '">➖</button><button type="button" class="ndgvi" aria-label="' + T("كبّر", "Agrandir") + '">➕</button><button type="button" class="ndgvx" aria-label="' + T("سكّر", "Fermer") + '">✕</button></span></div>' +
+    o.innerHTML = '<div class="ndgvh"><b>' + esc(title(x)) + '</b><span class="ndgvt"><button type="button" class="ndgvo" aria-label="' + T("صغّر", "Réduire") + '">−</button><button type="button" class="ndgvi" aria-label="' + T("كبّر", "Agrandir") + '">+</button><button type="button" class="ndgvx" aria-label="' + T("سكّر", "Fermer") + '">✕</button></span></div>' +
       '<div class="ndgvs"><img src="' + src(x) + '" alt="' + esc(alt(x)) + '" width="' + x.w + '" height="' + x.h + '" draggable="false"></div>' +
       '<p class="ndgvhint">' + esc(T("👆 كبسة مرتين أو قرّب بإصبعين لتكبّر · اسحب لتتنقّل", "👆 Double-touche ou pince pour zoomer · glisse pour te déplacer")) + "</p>";
     d.body.appendChild(o); d.documentElement.classList.add("ndgon");

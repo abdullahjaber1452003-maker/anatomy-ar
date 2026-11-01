@@ -483,9 +483,9 @@ html[data-theme=night] .ndgv{background:#05171a;color:#ecfbf8}
 .ndgvh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;border-bottom:1px solid rgba(127,127,127,.22)}
 .ndgvh b{flex:1;min-width:0;font-size:14.5px;font-weight:800;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ndgvt{display:flex;gap:6px;flex:0 0 auto}
-.ndgvt button{width:42px;height:42px;border-radius:99px;border:1px solid rgba(127,127,127,.3);background:rgba(255,255,255,.75);color:inherit;font-size:17px;line-height:1;cursor:pointer}
-html[data-theme=night] .ndgvt button{background:rgba(255,255,255,.08)}
-.ndgvt .ndgvx{background:#0f1f22;color:#fff;border-color:transparent;font-weight:800}
+.ndgvt button{width:42px;height:42px;border-radius:99px;border:1px solid rgba(127,127,127,.35);background:rgba(255,255,255,.8);color:inherit;font:800 22px/1 system-ui,sans-serif;cursor:pointer}
+html[data-theme=night] .ndgvt button{background:rgba(255,255,255,.12);color:#ecfbf8;border-color:rgba(255,255,255,.28)}
+.ndgvt .ndgvx{background:#0f1f22;color:#fff;border-color:transparent;font-size:18px}
 html[data-theme=night] .ndgvt .ndgvx{background:#ecfbf8;color:#05171a}
 .ndgvs{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-x pan-y;text-align:center}
 .ndgvs.grab{cursor:grabbing}
