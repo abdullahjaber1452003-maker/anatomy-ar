@@ -113,6 +113,34 @@ export function dqSummary(answers) {
   const right = (answers || []).filter(a => a.ok).sort((a, b) => ms(a) - ms(b) || (a.uid < b.uid ? -1 : 1));
   return { first: right[0] || null, right: right.length, n: (answers || []).length };
 }
+// ❓ who answered today (Abdullah, Nov 1 2026 7:43 PM «بدي أعرف بس مين اللي جاوبوا صح — بس خليك محتفظ إنه يبين مين هو أول واحد»):
+// ONLY the right answers (ok === true) are named, earliest first, and the first one stays 🥇; a wrong answer is never named for
+// students — just counted («✅ X جاوبو صح من أصل Y»). The site admin alone (his 7:44 PM «وكمان مبينلي … جاوبوا غلط») gets a folded
+// «❌ جاوبوا غلط» list under it. Each student still sees his own right/wrong result in the card itself.
+export const dqMs = a => (a && a.at && typeof a.at.toMillis === "function" ? a.at.toMillis() : a && a.at instanceof Date ? a.at.getTime() : a && typeof a.at === "number" ? a.at : Infinity);
+export function dqBoard(answers) {
+  const all = (answers || []).filter(a => a && a.uid), by = (a, b) => dqMs(a) - dqMs(b) || (a.uid < b.uid ? -1 : 1);
+  const right = all.filter(a => a.ok === true).sort(by), wrong = all.filter(a => a.ok !== true).sort(by);
+  return { right, wrong, first: right[0] || null, n: all.length };
+}
+export function dqClock(a) {
+  const t = dqMs(a); if (!isFinite(t)) return "";
+  try { return new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Beirut" }); } catch (e) { return ""; }
+}
+// o = { me, admin, name(uid, fallback) → safe html }
+export function dqWhoHtml(answers, o) {
+  o = o || {}; const b = dqBoard(answers), name = o.name || ((u, n) => String(n || "طالب").replace(/[<>&"]/g, "")), R = b.right, W = b.wrong;
+  const tm = a => { const c = dqClock(a); return c ? '<time class="dqtm" dir="ltr">' + c + "</time>" : ""; };
+  let h = '<div class="dqwho">';
+  if (R.length) h += '<p class="dqwh">✅ <b>يلّي جاوبوا صح</b> <small>(أوّل واحد فوق)</small></p><ol class="dqok">' +
+    R.map((a, i) => '<li class="' + (i ? "dqr" : "dqr dqfirst") + (a.uid === o.me ? " me" : "") + '"><span class="dqrk">' + (i + 1) + '</span><span class="dqnm">' + name(a.uid, a.name) + "</span>" +
+      (i ? "" : '<span class="dqtag">🥇 أوّل واحد</span>') + tm(a) + "</li>").join("") + "</ol>";
+  else h += '<p class="small dqnone">لسّا ما حدا جاوب صح — كون الأوّل!</p>';
+  if (b.n) h += '<p class="small dqcnt">✅ <b>' + R.length + "</b> جاوبو صح من أصل <b>" + b.n + "</b></p>";
+  if (o.admin && W.length) h += '<details class="dqwrong"><summary>❌ جاوبوا غلط (' + W.length + ') <small>🛡️ إنت بس بتشوفها</small></summary><ol class="dqbad">' +
+    W.map(a => '<li class="dqr"><span class="dqnm">' + name(a.uid, a.name) + "</span>" + tm(a) + "</li>").join("") + "</ol></details>";
+  return h + "</div>";
+}
 
 /* ---------- page ---------- */
 let A, F, N, esc, $;
@@ -343,7 +371,7 @@ async function openClass(el, cid) {
   if (C.canDel) $("#cdel").addEventListener("click", () => askDelete(cid, cls, cls.name, $("#cdelsec")));
   if (!C.member) {   // the admin looking at a class he isn't in: read-only, nothing gets written in his name
     const ro = '<p class="small">👀 إنت فاتح هالصف كأدمن (مش عضو فيه).</p>';
-    $("#cdqb").innerHTML = ro; $("#cexam").innerHTML = ro; loadProfiles(); return;
+    $("#cdqb").innerHTML = ro; $("#cexam").innerHTML = ro; dqAdminView($("#cdqb"), ro); loadProfiles(); return;
   }
   dqCard(); weekCard(); loadProfiles(); myClassBadges(); chatIn();
 }
@@ -382,6 +410,13 @@ async function dqLoad(dk) {
   const s = await F.getDocs(F.query(F.collection(A.db, "classes", C.cid, "dq"), F.where("day", "==", dk)));
   return s.docs.map(d => d.data());
 }
+// 🛡️ the admin opening a class he isn't in: today's question + who answered (right ones in order, 🥇 first; the wrong ones folded) — read only
+async function dqAdminView(box, ro) {
+  const dk = N.dayKey(), q = qById(dailyQid(C.cid, dk, window.QUIZ)); if (!q || !box) return;
+  let ans; try { ans = await dqLoad(dk); } catch (e) { return; }
+  box.innerHTML = ro + '<span class="qtopic">' + esc(topicName(q.t)) + '</span><p class="qq">' + q.q + "</p>" +
+    '<p class="small">✅ الجواب الصح: <b dir="ltr">' + L[q.a] + "</b> " + q.o[q.a] + "</p>" + dqWhoHtml(ans, { me: A.user.uid, admin: true, name: nameOf });
+}
 async function dqCard() {
   const box = $("#cdqb"), dk = N.dayKey(), q = qById(dailyQid(C.cid, dk, window.QUIZ)), me = A.user.uid;
   if (!q) { box.innerHTML = ""; return; }
@@ -395,9 +430,8 @@ async function dqCard() {
 // 👨‍🏫 الأستاذ عثمان (assets/osman.js) under a wrong daily answer (toggle «تعليقات الأستاذ عثمان», default on)
 function osmLine(ok) { const O = window.Osman; return !ok && O && O.on() ? O.bubble(O.pick("wrong")) : ""; }
 function dqDraw(box, q, ans, dk, note) {
-  const me = A.user.uid, mine = ans.find(a => a.uid === me), sum = dqSummary(ans);
-  const info = (sum.first ? '<p class="dqfirst">🥇 أول واحد جاوب صح: <b>' + nameOf(sum.first.uid, sum.first.name) + "</b></p>" : sum.n ? '<p class="small">لسّا ما حدا جاوب صح… كون إنت الأوّل 💪</p>' : '<p class="small">لسّا ما حدا جاوب. كون إنت الأوّل 💪</p>') +
-    '<p class="small">✅ <b>' + sum.right + "</b> جاوبو صح من أصل <b>" + sum.n + "</b></p>";
+  const me = A.user.uid, mine = ans.find(a => a.uid === me);
+  const info = dqWhoHtml(ans, { me, admin: isAdminUser(A.user), name: nameOf });
   let h = '<span class="qtopic">' + esc(topicName(q.t)) + '</span><p class="qq">' + q.q + "</p>";
   if (mine) {
     goalDone("dq");
