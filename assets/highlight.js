@@ -408,7 +408,7 @@
   // and the selection handles, which both hug the selection; at the top when the selection itself is down there (28r)
   function dockTop(r, ph) {
     var vh = w.innerHeight, nt = vh - 12, nav = d.querySelector(".hznav");
-    if (nav) { var nr = nav.getBoundingClientRect(); if (nr.height && nr.top > vh / 2 && nr.top < vh) nt = nr.top; }
+    if (nav) [nav, nav.querySelector(".hzmid")].forEach(function (el) { var nr = el && el.getBoundingClientRect(); if (nr && nr.height && nr.top > vh / 2 && nr.top < nt) nt = nr.top; });   // the raised 👨‍🏫 too
     var top = nt - ph - 10;
     if (r && r.bottom > top - 28 && r.top > 64 + ph + 40) { var hd = d.querySelector(".hzhead,header"), hb = hd ? hd.getBoundingClientRect().bottom : 0; top = Math.max(64, (hb > 0 && hb < vh / 3 ? hb : 56) + 10); }
     return Math.max(8, Math.min(top, vh - ph - 8));

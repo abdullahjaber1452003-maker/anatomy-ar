@@ -313,9 +313,9 @@ html[data-theme=night] .hlsw{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28)}
 .hltoast.hlout{opacity:0}.hltoast[hidden]{display:none}
 /* 28r: the toast never takes a tap, and moves up while the 🖍️ pill is docked at the bottom */
 .hltoast{pointer-events:none}
-html.hlpillon .hltoast{bottom:auto;top:calc(72px + env(safe-area-inset-top))}
 html.uion body.ui .hltoast{bottom:calc(100px + env(safe-area-inset-bottom))}
 html.uion.uifocus body.ui .hltoast,html.uion.uinavaway body.ui .hltoast{bottom:calc(16px + env(safe-area-inset-bottom))}
+html.hlpillon .hltoast{bottom:auto!important;top:calc(72px + env(safe-area-inset-top))!important}
 body.ui .topbar .uipen{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--hzedge);background:var(--uisoft);color:inherit;font-size:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 body.ui .topbar .uipen .hlsw{position:absolute;width:12px;height:12px;bottom:3px;inset-inline-end:3px;box-shadow:0 0 0 2px var(--hzbg,#fff)}
 body.ui .topbar .uipen.on{background:linear-gradient(135deg,var(--hzacc),var(--hzacc2));border-color:transparent;box-shadow:0 4px 14px rgba(15,118,110,.32)}
