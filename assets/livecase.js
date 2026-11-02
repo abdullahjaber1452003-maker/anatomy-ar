@@ -226,7 +226,7 @@ var LiveCore = (function () {
 
   if (typeof window !== "undefined") window.LiveCore = LiveCore;
   if (!d || !d.addEventListener) return;
-  var V = "20261028v", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028w", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -346,14 +346,18 @@ var LiveCore = (function () {
           if (!WR[r.k]) return;
           if (cur.n >= LiveCore.MAXEV) { res = { k: "full" }; return; }
           var prev = (s.data().pts || {})[M.uid];
-          if (prev && prev.t && prev.t.toMillis && Date.now() - prev.t.toMillis() < 2500) { res = { k: "slow" }; return; }
+          if (prev && prev.t && prev.t.toMillis && Date.now() - prev.t.toMillis() < 2500) { res = { k: "slow", ms: 2600 - (Date.now() - prev.t.toMillis()) }; return; }
           var n = cur.n + 1, e = { t: fs.serverTimestamp(), u: M.uid, n: M.name, p: pk, a: r.a, k: r.k, d: r.d }, pr = cur.pts[M.uid] || { p: 0, ok: 0, no: 0 }, up = { n: n };
           if (r.o != null) e.o = r.o;
           up["ev." + n] = e; up["pts." + M.uid] = { n: M.name, p: pr.p + r.d, ok: pr.ok + (r.k === "ok" ? 1 : 0), no: pr.no + (r.k === "ok" ? 0 : 1), t: fs.serverTimestamp() };
           tx.update(ref, up); tx.set(fs.doc(A.db, "live", id, "log", String(n)), e);
         });
       });
-    }).then(function () { return after(res || { k: "err" }); }, function (e) {
+    }).then(function () {
+      // 28w: the rules keep 2 s between two steps of one student — a quick 2nd answer waits its turn (the room shows «⏳») instead of failing
+      if (res && res.k === "slow" && !again) return new Promise(function (r) { setTimeout(r, Math.max(300, Math.min(2600, res.ms | 0))); }).then(function () { busy = false; return act(pk, a, opt, 1); });
+      return after(res || { k: "err" });
+    }, function (e) {
       busy = false; console.warn("nursin live act", e && e.code);
       if (e && e.code === "permission-denied") {        // a lost race / the 2 s rule (the doc still reads) → once more on fresh data; rules not published → preview
         return fs.getDoc(ref).then(function () { return again ? { k: "denied", code: e.code } : new Promise(function (r) { setTimeout(r, 2600); }).then(function () { return act(pk, a, opt, 1); }); },

@@ -28,6 +28,8 @@ html[data-theme="night"] .gcard.gclive{background:linear-gradient(135deg,rgba(69
 /* ---- the room overlay ---- */
 html.lcr-open,html.lcr-open body{overflow:hidden}
 html.lcr-open .osmt,html.lcr-open .stoast{z-index:2147483100}
+/* 28w: a badge toast over the room no longer eats the taps meant for the dossier options under it (it sat on the bottom of the open sheet for 6 s) */
+html.lcr-open .stoast,html.lcr-open .ltoast,html.lcr-open .ntoast{pointer-events:none!important}
 .lcr{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:#eef4f3;color:#13262b;font-size:14px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom,0px)}
 .lcr[hidden]{display:none}
 .lcr button{font:inherit;color:inherit;cursor:pointer}
@@ -51,7 +53,7 @@ html.lcr-open .osmt,html.lcr-open .stoast{z-index:2147483100}
 .lcr-end{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid rgba(0,0,0,.08)}
 .lcr-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .lcr-cv{display:block;touch-action:none;border-radius:12px}
-.lcr-fb{position:absolute;left:8px;right:8px;top:8px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 8px 26px rgba(0,0,0,.18);opacity:0;transform:translateY(-8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:3}
+.lcr-fb{position:absolute;left:8px;right:8px;top:8px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 8px 26px rgba(0,0,0,.18);opacity:0;transform:translateY(-8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9}
 .lcr-fb.on{opacity:1;transform:none}.lcr-fb p{margin:0}.lcr-fb.good{border-inline-start:5px solid #16a34a}.lcr-fb.bad{border-inline-start:5px solid #dc2626}.lcr-fb.ord{border-inline-start:5px solid #f59e0b}.lcr-fb.neutral{border-inline-start:5px solid #64748b}
 .lcr-bar{flex:none;display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,.9);border-top:1px solid rgba(0,0,0,.06)}
 .lcr-hl{font-size:12px;font-weight:700;white-space:nowrap}
@@ -150,3 +152,10 @@ html[data-theme="night"] .lcr-pbed{background:#2e1065;color:#ddd6fe;border-color
 .lcr-ova .lcr-btn{align-self:center;min-height:40px}
 html[data-theme="night"] .lcr-ovc{background:rgba(22,36,43,.86);border-color:rgba(255,255,255,.12);color:#e2eef0}
 html[data-theme="night"] .lcr-ovn{color:#5eead4}
+
+/* 28w: the result of a step shows above the open sheet (it used to sit under it → «nothing happens»); locked dossier fields say why */
+.lcr-lockb{margin:2px 0 8px;padding:8px 10px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74}.lcr-lockb p{margin:0 0 6px;font-size:13px}
+.lcr-lock{margin:4px 0 0;font-size:12.5px;opacity:.85}.lcr-lock span{font-weight:700}
+.lcr-now{border-color:#f59e0b!important;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
+.lcr-first h4{color:#b45309}
+html[data-theme="night"] .lcr-lockb{background:#2a1f12;border-color:#92400e}html[data-theme="night"] .lcr-first h4{color:#fbbf24}

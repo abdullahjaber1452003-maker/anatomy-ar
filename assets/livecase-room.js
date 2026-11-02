@@ -40,7 +40,10 @@
     pbed: { ar: "✋ {n} عم يشتغل عهالتخت هلّق — شوف شو بقي قبل ما تكبس", fr: "✋ {n} s'occupe de ce lit — vérifie ce qui reste avant d'agir" },
     pme: { ar: "إنت", fr: "Toi" },
     wait: { ar: "⏳ استنّى {t} قبل ما تجرّب هالخانة مرّة تانية", fr: "⏳ Attends {t} avant de réessayer ce champ" },
-    slow: { ar: "شوي شوي 🙂 جرّب كمان ثانية", fr: "Doucement 🙂 réessaie dans une seconde" }, over: { ar: "الحالة خلصت", fr: "Le cas est terminé" },
+    slow: { ar: "شوي شوي 🙂 جرّب كمان ثانية", fr: "Doucement 🙂 réessaie dans une seconde" },
+    saving: { ar: "⏳ عم تنحفظ…", fr: "⏳ Enregistrement…" },
+    lockF: { ar: "🔒 الملف بيفتح بعد:", fr: "🔒 Le dossier s'ouvre après :" }, lockOne: { ar: "🔒 بعد:", fr: "🔒 Après :" },
+    lockGo: { ar: "🩺 روح عالعناية", fr: "🩺 Aller aux soins" }, start: { ar: "① ابدأ هون", fr: "① Commence ici" }, over: { ar: "الحالة خلصت", fr: "Le cas est terminé" },
     err: { ar: "📶 ما انحفظت — جرّب كمان مرّة", fr: "📶 Pas enregistré — réessaie" }, full2: { ar: "الحالة تعبّت خطوات", fr: "Trop d'actions aujourd'hui" },
     before: { ar: "قبلها لازم:", fr: "Avant, il faut :" }, finishPh: { ar: "خلّصو {p} أوّل", fr: "Terminez d'abord {p}" },
     feed: { ar: "👥 شو صار", fr: "👥 Activité" }, did: { ar: "عمل", fr: "a fait" }, nobody: { ar: "لسّا ما حدا بلّش — كون الأوّل! 💪", fr: "Personne n'a commencé — sois le premier ! 💪" },
@@ -93,6 +96,9 @@
       '<div class="lcr-sheet" hidden><div class="lcr-shin"></div></div><div class="lcr-panel" hidden></div>';
     d.body.appendChild(ov);
     ov.addEventListener("click", onClick);
+    var sh0 = q(".lcr-sheet");
+    sh0.addEventListener("pointerdown", function () { sheetHold(true); });
+    ["pointerup", "pointercancel"].forEach(function (ev) { sh0.addEventListener(ev, function () { setTimeout(function () { sheetHold(false); }, 0); }); });
     cv = q(".lcr-cv"); cx = cv.getContext("2d"); cv.addEventListener("pointerdown", onTap);
     w.addEventListener("resize", function () { if (!ov.hidden) size(); });
   }
@@ -417,8 +423,13 @@
   function sheetPaint() {
     if (!sheet || !st) return; var el = q(".lcr-shin"), h = "";
     if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else h = stationHtml(sheet.k);
-    var sc = el.scrollTop; el.innerHTML = h; el.scrollTop = sc; bedHint();
+    // 28w: a repaint never lands under a finger (a snapshot arriving between touchstart and touchend swallowed the tap on iPhone) and an unchanged sheet is not rebuilt
+    if (sheetTouch) { sheetLate = true; return; }
+    if (h !== el.__h) { var sc = el.scrollTop; el.innerHTML = h; el.__h = h; el.scrollTop = sc; }
+    bedHint();
   }
+  var sheetTouch = false, sheetLate = false;
+  function sheetHold(on) { sheetTouch = on; if (!on && sheetLate) { sheetLate = false; setTimeout(function () { if (!sheetTouch) sheetPaint(); }, 380); } }
   function head(t, sub) { return '<div class="lcr-sh"><b>' + t + "</b>" + (sub ? "<small>" + sub + "</small>" : "") + '<button type="button" class="lcr-shx" data-lcclose="1" aria-label="' + esc(u("close")) + '">✕</button></div>'; }
   function bedSheet(k, tab) { sheetOpen("bed", k, tab); }
   function bedHtml(k, tab) {
@@ -429,8 +440,10 @@
     if (tab === "file") return h + fileHtml(x);
     if (tab === "story") return h + storyHtml(x);
     h += '<p class="lcr-who">' + esc(T(p.who)) + "</p>";
+    var acc0 = x.by.acc && !x.done.acc;                         // 28w: «🤝 استقبال» was the last button of the sheet — while not done it comes first
+    if (acc0) h += '<div class="lcr-grp lcr-first"><h4>' + esc(u("start")) + '</h4><div class="lcr-acts">' + nowBtn("acc") + "</div></div>";
     GROUPS.forEach(function (g) {
-      var btns = g[1].filter(function (a) { return D.A[a] && D.A[a].at === "bed"; }).map(function (a) {
+      var btns = g[1].filter(function (a) { return D.A[a] && D.A[a].at === "bed" && !(acc0 && a === "acc"); }).map(function (a) {
         var A = D.A[a], s = x.by[a], done = s && x.done[s.id], need = A.need, has = !need || hands.indexOf(need) > -1;
         return '<button type="button" class="lcr-act' + (done ? " done" : "") + (has ? "" : " need") + '" data-lcact="' + a + '">' + (done ? "✅ " : "") + A.ic + " " + esc(T(A).replace(/^(عطي |Donner : )/, "")) +
           (done ? '<small>' + esc(u("by") + " " + done.n) + "</small>" : !has ? "<small>" + esc((D.I[need] || {}).ic || "") + " ✋?</small>" : "") + "</button>";
@@ -447,10 +460,24 @@
       '<p class="small lcr-src">' + esc(T(st.cs.src)) + ' · <a href="' + st.cs.href + '">' + (FR() ? "📖 la leçon" : "📖 الدرس") + "</a></p></div>";
   }
   function fieldAnswer(x, f, cs) { var qd = C.opts(D, cs || st.cs, x.p, f); return qd.o[qd.a]; }
+  function nowBtn(a) { var A = D.A[a]; return A ? '<button type="button" class="lcr-act lcr-now" data-lcact="' + a + '">' + A.ic + " " + esc(T(A).replace(/^(عطي |Donner : )/, "")) + "</button>" : ""; }
+  // 28w: which steps still lock this field (null = it can be filled now)
+  function fieldLock(x, s) {
+    if (!s || x.done[s.id] || C.avail(x, s)) return null;
+    var m = C.missing(x, s), aft = m.filter(function (q) { return s.after.indexOf(q.id) > -1; }), ph = m.filter(function (q) { return q.ph < s.ph; });
+    return { m: m, aft: aft, ph: ph, low: ph.length ? Math.min.apply(null, ph.map(function (q) { return q.ph; })) : 0 };
+  }
   function fileHtml(x) {
     var order = ["id", "motif", "all", "ant", "tt", "cst", "gcs", "hend", "surv", "tr"], h = '<div class="lcr-file"><p class="lcr-fh">📁 ' + (FR() ? "Dossier de soins — fiche d'admission" : "Dossier de soins — ملف الدخول (ملف التمريض)") + "</p>";
+    var ban = [];                                                 // the steps that keep the admission fields closed (usually ① 🤝 Accueil)
+    order.forEach(function (f) { var s = x.by["f_" + f], lk = s && s.ph <= 2 && fieldLock(x, s); if (lk) lk.ph.forEach(function (q) { if (ban.indexOf(q) < 0) ban.push(q); }); });
+    if (ban.length && !st.end) {
+      var go = ban.filter(function (q) { return q.kind === "act" && D.A[q.a] && D.A[q.a].at === "bed" && !D.A[q.a].need; });
+      h += '<div class="lcr-lockb" role="note"><p><b>' + esc(u("lockF")) + "</b> " + esc(ban.slice(0, 3).map(L.stepName).join(" + ")) + "</p>" +
+        '<div class="lcr-acts">' + go.map(function (q) { return nowBtn(q.a); }).join("") + (go.length < ban.length ? '<button type="button" class="lcr-act" data-lctab="care">' + esc(u("lockGo")) + "</button>" : "") + "</div></div>";
+    }
     order.forEach(function (f) {
-      var F = D.fields[f], s = x.by["f_" + f], dn = s && x.done[s.id], key = x.k + f, isOpen = openQ === key;
+      var F = D.fields[f], s = x.by["f_" + f], dn = s && x.done[s.id], key = x.k + f, isOpen = openQ === key, lk = null;
       h += '<div class="lcr-fld' + (dn ? " done" : "") + '"><div class="lcr-fl"><b>' + F.ic + " " + esc(T(F)) + "</b>" + (FR() ? "" : ' <small dir="ltr">' + esc(F.fr) + "</small>") + "</div>";
       if (dn) h += '<div class="lcr-fv">' + esc(T(fieldAnswer(x, f))) + '<small> · ✍️ ' + esc(dn.n) + " " + fmtT(dn.t) + "</small></div>";
       else if (isOpen) {
@@ -460,6 +487,9 @@
         if (f === "cst") h += x.done.mon ? '<p class="lcr-cst" dir="ltr">TA ' + Math.round(x.v.sys) + "/" + Math.round(x.v.dia) + " · FC " + Math.round(x.v.fc) + " · FR " + Math.round(x.v.fr) + " · SpO₂ " + Math.round(x.v.spo2) + "% · T° " + x.v.t.toFixed(1) + "</p>" : '<p class="small">' + esc(u("mon0")) + "</p>";
         if (cl) h += '<p class="lcr-cool">' + esc(u("wait", { t: L.left(cl - Date.now() + 59e3) })) + "</p>";
         h += '<div class="lcr-opts">' + qd.o.map(function (o, i) { return '<button type="button" class="lcr-opt" data-lcopt="' + i + '" data-lcf="' + f + '"' + (cl ? " disabled" : "") + ">" + esc(T(o)) + "</button>"; }).join("") + "</div></div>";
+      } else if ((lk = fieldLock(x, s)) && !st.end) {
+        var why = lk.aft.length ? lk.aft.slice(0, 2).map(L.stepName).join(" + ") : lk.low ? T(U["ph" + lk.low]) : lk.m.slice(0, 2).map(L.stepName).join(" + ");
+        h += '<p class="lcr-lock"><span>' + esc(u("lockOne")) + "</span> " + esc(why) + "</p>" + (lk.aft.length && lk.aft[0].kind === "act" && D.A[lk.aft[0].a] && !D.A[lk.aft[0].a].need ? '<div class="lcr-acts">' + nowBtn(lk.aft[0].a) + "</div>" : "");
       } else h += '<button type="button" class="lcr-fill" data-lcq="' + f + '"><span>' + esc(u("notYet")) + "</span> " + esc(u("fill")) + "</button>";
       h += "</div>";
     });
@@ -496,17 +526,22 @@
     if (A && A.need && hands.indexOf(A.need) < 0) { var I = D.I[A.need], S = E.stations[I.st]; return say("ord", u("needItem", { i: I.ic + " " + T(I), s: S.ic + " " + T(S) })); }
     if (A && A.needDone && !x.done[A.needDone]) return say("ord", u("needVvp"));
     if (A && A.need && D.I[A.need].rx && !x.done.call) return say("ord", u("needCall"));
-    L.act(k, a, opt).then(function (r) { result(k, a, r); }).then(null, function (e) { console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
+    // 28w: steps queue one after the other (a quick 2nd answer used to bounce off the 2 s spacing); a step that takes a moment shows «⏳»
+    var tw = setTimeout(function () { say("neutral", u("saving")); }, 600);
+    actQ = actQ.then(function () { return L.act(k, a, opt); }).then(function (r) { clearTimeout(tw); result(k, a, r); }, function (e) { clearTimeout(tw); console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
   }
+  var actQ = Promise.resolve();
   function result(k, a, r) {
     var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d : "";
+    // 28w: close only THIS field's question — the answer of the field before (queued, saved a second later) used to close the one being answered
+    function shut() { if (openQ === k + String(a).replace(/^f_/, "")) openQ = null; }
     if ((r.k === "ok" || r.k === "bad") && A && A.need) { var I = D.I[A.need], j = hands.indexOf(A.need); if (I && !I.keep && j > -1) { hands.splice(j, 1); slots(); } }
-    if (r.k === "ok") { say("good", u("ok") + pts + " · " + L.stepName(r.s), T(r.s.why) || (r.s.kind === "file" ? T(fieldAnswer(x, r.s.f)) : "")); if (r.s.kind === "file") openQ = null; }
+    if (r.k === "ok") { say("good", u("ok") + pts + " · " + L.stepName(r.s), T(r.s.why) || (r.s.kind === "file" ? T(fieldAnswer(x, r.s.f)) : "")); if (r.s.kind === "file") shut(); }
     else if (r.k === "bad") { say("bad", u("bad") + pts + " · " + L.actName(a), T(r.why)); if (w.Osman && w.Osman.wrong) try { w.Osman.wrong(); } catch (e) {} }
     else if (r.k === "ord") { var m = r.miss || [], sm = m.filter(function (s) { return s.ph === r.s.ph; }); say("ord", u("ord") + pts + " · " + L.stepName(r.s), sm.length ? u("before") + " " + sm.slice(0, 2).map(L.stepName).join(" + ") : u("finishPh", { p: T(U["ph" + (m[0] ? m[0].ph : r.s.ph)]) })); }
     else if (r.k === "neu") say("neutral", u("neu") + pts, u("neuWhy"));
-    else if (r.k === "no") { say("bad", u("no") + pts, T(r.why)); openQ = null; }
-    else if (r.k === "repeat") { var dn = r.s && x.done[r.s.id]; say("neutral", dn && dn.u !== L.me().uid ? u("repeat", { n: dn.n }) : u("repeat0")); openQ = null; }
+    else if (r.k === "no") { say("bad", u("no") + pts, T(r.why)); shut(); }
+    else if (r.k === "repeat") { var dn = r.s && x.done[r.s.id]; say("neutral", dn && dn.u !== L.me().uid ? u("repeat", { n: dn.n }) : u("repeat0")); shut(); }
     else if (r.k === "wait") say("ord", u("wait", { t: L.left(r.until - Date.now() + 59e3) }));
     else if (r.k === "slow" || r.k === "busy") say("neutral", u("slow"));
     else if (r.k === "over") say("neutral", u("over"));
@@ -519,6 +554,7 @@
     if (sheet) sheetPaint();
   }
   function onClick(e) {
+    sheetTouch = false;                                          // the click ends the gesture: what it changes paints at once
     var t = e.target.closest ? e.target.closest("button,a") : null; if (!t) return;
     var g = function (k) { return t.getAttribute(k); };
     if (g("data-lcx")) return close();
