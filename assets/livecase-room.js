@@ -46,7 +46,16 @@
     feed: { ar: "👥 شو صار", fr: "👥 Activité" }, did: { ar: "عمل", fr: "a fait" }, nobody: { ar: "لسّا ما حدا بلّش — كون الأوّل! 💪", fr: "Personne n'a commencé — sois le premier ! 💪" },
     board: { ar: "🏆 نقاط هالحالة", fr: "🏆 Points de ce cas" }, mine: { ar: "نقاطك", fr: "Tes points" },
     endOk: { ar: "✅ برافو للفريق! المريضين صارو مستقرّين", fr: "✅ Bravo l'équipe ! Les deux patients sont stables" },
-    endLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" }, endTime: { ar: "⏰ خلص وقت الحالة", fr: "⏰ Le temps du cas est écoulé" },
+    endLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" },
+    ended: { ar: "🏁 انتهت الحالة", fr: "🏁 Cas terminé" }, nextIn: { ar: "⏳ الحالة الجاية بعد", fr: "⏳ Prochain cas dans" },
+    endNobody: { ar: "🏁 الحالة خلصت — شوف 📋 الخطوات الصح", fr: "🏁 Cas terminé — vois 📋 les bonnes étapes" },
+    seeSteps: { ar: "📋 الخطوات الصح", fr: "📋 Bonnes étapes" },
+    retry: { ar: "⏳ الحالة عم تتحضّر — جرّب كمان شوي", fr: "⏳ Le cas se prépare — réessaie dans un instant" },
+    denied: { ar: "🔒 ما انحفظت خطوتك — السيرفر رفضها", fr: "🔒 Action refusée par le serveur" },
+    deniedWhy: { ar: "جرّب كمان شوي. إذا ضلّت هيك سكّر الغرفة وارجع فوت.", fr: "Réessaie dans un moment ; sinon ferme la salle et reviens." },
+    offline: { ar: "📶 ما في إنترنت — ما انحفظت خطوتك", fr: "📶 Pas de connexion — action non enregistrée" },
+    errWhy: { ar: "تأكّد من الإنترنت وجرّب كمان مرّة.", fr: "Vérifie ta connexion et réessaie." },
+    pushErr: { ar: "⚠️ ما قدرت غيّر الإشعارات — جرّب كمان مرّة", fr: "⚠️ Impossible de changer les alertes — réessaie" }, endTime: { ar: "⏰ خلص وقت الحالة", fr: "⏰ Le temps du cas est écoulé" },
     nextCase: { ar: "حالة جديدة بكرا الساعة 12 بالليل 🌙", fr: "Nouveau cas demain à minuit 🌙" },
     steps: { ar: "📋 الخطوات الصح بالترتيب", fr: "📋 Les bonnes étapes, dans l'ordre" }, wrongs: { ar: "❌ شو انعمل غلط", fr: "❌ Ce qui a été fait de travers" },
     helped: { ar: "🏆 مين ساهم", fr: "🏆 Qui a aidé" }, noWrong: { ar: "ولا غلطة 👏", fr: "Aucune erreur 👏" }, missed: { ar: "ما انعملت", fr: "Non fait" },
@@ -78,7 +87,7 @@
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
       '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
-      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div></div>' +
+      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div></div>' +
       '<div class="lcr-bar"><span class="lcr-hl">' + esc(u("hands")) + '</span><button type="button" class="lcr-slot" data-lcslot="0"></button><button type="button" class="lcr-slot" data-lcslot="1"></button>' +
       '<button type="button" class="lcr-feedb" data-lcfeed="1"></button></div>' +
       '<div class="lcr-sheet" hidden><div class="lcr-shin"></div></div><div class="lcr-panel" hidden></div>';
@@ -102,7 +111,10 @@
   }
   function onState(s, m) {
     st = s; mode = m; if (!ov || ov.hidden || !s) return;
-    var tm = q(".lcr-tm"); tm.textContent = s.end ? "—" : "⏳ " + L.left(s.t1 - Date.now());
+    // 28v: an ended case is shown as ended everywhere in the room (dimmed room + «🏁 انتهت الحالة» card + countdown to the next one)
+    ov.classList.toggle("ended", !!s.end); if (!s.end) endSeen = false;
+    var tm = q(".lcr-tm"); tm.textContent = s.end ? "⏭️ " + L.left(s.t1 - Date.now()) : "⏳ " + L.left(s.t1 - Date.now());
+    overPaint();
     var M = L.me(), mine = (s.pts[M.uid] || {}).p | 0; q(".lcr-sc").textContent = "🏅 " + (mine > 0 ? "+" : "") + mine;
     var ban = q(".lcr-ban"), why = L.why();
     ban.className = "lcr-ban " + (m === "shared" ? "sh" : "pv");
@@ -116,7 +128,7 @@
     if (sheet) sheetPaint();
     if (panel === "feed") feedPanel();
     events();
-    if (s.end && !endSeen) { endSeen = true; setTimeout(function () { if (!panel) endPanel(); }, 900); }
+    if (s.end && !endSeen) { endSeen = true; sheetClose(); nurse.pts = []; nurse.goal = null; setTimeout(function () { if (!panel) endPanel(); }, 900); }
   }
   // a patient changed bucket since we last looked → one line (📉 / 📈) like the push the worker sends
   function events() {
@@ -126,7 +138,7 @@
     var el = q(".lcr-pts"); if (!el || !st) return;
     if (st.end) {
       var lost = st.end.w === "lost" ? X(st.end.pk) : null;
-      el.innerHTML = '<div class="lcr-end"><b>' + esc(st.end.w === "ok" ? u("endOk") : lost ? u("endLost", { n: nm(lost) }) : u("endTime")) + "</b><small>" + esc(u("nextCase")) + '</small><button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeEnd")) + "</button></div>";
+      el.innerHTML = '<div class="lcr-end"><b>' + esc(u("ended") + " · " + endWhy()) + "</b><small>⏳ " + esc(L.nextWords(st.t1 - Date.now())) + " 🌙</small></div>";
       return;
     }
     el.innerHTML = st.P.map(function (x, i) {
@@ -135,6 +147,26 @@
       return '<button type="button" class="lcr-pc ' + x.st + '" data-lcbed="' + pk(i) + '"><span class="lcr-pn"><b>🛏️' + (i + 1) + " " + esc(nm(x)) + '</b><small>' + x.p.age + " " + esc(u("ageY")) + " · " + (x.p.sex === "m" ? "♂" : "♀") + '</small></span><span class="lcr-ps">' + esc(L.stLabel(x.st)) + "</span>" + vit +
         '<span class="lcr-pg"><i style="width:' + pct + '%"></i></span><small class="lcr-pp">' + esc(T(U["ph" + x.ph])) + " · " + x.n + "/" + x.tot + "</small></button>";
     }).join("");
+  }
+  function endWhy() { var e = st && st.end; if (!e) return ""; var lost = e.w === "lost" ? X(e.pk) : null; return e.w === "ok" ? u("endOk") : lost ? u("endLost", { n: nm(lost) }) : u("endTime"); }
+  // 28v: the «🏁 انتهت الحالة» card over the (dimmed) room — it also takes the taps, so the room never looks alive while it is closed
+  var overKey = "", overT = 0;
+  function overPaint() {
+    var el = q(".lcr-over"); if (!el || !st) return;
+    if (!st.end) { if (!el.hidden) { el.hidden = true; el.innerHTML = ""; overKey = ""; } return; }
+    var k = st.id + st.end.w + (FR() ? "fr" : "ar");
+    if (k !== overKey) {
+      overKey = k; el.hidden = false;
+      el.innerHTML = '<div class="lcr-ovc" role="status"><b class="lcr-ovt">' + esc(u("ended")) + '</b><p class="lcr-ovw">' + esc(endWhy()) + "</p>" +
+        '<p class="lcr-ovn">' + esc(u("nextIn")) + ' <b class="lcr-ovcd" dir="ltr"></b></p><div class="lcr-ova">' +
+        '<button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeSteps")) + '</button><button type="button" class="lcr-btn" data-lcarch="1">' + esc(u("archive")) + "</button></div></div>";
+    }
+    overTick();
+  }
+  function overTick() {
+    if (!st || !st.end) return; var cd = q(".lcr-ovcd"); if (!cd) return;
+    var ms = Math.max(0, st.t1 - Date.now()), s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sc = s % 60;
+    var t = h + ":" + (m < 10 ? "0" : "") + m + ":" + (sc < 10 ? "0" : "") + sc; if (cd.textContent !== t) cd.textContent = t;
   }
   function lv(k, v) {
     if (k === "fc") return v < 50 || v > 120 ? "r" : v < 60 || v > 100 ? "o" : "g";
@@ -148,7 +180,7 @@
   }
   function feedLine() {
     var b = q(".lcr-feedb"); if (!b || !st) return;
-    var e = st.ev[st.ev.length - 1]; b.textContent = e ? evText(e) : u("nobody");
+    var e = st.ev[st.ev.length - 1]; b.textContent = e ? evText(e) : st.end ? u("endNobody") : u("nobody");
   }
 
   /* ---------------- canvas room ---------------- */
@@ -167,6 +199,7 @@
       var r = R.walk(nurse, nurse.pts, dt); nurse.x = r.x; nurse.y = r.y; nurse.dir = r.dir; nurse.walkT += dt;
       if (r.done) { nurse.walkT = 0; mark = null; if (nurse.goal) { var g = nurse.goal; nurse.goal = null; arrive(g); } }
     }
+    if (st && st.end && ts - overT > 500) { overT = ts; overTick(); }
     presFrame(dt);
     draw(ts / 1000);
   }
@@ -357,6 +390,7 @@
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
   function onTap(e) {
+    if (st && st.end) { e.preventDefault(); return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); }   // 28v: never a dead tap
     if (sheet || panel || !G) return; e.preventDefault();
     var p = toL(e), k = R.hitStation(p.x, p.y, 6);
     if (k) return goTo(k);
@@ -455,13 +489,14 @@
     clearTimeout(fbT); fbT = setTimeout(function () { f.classList.remove("on"); }, kind === "bad" || kind === "ord" ? 6000 : 3800);
   }
   function doAct(k, a, opt) {
-    if (!st || st.end) return say("neutral", u("over"));
+    if (!st) return say("ord", u("retry"));
+    if (st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now()));
     var A = D.A[a], x = X(k);
     if (A && A.at === "bed" && !washed) return say("ord", u("wash"));
     if (A && A.need && hands.indexOf(A.need) < 0) { var I = D.I[A.need], S = E.stations[I.st]; return say("ord", u("needItem", { i: I.ic + " " + T(I), s: S.ic + " " + T(S) })); }
     if (A && A.needDone && !x.done[A.needDone]) return say("ord", u("needVvp"));
     if (A && A.need && D.I[A.need].rx && !x.done.call) return say("ord", u("needCall"));
-    L.act(k, a, opt).then(function (r) { result(k, a, r); });
+    L.act(k, a, opt).then(function (r) { result(k, a, r); }).then(null, function (e) { console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
   }
   function result(k, a, r) {
     var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d : "";
@@ -477,7 +512,10 @@
     else if (r.k === "over") say("neutral", u("over"));
     else if (r.k === "full") say("neutral", u("full2"));
     else if (r.k === "rules") say("neutral", u("soon"));
-    else say("ord", u("err"));
+    else if (r.k === "retry") say("ord", u("retry"), r.code ? u("errWhy") + " (" + r.code + ")" : "");
+    else if (r.k === "denied") say("bad", u("denied"), u("deniedWhy"));
+    else if (r.code === "offline" || r.code === "unavailable") say("bad", u("offline"), u("errWhy"));
+    else say("bad", u("err"), u("errWhy") + (r.code ? " (" + r.code + ")" : ""));   // 28v: every failed write is said out loud
     if (sheet) sheetPaint();
   }
   function onClick(e) {
@@ -491,7 +529,7 @@
     if (g("data-lcact")) return doAct(sheet.k, g("data-lcact"));
     if (g("data-lcq")) { openQ = sheet.k + g("data-lcq"); return sheetPaint(); }
     if (g("data-lcopt")) return doAct(sheet.k, "f_" + g("data-lcf"), +g("data-lcopt"));
-    if (g("data-lccall")) { var kc = g("data-lccall"); return L.act(kc, "call").then(function (r) { result(kc, "call", r); }); }
+    if (g("data-lccall")) { var kc = g("data-lccall"); if (st && st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); return L.act(kc, "call").then(function (r) { result(kc, "call", r); }).then(null, function () { say("bad", u("err"), u("errWhy")); }); }
     if (g("data-lcfile")) return bedSheet(g("data-lcfile"), "file");
     if (g("data-lctake")) { var it = g("data-lctake"), j = hands.indexOf(it); if (j > -1) hands.splice(j, 1); else if (hands.length >= 2) say("neutral", u("full")); else hands.push(it); slots(); return sheetPaint(); }
     if (g("data-lcslot") != null) { var s = +g("data-lcslot"); if (hands[s]) { hands.splice(s, 1); slots(); } return; }
@@ -500,7 +538,7 @@
     if (g("data-lcarch")) return archPanel();
     if (g("data-lcday")) return archOne(g("data-lcday"));
     if (g("data-lcpush")) return pushPanel();
-    if (g("data-lcpset")) { L.setPush(g("data-lcpset") === "1").then(function () { pushPanel(); }); return; }
+    if (g("data-lcpset")) { L.setPush(g("data-lcpset") === "1").then(function (ok) { if (!ok) say("bad", u("pushErr")); pushPanel(); }); return; }
   }
 
   /* ---------------- panels: feed, end record, archive, push ---------------- */
@@ -565,7 +603,7 @@
   /* ---------------- the games.html card + #live ---------------- */
   function card() {
     var c = d.querySelector("[data-live]"); if (!c) return;
-    L.start(function (s) { if (!s) return; var b = c.querySelector(".gbest"); if (b) b.textContent = s.end ? (FR() ? "Terminé — voir les bonnes étapes" : "خلصت — شوف الخطوات الصح") : L.leftWords(s.t1 - Date.now()) + " · " + s.P.map(function (x) { return T(x.p.nm).split(" ")[0] + " " + L.stLabel(x.st).split(" ")[0]; }).join(" · "); });
+    L.start(function (s) { if (!s) return; var b = c.querySelector(".gbest"); if (b) b.textContent = s.end ? u("ended") + " · " + L.nextWords(s.t1 - Date.now()) : L.leftWords(s.t1 - Date.now()) + " · " + s.P.map(function (x) { return T(x.p.nm).split(" ")[0] + " " + L.stLabel(x.st).split(" ")[0]; }).join(" · "); });
     if (FR()) { var t1 = c.querySelector("b"), t2 = c.querySelector("small"); if (t1) t1.textContent = "Cas en direct — tous ensemble"; if (t2) t2.textContent = "Un cas par jour pour tout le site : deux patients, chacun fait l'étape suivante, + ou − points"; }
   }
   function init() {

@@ -115,7 +115,10 @@ var LiveCore = (function () {
   function state(D, doc, now) {
     doc = doc || {};
     var key = keyOf(doc.day) || dayKey(now), cs = caseById(D, doc.c) || caseById(D, pick(D, key));
-    var t0 = dayStart(key), t1 = dayStart(nextKey(key)), tD = t0 + DRIFT_FROM * H, tL = Math.min(now, t1);
+    // 28v: the patients only start to get worse once the case EXISTS — from 08:00, or from the moment the doc was created (at0, ms) when
+    // that was later (a case first created at 7 PM — the day the worker was deployed — used to be counted as neglected since 08:00 and was
+    // «lost» before anybody could see it). A doc without at0 (older days) keeps 08:00.
+    var t0 = dayStart(key), t1 = dayStart(nextKey(key)), a0 = +doc.at0 || 0, tD = Math.max(t0 + DRIFT_FROM * H, a0 < t1 ? a0 : 0), tL = Math.min(now, t1);
     var P = cs.pts.map(function (p) { var L = steps(D, cs, p), by = {}; L.forEach(function (s) { by[s.id] = s; }); return { p: p, k: p.k, L: L, by: by, done: {}, c: C0, lost: null, all: false, soins: false, bad: [], wrong: [], last: null }; });
     var evs = evList(doc), end = null, tp = t0, used = [];
     function upd(x) {
@@ -155,7 +158,7 @@ var LiveCore = (function () {
       x.next = end ? [] : x.L.filter(function (s) { return avail(x, s); });
       x.ph = x.next.length ? x.next[0].ph : 6;
     });
-    return { key: key, id: docId(key), cs: cs, t0: t0, t1: t1, end: end, P: P, ev: used, all: evs, pts: doc.pts || {}, n: doc.n | 0, now: now };
+    return { key: key, id: docId(key), cs: cs, t0: t0, t1: t1, from: tD, end: end, P: P, ev: used, all: evs, pts: doc.pts || {}, n: doc.n | 0, now: now };
   }
   function avail(x, s) {
     if (x.done[s.id]) return false;
@@ -223,7 +226,7 @@ var LiveCore = (function () {
 
   if (typeof window !== "undefined") window.LiveCore = LiveCore;
   if (!d || !d.addEventListener) return;
-  var V = "20261028u", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028v", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -257,18 +260,25 @@ var LiveCore = (function () {
   function prevDoc() {
     var id = LiveCore.docId(today()), p = lsGet(PK);
     if (p && p.day !== id) { var h = lsGet(HK) || []; if (p.n > 0 && !h.some(function (x) { return x.id === p.day; })) { h.unshift({ id: p.day, doc: p }); lsSet(HK, h.slice(0, 14)); } p = null; }
-    if (!p) { p = { day: id, c: LiveCore.pick(D, today()), n: 0, ev: {}, pts: {} }; }
+    if (!p) { p = { day: id, c: LiveCore.pick(D, today()), n: 0, ev: {}, pts: {}, at0: Date.now() }; lsSet(PK, p); }
+    else if (!p.at0) {                      // 28v: a preview from before at0 existed → its clock starts when it was first played (or now)
+      var t = 0; for (var k in (p.ev || {})) { var et = +(p.ev[k] || {}).t || 0; if (et && (!t || et < t)) t = et; }
+      p.at0 = t || Date.now(); lsSet(PK, p);
+    }
     return p;
   }
   function conv(snapData) {        // Firestore → plain numbers (timestamps in ms)
     var x = snapData || {}, o = { day: x.day, c: x.c, n: x.n | 0, ev: {}, pts: {} };
     var ms = function (t) { return t && t.toMillis ? t.toMillis() : t && t.seconds ? t.seconds * 1000 : +t || Date.now(); };
+    if (x.at0) o.at0 = ms(x.at0);          // 28v: when the case was created (worker v11 / the first student) — the patients' clock starts there
     for (var k in (x.ev || {})) { var e = x.ev[k]; if (e) o.ev[k] = { t: ms(e.t), u: e.u, n: e.n, p: e.p, a: e.a, k: e.k, d: e.d, o: e.o }; }
     for (var u in (x.pts || {})) { var r = x.pts[u] || {}; o.pts[u] = { n: r.n, p: r.p | 0, ok: r.ok | 0, no: r.no | 0, t: ms(r.t) }; }
     return o;
   }
   function emit() { var st = state(); subs.forEach(function (f) { try { f(st, mode); } catch (e) { console.warn("live", e); } }); }
-  function state() { if (!D) return null; return LiveCore.state(D, doc || { day: LiveCore.docId(today()), c: LiveCore.pick(D, today()) }, Date.now()); }
+  var born = {};                            // 28v: a case nobody created yet has not started — its clock starts when we first saw it missing
+  function bornAt(id) { return born[id] || (born[id] = Date.now()); }
+  function state() { if (!D) return null; var id = LiveCore.docId(today()); return LiveCore.state(D, doc || { day: id, c: LiveCore.pick(D, today()), at0: bornAt(id) }, Date.now()); }
   function setMode(m, wy) { mode = m; why = wy || ""; }
   function goPreview(wy) { if (unsub) { try { unsub(); } catch (e) {} unsub = null; } setMode("preview", wy); doc = prevDoc(); emit(); }
   var authWait = 0;
@@ -285,7 +295,7 @@ var LiveCore = (function () {
     try {
       if (unsub) unsub();
       unsub = fs.onSnapshot(fs.doc(A.db, "live", id), function (s) {
-        if (s.exists()) doc = conv(s.data({ serverTimestamps: "estimate" })); else doc = { day: id, c: LiveCore.pick(D, today()), n: 0, ev: {}, pts: {} };
+        if (s.exists()) doc = conv(s.data({ serverTimestamps: "estimate" })); else doc = { day: id, c: LiveCore.pick(D, today()), n: 0, ev: {}, pts: {}, at0: bornAt(id) };
         setMode("shared"); emit();
       }, function (e) { console.warn("nursin live:", e && e.code); goPreview(e && e.code === "permission-denied" ? "rules" : "net"); });
     } catch (e) { goPreview("net"); }
@@ -326,11 +336,12 @@ var LiveCore = (function () {
       return Promise.resolve(after(r));
     }
     var A = api, fs = A.fs, id = LiveCore.docId(today()), ref = fs.doc(A.db, "live", id), res = null;
-    var mk = function () { return fs.setDoc(ref, { day: id, c: (doc && doc.c) || LiveCore.pick(D, today()), n: 0, ev: {}, pts: {}, at0: fs.serverTimestamp() }).catch(function () {}); };
+    var mkErr = "";                          // 28v: a failed creation is no longer swallowed — the student hears why (see the room's result())
+    var mk = function () { return fs.setDoc(ref, { day: id, c: (doc && doc.c) || LiveCore.pick(D, today()), n: 0, ev: {}, pts: {}, at0: fs.serverTimestamp() }).catch(function (e) { mkErr = (e && e.code) || "err"; console.warn("nursin live create", mkErr); }); };
     return (doc && doc.n ? Promise.resolve() : fs.getDoc(ref).then(function (s) { if (!s.exists()) return mk(); }, function () {})).then(function () {
       return fs.runTransaction(A.db, function (tx) {
         return tx.get(ref).then(function (s) {
-          if (!s.exists()) { res = { k: "retry" }; return; }
+          if (!s.exists()) { res = { k: "retry", code: mkErr }; return; }
           var cur = conv(s.data()), st = LiveCore.state(D, cur, Date.now()), r = LiveCore.check(D, st, pk, a, opt); res = r;
           if (!WR[r.k]) return;
           if (cur.n >= LiveCore.MAXEV) { res = { k: "full" }; return; }
@@ -345,11 +356,15 @@ var LiveCore = (function () {
     }).then(function () { return after(res || { k: "err" }); }, function (e) {
       busy = false; console.warn("nursin live act", e && e.code);
       if (e && e.code === "permission-denied") {        // a lost race / the 2 s rule (the doc still reads) → once more on fresh data; rules not published → preview
-        return fs.getDoc(ref).then(function () { return again ? { k: "slow" } : new Promise(function (r) { setTimeout(r, 2600); }).then(function () { return act(pk, a, opt, 1); }); },
+        return fs.getDoc(ref).then(function () { return again ? { k: "denied", code: e.code } : new Promise(function (r) { setTimeout(r, 2600); }).then(function () { return act(pk, a, opt, 1); }); },
           function () { goPreview("rules"); return { k: "rules" }; });
       }
-      return { k: "err", code: e && e.code };
+      return { k: "err", code: (typeof navigator !== "undefined" && navigator.onLine === false) ? "offline" : (e && e.code) || "err" };
     });
+  }
+  function actSafe(pk, a, opt) {             // 28v: never a silent nothing — whatever happens, the room gets an answer to show
+    try { return act(pk, a, opt).then(null, function (e) { busy = false; console.warn("nursin live act", e); return { k: "err", code: (e && e.code) || "err" }; }); }
+    catch (e) { busy = false; console.warn("nursin live act", e); return Promise.resolve({ k: "err", code: "js" }); }
   }
   /* ---- 🔔 the student's own switch for the live-case notifications (users/{uid}.livePush; the worker reads it) ---- */
   function pushOn() { var A = fb(); var p = A && A.profile; return !(p && p.livePush === false); }
@@ -371,6 +386,8 @@ var LiveCore = (function () {
   function stLabel(k) { var s = STS[k] || STS.unst; return s.ic + " " + T(s); }
   function left(ms) { ms = Math.max(0, ms); var h = Math.floor(ms / 36e5), m = Math.floor(ms % 36e5 / 6e4); return h ? (FR() ? h + " h " + (m < 10 ? "0" : "") + m : h + ":" + (m < 10 ? "0" : "") + m) : (FR() ? m + " min" : m + " د"); }
   function leftWords(ms) { var h = Math.floor(Math.max(0, ms) / 36e5); return h >= 1 ? (FR() ? "encore " + h + " h" : "باقي " + h + (h === 1 ? " ساعة" : h === 2 ? " ساعتين" : h <= 10 ? " ساعات" : " ساعة")) : (FR() ? "encore " + Math.ceil(ms / 6e4) + " min" : "باقي " + Math.ceil(ms / 6e4) + " د"); }
+  function nextWords(ms) { var tm = Math.max(1, Math.ceil(Math.max(0, ms) / 6e4)), h = Math.floor(tm / 60), m = tm % 60;
+    return FR() ? "prochain dans " + (h ? h + " h " + (m < 10 ? "0" : "") + m : m + " min") : "الجاية بعد " + (h ? h + ":" + (m < 10 ? "0" : "") + m : m + " د"); }
   function stepName(s) {
     if (!s) return "";
     if (s.kind === "file") { var F = D.fields[s.f]; return F.ic + " " + T(F); }
@@ -382,8 +399,8 @@ var LiveCore = (function () {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;
     var cs = st.cs, ended = st.end, nm = function (x) { return T(x.p.nm).split(" ")[0]; };
     var pills = st.P.map(function (x) { return '<span class="hzlvp ' + x.st + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st)) + "</span>"; }).join("");
-    var top = ended ? (ended.w === "ok" ? (FR() ? "✅ Cas réussi — prochain cas demain" : "✅ نجحت الحالة — بكرا حالة جديدة") : ended.w === "lost" ? (FR() ? "💔 Cas terminé — revois les bonnes étapes" : "💔 خلصت الحالة — شوف الخطوات الصح") : (FR() ? "⏰ Temps écoulé" : "⏰ خلص الوقت"))
-      : leftWords(st.t1 - Date.now());
+    // 28v: an ended case says so plainly — «🏁 انتهت الحالة» + when the next one starts (never a card that still looks running)
+    var top = ended ? (FR() ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()) : leftWords(st.t1 - Date.now());
     // 👥 how many students are in the room right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
     var PR = W.LivePresRoom, ppl = !ended && mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1;
     if (ppl > 0) top += " · 👥 " + ppl;
@@ -403,7 +420,7 @@ var LiveCore = (function () {
       if (W.requestIdleCallback) W.requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 600);
     })();
   }
-  W.LiveCase = { load: load, start: start, off: off, act: act, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
+  W.LiveCase = { load: load, start: start, off: off, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
     archive: archive, pushOn: pushOn, setPush: setPush, stLabel: stLabel, left: left, leftWords: leftWords, stepName: stepName, actName: actName, T: T, esc: esc, FR: FR, homeCard: homeCard,
     cool: cool, PK: PK, HK: HK, preview: goPreview };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { if (d.getElementById("hz")) homeInit(); }); else if (d.getElementById("hz")) homeInit();
