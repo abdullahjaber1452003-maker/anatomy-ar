@@ -159,3 +159,13 @@ html[data-theme="night"] .lcr-ovn{color:#5eead4}
 .lcr-now{border-color:#f59e0b!important;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
 .lcr-first h4{color:#b45309}
 html[data-theme="night"] .lcr-lockb{background:#2a1f12;border-color:#92400e}html[data-theme="night"] .lcr-first h4{color:#fbbf24}
+
+/* 🏁 28x: each patient ends on his own — a finished bed stays (greyed, ✅ / 💔), the other one is still played */
+.lcr-pc.fin{opacity:.62;filter:grayscale(.55);background:#f1f5f9}.lcr-pc.fin.ok{opacity:.78;filter:grayscale(.25)}
+.lcr-pfin{font-weight:700;color:#0f766e}.lcr-pc.lost .lcr-pfin{color:#475569}
+.lcr-pover{display:flex;flex-direction:column;gap:4px;margin:6px 0 8px;padding:10px 12px;border-radius:14px;background:rgba(220,252,231,.85);border:1px solid #86efac}
+.lcr-pover.lost{background:rgba(226,232,240,.9);border-color:#cbd5e1}.lcr-pover b{font-size:14px}.lcr-pover small{font-size:12.5px;opacity:.85}.lcr-pover .lcr-acts{margin-top:4px}
+.lcr-fv.off{opacity:.6}.lcr-psteps{margin-top:6px}
+.hzlvp.fin{opacity:.72;filter:grayscale(.35)}
+html[data-theme="night"] .lcr-pc.fin{background:rgba(30,41,59,.7)}html[data-theme="night"] .lcr-pfin{color:#5eead4}
+html[data-theme="night"] .lcr-pover{background:rgba(20,83,45,.45);border-color:rgba(74,222,128,.4)}html[data-theme="night"] .lcr-pover.lost{background:rgba(51,65,85,.6);border-color:rgba(148,163,184,.35)}

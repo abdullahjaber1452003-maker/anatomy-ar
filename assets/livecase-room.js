@@ -50,7 +50,17 @@
     board: { ar: "🏆 نقاط هالحالة", fr: "🏆 Points de ce cas" }, mine: { ar: "نقاطك", fr: "Tes points" },
     endOk: { ar: "✅ برافو للفريق! المريضين صارو مستقرّين", fr: "✅ Bravo l'équipe ! Les deux patients sont stables" },
     endLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" },
-    ended: { ar: "🏁 انتهت الحالة", fr: "🏁 Cas terminé" }, nextIn: { ar: "⏳ الحالة الجاية بعد", fr: "⏳ Prochain cas dans" },
+    ended: { ar: "🏁 انتهت الحالة", fr: "🏁 Cas terminé" },
+    // 28x: each patient ends on his own; the other one keeps going
+    pOk: { ar: "✅ {n} استقرّ — برافو للفريق 👏", fr: "✅ {n} est stabilisé·e — bravo l'équipe 👏" }, pLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" },
+    pGoOn: { ar: "🛏️ {n} بعدو بحاجة إلكن — كمّلو معو هلّق", fr: "🛏️ {n} a encore besoin de vous — continuez avec lui/elle" },
+    pDone: { ar: "🏁 خلصت حالتو", fr: "🏁 Terminé" }, pOkF: { ar: "✅ {n} استقرّت — برافو للفريق 👏", fr: "✅ {n} est stabilisée — bravo l'équipe 👏" },
+    pGoOnF: { ar: "🛏️ {n} بعدا بحاجة إلكن — كمّلو معا هلّق", fr: "🛏️ {n} a encore besoin de vous — continuez avec elle" }, pDoneF: { ar: "🏁 خلصت حالتا", fr: "🏁 Terminé" },
+    pOverF: { ar: "🏁 {n} خلصت حالتا — ما في شي ينعمل هون", fr: "🏁 {n} : terminé — plus rien à faire ici" }, pGo: { ar: "🛏️ روح عند {n}", fr: "🛏️ Aller voir {n}" },
+    pOver: { ar: "🏁 {n} خلصت حالتو — ما في شي ينعمل هون", fr: "🏁 {n} : terminé — plus rien à faire ici" },
+    pRec: { ar: "📋 الخطوات الصح لـ {n}", fr: "📋 Les bonnes étapes de {n}" },
+    endMix: { ar: "✅ {a} صار مستقرّ · 💔 خسرنا {b}", fr: "✅ {a} stabilisé·e · 💔 nous avons perdu {b}" }, endMixF: { ar: "✅ {a} صارت مستقرّة · 💔 خسرنا {b}", fr: "✅ {a} stabilisée · 💔 nous avons perdu {b}" },
+    endLost2: { ar: "💔 خسرنا {a} و{b}", fr: "💔 Nous avons perdu {a} et {b}" }, nextIn: { ar: "⏳ الحالة الجاية بعد", fr: "⏳ Prochain cas dans" },
     endNobody: { ar: "🏁 الحالة خلصت — شوف 📋 الخطوات الصح", fr: "🏁 Cas terminé — vois 📋 les bonnes étapes" },
     seeSteps: { ar: "📋 الخطوات الصح", fr: "📋 Bonnes étapes" },
     retry: { ar: "⏳ الحالة عم تتحضّر — جرّب كمان شوي", fr: "⏳ Le cas se prépare — réessaie dans un instant" },
@@ -70,6 +80,7 @@
     gen: { ar: "🌐 معلومات عامة", fr: "🌐 Notions générales" }, mon0: { ar: "📟 ركّبو المونيتور لتبيّن الأرقام", fr: "📟 Posez le monitorage pour voir les chiffres" },
     gcsQ: { ar: "شو بيعمل المريض؟", fr: "Ce que fait le patient :" }, ageY: { ar: "سنة", fr: "ans" }
   };
+  function ug(k, x, r) { return u(x && x.p && x.p.sex === "f" && U[k + "F"] ? k + "F" : k, r); }   // 28x: the patient's gender (ليا استقرّت, بعدا…)
   function u(k, r) { var s = T(U[k]); for (var x in (r || {})) s = s.split("{" + x + "}").join(r[x]); return s; }
   var GY = [null, { ar: "ما بيفتح عيونو أبداً", fr: "N'ouvre pas les yeux" }, { ar: "بيفتح عيونو بس عالوجع", fr: "Ouvre les yeux à la douleur" }, { ar: "بيفتح عيونو لمّا تحكيه", fr: "Ouvre les yeux à la demande" }, { ar: "عيونو مفتوحة لحالو", fr: "Yeux ouverts spontanément" }];
   var GV = [null, { ar: "ما بيطلع منو صوت", fr: "Aucune réponse verbale" }, { ar: "أصوات ما بتنفهم", fr: "Sons incompréhensibles" }, { ar: "كلمات مش بمحلّها", fr: "Mots inappropriés" }, { ar: "بيحكي بس مشوّش", fr: "Confus" }, { ar: "بيحكي طبيعي وعارف وين هوّي", fr: "Orienté" }];
@@ -138,7 +149,15 @@
   }
   // a patient changed bucket since we last looked → one line (📉 / 📈) like the push the worker sends
   function events() {
-    st.P.forEach(function (x) { var p = prevSt[x.k]; if (p && p !== x.st) { var down = ["ok", "impr", "unst", "crit", "lost"].indexOf(x.st) > ["ok", "impr", "unst", "crit", "lost"].indexOf(p); say(down ? "bad" : "good", (down ? "📉 " : "📈 ") + nm(x) + ": " + L.stLabel(x.st)); } prevSt[x.k] = x.st; });
+    st.P.forEach(function (x) { var p = prevSt[x.k];
+      if (p && p !== x.st && x.over && !st.end) {                  // 28x: this one just finished, the other is still waiting
+        finSay(x); prevSt[x.k] = x.st; return;
+      }
+      if (p && p !== x.st) { var down = ["ok", "impr", "unst", "crit", "lost"].indexOf(x.st) > ["ok", "impr", "unst", "crit", "lost"].indexOf(p); say(down ? "bad" : "good", (down ? "📉 " : "📈 ") + nm(x) + ": " + L.stLabel(x.st)); } prevSt[x.k] = x.st; });
+  }
+  function finSay(x) {
+    if (!st || st.end || !x || !x.over) return; var o = st.P[x.k === "a" ? 1 : 0];
+    say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) }));
   }
   function cards() {
     var el = q(".lcr-pts"); if (!el || !st) return;
@@ -150,17 +169,25 @@
     el.innerHTML = st.P.map(function (x, i) {
       var v = x.v, mon = !!x.done.mon, pct = Math.round(x.n / x.tot * 100);
       var vit = mon ? '<span dir="ltr" class="lcr-v"><i class="' + lv("ta", v.sys) + '">' + Math.round(v.sys) + "/" + Math.round(v.dia) + '</i> <i class="' + lv("fc", v.fc) + '">♥' + Math.round(v.fc) + '</i> <i class="' + lv("spo2", v.spo2) + '">' + Math.round(v.spo2) + "%</i></span>" : '<span class="lcr-v off">📟 --</span>';
-      return '<button type="button" class="lcr-pc ' + x.st + '" data-lcbed="' + pk(i) + '"><span class="lcr-pn"><b>🛏️' + (i + 1) + " " + esc(nm(x)) + '</b><small>' + x.p.age + " " + esc(u("ageY")) + " · " + (x.p.sex === "m" ? "♂" : "♀") + '</small></span><span class="lcr-ps">' + esc(L.stLabel(x.st)) + "</span>" + vit +
-        '<span class="lcr-pg"><i style="width:' + pct + '%"></i></span><small class="lcr-pp">' + esc(T(U["ph" + x.ph])) + " · " + x.n + "/" + x.tot + "</small></button>";
+      var fin = x.over ? '<small class="lcr-pp lcr-pfin">' + esc(ug("pDone", x)) + " · " + esc(u("seeSteps")) + "</small>" : "";   // 28x: a finished bed stays, greyed
+      return '<button type="button" class="lcr-pc ' + x.st + (x.over ? " fin" : "") + '" data-lcbed="' + pk(i) + '"><span class="lcr-pn"><b>🛏️' + (i + 1) + " " + esc(nm(x)) + '</b><small>' + x.p.age + " " + esc(u("ageY")) + " · " + (x.p.sex === "m" ? "♂" : "♀") + '</small></span><span class="lcr-ps">' + esc(L.stLabel(x.st, x.p.sex)) + "</span>" + vit +
+        '<span class="lcr-pg"><i style="width:' + pct + '%"></i></span>' + (fin || '<small class="lcr-pp">' + esc(T(U["ph" + x.ph])) + " · " + x.n + "/" + x.tot + "</small>") + "</button>";
     }).join("");
   }
-  function endWhy() { var e = st && st.end; if (!e) return ""; var lost = e.w === "lost" ? X(e.pk) : null; return e.w === "ok" ? u("endOk") : lost ? u("endLost", { n: nm(lost) }) : u("endTime"); }
+  function endWhy(s) {                                         // 28x: ok (both stabilised) · lost (one or both) · mix (one ✅, one 💔) · time
+    s = s || st; var e = s && s.end; if (!e) return "";
+    var K = function (k) { return nm(s.P[k === "b" ? 1 : 0]); }, lo = e.lost || (e.pk ? [e.pk] : []), ok = e.ok || [];
+    if (e.w === "ok") return u("endOk");
+    if (e.w === "mix") return ug("endMix", s.P[ok[0] === "b" ? 1 : 0], { a: K(ok[0]), b: K(lo[0]) });
+    if (e.w === "lost") return lo.length > 1 ? u("endLost2", { a: K(lo[0]), b: K(lo[1]) }) : u("endLost", { n: K(lo[0] || "a") });
+    return u("endTime");
+  }
   // 28v: the «🏁 انتهت الحالة» card over the (dimmed) room — it also takes the taps, so the room never looks alive while it is closed
   var overKey = "", overT = 0;
   function overPaint() {
     var el = q(".lcr-over"); if (!el || !st) return;
     if (!st.end) { if (!el.hidden) { el.hidden = true; el.innerHTML = ""; overKey = ""; } return; }
-    var k = st.id + st.end.w + (FR() ? "fr" : "ar");
+    var k = st.id + st.end.w + (st.end.pk || "") + (FR() ? "fr" : "ar");
     if (k !== overKey) {
       overKey = k; el.hidden = false;
       el.innerHTML = '<div class="lcr-ovc" role="status"><b class="lcr-ovt">' + esc(u("ended")) + '</b><p class="lcr-ovw">' + esc(endWhy()) + "</p>" +
@@ -265,6 +292,10 @@
     var col = SC[x.st] || SC.unst, a = x.st === "crit" ? 0.35 + 0.3 * Math.sin(t * 6) : 0.5;
     cx.strokeStyle = col; cx.globalAlpha = a; cx.lineWidth = 3; rr(cx, s.x - 3, s.y - 3, s.w + 6, s.h + 6, 12); cx.stroke(); cx.globalAlpha = 1;
     label(cx, P, cxp, s.y + s.h + 12, "🛏️ " + T(x.p.nm).split(" ")[0] + " · " + L.stLabel(x.st).split(" ")[0], col);
+    if (x.over && !(st && st.end)) {                             // 28x: a finished bed is greyed with its result on it; the other bed stays alive
+      cx.fillStyle = night() ? "rgba(15,23,42,.5)" : "rgba(226,232,240,.6)"; rr(cx, s.x - 3, s.y - 3, s.w + 6, s.h + 6, 12); cx.fill();
+      label(cx, P, cxp, s.y + s.h / 2 + 4, x.over.w === "ok" ? "✅ " + (FR() ? "Stabilisé" : x.p.sex === "f" ? "استقرّت" : "استقرّ") : "💔 " + (FR() ? "Décédé" : "خسرناه"), col);
+    }
   }
   function draw(t) {
     if (!cv || !cx || !cv.width || !E) return;
@@ -434,11 +465,18 @@
   function bedSheet(k, tab) { sheetOpen("bed", k, tab); }
   function bedHtml(k, tab) {
     var x = X(k), p = x.p, i = k === "b" ? 2 : 1;
-    var h = head("🛏️" + i + " " + esc(nm(x)) + " · " + p.age + " " + esc(u("ageY")) + " · " + (p.sex === "m" ? "♂" : "♀"), esc(L.stLabel(x.st)) + " · " + esc(T(U["ph" + x.ph])) + " · ✅ " + x.n + "/" + x.tot);
+    var h = head("🛏️" + i + " " + esc(nm(x)) + " · " + p.age + " " + esc(u("ageY")) + " · " + (p.sex === "m" ? "♂" : "♀"), esc(L.stLabel(x.st, x.p.sex)) + " · " + esc(x.over ? ug("pDone", x) : T(U["ph" + x.ph])) + " · ✅ " + x.n + "/" + x.tot);
     h += '<p class="lcr-pbed" hidden></p>';
     h += '<div class="lcr-tabs" role="tablist">' + ["care", "file", "story"].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (t === tab) + '" class="lcr-tab' + (t === tab ? " on" : "") + '" data-lctab="' + t + '">' + esc(u(t)) + "</button>"; }).join("") + "</div>";
+    if (x.over && !st.end) {                                     // 28x: his case is finished — his steps stay, the other bed is one tap away
+      var o = st.P[k === "b" ? 0 : 1];
+      h += '<div class="lcr-pover ' + x.over.w + '" role="status"><b>' + esc(x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) })) + "</b>" +
+        (o.over ? "" : "<small>" + esc(ug("pGoOn", o, { n: nm(o) })) + "</small>") + '<div class="lcr-acts"><button type="button" class="lcr-btn on" data-lcrec="' + k + '">' + esc(u("pRec", { n: nm(x) })) + "</button>" +
+        (o.over ? "" : '<button type="button" class="lcr-btn" data-lcbed="' + o.k + '">' + esc(u("pGo", { n: nm(o) })) + "</button>") + "</div></div>";
+    }
     if (tab === "file") return h + fileHtml(x);
     if (tab === "story") return h + storyHtml(x);
+    if (x.over) return h + '<ol class="lcr-steps lcr-psteps">' + x.L.map(function (sp) { var dn = x.done[sp.id]; return '<li class="' + (dn ? "ok" : "miss") + '"><b>' + (dn ? "✅ " : "⬜ ") + esc(L.stepName(sp)) + '</b> <small class="lcr-byw">' + (dn ? "✍️ " + esc(dn.n) + " · " + fmtT(dn.t) : esc(u("missed"))) + "</small></li>"; }).join("") + "</ol>";
     h += '<p class="lcr-who">' + esc(T(p.who)) + "</p>";
     var acc0 = x.by.acc && !x.done.acc;                         // 28w: «🤝 استقبال» was the last button of the sheet — while not done it comes first
     if (acc0) h += '<div class="lcr-grp lcr-first"><h4>' + esc(u("start")) + '</h4><div class="lcr-acts">' + nowBtn("acc") + "</div></div>";
@@ -471,7 +509,7 @@
     var order = ["id", "motif", "all", "ant", "tt", "cst", "gcs", "hend", "surv", "tr"], h = '<div class="lcr-file"><p class="lcr-fh">📁 ' + (FR() ? "Dossier de soins — fiche d'admission" : "Dossier de soins — ملف الدخول (ملف التمريض)") + "</p>";
     var ban = [];                                                 // the steps that keep the admission fields closed (usually ① 🤝 Accueil)
     order.forEach(function (f) { var s = x.by["f_" + f], lk = s && s.ph <= 2 && fieldLock(x, s); if (lk) lk.ph.forEach(function (q) { if (ban.indexOf(q) < 0) ban.push(q); }); });
-    if (ban.length && !st.end) {
+    if (ban.length && !st.end && !x.over) {
       var go = ban.filter(function (q) { return q.kind === "act" && D.A[q.a] && D.A[q.a].at === "bed" && !D.A[q.a].need; });
       h += '<div class="lcr-lockb" role="note"><p><b>' + esc(u("lockF")) + "</b> " + esc(ban.slice(0, 3).map(L.stepName).join(" + ")) + "</p>" +
         '<div class="lcr-acts">' + go.map(function (q) { return nowBtn(q.a); }).join("") + (go.length < ban.length ? '<button type="button" class="lcr-act" data-lctab="care">' + esc(u("lockGo")) + "</button>" : "") + "</div></div>";
@@ -487,6 +525,8 @@
         if (f === "cst") h += x.done.mon ? '<p class="lcr-cst" dir="ltr">TA ' + Math.round(x.v.sys) + "/" + Math.round(x.v.dia) + " · FC " + Math.round(x.v.fc) + " · FR " + Math.round(x.v.fr) + " · SpO₂ " + Math.round(x.v.spo2) + "% · T° " + x.v.t.toFixed(1) + "</p>" : '<p class="small">' + esc(u("mon0")) + "</p>";
         if (cl) h += '<p class="lcr-cool">' + esc(u("wait", { t: L.left(cl - Date.now() + 59e3) })) + "</p>";
         h += '<div class="lcr-opts">' + qd.o.map(function (o, i) { return '<button type="button" class="lcr-opt" data-lcopt="' + i + '" data-lcf="' + f + '"' + (cl ? " disabled" : "") + ">" + esc(T(o)) + "</button>"; }).join("") + "</div></div>";
+      } else if (x.over || st.end) {
+        h += '<div class="lcr-fv off">⬜ ' + esc(u("missed")) + "</div>";   // 28x: a finished patient's file is read-only
       } else if ((lk = fieldLock(x, s)) && !st.end) {
         var why = lk.aft.length ? lk.aft.slice(0, 2).map(L.stepName).join(" + ") : lk.low ? T(U["ph" + lk.low]) : lk.m.slice(0, 2).map(L.stepName).join(" + ");
         h += '<p class="lcr-lock"><span>' + esc(u("lockOne")) + "</span> " + esc(why) + "</p>" + (lk.aft.length && lk.aft[0].kind === "act" && D.A[lk.aft[0].a] && !D.A[lk.aft[0].a].need ? '<div class="lcr-acts">' + nowBtn(lk.aft[0].a) + "</div>" : "");
@@ -522,6 +562,7 @@
     if (!st) return say("ord", u("retry"));
     if (st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now()));
     var A = D.A[a], x = X(k);
+    if (x && x.over) return overSay(x);                         // 28x: nothing more to do on a finished patient — the other one is waiting
     if (A && A.at === "bed" && !washed) return say("ord", u("wash"));
     if (A && A.need && hands.indexOf(A.need) < 0) { var I = D.I[A.need], S = E.stations[I.st]; return say("ord", u("needItem", { i: I.ic + " " + T(I), s: S.ic + " " + T(S) })); }
     if (A && A.needDone && !x.done[A.needDone]) return say("ord", u("needVvp"));
@@ -531,12 +572,14 @@
     actQ = actQ.then(function () { return L.act(k, a, opt); }).then(function (r) { clearTimeout(tw); result(k, a, r); }, function (e) { clearTimeout(tw); console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
   }
   var actQ = Promise.resolve();
+  function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) })); if (sheet) sheetPaint(); }
   function result(k, a, r) {
     var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d : "";
     // 28w: close only THIS field's question — the answer of the field before (queued, saved a second later) used to close the one being answered
     function shut() { if (openQ === k + String(a).replace(/^f_/, "")) openQ = null; }
     if ((r.k === "ok" || r.k === "bad") && A && A.need) { var I = D.I[A.need], j = hands.indexOf(A.need); if (I && !I.keep && j > -1) { hands.splice(j, 1); slots(); } }
-    if (r.k === "ok") { say("good", u("ok") + pts + " · " + L.stepName(r.s), T(r.s.why) || (r.s.kind === "file" ? T(fieldAnswer(x, r.s.f)) : "")); if (r.s.kind === "file") shut(); }
+    if (r.k === "ok") { say("good", u("ok") + pts + " · " + L.stepName(r.s), T(r.s.why) || (r.s.kind === "file" ? T(fieldAnswer(x, r.s.f)) : "")); if (r.s.kind === "file") shut();
+      setTimeout(function () { var y = X(k); if (y && y.over && !st.end) finSay(y); }, 1800); }   // 28x: that step finished him → say so after the step's own line
     else if (r.k === "bad") { say("bad", u("bad") + pts + " · " + L.actName(a), T(r.why)); if (w.Osman && w.Osman.wrong) try { w.Osman.wrong(); } catch (e) {} }
     else if (r.k === "ord") { var m = r.miss || [], sm = m.filter(function (s) { return s.ph === r.s.ph; }); say("ord", u("ord") + pts + " · " + L.stepName(r.s), sm.length ? u("before") + " " + sm.slice(0, 2).map(L.stepName).join(" + ") : u("finishPh", { p: T(U["ph" + (m[0] ? m[0].ph : r.s.ph)]) })); }
     else if (r.k === "neu") say("neutral", u("neu") + pts, u("neuWhy"));
@@ -545,6 +588,7 @@
     else if (r.k === "wait") say("ord", u("wait", { t: L.left(r.until - Date.now() + 59e3) }));
     else if (r.k === "slow" || r.k === "busy") say("neutral", u("slow"));
     else if (r.k === "over") say("neutral", u("over"));
+    else if (r.k === "pover") { overSay(X(k)); return; }
     else if (r.k === "full") say("neutral", u("full2"));
     else if (r.k === "rules") say("neutral", u("soon"));
     else if (r.k === "retry") say("ord", u("retry"), r.code ? u("errWhy") + " (" + r.code + ")" : "");
@@ -565,12 +609,13 @@
     if (g("data-lcact")) return doAct(sheet.k, g("data-lcact"));
     if (g("data-lcq")) { openQ = sheet.k + g("data-lcq"); return sheetPaint(); }
     if (g("data-lcopt")) return doAct(sheet.k, "f_" + g("data-lcf"), +g("data-lcopt"));
-    if (g("data-lccall")) { var kc = g("data-lccall"); if (st && st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); return L.act(kc, "call").then(function (r) { result(kc, "call", r); }).then(null, function () { say("bad", u("err"), u("errWhy")); }); }
+    if (g("data-lccall")) { var kc = g("data-lccall"); if (st && st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); if (st && X(kc).over) return overSay(X(kc)); return L.act(kc, "call").then(function (r) { result(kc, "call", r); }).then(null, function () { say("bad", u("err"), u("errWhy")); }); }
     if (g("data-lcfile")) return bedSheet(g("data-lcfile"), "file");
     if (g("data-lctake")) { var it = g("data-lctake"), j = hands.indexOf(it); if (j > -1) hands.splice(j, 1); else if (hands.length >= 2) say("neutral", u("full")); else hands.push(it); slots(); return sheetPaint(); }
     if (g("data-lcslot") != null) { var s = +g("data-lcslot"); if (hands[s]) { hands.splice(s, 1); slots(); } return; }
     if (g("data-lcfeed")) return feedPanel();
     if (g("data-lcend")) return endPanel();
+    if (g("data-lcrec")) { var kr = g("data-lcrec"); sheetClose(); return st && panelOpen("end", recordHtml(st, kr)); }
     if (g("data-lcarch")) return archPanel();
     if (g("data-lcday")) return archOne(g("data-lcday"));
     if (g("data-lcpush")) return pushPanel();
@@ -591,11 +636,12 @@
     panelOpen("feed", "<h2>" + esc(u("feed")) + '</h2><ul class="lcr-feed">' + (list.length ? list.map(function (e) { return '<li class="' + e.k + '"><small dir="ltr">' + fmtT(e.t) + "</small> " + esc(evText(e)) + "</li>"; }).join("") : "<li>" + esc(u("nobody")) + "</li>") + "</ul><h3>" + esc(u("board")) + "</h3>" + boardHtml(st.pts));
   }
   // the record of a case (today's when it ended, or one from «📚 الحالات السابقة»)
-  function recordHtml(s) {
-    var h = "<h2>" + esc(s.cs.ic + " " + T(s.cs.t)) + '</h2><p class="small">' + esc(s.key) + " · " + esc(s.end ? (s.end.w === "ok" ? u("endOk") : s.end.w === "lost" ? u("endLost", { n: nm(s.P[s.end.pk === "b" ? 1 : 0]) }) : u("endTime")) : "") + "</p>" +
+  function recordHtml(s, only) {                                 // 28x: only = one patient (his case finished while the other one goes on)
+    var h = "<h2>" + esc(s.cs.ic + " " + T(s.cs.t)) + '</h2><p class="small">' + esc(s.key) + " · " + esc(s.end ? endWhy(s) : only ? L.stLabel(s.P[only === "b" ? 1 : 0].st) : "") + "</p>" +
       '<p class="small lcr-src' + (s.cs.gen ? " g" : "") + '">' + esc(T(s.cs.src)) + "</p>";
     s.P.forEach(function (x, i) {
-      h += '<section class="lcr-rec"><h3>🛏️' + (i + 1) + " " + esc(nm(x)) + " · " + x.p.age + " · " + esc(L.stLabel(x.st)) + "</h3><h4>" + esc(u("steps")) + '</h4><ol class="lcr-steps">';
+      if (only && x.k !== only) return;
+      h += '<section class="lcr-rec"><h3>🛏️' + (i + 1) + " " + esc(nm(x)) + " · " + x.p.age + " · " + esc(L.stLabel(x.st, x.p.sex)) + "</h3><h4>" + esc(u("steps")) + '</h4><ol class="lcr-steps">';
       x.L.forEach(function (sp) {
         var dn = x.done[sp.id], ans = sp.kind === "file" ? T(fieldAnswer(x, sp.f, s.cs)) : T(sp.why);
         h += '<li class="' + (dn ? "ok" : "miss") + '"><b>' + (dn ? "✅ " : "⬜ ") + esc(L.stepName(sp)) + '</b> <small class="lcr-ph">' + esc(T(U["ph" + sp.ph]).split(" ")[0]) + "</small><p class=\"small\">" + esc(ans) + "</p>" + '<small class="lcr-byw">' + (dn ? "✍️ " + esc(dn.n) + " · " + fmtT(dn.t) : esc(u("missed"))) + "</small></li>";
@@ -612,7 +658,7 @@
       }).join("") + "</ul>" : '<p class="small">' + esc(u("noWrong")) + "</p>";
       h += "</section>";
     });
-    return h + "<h3>" + esc(u("helped")) + "</h3>" + boardHtml(s.pts);
+    return h + (only ? "" : "<h3>" + esc(u("helped")) + "</h3>" + boardHtml(s.pts));
   }
   function endPanel() { if (st) panelOpen("end", recordHtml(st)); }
   function archPanel() {
@@ -623,7 +669,7 @@
       w.__lcArch = list;
       var h = "<h2>" + esc(u("archive")) + "</h2>" + (a.src === "local" && list.length ? '<p class="small">' + esc(u("archLocal")) + "</p>" : "");
       h += list.length ? '<div class="lcr-arch">' + list.map(function (r) {
-        var s = r.s, ic = s.end && s.end.w === "ok" ? "✅" : s.end && s.end.w === "lost" ? "💔" : "⏰", n = Object.keys(s.pts).length;
+        var s = r.s, ic = s.end && s.end.w === "ok" ? "✅" : s.end && s.end.w === "lost" ? "💔" : s.end && s.end.w === "mix" ? "✅💔" : "⏰", n = Object.keys(s.pts).length;
         return '<button type="button" class="lcr-day" data-lcday="' + r.id + '"><span class="lcr-dic">' + s.cs.ic + '</span><span class="lcr-dt"><b>' + esc(T(s.cs.t)) + "</b><small>" + esc(s.key) + " · " + s.P.map(function (x) { return esc(T(x.p.nm).split(" ")[0]) + " " + L.stLabel(x.st).split(" ")[0]; }).join(" · ") + " · 👥 " + n + '</small></span><span class="lcr-dr">' + ic + "</span></button>";
       }).join("") + "</div>" : '<p class="lcr-none">' + esc(u("noArch")) + "</p>";
       panelOpen("arch", h);

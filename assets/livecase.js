@@ -10,7 +10,7 @@
 (function (w, d) {
 /* ==live-core== the shared engine of «🔴 حالة لايف» — the same text sits in assets/livecase.js and in the nursin worker v11
    (tests/site.test.js checks they are identical). Pure: no DOM, no Firestore. Everything (done steps, the file, health, vitals,
-   deterioration, the end of the case) is DERIVED from the case data + the shared doc live/{YYYYMMDD} { day, c, n, ev{1..n}, pts } + now,
+   deterioration, the end of each patient and of the case) is DERIVED from the case data + the shared doc live/{YYYYMMDD} { day, c, n, ev{1..n}, pts } + now,
    so every phone and the worker compute the same patients from the same timestamps, with or without the cron. */
 var LiveCore = (function () {
   var H = 36e5, DAY = 864e5, C0 = 50, REC = 4, HARM = -15, DRIFT_FROM = 8, MAXEV = 600, SLOW = 0.5;   // SLOW: a neglected patient loses rate×0.5 health points an hour
@@ -119,43 +119,60 @@ var LiveCore = (function () {
     // that was later (a case first created at 7 PM — the day the worker was deployed — used to be counted as neglected since 08:00 and was
     // «lost» before anybody could see it). A doc without at0 (older days) keeps 08:00.
     var t0 = dayStart(key), t1 = dayStart(nextKey(key)), a0 = +doc.at0 || 0, tD = Math.max(t0 + DRIFT_FROM * H, a0 < t1 ? a0 : 0), tL = Math.min(now, t1);
-    var P = cs.pts.map(function (p) { var L = steps(D, cs, p), by = {}; L.forEach(function (s) { by[s.id] = s; }); return { p: p, k: p.k, L: L, by: by, done: {}, c: C0, lost: null, all: false, soins: false, bad: [], wrong: [], last: null }; });
+    var P = cs.pts.map(function (p) { var L = steps(D, cs, p), by = {}; L.forEach(function (s) { by[s.id] = s; }); return { p: p, k: p.k, L: L, by: by, done: {}, c: C0, lost: null, fin: null, all: false, soins: false, bad: [], wrong: [], last: null }; });
     var evs = evList(doc), end = null, tp = t0, used = [];
     function upd(x) {
       x.all = x.L.every(function (s) { return !!x.done[s.id]; });
       x.soins = x.L.every(function (s) { return s.ph > 3 || !!x.done[s.id]; });
     }
-    function adv(to) {                     // health between two moments; the first patient reaching 0 ends the case right there
-      if (to <= tp) return;
-      var first = to, who = null;
-      P.forEach(function (x) {
-        if (x.lost != null || x.soins) return;
-        var s = Math.max(tp, tD); if (to <= s) return;
-        var tl = s + x.c / (x.p.rate * SLOW) * H; if (tl <= first) { first = tl; who = x; }
-      });
-      P.forEach(function (x) {
-        if (x.lost != null) return;
-        if (x.soins) { x.c = Math.min(100, x.c + REC * (first - tp) / H); return; }
-        var s = Math.max(tp, tD); if (first > s) x.c = Math.max(0, x.c - x.p.rate * SLOW * (first - s) / H);
-      });
-      if (who) { who.lost = first; who.c = 0; end = { w: "lost", t: first, pk: who.k }; }
-      tp = first;
+    // 28x (Abdullah, Nov 2 10:32 PM): each patient ends ON HIS OWN — ✅ stabilised (every step done) or 💔 lost — and the OTHER one keeps
+    // going with his own clock; the case ends only when BOTH are finished (or at midnight). end = { w: ok|lost|mix|time, t, pk, ok:[k], lost:[k] }
+    function adv(to) {                     // health between two moments; a patient reaching 0 is lost right there, the other one goes on
+      while (to > tp) {
+        var first = to, who = null;
+        P.forEach(function (x) {
+          if (x.lost != null || x.soins) return;
+          var s = Math.max(tp, tD); if (to <= s) return;
+          var tl = s + x.c / (x.p.rate * SLOW) * H; if (tl <= first) { first = tl; who = x; }
+        });
+        P.forEach(function (x) {
+          if (x.lost != null) return;
+          if (x.soins) { x.c = Math.min(100, x.c + REC * (first - tp) / H); return; }
+          var s = Math.max(tp, tD); if (first > s) x.c = Math.max(0, x.c - x.p.rate * SLOW * (first - s) / H);
+        });
+        if (who) { who.lost = first; who.c = 0; }
+        tp = first;
+      }
+    }
+    function out(x) { return x.lost != null || x.all; }
+    function ends(w, t) {
+      var ok = [], lost = [], pk = null, tl = -1;
+      P.forEach(function (x) { if (x.lost != null) { lost.push(x.k); if (x.lost >= tl) { tl = x.lost; pk = x.k; } } else if (x.all) ok.push(x.k); });
+      return { w: w || (!lost.length ? "ok" : !ok.length ? "lost" : "mix"), t: t, pk: pk, ok: ok, lost: lost };
+    }
+    function fin() {                       // both patients finished → the case is over, at the moment the second one finished
+      if (end || !P.every(out)) return;
+      var t = 0; P.forEach(function (x) { var tx = x.lost != null ? x.lost : x.fin; if (tx > t) t = tx; });
+      end = ends(null, t);
     }
     for (var i = 0; i < evs.length && !end; i++) {
       var e = evs[i]; if (e.t > tL) break;
-      adv(e.t); if (end) break;
-      var x = P[e.p === "b" ? 1 : 0]; used.push(e); x.last = e.t;
-      if (e.k === "ok") { var s = x.by[e.a]; if (s && !x.done[s.id]) { x.done[s.id] = { t: e.t, u: e.u, n: e.n, i: e.i }; x.c = Math.max(0, Math.min(100, x.c + s.g)); upd(x); } }
-      else if (e.k === "bad") { x.bad.push(e); x.c = Math.max(0, x.c + HARM); if (x.c <= 0) { x.lost = e.t; end = { w: "lost", t: e.t, pk: x.k }; } }
+      adv(e.t); fin(); if (end) break;
+      var x = P[e.p === "b" ? 1 : 0];
+      if (out(x)) continue;                // a step on a patient who is already ✅ / 💔 changes nothing (he stays as he ended)
+      used.push(e); x.last = e.t;
+      if (e.k === "ok") { var s = x.by[e.a]; if (s && !x.done[s.id]) { x.done[s.id] = { t: e.t, u: e.u, n: e.n, i: e.i }; x.c = Math.max(0, Math.min(100, x.c + s.g)); upd(x); if (x.all) x.fin = e.t; } }
+      else if (e.k === "bad") { x.bad.push(e); x.c = Math.max(0, x.c + HARM); if (x.c <= 0) { x.lost = e.t; x.c = 0; } }
       else x.wrong.push(e);
-      if (P[0].all && P[1].all) end = { w: "ok", t: e.t };
+      fin();
     }
-    if (!end) adv(tL);
-    if (!end && now >= t1) end = { w: "time", t: t1 };
+    if (!end) { adv(tL); fin(); }
+    if (!end && now >= t1) end = ends("time", t1);
     P.forEach(function (x) {
       upd(x); x.st = bucket(x); x.v = vitals(D, x.p, x.c);
+      x.over = x.lost != null ? { w: "lost", t: x.lost } : x.all ? { w: "ok", t: x.fin } : null;   // 28x: this patient's own end
       x.n = x.L.filter(function (s) { return !!x.done[s.id]; }).length; x.tot = x.L.length;
-      x.next = end ? [] : x.L.filter(function (s) { return avail(x, s); });
+      x.next = end || x.over ? [] : x.L.filter(function (s) { return avail(x, s); });
       x.ph = x.next.length ? x.next[0].ph : 6;
     });
     return { key: key, id: docId(key), cs: cs, t0: t0, t1: t1, from: tD, end: end, P: P, ev: used, all: evs, pts: doc.pts || {}, n: doc.n | 0, now: now };
@@ -172,10 +189,11 @@ var LiveCore = (function () {
     x.L.forEach(function (q) { if (q.ph < s.ph && !x.done[q.id] && m.indexOf(q) < 0) m.push(q); });
     return m;
   }
-  // a student tries something on patient pk → { k: ok|bad|ord|neu|no|repeat|over|wait, d: points, a: what is stored, o, s: step, why, miss }
+  // a student tries something on patient pk → { k: ok|bad|ord|neu|no|repeat|over|pover|wait, d: points, a: what is stored, o, s: step, why, miss }
   function check(D, st, pk, a, opt) {
     if (st.end) return { k: "over" };
     var x = st.P[pk === "b" ? 1 : 0], p = x.p, s, b, i;
+    if (x.over) return { k: "pover", w: x.over.w, x: x };   // 28x: this patient is finished (✅ / 💔) — the other one is still waiting
     if (a.indexOf("f_") === 0) {
       s = x.by[a]; if (!s) return { k: "neu", d: PTS.neu, a: a };
       if (x.done[s.id]) return { k: "repeat", s: s };
@@ -199,7 +217,7 @@ var LiveCore = (function () {
     return {
       id: st.id, key: st.key, c: st.cs.id, end: st.end,
       P: st.P.map(function (x) {
-        return { k: x.k, st: x.st, steps: x.L.map(function (s) { return { id: s.id, ph: s.ph, done: x.done[s.id] || null }; }),
+        return { k: x.k, st: x.st, over: x.over, steps: x.L.map(function (s) { return { id: s.id, ph: s.ph, done: x.done[s.id] || null }; }),
           bad: x.bad, wrong: x.wrong };
       }),
       board: board
@@ -220,13 +238,13 @@ var LiveCore = (function () {
   function pushOk(u, kind, now, day) { if (!u || u.livePush === false) return false; if (kind === "new") return u.liveDay !== day; return now - (+u.liveAt || 0) >= H; }
   return { RANK: RANK, changes: changes, pushOk: pushOk, H: H, DAY: DAY, PTS: PTS, GAIN: GAIN, C0: C0, MAXEV: MAXEV, DRIFT_FROM: DRIFT_FROM, bOff: bOff, dayKey: dayKey, dayStart: dayStart, nextKey: nextKey, docId: docId, keyOf: keyOf,
     hash: hash, rng: rng, order: order, pick: pick, caseById: caseById, steps: steps, opts: opts, vitals: vitals, bucket: bucket, evList: evList,
-    state: state, avail: avail, missing: missing, check: check, summary: summary, WHY: WHY };
+    state: state, avail: avail, out: function (x) { return !!(x && x.over); }, missing: missing, check: check, summary: summary, WHY: WHY };
 })();
 /* ==/live-core== */
 
   if (typeof window !== "undefined") window.LiveCore = LiveCore;
   if (!d || !d.addEventListener) return;
-  var V = "20261028w", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028x", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -386,8 +404,8 @@ var LiveCore = (function () {
     });
   }
   /* ---- words ---- */
-  var STS = { lost: { ic: "💔", ar: "خسرناه", fr: "Décédé" }, ok: { ic: "✅", ar: "مستقرّ", fr: "Stable" }, crit: { ic: "🔴", ar: "حرج", fr: "Critique" }, unst: { ic: "🟠", ar: "مش مستقرّ", fr: "Instable" }, impr: { ic: "🟡", ar: "عم يتحسّن", fr: "S'améliore" } };
-  function stLabel(k) { var s = STS[k] || STS.unst; return s.ic + " " + T(s); }
+  var STS = { lost: { ic: "💔", ar: "خسرناه", fr: "Décédé" }, ok: { ic: "✅", ar: "استقرّ", fr: "Stabilisé" }, crit: { ic: "🔴", ar: "حرج", fr: "Critique" }, unst: { ic: "🟠", ar: "مش مستقرّ", fr: "Instable" }, impr: { ic: "🟡", ar: "عم يتحسّن", fr: "S'améliore" } };
+  function stLabel(k, sex) { var s = STS[k] || STS.unst; return s.ic + " " + (k === "ok" && sex === "f" ? (FR() ? "Stabilisée" : "استقرّت") : T(s)); }
   function left(ms) { ms = Math.max(0, ms); var h = Math.floor(ms / 36e5), m = Math.floor(ms % 36e5 / 6e4); return h ? (FR() ? h + " h " + (m < 10 ? "0" : "") + m : h + ":" + (m < 10 ? "0" : "") + m) : (FR() ? m + " min" : m + " د"); }
   function leftWords(ms) { var h = Math.floor(Math.max(0, ms) / 36e5); return h >= 1 ? (FR() ? "encore " + h + " h" : "باقي " + h + (h === 1 ? " ساعة" : h === 2 ? " ساعتين" : h <= 10 ? " ساعات" : " ساعة")) : (FR() ? "encore " + Math.ceil(ms / 6e4) + " min" : "باقي " + Math.ceil(ms / 6e4) + " د"); }
   function nextWords(ms) { var tm = Math.max(1, Math.ceil(Math.max(0, ms) / 6e4)), h = Math.floor(tm / 60), m = tm % 60;
@@ -402,7 +420,7 @@ var LiveCore = (function () {
   function homeCard(st) {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;
     var cs = st.cs, ended = st.end, nm = function (x) { return T(x.p.nm).split(" ")[0]; };
-    var pills = st.P.map(function (x) { return '<span class="hzlvp ' + x.st + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st)) + "</span>"; }).join("");
+    var pills = st.P.map(function (x) { return '<span class="hzlvp ' + x.st + (x.over && !ended ? " fin" : "") + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st, x.p.sex)) + "</span>"; }).join("");
     // 28v: an ended case says so plainly — «🏁 انتهت الحالة» + when the next one starts (never a card that still looks running)
     var top = ended ? (FR() ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()) : leftWords(st.t1 - Date.now());
     // 👥 how many students are in the room right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
