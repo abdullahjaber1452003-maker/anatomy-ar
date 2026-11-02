@@ -7,6 +7,8 @@
   var E = w.ERROOM, R = w.ERRoom;
   var ov = null, D = null, st = null, mode = "loading", cv, cx, dpr = 1, scale = 1, G = null, bg = null, raf = 0, last = 0, nurse = null, mark = null;
   var hands = [], washed = false, sheet = null, panel = null, fbT = 0, endSeen = false, openQ = null, prevSt = {};
+  // 👥 the other students in the room (assets/livepres.js): their drawn position, path, sprite; the join/leave toast queue
+  var peers = {}, pList = [], pPrev = null, pQ = { join: [], left: [] }, pToastT = 0, pT = 0, avImg = {}, mySpr = null;
   var T = L.T, esc = L.esc, FR = L.FR;
   var U = {
     title: { ar: "🔴 حالة لايف", fr: "🔴 Cas en direct" }, close: { ar: "سكّر", fr: "Fermer" },
@@ -32,6 +34,11 @@
     neu: { ar: "🤔 مش لازم لهالمريض هلّق", fr: "🤔 Pas utile pour ce patient maintenant" }, no: { ar: "❌ مش هيدا", fr: "❌ Ce n'est pas ça" },
     neuWhy: { ar: "فكّر شو بيحتاج هالمريض هلّق — اقرا القصّة والملف.", fr: "Réfléchis à ce dont CE patient a besoin — relis l'histoire et le dossier." },
     repeat: { ar: "⚡ {n} سبقك وعملها!", fr: "⚡ {n} l'a déjà fait !" }, repeat0: { ar: "✔️ معمولة من قبل", fr: "✔️ Déjà fait" },
+    ppl: { ar: "👥 {n} بالغرفة هلّق", fr: "👥 {n} dans la salle" }, ppl1: { ar: "👥 إنت لحالك بالغرفة هلّق", fr: "👥 Tu es seul·e dans la salle" },
+    pin: { ar: "👋 {n} فات", fr: "👋 {n} est entré·e" }, pinN: { ar: "👋 {n} فاتوا", fr: "👋 {n} sont entrés" },
+    pout: { ar: "🚪 {n} طلع", fr: "🚪 {n} est sorti·e" }, poutN: { ar: "🚪 {n} طلعوا", fr: "🚪 {n} sont sortis" },
+    pbed: { ar: "✋ {n} عم يشتغل عهالتخت هلّق — شوف شو بقي قبل ما تكبس", fr: "✋ {n} s'occupe de ce lit — vérifie ce qui reste avant d'agir" },
+    pme: { ar: "إنت", fr: "Toi" },
     wait: { ar: "⏳ استنّى {t} قبل ما تجرّب هالخانة مرّة تانية", fr: "⏳ Attends {t} avant de réessayer ce champ" },
     slow: { ar: "شوي شوي 🙂 جرّب كمان ثانية", fr: "Doucement 🙂 réessaie dans une seconde" }, over: { ar: "الحالة خلصت", fr: "Le cas est terminé" },
     err: { ar: "📶 ما انحفظت — جرّب كمان مرّة", fr: "📶 Pas enregistré — réessaie" }, full2: { ar: "الحالة تعبّت خطوات", fr: "Trop d'actions aujourd'hui" },
@@ -71,7 +78,7 @@
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
       '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
-      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-fb" aria-live="polite"></div></div>' +
+      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div></div>' +
       '<div class="lcr-bar"><span class="lcr-hl">' + esc(u("hands")) + '</span><button type="button" class="lcr-slot" data-lcslot="0"></button><button type="button" class="lcr-slot" data-lcslot="1"></button>' +
       '<button type="button" class="lcr-feedb" data-lcfeed="1"></button></div>' +
       '<div class="lcr-sheet" hidden><div class="lcr-shin"></div></div><div class="lcr-panel" hidden></div>';
@@ -90,6 +97,7 @@
   }
   function close() {
     if (!ov || ov.hidden) return; ov.hidden = true; d.documentElement.classList.remove("lcr-open"); stop(); L.off(onState); sheetClose(); panelClose();
+    if (w.LivePresRoom) w.LivePresRoom.stop(); peers = {}; pList = []; pPrev = null;
     if (location.hash === "#live") try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
   function onState(s, m) {
@@ -100,7 +108,10 @@
     ban.className = "lcr-ban " + (m === "shared" ? "sh" : "pv");
     ban.innerHTML = '<span>' + esc(m === "shared" ? u("shared") : m === "loading" ? "…" : why === "rules" ? u("soon") : why === "net" ? u("net") : u("preview")) + "</span>" +
       (m === "preview" && why === "out" ? ' <a href="friends.html">' + esc(u("sign")) + "</a>" : "") +
+      '<span class="lcr-ppl" hidden></span>' +
       '<b class="lcr-case">' + esc(s.cs.ic + " " + T(s.cs.t)) + (s.cs.gen ? ' <small class="lcr-gen">' + esc(u("gen")) + "</small>" : "") + "</b>";
+    var PR = w.LivePresRoom; if (PR) { if (m === "shared") PR.start(presChange); else { PR.stop(); pList = []; } }
+    pplPaint();
     cards(); feedLine();
     if (sheet) sheetPaint();
     if (panel === "feed") feedPanel();
@@ -156,6 +167,7 @@
       var r = R.walk(nurse, nurse.pts, dt); nurse.x = r.x; nurse.y = r.y; nurse.dir = r.dir; nurse.walkT += dt;
       if (r.done) { nurse.walkT = 0; mark = null; if (nurse.goal) { var g = nurse.goal; nurse.goal = null; arrive(g); } }
     }
+    presFrame(dt);
     draw(ts / 1000);
   }
   function night() { return d.documentElement.getAttribute("data-theme") === "night"; }
@@ -226,7 +238,9 @@
       st.P.forEach(function (x, i) { var s = i ? S.bed2 : S.bed1; s.k = pk(i); patient(P, x, s, t); });
     }
     if (mark) { mark.t += 1 / 60; var r2 = 4 + (mark.t * 20) % 10; cx.strokeStyle = "rgba(15,118,110,.7)"; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(mark.x, mark.y, r2, 0, 7); cx.stroke(); }
+    peersDraw(P, t);
     nurseDraw(P, t);
+    if (pList.length) meTag();
   }
   function nurseDraw(P) {
     var x = nurse.x, y = nurse.y, a = nurse.dir, sw = nurse.pts.length ? Math.sin(nurse.walkT * 12) : 0;
@@ -237,6 +251,109 @@
     cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill(); cx.fillStyle = P.hair; cx.beginPath(); cx.arc(0, 0.5, 5.6, 0, Math.PI); cx.fill();
     cx.restore();
     if (hands.length) { cx.font = "9px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; hands.forEach(function (it, i) { var bx = x + (i ? 9 : -9) * (hands.length > 1 ? 1 : 0), by = y - 21; cx.fillStyle = "rgba(255,255,255,.92)"; cx.beginPath(); cx.arc(bx, by, 6.5, 0, 7); cx.fill(); cx.fillStyle = "#000"; cx.fillText((D.I[it] || {}).ic || "•", bx, by + 0.5); }); }
+  }
+
+  /* ---------------- 👥 the others in the room (assets/livepres.js) ---------------- */
+  function presChange() { var PR = w.LivePresRoom; pList = PR ? PR.others() : []; presDiff(); pplPaint(); bedHint(); }
+  function presDiff() {
+    var LP = w.LivePres; if (!LP) return;
+    if (pPrev) {
+      var df = LP.diff(pPrev, pList);
+      df.join.forEach(function (n) { pQ.left = pQ.left.filter(function (x) { return x !== n; }); if (pQ.join.indexOf(n) < 0) pQ.join.push(n); });
+      df.left.forEach(function (n) { pQ.join = pQ.join.filter(function (x) { return x !== n; }); if (pQ.left.indexOf(n) < 0) pQ.left.push(n); });
+    }
+    pPrev = pList.slice(); presToast(Date.now());
+  }
+  // «👋 ريم فات» / «🚪 ريم طلع» — at most one every 4 s; names that come meanwhile wait and arrive together
+  function presToast(now) {
+    var LP = w.LivePres, el = q(".lcr-ptoast"); if (!el || (!pQ.join.length && !pQ.left.length) || !LP.toastOk(pToastT, now)) return;
+    var j = pQ.join.length, t = j ? u(j > 1 ? "pinN" : "pin", { n: LP.names(pQ.join, FR()) }) : u(pQ.left.length > 1 ? "poutN" : "pout", { n: LP.names(pQ.left, FR()) });
+    if (j) pQ.join = []; else pQ.left = [];
+    el.textContent = t; el.classList.add("on"); pToastT = now; clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove("on"); }, 2600);
+  }
+  function pplPaint() {
+    var el = q(".lcr-ppl"), PR = w.LivePresRoom; if (!el) return;
+    var on = !!(PR && PR.active()); el.hidden = !on; if (!on) return;
+    var n = pList.length + 1, t = n > 1 ? u("ppl", { n: n }) : u("ppl1");
+    if (el.textContent !== t) el.textContent = t; el.classList.toggle("many", n > 1);
+  }
+  function bedHint() {
+    var el = q(".lcr-pbed"); if (!el || !sheet || sheet.kind !== "bed") return;
+    var sk = w.LivePresRoom ? w.LivePresRoom.skew() : 0, ns = pList.filter(function (p) { return p.b === sheet.k && Date.now() + sk - p.at < 20000; }).map(function (p) { return p.n; });
+    el.hidden = !ns.length; if (ns.length) el.textContent = u("pbed", { n: w.LivePres.names(ns, FR()) });
+  }
+  // every frame: send my place (throttled inside), age the list once a second, move each other student smoothly along his path
+  function presFrame(dt) {
+    var PR = w.LivePresRoom, LP = w.LivePres; if (!PR || !PR.active()) { if (pList.length) { pList = []; peers = {}; } return; }
+    var tg = nurse.pts.length ? nurse.pts[nurse.pts.length - 1] : nurse;
+    PR.tick(nurse, tg, sheet && sheet.kind === "bed" ? sheet.k : "", nurse.pts.length > 0);
+    var now = Date.now(); if (now - pT > 1000) { pT = now; pList = PR.others(); presDiff(); pplPaint(); bedHint(); }
+    var seen = {};
+    pList.forEach(function (p) {
+      seen[p.uid] = 1; var e = peers[p.uid];
+      if (!e) e = peers[p.uid] = { x: p.x, y: p.y, dir: -Math.PI / 2, pts: [], walkT: 0, key: "" };
+      if (e.tx !== p.tx || e.ty !== p.ty || e.rx !== p.x || e.ry !== p.y) {          // news from him → walk from where I show him to where he goes
+        e.rx = p.x; e.ry = p.y; e.tx = p.tx; e.ty = p.ty;
+        var far = Math.abs(p.x - e.x) + Math.abs(p.y - e.y) > LP.SNAP * 2.5; if (far) { e.x = p.x; e.y = p.y; }
+        e.pts = G && Math.abs(p.tx - e.x) + Math.abs(p.ty - e.y) > 3 ? R.path(G, e, { x: p.tx, y: p.ty }) : [];
+      }
+      var mv = false;
+      if (e.pts.length) { var r = R.walk(e, e.pts, dt); e.x = r.x; e.y = r.y; e.dir = r.dir; mv = true; }
+      else if (Math.abs(e.tx - e.x) + Math.abs(e.ty - e.y) > 0.5) { var f = LP.follow(e, { x: e.tx, y: e.ty }, dt); e.x = f.x; e.y = f.y; e.dir = f.dir; mv = !f.jump; }
+      e.walkT = mv ? e.walkT + dt : 0; e.mv = mv;
+    });
+    for (var k in peers) if (!seen[k]) delete peers[k];
+  }
+  function avI(k) {
+    if (!k || !w.LivePres.AVRE.test(k)) return null; var im = avImg[k];
+    if (!im) { im = avImg[k] = new Image(); im.onload = function () { im.ok = 1; }; im.src = "assets/avatars/" + k + ".webp"; }
+    return im.ok ? im : null;
+  }
+  // the avatar disc + the first name above it, drawn once into a small canvas (redrawn when the zoom, theme or picture changes)
+  function sprite(p, e) {
+    var img = avI(p.av), key = (p.av || "") + "|" + p.n + "|" + night() + "|" + scale + "|" + (img ? 1 : 0);
+    if (e.key === key && e.spr) return e.spr;
+    var k = scale * dpr, c = d.createElement("canvas"), g = c.getContext("2d"), P = pal();
+    g.font = "700 8px " + EMO; var tw = Math.ceil(g.measureText(p.n).width) + 10, wd = Math.max(26, tw), ht = 38;
+    c.width = Math.ceil(wd * k); c.height = Math.ceil(ht * k); g = c.getContext("2d"); g.setTransform(k, 0, 0, k, 0, 0);
+    var col = w.LivePres.color(p.uid), cxp = wd / 2, cy = 26;
+    g.fillStyle = "#fff"; g.beginPath(); g.arc(cxp, cy, 11, 0, 7); g.fill();
+    g.save(); g.beginPath(); g.arc(cxp, cy, 9.5, 0, 7); g.clip();
+    if (img) g.drawImage(img, cxp - 9.5, cy - 9.5, 19, 19);
+    else { g.fillStyle = col; g.fillRect(cxp - 10, cy - 10, 20, 20); g.fillStyle = "#fff"; g.font = "800 10px " + EMO; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Array.from(p.n || "?")[0] || "?", cxp, cy + 0.5); }
+    g.restore(); g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); g.arc(cxp, cy, 10.6, 0, 7); g.stroke();
+    g.font = "700 8px " + EMO; g.fillStyle = P.lb; rr(g, cxp - tw / 2, 0, tw, 13, 6.5); g.fill();
+    g.fillStyle = P.ink; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = FR() ? "ltr" : "rtl"; g.fillText(p.n, cxp, 7);
+    e.key = key; e.spr = { c: c, w: wd, h: ht }; return e.spr;
+  }
+  function peerBody(x, y, a, sw, col, P) {
+    cx.fillStyle = "rgba(0,0,0,.16)"; cx.beginPath(); cx.ellipse(x + 2, y + 4, 13, 9, 0, 0, 7); cx.fill();
+    cx.save(); cx.translate(x, y); cx.scale(1.2, 1.2); cx.rotate(a + Math.PI / 2);
+    cx.fillStyle = col; [[-8, sw * 4], [8, -sw * 4]].forEach(function (q2) { cx.beginPath(); cx.arc(q2[0], q2[1] - 1, 3, 0, 7); cx.fill(); });
+    cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill(); cx.fillStyle = "rgba(255,255,255,.25)"; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill();
+    cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill(); cx.fillStyle = P.hair; cx.beginPath(); cx.arc(0, 0.5, 5.6, 0, Math.PI); cx.fill();
+    cx.restore();
+  }
+  function handIc(x, y) { cx.fillStyle = "#7c3aed"; cx.beginPath(); cx.arc(x, y, 7, 0, 7); cx.fill(); cx.font = "8px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = "#fff"; cx.fillText("✋", x, y + 0.5); }
+  function peersDraw(P) {
+    if (!pList.length) return;
+    var LP = w.LivePres, now = Date.now() + (w.LivePresRoom ? w.LivePresRoom.skew() : 0), on = { a: [], b: [] };
+    pList.forEach(function (p) {
+      var e = peers[p.uid]; if (!e) return; var a = LP.alpha(now - p.at); if (a <= 0) return;
+      cx.globalAlpha = a;
+      peerBody(e.x, e.y, e.dir, e.mv ? Math.sin(e.walkT * 12) : 0, LP.color(p.uid), P);
+      var s = sprite(p, e); cx.drawImage(s.c, e.x - s.w / 2, e.y - 5 - s.h, s.w, s.h);
+      if (p.b && a > 0.6) { on[p.b].push(p.n); handIc(e.x + 12, e.y - 17); }
+      cx.globalAlpha = 1;
+    });
+    ["a", "b"].forEach(function (k) { if (!on[k].length) return; var s = E.stations[k === "a" ? "bed1" : "bed2"]; label(cx, P, s.x + s.w / 2, s.y - 7, "✋ " + LP.names(on[k], FR()), "#7c3aed"); });
+  }
+  // my own disc + «إنت» above my nurse, once someone else is in the room (so everybody looks the same on every phone)
+  function meTag() {
+    mySpr = mySpr || { key: "" };
+    var M = L.me(), s = sprite({ uid: M.uid, n: u("pme"), av: w.LivePresRoom ? w.LivePresRoom.myAv() : "" }, mySpr);
+    cx.drawImage(s.c, nurse.x - s.w / 2, nurse.y - 7 - s.h, s.w, s.h);
+    if (sheet && sheet.kind === "bed") handIc(nurse.x + 12, nurse.y - 19);
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
   function onTap(e) {
@@ -266,13 +383,14 @@
   function sheetPaint() {
     if (!sheet || !st) return; var el = q(".lcr-shin"), h = "";
     if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else h = stationHtml(sheet.k);
-    var sc = el.scrollTop; el.innerHTML = h; el.scrollTop = sc;
+    var sc = el.scrollTop; el.innerHTML = h; el.scrollTop = sc; bedHint();
   }
   function head(t, sub) { return '<div class="lcr-sh"><b>' + t + "</b>" + (sub ? "<small>" + sub + "</small>" : "") + '<button type="button" class="lcr-shx" data-lcclose="1" aria-label="' + esc(u("close")) + '">✕</button></div>'; }
   function bedSheet(k, tab) { sheetOpen("bed", k, tab); }
   function bedHtml(k, tab) {
     var x = X(k), p = x.p, i = k === "b" ? 2 : 1;
     var h = head("🛏️" + i + " " + esc(nm(x)) + " · " + p.age + " " + esc(u("ageY")) + " · " + (p.sex === "m" ? "♂" : "♀"), esc(L.stLabel(x.st)) + " · " + esc(T(U["ph" + x.ph])) + " · ✅ " + x.n + "/" + x.tot);
+    h += '<p class="lcr-pbed" hidden></p>';
     h += '<div class="lcr-tabs" role="tablist">' + ["care", "file", "story"].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (t === tab) + '" class="lcr-tab' + (t === tab ? " on" : "") + '" data-lctab="' + t + '">' + esc(u(t)) + "</button>"; }).join("") + "</div>";
     if (tab === "file") return h + fileHtml(x);
     if (tab === "story") return h + storyHtml(x);
@@ -318,6 +436,7 @@
     h += '<div class="lcr-items">' + its.map(function (i) { var I = D.I[i], hv = hands.indexOf(i) > -1; return '<button type="button" class="lcr-item' + (hv ? " on" : "") + '" data-lctake="' + i + '">' + I.ic + " " + esc(T(I)) + "<small>" + esc(hv ? u("have") : u("take")) + "</small></button>"; }).join("") + "</div>";
     return h;
   }
+  function stationSheet(k) { sheetOpen("station", k); }          // the cart / drugs / O₂ / monitor / defib: take things in your hands (28u: was missing)
   function deskSheet() { sheetOpen("desk", "phone"); }
   function deskHtml() {
     var S = E.stations.phone, h = head(S.ic + " " + esc(T(S)) + " · 📁");

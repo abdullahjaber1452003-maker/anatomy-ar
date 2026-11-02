@@ -126,3 +126,14 @@ html[data-theme="night"] .lcr-v .g{color:#4ade80}html[data-theme="night"] .lcr-v
 html[data-theme="night"] .lcr-gen,html[data-theme="night"] .lcr-src.g{color:#93c5fd}
 html[data-theme="night"] .lcr-item small{color:#5eead4}html[data-theme="night"] .lcr-btn{border-color:#5eead4;color:#5eead4!important}html[data-theme="night"] .lcr-btn.on{background:#0f766e;color:#fff!important}
 html[data-theme="night"] .lcr-shx{background:rgba(255,255,255,.1)}
+
+/* 👥 who is in the room (28u): badge in the header row, join/leave toast, the soft «✋» hint in a bed sheet */
+.lcr-ppl{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:999px;font-weight:800;font-size:12px;background:rgba(255,255,255,.75);border:1px solid rgba(6,95,70,.18);white-space:nowrap}
+.lcr-ppl.many{background:#065f46;color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(6,95,70,.25)}
+.lcr-ptoast{position:absolute;left:50%;bottom:10px;transform:translate(-50%,8px);max-width:calc(100% - 24px);padding:6px 14px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:3;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.lcr-ptoast.on{opacity:1;transform:translate(-50%,0)}
+.lcr-pbed{margin:6px 0 2px;padding:6px 10px;border-radius:12px;background:#f5f3ff;color:#5b21b6;font-size:12.5px;font-weight:700;border:1px solid rgba(124,58,237,.2)}
+html[data-theme="night"] .lcr-ppl{background:rgba(255,255,255,.08);border-color:rgba(167,243,208,.25);color:#a7f3d0}
+html[data-theme="night"] .lcr-ppl.many{background:#10b981;color:#052e22}
+html[data-theme="night"] .lcr-ptoast{background:rgba(226,232,240,.9);color:#0f172a}
+html[data-theme="night"] .lcr-pbed{background:#2e1065;color:#ddd6fe;border-color:rgba(196,181,253,.25)}

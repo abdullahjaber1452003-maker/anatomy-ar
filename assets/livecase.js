@@ -223,7 +223,7 @@ var LiveCore = (function () {
 
   if (typeof window !== "undefined") window.LiveCore = LiveCore;
   if (!d || !d.addEventListener) return;
-  var V = "20261028t", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028u", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -384,6 +384,9 @@ var LiveCore = (function () {
     var pills = st.P.map(function (x) { return '<span class="hzlvp ' + x.st + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st)) + "</span>"; }).join("");
     var top = ended ? (ended.w === "ok" ? (FR() ? "✅ Cas réussi — prochain cas demain" : "✅ نجحت الحالة — بكرا حالة جديدة") : ended.w === "lost" ? (FR() ? "💔 Cas terminé — revois les bonnes étapes" : "💔 خلصت الحالة — شوف الخطوات الصح") : (FR() ? "⏰ Temps écoulé" : "⏰ خلص الوقت"))
       : leftWords(st.t1 - Date.now());
+    // 👥 how many students are in the room right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
+    var PR = W.LivePresRoom, ppl = !ended && mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1;
+    if (ppl > 0) top += " · 👥 " + ppl;
     var soon = mode === "preview" && why === "rules" ? '<small class="hzlvs">' + (FR() ? "🔴 Le cas partagé arrive bientôt — essaie-le maintenant" : "🔴 الحالة اللايف رح تشتغل قريباً — جرّبها هلّق") + "</small>" : "";
     var h = '<a class="hzlive' + (ended ? " end" : "") + '" href="games.html#live" data-nofr>' +
       '<span class="hzlvh"><b>' + (FR() ? "🔴 Cas en direct" : "🔴 حالة لايف") + "</b><span class=\"hzlvt\"> · " + esc(top) + "</span></span>" +
