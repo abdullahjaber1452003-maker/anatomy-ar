@@ -19,9 +19,11 @@
       Beirut). Results per week in nursin_wexam_v1.
    B) 🎯 «متأكد ولا محزّر؟» + C) ❓ «ليش؟» — drawn by assets/quiz.js; the why-questions are data (assets/why-data.js, written from each
       question's own explanation), loaded on quiz.html. Helpers: Retain.confOn(state), Retain.whyFor(q, guessed, rnd).
+   4) 📝 «كويز هالجزء» (Nov 3 2026, 10:01 PM) — first button of the end row of EVERY part: that part's questions only (assets/partq-data.js),
+      inline sheet, score + «🔁 عيد» + «➡️ الجزء الجاي», «كنت متأكد / حزرت», every answer → SRS v2; ✓ done marks (nursin_partq_v1).
    Everything works offline: localStorage only (no account sync for these — the reviews they feed already sync through srs.js). */
 (function (w, d) {
-  var V = "20261029b", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+  var V = "20261029c", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var TK = "nursin_teach_day_v1", TMAX = 10, BK = "nursin_blank_v1", WK = "nursin_wexam_v1", BLANK_SEC = 120, WN = 20, WMIN = 25;
   var CASE_IDS = ["cardio:infarctus", "cardio:angor", "cardio:pericarde", "cardio:endomyo", "cardio:pacemaker", "cardio:embolie", "cardio:choc", "cardio:ic", "cardio:arythmies", "cardio:chirurgie", "neuro:evaluation", "neuro:examens", "neuro:laminectomie", "neuro:craniotomie", "neuro:avc", "neuro:htic", "neuro:glasgow", "henderson:h1", "henderson:h2", "pharma:cardio", "pharma:coag", "pharma:atb", "pharma:pain", "pharma:resp", "pharma:dig", "pharma:cort", "pharma:diab", "pharma:other", "rea:r1", "geri:g1", "geri:g2", "geri:g3", "geri:g4", "geri:g5", "geri:g6", "geri:g7", "geri:g8", "geri:g9", "geri:g10", "comm:c3", "comm:c4", "comm:c5", "comm:c7", "comm:c8", "medsurg:iv", "rea:r2", "rea:r3", "rea:r4"];
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -333,6 +335,113 @@
     });
   }
 
+
+  /* ---------------- 📝 «كويز هالجزء» — a quiz at the end of EVERY lesson part (Abdullah, Nov 3 2026 10:01 PM: «بدي بكل جزء من الدرس
+     ينعمل كويز عنه، إذا مقسّم لـ3 ينعمل بكل قسم كويز»). The button is the first one of the part's end row (.rtrow). The part's questions =
+     assets/partq-data.js PARTQ.map[part key]: the lesson's bank questions matched to the part by the part's own words, plus questions
+     written from that part's text (all of them live in assets/quiz-data.js with their own q### id). It opens over the page (ads hidden,
+     html.rton), one question at a time; after a right answer «✅ كنت متأكد / 🤔 حزرت»; every answer → NursinSRS (same id) + NursinRet + Weak.
+     End: score, «🔁 عيد», «➡️ الجزء الجاي». Done parts: localStorage nursin_partq_v1 {key: {s best, l last, n, t}} → ✓ on the button and on
+     the part's title, «📝 2/5» (parts done / parts) on the lesson's first title. Reading the quiz to its end also marks the part read. */
+  var PQK = "nursin_partq_v1", PQMAX = 6;
+  function pqLoad() { return loadScript("assets/partq-data.js?v=" + V, function () { return !!w.PARTQ; }); }
+  function pqDone() { var o = lsGet(PQK); return o && typeof o === "object" ? o : {}; }
+  function pqSave(k, s, n) {
+    var o = pqDone(), p = o[k]; o[k] = { s: Math.max(s, p ? p.s | 0 : 0), l: s, n: n, t: Date.now() }; lsSet(PQK, o);
+    try { d.dispatchEvent(new CustomEvent("nursin:partq", { detail: { k: k, s: s, n: n } })); } catch (e) {}
+  }
+  function pqIds(k) { var P = w.PARTQ; return P && P.map && P.map[k] ? P.map[k].slice() : []; }
+  function pqQs(k) { var b = {}; (w.QUIZ || []).forEach(function (q) { if (q && q.id) b[q.id] = q; }); return pqIds(k).map(function (id) { return b[id]; }).filter(Boolean); }
+  function pageParts() { return (R().parts || R().list || []).filter(here); }
+  function lessonParts(x) { return (R().parts || R().list || []).filter(function (y) { return base(y) === base(x); }); }
+  function pqNext(x) { var P = pageParts(), k = pkey(x); for (var i = 0; i < P.length - 1; i++) if (pkey(P[i]) === k) return P[i + 1]; return null; }
+  function goPart(y) {
+    var a = y.href.split("#")[1], el = a ? d.getElementById(a) : null;
+    if (!el) { var r0 = d.querySelector('.rtrow[data-k="' + pkey(y) + '"]'); el = r0 ? (r0.closest("details,section,article") || r0) : null; }
+    if (!el) return;
+    if (el.tagName === "DETAILS") el.open = true;
+    try { el.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) { el.scrollIntoView(); }
+  }
+  function pqMarks() {
+    var dn = pqDone();
+    [].forEach.call(d.querySelectorAll("button[data-pq]"), function (b) {
+      var r = dn[b.getAttribute("data-pq")], want = r ? "✓ " + T("📝 كويز هالجزء", "📝 Quiz de cette partie") + " · " + r.s + "/" + r.n : T("📝 كويز هالجزء", "📝 Quiz de cette partie");
+      if (b.textContent !== want) b.textContent = want;
+      if (b.classList.contains("pqok") !== !!r) b.classList.toggle("pqok", !!r);
+    });
+    pageParts().forEach(function (x) {
+      var a = x.href.split("#")[1], el = a ? d.getElementById(a) : null; if (!el || el.tagName !== "DETAILS") return;
+      var sm = el.querySelector(":scope > summary"); if (!sm) return; var host = sm.querySelector(".t b") || sm;
+      var mk = host.querySelector(".pqmk"), on = !!dn[pkey(x)];
+      if (on && !mk) { mk = d.createElement("span"); mk.className = "pqmk"; mk.setAttribute("data-nofr", ""); mk.setAttribute("title", T("خلصت كويز هالجزء", "Quiz de cette partie fait")); mk.textContent = " ✓"; var pr0 = host.querySelector(".pqpr"); if (pr0) host.insertBefore(mk, pr0); else host.appendChild(mk); }
+      else if (!on && mk) mk.remove();
+      var ps = lessonParts(x), pr = host.querySelector(".pqpr");
+      if (ps.length > 1 && x.p === 1) {
+        var c = ps.filter(function (y) { return dn[pkey(y)]; }).length, t = " · 📝 " + c + "/" + ps.length + " " + T("أجزاء", "parties");
+        if (!pr) { pr = d.createElement("span"); pr.className = "pqpr"; pr.setAttribute("data-nofr", ""); host.appendChild(pr); }
+        if (pr.textContent !== t) pr.textContent = t;
+        if (pr.classList.contains("all") !== (c === ps.length)) pr.classList.toggle("all", c === ps.length);
+      } else if (pr) pr.remove();
+    });
+  }
+  function openPart(x, again) {
+    var k = pkey(x), id = base(x), bd = shell("rpq", "📝 " + T("كويز هالجزء", "Quiz de cette partie"));
+    bd.innerHTML = '<p class="small">⏳</p>';
+    var mine = box;
+    Promise.all([loadQuiz(), pqLoad()]).then(function () {
+      if (box !== mine) return;
+      var qs = pqQs(k), n = qs.length, i = 0, ok = 0, L = "abc", miss = [];
+      if (!n) { bd.innerHTML = '<p class="small">' + esc(T("ما في أسئلة لهالجزء بعد.", "Pas encore de questions pour cette partie.")) + "</p>"; return; }
+      if (again) for (var j = n - 1; j > 0; j--) { var r = Math.floor(Math.random() * (j + 1)), tq = qs[j]; qs[j] = qs[r]; qs[r] = tq; }
+      if (n > PQMAX) {                                   // a part with many bank questions: 6 a round, the ones he never answered first
+        var SS = w.NursinSRS, has = function (q) { try { return !!(SS && SS.has && SS.has(q.id)); } catch (e) { return false; } };
+        qs = qs.filter(function (q) { return !has(q); }).concat(qs.filter(has)).slice(0, PQMAX); n = qs.length;
+      }
+      var hd = '<p class="rpqlab"><span aria-hidden="true">📖</span> ' + esc(plabel(x)) + "</p>";
+      function draw() {
+        var q = qs[i];
+        bd.innerHTML = hd + '<div class="rpqbar" aria-hidden="true">' + qs.map(function (_, t) { return '<i class="' + (t < i ? "d" : t === i ? "c" : "") + '"></i>'; }).join("") + "</div>" +
+          '<p class="small rpqn">' + esc(T("سؤال " + (i + 1) + " من " + n, "Question " + (i + 1) + " sur " + n)) + "</p>" +
+          '<div class="rcq rpqq" data-qid="' + esc(q.id) + '"><p class="rcqq">' + esc(q.q) + "</p>" + q.o.map(function (o, kk) { return '<button class="opt" type="button" data-k="' + kk + '"><span class="l" dir="ltr">' + L[kk] + "</span><span>" + esc(o) + "</span></button>"; }).join("") +
+          '<div class="rcx" aria-live="polite"></div></div><div class="fcact rpqgo" hidden><button class="btn pri" type="button" data-pqnext>' + esc(i < n - 1 ? T("السؤال الجاي ←", "Question suivante →") : T("النتيجة 🏁", "Résultat 🏁")) + "</button></div>";
+        var el = bd.querySelector(".rpqq");
+        el.addEventListener("click", function (e) {
+          var b = e.target.closest && e.target.closest(".opt"); if (!b || b.disabled) return;
+          var kk = +b.getAttribute("data-k"), good = kk === q.a; if (good) ok++; else miss.push(q);
+          [].forEach.call(el.querySelectorAll(".opt"), function (o) { var k2 = +o.getAttribute("data-k"); o.disabled = true; if (k2 === q.a) o.classList.add("ok"); else if (k2 === kk) o.classList.add("bad"); });
+          var rx = el.querySelector(".rcx");
+          rx.innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>";
+          ret(id, good ? "ok" : "bad");
+          try { var W = w.Weak; if (W && W.record) W.record(q, good); } catch (e1) {}
+          try {                                              // 🔁 every answer enters the spaced repetition (same q### id as everywhere)
+            var SR = w.NursinSRS, sr = SR && SR.answer ? SR.answer(q, good) : null;
+            if (sr) { rx.insertAdjacentHTML("beforeend", SR.tagHtml(sr)); var cr = good && SR.confRow ? SR.confRow(q) : null; if (cr) rx.appendChild(cr); }
+          } catch (e2) {}
+          var go = bd.querySelector(".rpqgo"); go.hidden = false;
+          try { go.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e3) {}
+        });
+        bd.querySelector("[data-pqnext]").addEventListener("click", function () { i++; if (i < n) { draw(); try { box.querySelector(".fcbd").scrollTop = 0; } catch (e4) {} } else end(); });
+      }
+      function end() {
+        pqSave(k, ok, n);
+        try { var NL = w.NursinLessons; if (NL && NL.markRead) NL.markRead(x); } catch (e5) {}
+        var pct = Math.round(100 * ok / n), nx = pqNext(x);
+        bd.innerHTML = hd + '<div class="fcend rpqend"><p class="fcbig">' + (pct === 100 ? "🎉" : pct >= 50 ? "👏" : "💪") + '</p><p class="rpqsc"><b dir="ltr">' + ok + "/" + n + '</b></p><p class="rpqsc2">' + esc(T("جاوبت صح " + ok + " من " + n, "Tu as " + ok + " bonne(s) réponse(s) sur " + n)) + "</p><p>" +
+          esc(pct === 100 ? T("كلّو صح! هالجزء صار بجيبتك ✓", "Tout juste ! Cette partie est acquise ✓") : pct >= 50 ? T("منيح! راجع يلّي غلطت فيه وعيد.", "Bien ! Revois tes erreurs et refais-le.") : T("رجاع اقرا هالجزء مرّة تانية، وبعدين عيد الكويز.", "Relis cette partie, puis refais le quiz.")) + "</p>" +
+          (miss.length ? '<ul class="rpqmiss">' + miss.map(function (q) { return "<li>❌ " + esc(clip(q.q, 90)) + " <b>" + esc(T("الصح: ", "Juste : ")) + "</b>" + esc(q.o[q.a]) + "</li>"; }).join("") + "</ul>" : "") +
+          '<p class="small">' + esc(T("🔁 كل أجوبتك انحطّت بالتكرار المتباعد، وانعلّم هالجزء ✓.", "🔁 Toutes tes réponses sont dans la révision espacée, et cette partie est cochée ✓.")) + "</p>" +
+          '<div class="fcact"><button class="btn" type="button" data-pqagain>' + esc(T("🔁 عيد", "🔁 Refaire")) + "</button>" +
+          (nx ? '<button class="btn pri" type="button" data-pqgo>' + esc(T("➡️ الجزء الجاي", "➡️ Partie suivante")) + "</button>" : '<button class="btn pri" type="button" data-pqfin>' + esc(T("✅ خلصت", "✅ Terminé")) + "</button>") + "</div>" +
+          (nx ? '<p class="small rpqnx">➡️ ' + esc(plabel(nx)) + "</p>" : "") + "</div>";
+        bd.querySelector("[data-pqagain]").addEventListener("click", function () { openPart(x, true); });
+        var g = bd.querySelector("[data-pqgo]"); if (g) g.addEventListener("click", function () { close(); setTimeout(function () { goPart(nx); }, 60); });
+        var f = bd.querySelector("[data-pqfin]"); if (f) f.addEventListener("click", close);
+        try { box.querySelector(".fcbd").scrollTop = 0; } catch (e6) {}
+      }
+      draw();
+    });
+  }
+
   /* ---------------- the rows / buttons on lesson pages ---------------- */
   function mountParts() {
     var P = R().parts || R().list || [];
@@ -360,14 +469,15 @@
   }
   function row(x) {
     var p = d.createElement("p"); p.className = "rtrow"; p.setAttribute("data-k", pkey(x));
-    p.innerHTML = '<button class="btn sm" type="button" data-teach="' + esc(pkey(x)) + '">' + esc(T("🧑‍🏫 علِّم عثمان", "🧑‍🏫 Enseigne à Osman")) + '</button><button class="btn sm" type="button" data-blank="' + esc(pkey(x)) + '">' + esc(T("📃 الورقة البيضا", "📃 Page blanche")) + "</button>";
+    p.innerHTML = '<button class="btn sm pqbtn" type="button" data-pq="' + esc(pkey(x)) + '">' + esc(T("📝 كويز هالجزء", "📝 Quiz de cette partie")) + '</button><button class="btn sm" type="button" data-teach="' + esc(pkey(x)) + '">' + esc(T("🧑‍🏫 علِّم عثمان", "🧑‍🏫 Enseigne à Osman")) + '</button><button class="btn sm" type="button" data-blank="' + esc(pkey(x)) + '">' + esc(T("📃 الورقة البيضا", "📃 Page blanche")) + "</button>";
     return p;
   }
   function partByKey(k) { var P = R().parts || R().list || []; for (var i = 0; i < P.length; i++) if (pkey(P[i]) === k) return P[i]; return null; }
   function lessonById(id) { var L = R().list || []; for (var i = 0; i < L.length; i++) if (base(L[i]) === id) return L[i]; return null; }
   d.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest("[data-teach],[data-blank],[data-case]"); if (!b) return;
+    var b = e.target.closest && e.target.closest("[data-teach],[data-blank],[data-case],[data-pq]"); if (!b) return;
     if (locked()) return;
+    if (b.hasAttribute("data-pq")) { var xp = partByKey(b.getAttribute("data-pq")); if (xp) openPart(xp); return; }
     if (b.hasAttribute("data-case")) { var l = lessonById(b.getAttribute("data-case")); if (l) openCase(l); return; }
     var x = partByKey(b.getAttribute("data-teach") || b.getAttribute("data-blank")); if (!x) return;
     if (b.hasAttribute("data-teach")) openTeach(x); else openBlank(x);
@@ -456,19 +566,21 @@
     weeklyPick: weeklyPick, weekKey: weekKey, weekly: weekly, wstatus: wstatus, wsave: wsave, subjName: subjName, groupOf: groupOf, bySubjHtml: bySubjHtml,
     confOn: confOn, whyFor: whyFor, loadWhy: loadWhy, loadQuiz: loadQuiz, CASE_IDS: CASE_IDS, BLANK_SEC: BLANK_SEC, TMAX: TMAX, WN: WN, WMIN: WMIN,
     openTeach: function (k) { var x = partByKey(k); if (x) openTeach(x); }, openBlank: function (k) { var x = partByKey(k); if (x) openBlank(x); },
-    openCase: function (id) { var l = lessonById(id); if (l) openCase(l); }, close: close, T: T };
+    openCase: function (id) { var l = lessonById(id); if (l) openCase(l); }, close: close, T: T,
+    openPart: function (k) { var x = partByKey(k); if (x) openPart(x); }, pqMarks: pqMarks, pqDone: pqDone, pqSave: pqSave, pqIds: pqIds, PQK: PQK };
 
   function init() {
     if (d.querySelector(".lqz") || d.querySelector("details.topic") || d.querySelector("[data-subject]") || /^(cardio|neuro|henderson|medsurg|geri|community|rea|pharma|law|mgmt|quality)\.html$/.test(page)) {
-      var mT = 0, mount = function () { clearTimeout(mT); mT = setTimeout(function () { try { mountParts(); } catch (e) {} }, 80); };
+      var mT = 0, mount = function () { clearTimeout(mT); mT = setTimeout(function () { try { mountParts(); } catch (e) {} try { pqMarks(); } catch (e) {} }, 80); };
       mount(); setTimeout(mount, 1500);
       try { new MutationObserver(function (ms) { for (var i = 0; i < ms.length; i++) { var t = ms[i].target; if (box && box.contains(t)) continue; if (t.closest && t.closest(".rtrow,.fcwrap,.nwrap,.ntoast")) continue; mount(); return; } }).observe(d.body, { childList: true, subtree: true }); } catch (e) {}
     }
     homeEntry(); hifzCard();
+    d.addEventListener("nursin:partq", function () { setTimeout(function () { try { pqMarks(); } catch (e) {} }, 30); });
     ["nursin:ret", "nursin:srs", "nursin:wexam", "nursin:gate"].forEach(function (ev) { d.addEventListener(ev, function () { setTimeout(function () { homeEntry(); hifzCard(); }, 40); }); });
     if (page === "quiz.html") setTimeout(loadWhy, 1200);
-    var m = (location.search.match(/[?&](teach|blank|case)=([\w%:#-]+)/) || []);
-    if (m[1]) setTimeout(function () { var k = decodeURIComponent(m[2]); if (m[1] === "case") w.Retain.openCase(k); else if (m[1] === "teach") w.Retain.openTeach(k); else w.Retain.openBlank(k); }, 900);
+    var m = (location.search.match(/[?&](teach|blank|case|pq)=([\w%:#-]+)/) || []);
+    if (m[1]) setTimeout(function () { var k = decodeURIComponent(m[2]); if (m[1] === "case") w.Retain.openCase(k); else if (m[1] === "pq") w.Retain.openPart(k); else if (m[1] === "teach") w.Retain.openTeach(k); else w.Retain.openBlank(k); }, 900);
   }
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(window, document);

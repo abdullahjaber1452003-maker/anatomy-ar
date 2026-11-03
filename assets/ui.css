@@ -683,3 +683,21 @@ html[data-theme="night"] .clg-toast{background:#e2e8f0;color:#0f172a}
 .hlitem .hlnx{flex:1 0 100%;padding:0 12px 10px;min-width:0;box-sizing:border-box}
 .hlitem .hlnx .naskw{margin-top:0}
 .hlnote2{margin:0 0 6px}.hlnote2 .hlnh{margin:0 0 2px;color:var(--hzmut,#64748b)}.hlnote2 .ntext{margin:2px 0 4px}
+
+/* 📝 29c: «كويز هالجزء» — a quiz at the end of every lesson part (assets/retain.js openPart) — glass tokens, night follows */
+.rtrow .pqbtn,body.ui .rtrow .btn.pqbtn{flex:1 1 100%;order:-1;font-size:15px;font-weight:800;padding:11px 10px;min-height:44px;color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--hzacc2,#0d9488),var(--hzacc,#0f766e));box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 14px rgba(13,148,136,.25)}
+.rtrow .pqbtn.pqok,body.ui .rtrow .btn.pqbtn.pqok{color:#166534;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.45);box-shadow:none}
+.pqmk{color:#16a34a;font-size:.85em;font-weight:800;white-space:nowrap}
+.pqpr{font-size:.74em;font-weight:700;color:var(--mut,#64748b);white-space:nowrap}.pqpr.all{color:#16a34a}
+.rpq .rpqlab{margin:0 0 6px;font-weight:700;color:var(--hzacc,#0f766e);line-height:1.5;overflow-wrap:anywhere}
+.rpqbar{display:flex;gap:4px;margin:0 0 4px}.rpqbar i{flex:1;height:5px;border-radius:4px;background:var(--line,#e2e8f0)}.rpqbar i.d{background:var(--pri,#0f766e)}.rpqbar i.c{background:var(--acc,#f59e0b)}
+.rpq .rpqn{margin:2px 0 0;color:var(--mut,#64748b)}
+.rpq .rpqq{border-top:0;margin-top:2px;padding-top:2px}
+.rpq .rpqq .opt{font-size:15.5px;overflow-wrap:anywhere}
+.rpq .rpqgo .btn{flex:1}
+.rpqsc{font-size:30px;margin:0}.rpqmiss{text-align:start;margin:10px 0;padding:0 18px 0 0;font-size:14px;line-height:1.6}.rpqmiss li{margin:4px 0;overflow-wrap:anywhere}
+html[dir="ltr"] .rpqmiss{padding:0 0 0 18px}
+.rpqnx{margin:6px 0 0;color:var(--mut,#64748b)}
+html[data-theme="night"] .rtrow .pqbtn.pqok,html[data-theme="night"] body.ui .rtrow .btn.pqbtn.pqok{color:#4ade80;background:rgba(74,222,128,.10);border-color:rgba(74,222,128,.4)}
+html[data-theme="night"] .pqmk,html[data-theme="night"] .pqpr.all{color:#4ade80}
+.rpqsc2{margin:2px 0 6px;font-weight:700}
