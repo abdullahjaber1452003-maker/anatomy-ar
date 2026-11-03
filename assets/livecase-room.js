@@ -10,10 +10,22 @@
   // 28y: 💡 open hint box (bed k) · the step a paid hint pointed at · the 📤 checklist · each bed has its own IV set (soluté + cathéter + tubulure) at the bed
   var hintOpen = null, hl = null, handOpen = null, BEDSIDE = { kit: 1 };
   // 👥 the other students in the room (assets/livepres.js): their drawn position, path, sprite; the join/leave toast queue
+  // 28z 🏥 the floor strip (all departments small, mine big above): its canvas, my walk between departments (trv), the ambulance, the sound
+  var fcv = null, fcx = null, fsc = 1, fdpr = 1, trv = null, lastDep = "er", ambSeen = 0, ambAnim = null, snd = false, SNDK = "nursin_live_snd_v1", actx = null, pAll = [];
   var peers = {}, pList = [], pPrev = null, pQ = { join: [], left: [] }, pToastT = 0, pT = 0, avImg = {}, mySpr = null;
   var T = L.T, esc = L.esc, FR = L.FR;
   var U = {
     title: { ar: "🔴 حالة لايف", fr: "🔴 Cas en direct" }, close: { ar: "سكّر", fr: "Fermer" },
+    // 28z 🏥 the hospital floor
+    hosp: { ar: "🏥 المستشفى", fr: "🏥 L'hôpital" }, here: { ar: "📍 إنت هون", fr: "📍 Tu es ici" }, corr: { ar: "الممرّ", fr: "Couloir" },
+    entr: { ar: "🚪 مدخل الطوارئ", fr: "🚪 Entrée des urgences" }, bayEmpty: { ar: "🛏️ سرير الإسعاف فاضي", fr: "🛏️ Lit d'ambulance libre" },
+    noAmb: { ar: "🚑 ما في إسعاف هلّق", fr: "🚑 Pas d'ambulance pour l'instant" }, noAmb2: { ar: "الإسعاف بتوصل فجأة بأي وقت بالنهار — بتسمع الصفّارة 🚨", fr: "Elles arrivent à l'improviste dans la journée — tu entendras la sirène 🚨" },
+    walk: { ar: "🚶 رايح عَ {d}…", fr: "🚶 Vers {d}…" }, inDep: { ar: "إنت بـ {d}", fr: "Tu es en {d}" },
+    sirenT: { ar: "🚑 وصلت إسعاف! مريض جديد بالطوارئ", fr: "🚑 Une ambulance arrive ! Nouveau patient aux urgences" }, sirenGo: { ar: "🏃 روح استقبلو", fr: "🏃 J'y vais" },
+    ambDone: { ar: "🚑 خلصت حالة الإسعاف — الجاية بتوصل فجأة", fr: "🚑 Cas de l'ambulance terminé — la prochaine arrive à l'improviste" },
+    bed2Empty: { ar: "🛏️ هالتخت فاضي — مريض الإسعاف عالتخت ①", fr: "🛏️ Lit vide — le patient de l'ambulance est au lit ①" },
+    sndOn: { ar: "🔊 صوت القسم", fr: "🔊 Son du service" }, sndOff: { ar: "🔇 بلا صوت", fr: "🔇 Sans son" },
+    welcome: { ar: "أهلا وسهلا بـ{d}", fr: "Bienvenue en {d}" },
     preview: { ar: "👀 تجربة على جهازك — سجّل دخول لتشتغل مع كل الطلاب", fr: "👀 Essai sur ton appareil — connecte-toi pour jouer avec tout le monde" },
     soon: { ar: "🔴 الحالة اللايف رح تشتغل قريباً — هلّق عم تجرّبها لحالك (ما بتنحفظ للكل)", fr: "🔴 Le cas partagé arrive bientôt — tu l'essaies seul pour l'instant" },
     net: { ar: "📶 ما في اتصال — عم تشتغل على جهازك", fr: "📶 Hors ligne — sur ton appareil" },
@@ -129,10 +141,12 @@
   var GM = [null, { ar: "ما بيتحرّك أبداً", fr: "Aucune réponse motrice" }, { ar: "بيمدّ إيديه وإجريه عالوجع (extension)", fr: "Extension à la douleur" }, { ar: "بيطوي إيديه بشكل غريب (flexion anormale)", fr: "Flexion anormale" }, { ar: "بيسحب إيدو عالوجع (évitement)", fr: "Évitement à la douleur" }, { ar: "بيحدّد محلّ الوجع (localise)", fr: "Localise la douleur" }, { ar: "بينفّذ الأوامر", fr: "Obéit aux ordres" }];
   var GROUPS = [["eval", ["eval", "pouls", "swallow", "gly", "ecg", "mon", "bilan", "gds", "bio"]], ["pos", ["pos_semi", "pos_trend", "pos_pls", "pos_tete30", "leg_down", "repos"]],
     ["soin", ["acc", "airway", "o2", "vent", "guedel", "vvp", "remp", "stop", "stopdrug", "immob", "cpr", "shock", "sonde", "jeun", "es", "isol", "refroid", "calm", "drink"]],
-    ["rx", ["adre", "nora", "atro", "dobu", "deca", "atb", "sang", "trinit", "aspi", "hep", "furo", "mann", "morph", "g30", "insu", "digi", "vitk", "digo", "aero", "para", "bicar"]]];
+    ["rx", ["adre", "nora", "atro", "dobu", "deca", "atb", "sang", "trinit", "aspi", "hep", "furo", "mann", "morph", "g30", "insu", "digi", "vitk", "digo", "aero", "para", "bicar", "phen"]]];
   function q(s) { return ov && ov.querySelector(s); }
   function pk(i) { return i ? "b" : "a"; }
   function X(k) { return st && st.P[k === "b" ? 1 : 0]; }
+  function DK() { return (st && st.DK) || D; }                                        // 28z: the bank of the department the nurse is in
+  function ckey(k) { var dk = L.dep ? L.dep() : "er"; return (dk === "er" ? "" : dk) + k; }
   function nm(x) { return T(x.p.nm); }
   function fmtT(t) { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(t)); } catch (e) { return ""; } }
 
@@ -141,9 +155,10 @@
     ov = d.createElement("div"); ov.className = "lcr"; ov.hidden = true; ov.setAttribute("data-nofr", ""); ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true");
     ov.innerHTML = '<div class="lcr-top"><button type="button" class="lcr-x" data-lcx="1" aria-label="' + esc(u("close")) + '">✕</button>' +
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
-      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button></div>' +
+      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
-      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div></div>' +
+      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div></div>' +
+      '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas></div>' +
       '<div class="lcr-bar"><span class="lcr-hl">' + esc(u("hands")) + '</span><button type="button" class="lcr-slot" data-lcslot="0"></button><button type="button" class="lcr-slot" data-lcslot="1"></button>' +
       '<button type="button" class="lcr-feedb" data-lcfeed="1"></button></div>' +
       '<div class="lcr-sheet" hidden><div class="lcr-shin"></div></div><div class="lcr-panel" hidden></div>';
@@ -153,13 +168,14 @@
     sh0.addEventListener("pointerdown", function () { sheetHold(true); });
     ["pointerup", "pointercancel"].forEach(function (ev) { sh0.addEventListener(ev, function () { setTimeout(function () { sheetHold(false); }, 0); }); });
     cv = q(".lcr-cv"); cx = cv.getContext("2d"); cv.addEventListener("pointerdown", onTap);
+    fcv = q(".lcr-fcv"); fcx = fcv.getContext("2d"); fcv.addEventListener("pointerdown", onFloorTap); sndPaint();
     w.addEventListener("resize", function () { if (!ov.hidden) size(); });
   }
   function open() {
     if (!ov) build();
     ov.hidden = false; d.documentElement.classList.add("lcr-open");
     if (location.hash !== "#live") try { history.pushState({ lc: 1 }, "", "#live"); } catch (e) { location.hash = "live"; }
-    q(".lcr-tt").textContent = u("title");
+    q(".lcr-tt").textContent = depTitle();
     nurse = nurse || { x: 180, y: 560, dir: -Math.PI / 2, pts: [], goal: null, walkT: 0 };
     L.start(onState).then(function (X) { D = X; if (!X) return; G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); });
   }
@@ -170,6 +186,8 @@
   }
   function onState(s, m) {
     st = s; mode = m; if (!ov || ov.hidden || !s) return;
+    if ((s.dep || "er") !== lastDep) { lastDep = s.dep || "er"; bg = null; prevSt = {}; endSeen = !!s.end; q(".lcr-tt").textContent = depTitle(); }
+    ambCheck();
     // 28v: an ended case is shown as ended everywhere in the room (dimmed room + «🏁 انتهت الحالة» card + countdown to the next one)
     ov.classList.toggle("ended", !!s.end); if (!s.end) endSeen = false;
     var tm = q(".lcr-tm"); tm.textContent = s.end ? "⏭️ " + L.left(s.t1 - Date.now()) : "⏳ " + L.left(s.t1 - Date.now());
@@ -198,7 +216,7 @@
       if (p && p !== x.st) { var down = ["ok", "impr", "unst", "crit", "lost"].indexOf(x.st) > ["ok", "impr", "unst", "crit", "lost"].indexOf(p); say(down ? "bad" : "good", (down ? "📉 " : "📈 ") + nm(x) + ": " + L.stLabel(x.st)); } prevSt[x.k] = x.st; });
   }
   function finSay(x) {
-    if (!st || st.end || !x || !x.over) return; var o = st.P[x.k === "a" ? 1 : 0];
+    if (!st || st.end || !x || !x.over || x.ghost) return; var o = st.P[x.k === "a" ? 1 : 0]; if (!o || o.ghost) return say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }));
     say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) }));
   }
   function cards() {
@@ -209,6 +227,7 @@
       return;
     }
     el.innerHTML = st.P.map(function (x, i) {
+      if (x.ghost) return '<div class="lcr-pc lcr-ghost"><b>🛏️2</b><small>' + esc(u("bayEmpty")) + "</small></div>";
       var v = x.v, mon = !!x.done.mon, pct = Math.round(x.n / x.tot * 100);
       var vit = mon ? '<span dir="ltr" class="lcr-v"><i class="' + lv("ta", v.sys) + '">' + Math.round(v.sys) + "/" + Math.round(v.dia) + '</i> <i class="' + lv("fc", v.fc) + '">♥' + Math.round(v.fc) + '</i> <i class="' + lv("spo2", v.spo2) + '">' + Math.round(v.spo2) + "%</i></span>" : '<span class="lcr-v off">📟 --</span>';
       var fin = x.over ? '<small class="lcr-pp lcr-pfin">' + esc(ug("pDone", x)) + " · " + esc(u("seeSteps")) + "</small>" : "";   // 28x: a finished bed stays, greyed
@@ -229,11 +248,11 @@
   function overPaint() {
     var el = q(".lcr-over"); if (!el || !st) return;
     if (!st.end) { if (!el.hidden) { el.hidden = true; el.innerHTML = ""; overKey = ""; } return; }
-    var k = st.id + st.end.w + (st.end.pk || "") + (FR() ? "fr" : "ar");
+    var k = (st.dep || "") + st.id + st.end.w + (st.end.pk || "") + (FR() ? "fr" : "ar");
     if (k !== overKey) {
       overKey = k; el.hidden = false;
       el.innerHTML = '<div class="lcr-ovc" role="status"><b class="lcr-ovt">' + esc(u("ended")) + '</b><p class="lcr-ovw">' + esc(endWhy()) + "</p>" +
-        '<p class="lcr-ovn">' + esc(u("nextIn")) + ' <b class="lcr-ovcd" dir="ltr"></b></p><div class="lcr-ova">' +
+        (st.dep === "x" ? '<p class="lcr-ovn">' + esc(u("ambDone")) + "</p>" : '<p class="lcr-ovn">' + esc(u("nextIn")) + ' <b class="lcr-ovcd" dir="ltr"></b></p>') + '<div class="lcr-ova">' +
         '<button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeSteps")) + '</button><button type="button" class="lcr-btn" data-lcarch="1">' + esc(u("archive")) + "</button></div></div>";
     }
     overTick();
@@ -260,6 +279,7 @@
 
   /* ---------------- canvas room ---------------- */
   function size() {
+    fsize();
     if (!cv || !E) return; var stg = q(".lcr-stage"), wv = stg.clientWidth, hv = stg.clientHeight; if (!wv || !hv) return;
     scale = Math.min(wv / E.W, hv / E.H); dpr = Math.min(2, w.devicePixelRatio || 1);
     cv.style.width = Math.round(E.W * scale) + "px"; cv.style.height = Math.round(E.H * scale) + "px";
@@ -275,8 +295,10 @@
       if (r.done) { nurse.walkT = 0; mark = null; if (nurse.goal) { var g = nurse.goal; nurse.goal = null; arrive(g); } }
     }
     if (st && st.end && ts - overT > 500) { overT = ts; overTick(); }
+    travelTick(dt);
     presFrame(dt);
     draw(ts / 1000);
+    floorDraw(ts / 1000, dt);
   }
   function night() { return d.documentElement.getAttribute("data-theme") === "night"; }
   function pal() {
@@ -362,11 +384,12 @@
     if (!cv || !cx || !cv.width || !E) return;
     if (!bg) bg = room();
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.drawImage(bg, 0, 0); cx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-    var P = pal(), S = E.stations;
+    var P = pal(), S = E.stations, dk0 = L.dep();
+    if (dk0 !== "er") { cx.fillStyle = DCOL[dk0]; cx.globalAlpha = 0.07; cx.fillRect(0, 0, E.W, E.H); cx.globalAlpha = 1; label(cx, P, E.W / 2, 7, depName(dk0), DCOL[dk0]); }
     if (st) {
       var m = S.mon, on = st.P.filter(function (x) { return x.done.mon; });
       on.forEach(function (x, j) { cx.strokeStyle = j ? "#7dd3fc" : "#3df59a"; cx.lineWidth = 1; cx.beginPath(); for (var i = 0; i <= 30; i++) { var ph = (i / 30 * 2 + t * (x.v.fc || 0) / 60) % 1, yv = ph < 0.16 ? 0 : ph < 0.18 ? -1 : ph < 0.21 ? 6 : ph < 0.24 ? -2 : 0; cx[i ? "lineTo" : "moveTo"](m.x + 4 + i, m.y + 10 + j * 10 - yv); } cx.stroke(); });
-      st.P.forEach(function (x, i) { var s = i ? S.bed2 : S.bed1; s.k = pk(i); patient(P, x, s, t); });
+      st.P.forEach(function (x, i) { if (x.ghost) return; var s = i ? S.bed2 : S.bed1; s.k = pk(i); patient(P, x, s, t); });
     }
     if (mark) { mark.t += 1 / 60; var r2 = 4 + (mark.t * 20) % 10; cx.strokeStyle = "rgba(15,118,110,.7)"; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(mark.x, mark.y, r2, 0, 7); cx.stroke(); }
     peersDraw(P, t);
@@ -385,7 +408,9 @@
   }
 
   /* ---------------- 👥 the others in the room (assets/livepres.js) ---------------- */
-  function presChange() { var PR = w.LivePresRoom; pList = PR ? PR.others() : []; presDiff(); pplPaint(); bedHint(); }
+  // 28z: everyone in the hospital (pAll, drawn on the floor strip); pList = only those standing in MY department (drawn in the room)
+  function mine(l) { var dk = L.dep(); return l.filter(function (p) { return (p.dep || "er") === dk && (p.tdep || p.dep || "er") === dk; }); }
+  function presChange() { var PR = w.LivePresRoom; pAll = PR ? PR.others() : []; pList = mine(pAll); presDiff(); pplPaint(); bedHint(); }
   function presDiff() {
     var LP = w.LivePres; if (!LP) return;
     if (pPrev) {
@@ -415,10 +440,10 @@
   }
   // every frame: send my place (throttled inside), age the list once a second, move each other student smoothly along his path
   function presFrame(dt) {
-    var PR = w.LivePresRoom, LP = w.LivePres; if (!PR || !PR.active()) { if (pList.length) { pList = []; peers = {}; } return; }
+    var PR = w.LivePresRoom, LP = w.LivePres; if (!PR || !PR.active()) { if (pList.length || pAll.length) { pList = []; pAll = []; peers = {}; } return; }
     var tg = nurse.pts.length ? nurse.pts[nurse.pts.length - 1] : nurse;
-    PR.tick(nurse, tg, sheet && sheet.kind === "bed" ? sheet.k : "", nurse.pts.length > 0);
-    var now = Date.now(); if (now - pT > 1000) { pT = now; pList = PR.others(); presDiff(); pplPaint(); bedHint(); }
+    PR.tick(nurse, tg, sheet && sheet.kind === "bed" ? sheet.k : "", nurse.pts.length > 0 || !!trv, L.dep(), trv ? trv.to : L.dep());
+    var now = Date.now(); if (now - pT > 1000) { pT = now; pAll = PR.others(); pList = mine(pAll); presDiff(); pplPaint(); bedHint(); }
     var seen = {};
     pList.forEach(function (p) {
       seen[p.uid] = 1; var e = peers[p.uid];
@@ -488,6 +513,7 @@
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
   function onTap(e) {
+    if (trv) { e.preventDefault(); return; }
     if (st && st.end) { e.preventDefault(); return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); }   // 28v: never a dead tap
     if (sheet || panel || !G) return; e.preventDefault();
     var p = toL(e), k = R.hitStation(p.x, p.y, 6);
@@ -503,11 +529,167 @@
   }
   function arrive(k) {
     var S = E.stations[k]; nurse.dir = Math.atan2((S.y + S.h / 2) - nurse.y, (S.x + S.w / 2) - nurse.x);
+    if (k === "bed2" && X("b") && X("b").ghost) return say("neutral", u("bed2Empty"));
     if (k === "bed1" || k === "bed2") return bedSheet(k === "bed1" ? "a" : "b", "care");
     if (k === "sink") { washed = true; return say("good", u("washed")); }
     if (k === "phone") return deskSheet();
     stationSheet(k);
   }
+
+
+  /* ---------------- 28z 🏥 the hospital floor ----------------
+     ONE continuous floor: the department the nurse stands in is the big room above (everything as before); below, the whole floor small —
+     🧠 الأعصاب · 🫀 القلب · 🚑 الطوارئ along one corridor, the ER entrance with «🛏️ سرير الإسعاف» where the ambulances stop. Each small
+     room shows its two beds (status colours), the students in it (👥 N) and me (📍). A tap on another room → my nurse walks to the door of
+     the big room, the big room shrinks into the floor, the nurse walks along the corridor, and the new department grows into the big room. */
+  var FW = 360, FH = 128, ROOMS = { n: { x: 6, y: 4, w: 108, h: 60 }, k: { x: 126, y: 4, w: 108, h: 60 }, er: { x: 246, y: 4, w: 108, h: 60 }, x: { x: 246, y: 96, w: 108, h: 28 } };
+  var DCOL = { er: "#dc2626", k: "#e11d48", n: "#7c3aed", x: "#ea580c" }, SCOL = { ok: "#16a34a", impr: "#eab308", unst: "#f97316", crit: "#dc2626", lost: "#64748b" };
+  var CORR_Y = 80;
+  function depName(dk) { var I = w.LiveDept.INFO[dk || L.dep()]; return I.ic + " " + T(I.t); }
+  function depTitle() { var dk = L.dep(); return dk === "er" ? u("title") + " · " + depName("er") : depName(dk); }
+  function fsize() {
+    if (!fcv) return; var box = fcv.parentNode, wv = box.clientWidth - 12; if (wv <= 0) return;
+    fsc = Math.min(wv / FW, 1.9); fdpr = Math.min(2, w.devicePixelRatio || 1);
+    fcv.style.width = Math.round(FW * fsc) + "px"; fcv.style.height = Math.round(FH * fsc) + "px";
+    fcv.width = Math.round(FW * fsc * fdpr); fcv.height = Math.round(FH * fsc * fdpr);
+  }
+  function door(dk) { var r = ROOMS[dk]; return dk === "x" ? { x: r.x + 26, y: r.y } : { x: r.x + r.w / 2, y: r.y + r.h }; }
+  // where a student (room coordinates 360×600) stands on the small room
+  function mini(dk, x, y) { var r = ROOMS[dk]; return dk === "x" ? { x: r.x + 6 + (x / 360) * (r.w - 12), y: r.y + 6 + (y / 600) * (r.h - 10) } : { x: r.x + 5 + (x / 360) * (r.w - 10), y: r.y + 16 + (y / 600) * (r.h - 20) }; }
+  // the corridor walk from one door to another: down to the corridor, along it, up into the other room (t 0…1)
+  function cwalk(a, b, t) {
+    var A = door(a), B = door(b), P = [A, { x: A.x, y: CORR_Y }, { x: B.x, y: CORR_Y }, B], L2 = [], tot = 0, i;
+    for (i = 1; i < P.length; i++) { var l = Math.abs(P[i].x - P[i - 1].x) + Math.abs(P[i].y - P[i - 1].y); L2.push(l); tot += l; }
+    var dd = Math.max(0, Math.min(1, t)) * tot;
+    for (i = 1; i < P.length; i++) { if (dd <= L2[i - 1] || i === P.length - 1) { var k = L2[i - 1] ? Math.min(1, dd / L2[i - 1]) : 1; return { x: P[i - 1].x + (P[i].x - P[i - 1].x) * k, y: P[i - 1].y + (P[i].y - P[i - 1].y) * k, dir: Math.atan2(P[i].y - P[i - 1].y, P[i].x - P[i - 1].x) }; } dd -= L2[i - 1]; }
+    return B;
+  }
+  function hosp() { return L.hospital ? L.hospital() : null; }
+  var hCache = null, hAt = 0;
+  function hNow() { var n = Date.now(); if (!hCache || n - hAt > 1500) { hCache = hosp(); hAt = n; } return hCache; }
+  function floorDraw(t, dt) {
+    if (!fcx || !fcv.width) return; var c = fcx, P = pal(), H0 = hNow(), dk = L.dep(), nt = night();
+    c.setTransform(fsc * fdpr, 0, 0, fsc * fdpr, 0, 0); c.clearRect(0, 0, FW, FH);
+    // corridor + road
+    c.fillStyle = nt ? "#0f1a1f" : "#dfe9e7"; c.fillRect(0, 0, FW, FH);
+    c.fillStyle = nt ? "#1c2b32" : "#f6faf9"; rr(c, 2, CORR_Y - 10, FW - 4, 20, 8); c.fill();
+    c.strokeStyle = nt ? "#2b3f47" : "#c9d9d6"; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(8, CORR_Y); c.lineTo(FW - 8, CORR_Y); c.stroke(); c.setLineDash([]);
+    c.fillStyle = nt ? "#232f35" : "#9aa7ad"; rr(c, 0, 99, 240, 22, 4); c.fill(); c.strokeStyle = "rgba(255,255,255,.55)"; c.setLineDash([8, 7]); c.beginPath(); c.moveTo(4, 110); c.lineTo(236, 110); c.stroke(); c.setLineDash([]);
+    label(c, P, 46, CORR_Y, "🚶 " + u("corr"));
+    // the rooms
+    ["n", "k", "er", "x"].forEach(function (k) {
+      var r = ROOMS[k], S = H0 && H0[k], on = k === dk, col = DCOL[k];
+      c.fillStyle = "rgba(0,0,0,.10)"; rr(c, r.x + 2, r.y + 3, r.w, r.h, 9); c.fill();
+      c.fillStyle = nt ? "#17232a" : "#ffffff"; rr(c, r.x, r.y, r.w, r.h, 9); c.fill();
+      c.fillStyle = col; c.globalAlpha = on ? 0.18 : 0.08; rr(c, r.x, r.y, r.w, r.h, 9); c.fill(); c.globalAlpha = 1;
+      c.lineWidth = on ? 2.4 : 1; c.strokeStyle = on ? col : (nt ? "#33474f" : "#b8cbc7"); rr(c, r.x, r.y, r.w, r.h, 9); c.stroke();
+      // door gap
+      var dr = door(k); c.fillStyle = nt ? "#1c2b32" : "#f6faf9"; c.fillRect(dr.x - 9, dr.y - 2, 18, 4);
+      c.font = "700 8.5px " + EMO; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.textAlign = "center"; c.fillStyle = nt ? "#dff3ee" : "#17323a";
+      if (k !== "x") c.fillText(depName(k), r.x + r.w / 2, r.y + 9);
+      // beds
+      var beds = k === "x" ? [{ x: r.x + r.w - 40, y: r.y + 5, w: 34, h: 18 }] : [{ x: r.x + 8, y: r.y + 18, w: 40, h: 26 }, { x: r.x + r.w - 48, y: r.y + 18, w: 40, h: 26 }];
+      beds.forEach(function (b, i) {
+        var x = S && S.P[i], gone = !x || x.ghost;
+        c.fillStyle = nt ? "#5d6f79" : "#7d8c96"; rr(c, b.x, b.y, b.w, b.h, 5); c.fill(); c.fillStyle = nt ? "#cdd7dc" : "#fff"; rr(c, b.x + 2, b.y + 2, b.w - 4, b.h - 4, 4); c.fill();
+        if (!gone) {
+          var sc = x.over ? "#94a3b8" : SCOL[x.st] || "#f97316"; c.fillStyle = sc; rr(c, b.x + 3, b.y + b.h * 0.45, b.w - 6, b.h * 0.5, 3); c.fill();
+          if (!x.over && (x.st === "crit")) { c.globalAlpha = 0.35 + 0.35 * Math.sin(t * 6); c.strokeStyle = "#dc2626"; c.lineWidth = 2; rr(c, b.x - 1.5, b.y - 1.5, b.w + 3, b.h + 3, 6); c.stroke(); c.globalAlpha = 1; }
+          c.font = "7px " + EMO; c.fillStyle = "#0f172a"; c.textAlign = "center"; c.fillText(x.over ? (x.over.w === "ok" ? "✅" : "💔") : "🛌", b.x + b.w / 2, b.y + 7);
+        }
+      });
+      if (k === "x") { c.font = "700 8px " + EMO; c.fillStyle = nt ? "#fed7aa" : "#9a3412"; c.textAlign = "center"; var tx2 = S && S.P[0] && !S.end ? "🛏️ " + T(w.LiveDept.INFO.x.t) : u("entr"); c.fillText(tx2, r.x + 34, r.y + 15); }
+      // 👥 how many in it
+      var cnt = pAll.filter(function (p) { return p.dep === k && (p.tdep || p.dep) === k; }).length + (on && !trv ? 1 : 0);
+      if (cnt > 0 && w.LivePresRoom && w.LivePresRoom.active()) { label(c, P, k === "x" ? r.x + 12 : r.x + r.w - 14, k === "x" ? r.y + 24 : r.y + r.h - 7, "👥 " + cnt, col); }
+      if (on && !trv) label(c, P, k === "x" ? r.x + 30 : r.x + 22, k === "x" ? r.y - 6 : r.y + r.h - 7, u("here"), "#0f766e");
+    });
+    // the others: in their room, or walking along the corridor
+    var LP = w.LivePres, now = Date.now() + (w.LivePresRoom ? w.LivePresRoom.skew() : 0);
+    pAll.forEach(function (p, i) {
+      var a = LP ? LP.alpha(now - p.at) : 1; if (a <= 0) return; var pos;
+      if (p.dep !== p.tdep) { var ph = ((t * 0.25 + (LP.color(p.uid).length % 7) / 7) % 1); pos = cwalk(p.dep, p.tdep, ph); }
+      else pos = mini(p.dep, p.x, p.y);
+      c.globalAlpha = a; c.fillStyle = LP ? LP.color(p.uid) : "#2563eb"; c.beginPath(); c.arc(pos.x, pos.y, 3.6, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1; c.stroke(); c.globalAlpha = 1;
+    });
+    // me
+    var me = trv && trv.ph === 2 ? cwalk(trv.from, trv.to, trv.t) : nurse ? mini(trv ? trv.from : dk, nurse.x, nurse.y) : null;
+    if (me) { var bob = trv && trv.ph === 2 ? Math.sin(t * 18) * 0.8 : 0; c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(me.x + 1, me.y + 2.5, 5, 3, 0, 0, 7); c.fill(); c.fillStyle = "#dc2626"; c.beginPath(); c.arc(me.x, me.y + bob, 4.6, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.4; c.stroke(); c.fillStyle = P.skin; c.beginPath(); c.arc(me.x, me.y + bob - 0.5, 2, 0, 7); c.fill(); }
+    // 🚑 the ambulance: drives up the road to the ER entrance, lights flashing, then waits there a few minutes
+    var A = H0 && H0.amb, cur = A && A.cur, since = cur ? Date.now() - cur.t : 1e12;
+    if (cur && since < 12 * 6e4) {
+      if (!ambAnim || ambAnim.i !== cur.i) ambAnim = { i: cur.i, t0: since < 30000 ? t : t - 9 };
+      var k2 = Math.min(1, (t - ambAnim.t0) / 3.2), e2 = 1 - Math.pow(1 - k2, 3), ax = -50 + e2 * 236;
+      ambDraw(c, ax, 102, t, k2 < 1 || since < 5 * 6e4);
+      if (k2 >= 1 && since < 4 * 6e4) { var sx = 228 + Math.min(1, (t - ambAnim.t0 - 3.2) / 2) * 32; c.font = "11px " + EMO; c.textAlign = "center"; c.fillText("🛏️", sx, 110); }
+    }
+    if (trv && trv.ph === 2) label(c, P, FW / 2, FH - 4, u("walk", { d: depName(trv.to) }), "#0f766e");
+  }
+  function ambDraw(c, x, y, t, lights) {
+    c.fillStyle = "rgba(0,0,0,.18)"; rr(c, x + 2, y + 3, 46, 16, 4); c.fill();
+    c.fillStyle = "#ffffff"; rr(c, x, y, 46, 16, 4); c.fill(); c.strokeStyle = "#94a3b8"; c.lineWidth = 1; rr(c, x, y, 46, 16, 4); c.stroke();
+    c.fillStyle = "#fb923c"; c.fillRect(x + 2, y + 9, 34, 3); c.fillStyle = "#93c5fd"; rr(c, x + 36, y + 2, 9, 7, 2); c.fill();
+    c.fillStyle = "#dc2626"; c.fillRect(x + 15, y + 2.5, 8, 2.5); c.fillRect(x + 17.75, y + 0, 2.5, 7.5);
+    if (lights) { var on = Math.sin(t * 14) > 0; c.fillStyle = on ? "#ef4444" : "#3b82f6"; c.beginPath(); c.arc(x + 30, y - 1, 3, 0, 7); c.fill(); c.globalAlpha = 0.25; c.beginPath(); c.arc(x + 30, y - 1, 9, 0, 7); c.fill(); c.globalAlpha = 1; }
+    c.fillStyle = "#1f2937"; c.beginPath(); c.arc(x + 9, y + 16, 3, 0, 7); c.arc(x + 37, y + 16, 3, 0, 7); c.fill();
+  }
+  function onFloorTap(e) {
+    e.preventDefault(); if (trv) return;
+    var r = fcv.getBoundingClientRect(), x = (e.clientX - r.left) / fsc, y = (e.clientY - r.top) / fsc;
+    for (var k in ROOMS) { var o = ROOMS[k]; if (x >= o.x - 4 && x <= o.x + o.w + 4 && y >= o.y - 4 && y <= o.y + o.h + 4) return walkTo(k); }
+    if (y > 92 && x < 244) { var H0 = hNow(); if (H0 && H0.amb && H0.amb.cur) return walkTo("x"); return say("neutral", u("noAmb"), u("noAmb2")); }
+  }
+  // the walk: ① to the door of the big room ② the big room shrinks, the nurse walks the corridor ③ the new department grows, he walks in
+  function walkTo(dk) {
+    if (trv) return; var cur = L.dep();
+    if (dk === cur) return say("neutral", u("inDep", { d: depName(dk) }));
+    if (dk === "x") { var H0 = hosp(); if (!H0 || !H0.amb || !H0.amb.cur) return say("neutral", u("noAmb"), u("noAmb2")); }
+    sheetClose(); panelClose(); hintOpen = null; handOpen = null;
+    var dr = { x: 180, y: E.H - 16 };
+    trv = { from: cur, to: dk, ph: 1, t: 0 };
+    nurse.goal = null; nurse.pts = G ? R.path(G, nurse, dr) : []; mark = null;
+    if (!nurse.pts.length) travelNext();
+  }
+  function travelNext() {
+    if (!trv) return;
+    if (trv.ph === 1) { trv.ph = 2; trv.t = 0; cv.classList.remove("zin"); cv.classList.add("zout"); return; }
+    if (trv.ph === 2) {
+      trv.ph = 3; var to = trv.to; L.setDep(to); st = L.state() || st; bg = null;
+      nurse.x = 180; nurse.y = E.H - 18; nurse.dir = -Math.PI / 2; nurse.pts = G ? R.path(G, nurse, { x: 180, y: E.H - 92 }) : [];
+      cv.classList.remove("zout"); cv.classList.add("zin0"); void cv.offsetWidth; cv.classList.remove("zin0"); cv.classList.add("zin");
+      trv = null; chime(); announce(to); pList = mine(pAll); peers = {};
+      say("good", depName(to), st && st.cs ? st.cs.ic + " " + T(st.cs.t) : "");
+    }
+  }
+  function travelTick(dt) {
+    if (!trv) return;
+    if (trv.ph === 1 && !nurse.pts.length) return travelNext();
+    if (trv.ph === 2) { trv.t += dt / 1.6; if (trv.t >= 1) travelNext(); }
+  }
+  // 🔊 «صوت القسم»: a soft two-note chime + the department's name said out loud when you walk in; 🚨 a siren when an ambulance arrives.
+  // Off until the student turns it on (🔇 → 🔊 in the top bar; phones block sound before a tap anyway)
+  function sndPaint() { try { snd = localStorage.getItem(SNDK) === "1"; } catch (e) {} var b = q(".lcr-snd"); if (b) { b.textContent = snd ? "🔊" : "🔇"; b.setAttribute("aria-label", u(snd ? "sndOn" : "sndOff")); b.title = u(snd ? "sndOn" : "sndOff"); } }
+  function ac() { if (!snd) return null; try { actx = actx || new (w.AudioContext || w.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); return actx; } catch (e) { return null; } }
+  function tone(a, f, t0, dur, vol, type) { var o = a.createOscillator(), g = a.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, a.currentTime + t0); g.gain.setValueAtTime(0.0001, a.currentTime + t0); g.gain.exponentialRampToValueAtTime(vol, a.currentTime + t0 + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + t0 + dur); o.connect(g); g.connect(a.destination); o.start(a.currentTime + t0); o.stop(a.currentTime + t0 + dur + 0.05); return o; }
+  function chime() { var a = ac(); if (!a) return; tone(a, 784, 0, 0.5, 0.12); tone(a, 587, 0.28, 0.7, 0.1); }
+  function announce(dk) { if (!snd || !w.speechSynthesis || !w.SpeechSynthesisUtterance) return; try { var I = w.LiveDept.INFO[dk], m = new SpeechSynthesisUtterance(u("welcome", { d: T(I.t) })); m.lang = FR() ? "fr-FR" : "ar-SA"; m.rate = 1; m.volume = 0.8; w.speechSynthesis.cancel(); setTimeout(function () { w.speechSynthesis.speak(m); }, 650); } catch (e) {} }
+  function siren() { var a = ac(); if (!a) return; for (var i = 0; i < 3; i++) { var o = tone(a, 660, i * 0.9, 0.85, 0.08, "triangle"); o.frequency.linearRampToValueAtTime(960, a.currentTime + i * 0.9 + 0.45); o.frequency.linearRampToValueAtTime(660, a.currentTime + i * 0.9 + 0.85); } }
+  // 🚨 a new ambulance (the same moment on every phone): the siren banner (once per ambulance per phone), the siren sound if on
+  function ambCheck() {
+    var H0 = hosp(), A = H0 && H0.amb, cur = A && A.cur; if (!cur) return;
+    var key = "nursin_live_amb_v1", seen = ""; try { seen = localStorage.getItem(key) || ""; } catch (e) {}
+    var id = C.docId(C.dayKey(cur.t)) + "-" + cur.i; if (ambSeen === id) return; ambSeen = id;
+    if (seen === id || Date.now() - cur.t > 15 * 6e4) return;
+    try { localStorage.setItem(key, id); } catch (e) {}
+    sirenShow(); siren(); if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) try { navigator.vibrate([120, 80, 120]); } catch (e) {}
+  }
+  function sirenShow() {
+    var el = q(".lcr-siren"); if (!el) return; var H0 = hosp(), X0 = H0 && H0.x, p = X0 && X0.P[0];
+    el.innerHTML = '<b>' + esc(u("sirenT")) + "</b>" + (p ? "<small>" + esc(T(p.p.nm) + " · " + p.p.age + " " + u("ageY") + " — " + T(p.p.who)) + "</small>" : "") +
+      '<span><button type="button" class="lcr-sirb" data-lcamb="1">' + esc(u("sirenGo")) + '</button><button type="button" class="lcr-sirb x" data-lcsirx="1" aria-label="' + esc(u("close")) + '">✕</button></span>';
+    el.hidden = false; clearTimeout(el._t); el._t = setTimeout(sirenHide, 20000);
+  }
+  function sirenHide() { var el = q(".lcr-siren"); if (el) el.hidden = true; }
 
   /* ---------------- sheets ---------------- */
   function sheetOpen(kind, k, tab) { sheet = { kind: kind, k: k, tab: tab || "care" }; openQ = null; q(".lcr-sheet").hidden = false; sheetPaint(); }
@@ -587,7 +769,7 @@
   function hintHtml(x) {
     var op = hintOpen === x.k, h = '<div class="lcr-hint' + (op ? " on" : "") + '"><button type="button" class="lcr-hintb" data-lchint="' + x.k + '" aria-expanded="' + op + '">' + esc(u("hint")) + "</button>";
     if (!op) return h + "</div>";
-    var c = C.clue(D, st, x.k);
+    var c = C.clue(DK(), st, x.k);
     if (!c) return h + '<p class="small">' + esc(u("hintNone")) + "</p></div>";
     var s = c.s, g = s.kind === "file" ? "file" : s.id === "acc" ? "acc" : s.id === "mon" ? "mon" : grpOf(s.a), n = nm(x).split(" ")[0];
     var cat = { acc: u("cAcc"), file: u("cFile"), mon: u("cMon"), eval: u("cEval", { n: n }), pos: u("cPos"), soin: u("cSoin", { n: n }), rx: u("cRx"), call: u("cCall") }[g];
@@ -608,7 +790,7 @@
       "<h4>🧪 " + (FR() ? "Examens" : "فحوصات") + "</h4><ul>" + p.lab.map(function (s) { return "<li>" + esc(T(s)) + "</li>"; }).join("") + "</ul>" +
       '<p class="small lcr-src">' + esc(T(st.cs.src)) + ' · <a href="' + st.cs.href + '">' + (FR() ? "📖 la leçon" : "📖 الدرس") + "</a></p></div>";
   }
-  function fieldAnswer(x, f, cs) { var qd = C.opts(D, cs || st.cs, x.p, f); return qd.o[qd.a]; }
+  function fieldAnswer(x, f, cs) { var qd = C.opts(cs ? D : DK(), cs || st.cs, x.p, f); return qd.o[qd.a]; }
   function nowBtn(a) { var A = D.A[a]; return A ? '<button type="button" class="lcr-act lcr-now" data-lcact="' + a + '">' + A.ic + " " + esc(T(A).replace(/^(عطي |Donner : )/, "")) + "</button>" : ""; }
   // 28w: which steps still lock this field (null = it can be filled now)
   function fieldLock(x, s) {
@@ -630,7 +812,7 @@
       h += '<div class="lcr-fld' + (dn ? " done" : "") + (hl && hl.k === x.k && hl.id === "f_" + f && !dn ? " lcr-hit" : "") + '"><div class="lcr-fl"><b>' + F.ic + " " + esc(T(F)) + "</b>" + (FR() ? "" : ' <small dir="ltr">' + esc(F.fr) + "</small>") + "</div>";
       if (dn) h += '<div class="lcr-fv">' + esc(T(fieldAnswer(x, f))) + '<small> · ✍️ ' + esc(dn.n) + " " + fmtT(dn.t) + "</small></div>";
       else if (isOpen) {
-        var qd = C.opts(D, st.cs, x.p, f), cl = L.cool(x.k, "f_" + f);
+        var qd = C.opts(DK(), st.cs, x.p, f), cl = L.cool(ckey(x.k), "f_" + f);
         h += '<div class="lcr-fq"><p>' + esc(T(F.q)) + "</p>";
         if (f === "gcs") { var g = x.p.gyvm; h += '<ul class="lcr-gcs"><li>👁️ ' + esc(T(GY[g[0]])) + "</li><li>🗣️ " + esc(T(GV[g[1]])) + "</li><li>✋ " + esc(T(GM[g[2]])) + "</li></ul>"; }
         if (f === "cst") h += x.done.mon ? '<p class="lcr-cst" dir="ltr">TA ' + Math.round(x.v.sys) + "/" + Math.round(x.v.dia) + " · FC " + Math.round(x.v.fc) + " · FR " + Math.round(x.v.fr) + " · SpO₂ " + Math.round(x.v.spo2) + "% · T° " + x.v.t.toFixed(1) + "</p>" : '<p class="small">' + esc(u("mon0")) + "</p>";
@@ -658,10 +840,10 @@
   function deskHtml() {
     var S = E.stations.phone, h = head(S.ic + " " + esc(T(S)) + " · 📁");
     // 28y: the doctor can be called again and again — each call with something new answers (+1), a call with nothing new costs −1
-    h += '<p class="lcr-who">' + esc(u("callFor")) + '</p><div class="lcr-acts">' + st.P.map(function (x, i) { var s = x.by.call, dn = s && x.done.call, hit = hl && hl.k === x.k && hl.id === "call" && !dn;
+    h += '<p class="lcr-who">' + esc(u("callFor")) + '</p><div class="lcr-acts">' + st.P.map(function (x, i) { if (x.ghost) return ""; var s = x.by.call, dn = s && x.done.call, hit = hl && hl.k === x.k && hl.id === "call" && !dn;
       return '<button type="button" class="lcr-act' + (dn ? " done" : "") + (x.over ? " off" : "") + (hit ? " lcr-hit" : "") + '" data-lccall="' + pk(i) + '">' + (dn ? "✅ " : "") + "📞 🛏️" + (i + 1) + " " + esc(nm(x)) +
         (dn ? "<small>✍️ " + esc(dn.n) + " · " + esc(u("called", { c: x.calls.length })) + " · " + esc(u("docAgain")) + "</small>" : "") + "</button>"; }).join("") + '</div><p class="small lcr-callh">' + esc(u("calls0")) + "</p>";
-    h += '<p class="lcr-who">' + esc(u("fileOf")) + '</p><div class="lcr-acts">' + st.P.map(function (x, i) { return '<button type="button" class="lcr-act" data-lcfile="' + pk(i) + '">📁 🛏️' + (i + 1) + " " + esc(nm(x)) + "</button>"; }).join("") + "</div>";
+    h += '<p class="lcr-who">' + esc(u("fileOf")) + '</p><div class="lcr-acts">' + st.P.map(function (x, i) { if (x.ghost) return ""; return '<button type="button" class="lcr-act" data-lcfile="' + pk(i) + '">📁 🛏️' + (i + 1) + " " + esc(nm(x)) + "</button>"; }).join("") + "</div>";
     return h;
   }
   function slots() {
@@ -703,7 +885,7 @@
     say("good", u("ok") + pts + " · 📞 " + nm(x), u("doc") + " " + t);
   }
   function hintShow(k, pts) {                                   // 28y 🎯 the paid hint: the exact step, highlighted where it is
-    var c = C.clue(D, st, k); if (!c) return say("neutral", u("hintNone"));
+    var c = C.clue(DK(), st, k); if (!c) return say("neutral", u("hintNone"));
     hl = { k: k, id: c.s.id, s: c.s }; hintOpen = k;
     if (sheet && sheet.kind === "bed" && sheet.k === k) { sheet.tab = c.s.kind === "file" ? "file" : "care"; openQ = null; }
     say("neutral", u("hintGot") + " " + L.stepName(c.s) + pts, T(c.s.why) || "");
@@ -750,6 +932,9 @@
     var t = e.target.closest ? e.target.closest("button,a") : null; if (!t) return;
     var g = function (k) { return t.getAttribute(k); };
     if (g("data-lcx")) return close();
+    if (g("data-lcsnd")) { snd = !snd; try { localStorage.setItem(SNDK, snd ? "1" : "0"); } catch (x) {} sndPaint(); if (snd) chime(); return; }
+    if (g("data-lcamb")) { sirenHide(); return walkTo("x"); }
+    if (g("data-lcsirx")) return sirenHide();
     if (g("data-lcclose")) return sheetClose();
     if (g("data-lcback")) return panelClose();
     if (g("data-lcbed")) { var kb = g("data-lcbed"); sheetClose(); return goTo(kb === "a" ? "bed1" : "bed2"); }
@@ -793,6 +978,7 @@
     var h = "<h2>" + esc(s.cs.ic + " " + T(s.cs.t)) + '</h2><p class="small">' + esc(s.key) + " · " + esc(s.end ? endWhy(s) : only ? L.stLabel(s.P[only === "b" ? 1 : 0].st) : "") + "</p>" +
       '<p class="small lcr-src' + (s.cs.gen ? " g" : "") + '">' + esc(T(s.cs.src)) + "</p>";
     s.P.forEach(function (x, i) {
+      if (x.ghost) return;
       if (only && x.k !== only) return;
       h += '<section class="lcr-rec"><h3>🛏️' + (i + 1) + " " + esc(nm(x)) + " · " + x.p.age + " · " + esc(L.stLabel(x.st, x.p.sex)) + "</h3><h4>" + esc(u("steps")) + '</h4><ol class="lcr-steps">';
       x.L.forEach(function (sp) {
@@ -804,7 +990,7 @@
       h += wr.length ? '<ul class="lcr-wr">' + wr.map(function (e) {
         var why = "";
         if (e.k === "bad") { x.p.bad.forEach(function (b) { if (b.a === e.a) why = T(b.why); }); if (!why) why = T(C.extra(D, x.p, e.a).why); }
-        else if (e.k === "no") { var F = D.fields[String(e.a).slice(2)]; why = F ? T(F.x) : ""; var qd = F ? C.opts(D, s.cs, x.p, String(e.a).slice(2)) : null; if (qd && e.o != null && qd.o[e.o]) why = "«" + T(qd.o[e.o]) + "» ← " + why; }
+        else if (e.k === "no") { var F = D.fields[String(e.a).slice(2)]; why = F ? T(F.x) : ""; var qd = F ? C.opts(s.DK || D, s.cs, x.p, String(e.a).slice(2)) : null; if (qd && e.o != null && qd.o[e.o]) why = "«" + T(qd.o[e.o]) + "» ← " + why; }
         else if (e.k === "ord") why = FR() ? "Pas dans l'ordre" : "مش بالترتيب";
         else { var xr = C.extra(D, x.p, e.a); why = xr.k === "safe" ? T(U.neuWhy) : T(xr.why); }
         return '<li class="' + e.k + '"><b>' + (e.k === "bad" ? "❌ " : "⚠️ ") + esc(L.actName(e.a)) + " (" + e.d + ')</b> <small>👤 ' + esc(e.n) + " · " + fmtT(e.t) + '</small><p class="small">' + esc(why) + "</p></li>";
@@ -818,7 +1004,7 @@
     panelOpen("arch", "<h2>" + esc(u("archive")) + '</h2><p class="small">…</p>');
     L.archive().then(function (a) {
       if (panel !== "arch") return;
-      var list = a.list.map(function (r) { var s = C.state(D, r.doc, Math.max(Date.now(), C.dayStart(C.keyOf(r.id)) + C.DAY + 3600e3)); return { id: r.id, s: s }; });
+      var list = a.list.map(function (r) { var s = LiveDept.state(D, r.doc, "er", Math.max(Date.now(), C.dayStart(C.keyOf(r.id)) + C.DAY + 3600e3)); return { id: r.id, s: s }; });
       w.__lcArch = list;
       var h = "<h2>" + esc(u("archive")) + "</h2>" + (a.src === "local" && list.length ? '<p class="small">' + esc(u("archLocal")) + "</p>" : "");
       h += list.length ? '<div class="lcr-arch">' + list.map(function (r) {
@@ -838,8 +1024,13 @@
   /* ---------------- the games.html card + #live ---------------- */
   function card() {
     var c = d.querySelector("[data-live]"); if (!c) return;
-    L.start(function (s) { if (!s) return; var b = c.querySelector(".gbest"); if (b) b.textContent = s.end ? u("ended") + " · " + L.nextWords(s.t1 - Date.now()) : L.leftWords(s.t1 - Date.now()) + " · " + s.P.map(function (x) { return T(x.p.nm).split(" ")[0] + " " + L.stLabel(x.st).split(" ")[0]; }).join(" · "); });
-    if (FR()) { var t1 = c.querySelector("b"), t2 = c.querySelector("small"); if (t1) t1.textContent = "Cas en direct — tous ensemble"; if (t2) t2.textContent = "Un cas par jour pour tout le site : deux patients, chacun fait l'étape suivante, + ou − points"; }
+    L.start(function (s) { if (!s) return; if (L.stateOf && s.dep && s.dep !== "er") s = L.stateOf("er") || s; var b = c.querySelector(".gbest"); if (b) b.textContent = (s.end ? u("ended") + " · " + L.nextWords(s.t1 - Date.now()) : L.leftWords(s.t1 - Date.now()) + " · " + s.P.map(function (x) { return T(x.p.nm).split(" ")[0] + " " + L.stLabel(x.st).split(" ")[0]; }).join(" · ")) + hospLine(); });
+    if (FR()) { var t1 = c.querySelector("b"), t2 = c.querySelector("small"); if (t1) t1.textContent = "🏥 L'hôpital en direct — tous ensemble"; if (t2) t2.textContent = "🚑 Urgences · 🫀 Cardio · 🧠 Neuro : deux patients par service, des ambulances à l'improviste. Marche d'un service à l'autre, + ou − points"; }
+  }
+  // 28z: the games card also names the two departments upstairs (each patient's colour) — «🫀 … · 🧠 …»
+  function hospLine() {
+    var H0 = L.hospital ? L.hospital() : null; if (!H0) return "";
+    return ["k", "n"].map(function (k) { var S = H0[k]; return S ? " · " + w.LiveDept.INFO[k].ic + " " + (S.end ? "🏁" : S.P.map(function (x) { return L.stLabel(x.st).split(" ")[0]; }).join("")) : ""; }).join("") + (H0.amb && H0.amb.cur && H0.x && !H0.x.end ? " · 🚑" + L.stLabel(H0.x.P[0].st).split(" ")[0] : "");
   }
   function init() {
     card();

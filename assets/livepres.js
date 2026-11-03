@@ -15,10 +15,17 @@ var LivePres = (function () {
   function clampI(v, lo, hi) { v = Math.round(+v || 0); return v < lo ? lo : v > hi ? hi : v; }
   function first(n) { n = String(n || "").replace(/\s+/g, " ").trim(); return (n.split(" ")[0] || n).slice(0, 20); }
   // the doc I write (exactly the fields the rules accept, bounded) — at is added by the caller (serverTimestamp)
-  function doc(me, pos, tgt, bed) {
+  // 28z 🏥: the department he is in (dk) and the one he walks to (tdk) ride in the 2 low bits of x / tx (er 0 · k 1 · n 2 · x 3) —
+  // the same 8 fields, the same bounds, so rules v22 accept it; an older phone draws him ≤ 3 px off, nothing else
+  var DEPS = ["er", "k", "n", "x"];
+  function enc(v, dk) { var c = DEPS.indexOf(dk); v = clampI(v, 0, W - 4); return (v & ~3) | (c < 0 ? 0 : c); }
+  function dec(v) { v = Math.round(+v || 0); return { v: v & ~3, dep: DEPS[v & 3] }; }
+  function doc(me, pos, tgt, bed, dk, tdk) {
     return { n: first(me && me.name) || "طالب", av: AVRE.test((me && me.av) || "") ? me.av : "",
-      x: clampI(pos.x, 0, W), y: clampI(pos.y, 0, H), tx: clampI(tgt.x, 0, W), ty: clampI(tgt.y, 0, H), b: bed === "a" || bed === "b" ? bed : "" };
+      x: enc(pos.x, dk || "er"), y: clampI(pos.y, 0, H), tx: enc(tgt.x, tdk || dk || "er"), ty: clampI(tgt.y, 0, H), b: bed === "a" || bed === "b" ? bed : "" };
   }
+  // a read doc → where he is: { dep, tdep, x, tx } (walking between two departments when dep ≠ tdep)
+  function place(p) { var a = dec(p.x), b = dec(p.tx == null ? p.x : p.tx); p.dep = a.dep; p.tdep = b.dep; p.x = a.v; p.tx = b.v; return p; }
   // should I write now? changed = where I go / my bed changed since the last write; moving = I am walking
   function due(last, now, moving, changed) {
     if (!last) return true;
@@ -59,7 +66,7 @@ var LivePres = (function () {
   }
   function color(uid) { var h = 2166136261; uid = String(uid); for (var i = 0; i < uid.length; i++) { h ^= uid.charCodeAt(i); h = Math.imul(h, 16777619); } return "hsl(" + ((h >>> 0) % 360) + ",62%,46%)"; }
   return { STALE: STALE, FADE: FADE, MOVE_MS: MOVE_MS, IDLE_MS: IDLE_MS, GAP: GAP, SNAP: SNAP, MAXP: MAXP, TOAST_GAP: TOAST_GAP, AVRE: AVRE,
-    first: first, doc: doc, due: due, fresh: fresh, alpha: alpha, follow: follow, diff: diff, toastOk: toastOk, names: names, color: color };
+    DEPS: DEPS, enc: enc, dec: dec, place: place, first: first, doc: doc, due: due, fresh: fresh, alpha: alpha, follow: follow, diff: diff, toastOk: toastOk, names: names, color: color };
 })();
 /* ==/pres-core== */
   if (typeof window !== "undefined") window.LivePres = LivePres;
@@ -77,7 +84,7 @@ var LivePres = (function () {
     try {
       unsub = A.fs.onSnapshot(A.fs.collection(A.db, "live", id, "presence"), function (q) {
         var out = [], me = A.user.uid;
-        q.forEach(function (s) { var x = s.data({ serverTimestamps: "estimate" }) || {}; var p = { uid: s.id, n: String(x.n || "").slice(0, 20), av: x.av || "", x: +x.x || 0, y: +x.y || 0, tx: x.tx == null ? +x.x || 0 : +x.tx, ty: x.ty == null ? +x.y || 0 : +x.ty, b: x.b || "", at: ms(x.at) };
+        q.forEach(function (s) { var x = s.data({ serverTimestamps: "estimate" }) || {}; var p = { uid: s.id, n: String(x.n || "").slice(0, 20), av: x.av || "", x: +x.x || 0, y: +x.y || 0, tx: x.tx == null ? +x.x || 0 : +x.tx, ty: x.ty == null ? +x.y || 0 : +x.ty, b: x.b || "", at: ms(x.at) }; LivePres.place(p);
           if (p.uid === me && sentAt && !s.metadata.hasPendingWrites && p.at) skew = p.at - sentAt;   // my clock vs the server's (≈ the trip time)
           out.push(p); });
         list = out; if (cb) try { cb(); } catch (e) {}
@@ -96,11 +103,11 @@ var LivePres = (function () {
     var A = fb(); if (A && wr && id) { try { A.fs.deleteDoc(ref(A)).catch(function () {}); } catch (e) {} } wr = false;
   }
   // called every frame by the room: my position, where I walk to, the bed I work on (a write when I stop walking, too)
-  function tick(pos, tgt, bed, moving) {
+  function tick(pos, tgt, bed, moving, dk, tdk) {
     if (!on || dead || hid) return; var A = fb(); if (!A) return;
     var now = Date.now(), nid = dayId();
     if (nid !== id) { stopListen(); id = nid; last = 0; lastSig = ""; listen(); }
-    var dc = LivePres.doc({ name: (A.profile && A.profile.name) || A.user.displayName, av: myAv() }, pos, tgt, bed), sig = dc.tx + "," + dc.ty + "," + dc.b;
+    var dc = LivePres.doc({ name: (A.profile && A.profile.name) || A.user.displayName, av: myAv() }, pos, tgt, bed, dk, tdk), sig = dc.x % 4 + ":" + dc.tx + "," + dc.ty + "," + dc.b;
     var stopped = wasMv && !moving;                  // he just arrived → one write with where he really stands
     if (!LivePres.due(last, now, moving, sig !== lastSig || stopped)) { if (!stopped) wasMv = moving; return; }
     wasMv = moving; last = now; lastSig = sig; dc.at = A.fs.serverTimestamp(); sentAt = now;
@@ -108,6 +115,7 @@ var LivePres = (function () {
   }
   function others() { var A = fb(); return on && !dead ? LivePres.fresh(extra.length ? list.concat(extra) : list, Date.now(), A ? A.user.uid : "me", skew) : []; }
   function count() { return on && !dead ? others().length + 1 : 0; }
+  function byDep(myDk) { var o = { er: 0, k: 0, n: 0, x: 0 }; others().forEach(function (p) { o[p.dep] = (o[p.dep] || 0) + 1; }); if (on && !dead && myDk) o[myDk]++; return o; }
   function skewMs() { return skew; }
   d.addEventListener("visibilitychange", function () {
     if (!on) return; var A = fb();
@@ -129,6 +137,6 @@ var LivePres = (function () {
     }
     return hN;
   }
-  W.LivePresRoom = { start: start, stop: stop, tick: tick, others: others, count: count, homeCount: homeCount, skew: skewMs, active: function () { return on && !dead; }, myAv: myAv,
-    _list: function () { return list; }, _inject: function (l) { extra = l || []; on = true; dead = false; if (cb) cb(); } };   // test hook: extra students drawn beside the real ones
+  W.LivePresRoom = { start: start, stop: stop, tick: tick, others: others, count: count, byDep: byDep, homeCount: homeCount, skew: skewMs, active: function () { return on && !dead; }, myAv: myAv,
+    _list: function () { return list; }, _inject: function (l) { extra = (l || []).map(function (p) { return p.dep ? p : LivePres.place(Object.assign({}, p)); }); on = true; dead = false; if (cb) cb(); } };   // test hook: extra students drawn beside the real ones
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

@@ -194,3 +194,29 @@ html[data-theme="night"] .lcr-act.need small,html[data-theme="night"] .lcr-act.r
 html[data-theme="night"] .lcr-hint{background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.3)}html[data-theme="night"] .lcr-hintb{color:#fcd34d!important}
 html[data-theme="night"] .lcr-hph b{color:#5eead4}html[data-theme="night"] .lcr-hgot{background:rgba(167,139,250,.14)}
 html[data-theme="night"] .lcr-priv h4{color:#93c5fd}html[data-theme="night"] .lcr-left{background:#2a1f12;border-color:#92400e}
+
+/* 🏥 28z the hospital floor: the department I stand in = the big room above; the whole floor small below (corridor, 3 departments,
+   the ER entrance with «🛏️ سرير الإسعاف» and the ambulance) — glass, light + dark, 390 px first */
+.lcr-floor{flex:none;display:flex;justify-content:center;padding:4px 6px 2px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid rgba(0,0,0,.06)}
+.lcr-fcv{display:block;touch-action:manipulation;border-radius:12px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.lcr-cv{transition:transform .38s cubic-bezier(.3,.7,.2,1),opacity .38s ease;transform-origin:50% 100%}
+.lcr-cv.zout{transform:scale(.32) translateY(18%);opacity:.15}
+.lcr-cv.zin0{transform:scale(.32) translateY(18%);opacity:.15;transition:none}
+.lcr-cv.zin{transform:none;opacity:1}
+.lcr-siren[hidden]{display:none}
+.lcr-siren{position:absolute;left:8px;right:8px;top:8px;z-index:12;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:16px;background:linear-gradient(90deg,rgba(220,38,38,.94),rgba(37,99,235,.94));color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.28);animation:lcrSiren 1s ease-in-out infinite alternate}
+.lcr-siren b{font-size:15px}.lcr-siren small{opacity:.92;font-size:12px}
+.lcr-siren span{display:flex;gap:6px;margin-top:2px}.lcr .lcr-siren .lcr-sirb{flex:none;min-height:36px;padding:6px 14px;border-radius:999px;border:0;background:#fff;color:#991b1b;font:inherit;font-weight:800;cursor:pointer}
+.lcr .lcr-siren .lcr-sirb.x{background:rgba(255,255,255,.22);color:#fff;padding:6px 12px}
+@keyframes lcrSiren{from{box-shadow:0 10px 30px rgba(220,38,38,.45)}to{box-shadow:0 10px 30px rgba(37,99,235,.55)}}
+@media (prefers-reduced-motion:reduce){.lcr-siren{animation:none}.lcr-cv{transition:none}}
+.lcr-pc.lcr-ghost{opacity:.55;display:flex;flex-direction:column;align-items:center;justify-content:center;border-style:dashed;cursor:default}
+html[data-theme="night"] .lcr-floor{background:rgba(9,18,23,.72);border-top-color:rgba(255,255,255,.08)}
+html[data-theme="night"] .lcr-fcv{box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.hzhosp .hzlvd{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;padding:3px 0;border-top:1px dashed rgba(0,0,0,.08)}
+.hzhosp .hzlvd>b{font-size:12.5px;min-width:7.2em}
+.hzhosp .hzlvd .hzlvc{font-size:12px;opacity:.85}
+.hzhosp .hzlva{display:block;font-size:12px;font-weight:700;margin-top:4px;color:#b91c1c}
+html[data-theme="night"] .hzhosp .hzlvd{border-top-color:rgba(255,255,255,.1)}
+html[data-theme="night"] .hzhosp .hzlva{color:#fca5a5}
+@media (max-height:700px){.lcr-pts{gap:4px;padding:4px 6px}}

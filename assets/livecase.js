@@ -310,9 +310,149 @@ var LiveCore = (function () {
 })();
 /* ==/live-core== */
 
-  if (typeof window !== "undefined") window.LiveCore = LiveCore;
+/* ==dept-core== 28z «🏥 المستشفى» (Abdullah, Nov 3 2026 5:50–5:52 PM: «بدي تكون كأنها مستشفى، يكون في كذا قسم، كذا حالة… مفاجأة تجي سيارة
+   إسعاف» + «الممرّض يلّي عم يمشي يبيّن كيف عم يفوت من قسم لقسم… المحل يلّي هو موجود فيه بتكون الغرفة واسعة»). Pure (node-tested).
+   ONE shared doc a day stays the whole hospital (rules v22 accept only live/{YYYYMMDD}): the 🚑 ER events keep their action ids
+   (worker v11 + old phones unchanged); 🫀 قسم القلب writes «k_<step>», 🧠 قسم الأعصاب «n_<step>», the i-th 🚑 ambulance «x<i>_<step>».
+   A harmful act in a department is stored as k «no» (rules-valid, and an older ER engine only lists it, it never hurts the ER patients);
+   the department view turns it back into «bad». Each department's case (two patients) and every ambulance (time + patient) come from
+   the date alone, so every phone sees the same hospital without any new doc, rule or worker. */
+var LiveDept = (function (C) {
+  var KEYS = ["er", "k", "n", "x"], CODE = { er: 0, k: 1, n: 2, x: 3 }, PRE_RE = /^(k|n|x[1-3])_/;
+  var AMB_FROM = 10 * 60, AMB_TO = 23 * 60, AMB_GAP = 90, MIN = 6e4, H = 36e5;
+  var INFO = {
+    er: { ic: "🚑", t: { ar: "الطوارئ", fr: "Urgences" } },
+    k: { ic: "🫀", t: { ar: "قسم القلب", fr: "Cardiologie" } },
+    n: { ic: "🧠", t: { ar: "قسم الأعصاب", fr: "Neurologie" } },
+    x: { ic: "🛏️", t: { ar: "سرير الإسعاف", fr: "Lit de l'ambulance" } }
+  };
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function shuffle(a, r) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function dayIdx(D, key) { var e = String(D.epoch || "2026-11-02").split("-"), k = String(key).split("-"); return Math.round((Date.UTC(+k[0], +k[1] - 1, +k[2]) - Date.UTC(+e[0], +e[1] - 1, +e[2])) / 864e5); }
+  // a bank patient by reference: "lc01a" = case lc01, patient a; "nx1" = one of the new department patients
+  function ref(D, r) {
+    if (D.xpts && D.xpts[r]) return { p: D.xpts[r], c: null };
+    var m = /^(lc\d\d)([ab])$/.exec(r); if (!m) return null; var c = C.caseById(D, m[1]); if (!c) return null;
+    return { p: c.pts[m[2] === "b" ? 1 : 0], c: c };
+  }
+  function pat(src, k) { var p = clone(src); p.k = k; p.bed = k === "a" ? "bed1" : "bed2"; return p; }
+  // the department cases as full cases (two patients each), built once per bank
+  function cases(D, dk) {
+    D.__dc = D.__dc || {}; if (D.__dc[dk]) return D.__dc[dk];
+    var out = ((D.dept || {})[dk] || []).map(function (x) {
+      var a = ref(D, x.p[0]), b = ref(D, x.p[1]);
+      return { id: x.id, ic: x.ic, t: x.t, src: x.src, href: x.href, gen: x.gen, dept: dk, from: [a && a.c ? a.c.id : x.p[0], b && b.c ? b.c.id : x.p[1]], pts: [pat(a.p, "a"), pat(b.p, "b")] };
+    });
+    return (D.__dc[dk] = out);
+  }
+  // today's case of a department: the same cycle rule as the ER (every case once before any comes back; never twice in a row)
+  function order(list, dk, cyc) {
+    var o = shuffle(list, C.rng(C.hash("lc-" + dk + "-cycle-" + cyc)));
+    if (cyc > 0 && o.length > 1) { var prev = order(list, dk, cyc - 1); if (o[0] === prev[prev.length - 1]) { var t = o[0]; o[0] = o[1]; o[1] = t; } }
+    return o;
+  }
+  // never a patient of today's 🚑 ER case upstairs too (the same name in two departments): then the next case of the cycle
+  function pick(D, dk, key) {
+    var L0 = cases(D, dk), list = L0.map(function (c) { return c.id; }), n = list.length; if (!n) return null;
+    var i = dayIdx(D, key); if (i < 0) i = ((i % n) + n) % n;
+    var o = order(list, dk, Math.floor(i / n)), er = C.caseById(D, C.pick(D, key)), er0 = er ? er.id : "";
+    for (var j = 0; j < n; j++) { var id = o[(i + j) % n], c = L0[list.indexOf(id)]; if (c.from.indexOf(er0) < 0) return id; }
+    return o[i % n];
+  }
+  function deptCase(D, dk, key) { var id = pick(D, dk, key), L = cases(D, dk); for (var i = 0; i < L.length; i++) if (L[i].id === id) return L[i]; return null; }
+  // 🚨 the ambulances of a day: 2 or 3, between 10:00 and 23:00 Beirut, at least 90 min apart, the same on every phone
+  function ambTimes(key) {
+    var r = C.rng(C.hash("amb-" + key)), c = r() < 0.5 ? 2 : 3, slack = AMB_TO - AMB_FROM - AMB_GAP * (c - 1), offs = [], t0 = C.dayStart(key);
+    for (var i = 0; i < c; i++) offs.push(Math.floor(r() * (slack + 1)));
+    offs.sort(function (a, b) { return a - b; });
+    return offs.map(function (o, i) { return t0 + (AMB_FROM + o + AMB_GAP * i) * MIN; });
+  }
+  // the one ambulance that holds «🛏️ سرير الإسعاف» at «now» (the newest that arrived) → { i (1…3), t (arrival), next (next arrival or 0), all }
+  function ambNow(key, now) {
+    var T = ambTimes(key), cur = null, nx = 0;
+    for (var i = 0; i < T.length; i++) { if (T[i] <= now) cur = { i: i + 1, t: T[i] }; else if (!nx) nx = T[i]; }
+    return { cur: cur, next: nx, all: T };
+  }
+  // the patient an ambulance brings: an unstable patient of the ER bank (not one of today's patients upstairs, not an earlier ambulance)
+  function ambCase(D, key, i, erId) {
+    var used = {}, pool = [];
+    [erId || C.pick(D, key)].forEach(function (id) { var c = C.caseById(D, id); if (c) c.pts.forEach(function (p) { used[c.id + p.k] = 1; }); });
+    ["k", "n"].forEach(function (dk) { var c = deptCase(D, dk, key); if (c) c.from.forEach(function (f, j) { used[f + c.pts[j].k] = 1; }); });
+    D.cases.forEach(function (c) { c.pts.forEach(function (p) { if ((p.rate | 0) >= 7) pool.push({ c: c, p: p }); }); });
+    var ch = null;
+    for (var j = 1; j <= i; j++) {
+      var free = pool.filter(function (x) { return !used[x.c.id + x.p.k]; }); if (!free.length) free = pool;
+      ch = free[Math.floor(C.rng(C.hash("amb-" + key + "-" + j))() * free.length)]; used[ch.c.id + ch.p.k] = 1;
+    }
+    var o = ch.c.pts[ch.p.k === "a" ? 1 : 0], A = pat(ch.p, "a"), B = pat(o, "b");
+    A.rate = Math.round(A.rate * 1.5); A.amb = i;
+    return { id: "x" + i, ic: "🚑", amb: i, dept: "x", from: [ch.c.id, ch.c.id], src: ch.c.src, href: ch.c.href, gen: ch.c.gen,
+      t: { ar: "إسعاف: " + ch.p.who.ar, fr: "Ambulance : " + ch.p.who.fr }, pts: [A, B] };
+  }
+  function pre(dk, i) { return dk === "er" ? "" : dk === "x" ? "x" + (i | 0) + "_" : dk + "_"; }
+  function ns(a) { var m = PRE_RE.exec(String(a || "")); return m ? m[1] : ""; }
+  // one step of the department, as it is stored in the shared doc (fits rules v22: action ≤ 20 chars, «bad» → «no» with d < 0)
+  function enc(dk, i, r) {
+    var a = pre(dk, i) + r.a, k = r.k;
+    if (dk !== "er" && k === "bad") k = "no";
+    return { a: a, k: k };
+  }
+  // the bank a department plays with: its case first, then the ER bank without the cases its patients come from (no twin answers)
+  function bankFor(D, cs) {
+    var skip = {}; (cs.from || []).forEach(function (f) { skip[f] = 1; });
+    var X = {}; for (var k in D) if (k !== "cases" && k.indexOf("__") !== 0) X[k] = D[k];
+    X.cases = [cs].concat(D.cases.filter(function (c) { return !skip[c.id]; })); return X;
+  }
+  // the shared doc as ONE department sees it → { D, doc, cs, amb } (amb = the ambulance shown, or null)
+  function view(D, doc, dk, now, ai) {
+    doc = doc || {}; var key = C.keyOf(doc.day) || C.dayKey(now), cs = null, at0 = doc.at0, p = "", amb = null;
+    if (dk === "er") {
+      var ev = {}; for (var n in (doc.ev || {})) { var e = doc.ev[n]; if (e && !ns(e.a)) ev[n] = e; }
+      return { D: D, doc: { day: doc.day, c: doc.c, n: doc.n, ev: ev, pts: doc.pts || {}, at0: doc.at0 }, cs: C.caseById(D, doc.c) || C.caseById(D, C.pick(D, key)), amb: null, key: key };
+    }
+    if (dk === "x") {
+      var A = ambNow(key, now), i = ai || (A.cur && A.cur.i); if (!i) return null;
+      amb = { i: i, t: A.all[i - 1], next: A.all[i] || 0 }; cs = ambCase(D, key, i, doc.c); at0 = amb.t; p = "x" + i + "_";
+    } else { cs = deptCase(D, dk, key); p = dk + "_"; }
+    if (!cs) return null;
+    var ev2 = {};
+    for (var m in (doc.ev || {})) {
+      var x = doc.ev[m]; if (!x || String(x.a).indexOf(p) !== 0) continue;
+      var a = String(x.a).slice(p.length), y = {}; for (var f in x) y[f] = x[f];
+      y.a = a; if (y.k === "no" && a.indexOf("f_") !== 0) y.k = "bad";
+      ev2[m] = y;
+    }
+    return { D: bankFor(D, cs), doc: { day: doc.day, c: cs.id, n: doc.n, ev: ev2, pts: doc.pts || {}, at0: at0 }, cs: cs, amb: amb, key: key };
+  }
+  // the derived state of a department (the same engine), with st.dep / st.amb; an ambulance has ONE patient: it ends with him
+  function state(D, doc, dk, now, ai) {
+    var v = view(D, doc, dk, now, ai); if (!v) return null;
+    var st = C.state(v.D, v.doc, now); st.dep = dk; st.amb = v.amb; st.DK = v.D;
+    if (dk === "x") {
+      var x = st.P[0], g = st.P[1], gh = {}; for (var f in g) gh[f] = g[f];
+      gh.ghost = true; gh.over = { w: "ok", t: 0 }; gh.st = "ok"; gh.next = []; st.P = [x, gh];   // bed ② of the bay stays empty (never drawn, never tapped)
+      if (x.over) st.end = { w: x.over.w === "ok" ? "ok" : "lost", t: x.lost != null ? x.lost : x.fin, pk: x.lost != null ? "a" : null, ok: x.lost != null ? [] : ["a"], lost: x.lost != null ? ["a"] : [] };
+      else if (v.amb.next && now >= v.amb.next) st.end = { w: "time", t: v.amb.next, pk: null, ok: [], lost: [] };
+      else st.end = st.end && st.end.w === "time" ? st.end : null;
+    }
+    return st;
+  }
+  function check(D, doc, dk, pk, a, opt, uid, now, ai) {
+    var st = state(D, doc, dk, now, ai); if (!st) return { st: null, r: { k: "noamb" } };
+    var r = C.check(st.DK, st, pk, a, opt, uid); return { st: st, r: r };
+  }
+  // 👥 presence: the department rides in the 2 low bits of x (where he stands) and tx (where he walks to) — rules v22 fields unchanged
+  function penc(v, dk) { v = Math.max(0, Math.min(356, Math.round(+v || 0))); return (v & ~3) | (CODE[dk] | 0); }
+  function pdec(v) { v = Math.round(+v || 0); return { v: v & ~3, dep: KEYS[v & 3] }; }
+  return { KEYS: KEYS, CODE: CODE, INFO: INFO, PRE_RE: PRE_RE, AMB_FROM: AMB_FROM, AMB_TO: AMB_TO, AMB_GAP: AMB_GAP,
+    ref: ref, cases: cases, pick: pick, deptCase: deptCase, ambTimes: ambTimes, ambNow: ambNow, ambCase: ambCase, pre: pre, ns: ns, enc: enc,
+    bankFor: bankFor, view: view, state: state, check: check, penc: penc, pdec: pdec };
+})(LiveCore);
+/* ==/dept-core== */
+
+  if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261028y", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028z", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -364,7 +504,17 @@ var LiveCore = (function () {
   function emit() { var st = state(); subs.forEach(function (f) { try { f(st, mode); } catch (e) { console.warn("live", e); } }); }
   var born = {};                            // 28v: a case nobody created yet has not started — its clock starts when we first saw it missing
   function bornAt(id) { return born[id] || (born[id] = Date.now()); }
-  function state() { if (!D) return null; var id = LiveCore.docId(today()); return LiveCore.state(D, doc || { day: id, c: LiveCore.pick(D, today()), at0: bornAt(id) }, Date.now()); }
+  // 28z 🏥: the student stands in ONE department (dep: er | k | n | x = 🛏️ سرير الإسعاف); state() is that department's case,
+  // stateOf(dk) any department's, hospital() all of them + the ambulances (the floor strip, the home card)
+  var dep = "er";
+  function rawDoc() { var id = LiveCore.docId(today()); return doc || { day: id, c: LiveCore.pick(D, today()), n: 0, ev: {}, pts: {}, at0: bornAt(id) }; }
+  function stateOf(dk) { if (!D) return null; try { return LiveDept.state(D, rawDoc(), dk || "er", Date.now()); } catch (e) { console.warn("live dept", dk, e); return null; } }
+  function state() { if (!D) return null; return stateOf(dep) || stateOf("er"); }
+  function hospital() {
+    if (!D) return null; var now = Date.now(), A = LiveDept.ambNow(today(), now), o = { er: stateOf("er"), k: stateOf("k"), n: stateOf("n"), x: A.cur ? stateOf("x") : null, amb: A, now: now };
+    return o;
+  }
+  function setDep(dk) { if (LiveDept.KEYS.indexOf(dk) < 0) dk = "er"; if (dk === "x" && !LiveDept.ambNow(today(), Date.now()).cur) dk = "er"; dep = dk; emit(); return dep; }
   function setMode(m, wy) { mode = m; why = wy || ""; }
   function goPreview(wy) { if (unsub) { try { unsub(); } catch (e) {} unsub = null; } setMode("preview", wy); doc = prevDoc(); emit(); }
   var authWait = 0;
@@ -405,17 +555,19 @@ var LiveCore = (function () {
   function setCool(pk, a) { var c = lsGet(CK) || {}, t = today(); for (var k in c) if (k.indexOf(t) !== 0) delete c[k]; c[t + pk + a] = Date.now() + 18e4; lsSet(CK, c); }
   var busy = false;
   // one step by this student on patient pk → { k, d, why, s, ... } (the transaction refuses a step someone else did a second earlier)
-  function act(pk, a, opt, again) {
+  function act(pk, a, opt, again, dk0) {
     if (!D || busy) return Promise.resolve({ k: "busy" });
-    if (a.indexOf("f_") === 0) { var cl = cool(pk, a); if (cl) return Promise.resolve({ k: "wait", until: cl }); }
+    var dk = dk0 || dep, ck = (dk === "er" ? "" : dk) + pk;      // 28z: the step belongs to the department the student stands in
+    if (a.indexOf("f_") === 0) { var cl = cool(ck, a); if (cl) return Promise.resolve({ k: "wait", until: cl }); }
     var M = me(), WR = { ok: 1, bad: 1, ord: 1, neu: 1, no: 1 };
-    function after(r) { busy = false; if (r.k === "no") setCool(pk, a); if (r.k === "ok" && mode === "shared" && W.NursinStudy && W.NursinStudy.activity) try { W.NursinStudy.activity("game", r.d, "🔴 حالة لايف"); } catch (e) {} return r; }
+    function after(r) { busy = false; if (r.k === "no") setCool(ck, a); if (r.k === "ok" && mode === "shared" && W.NursinStudy && W.NursinStudy.activity) try { W.NursinStudy.activity("game", r.d, "🔴 حالة لايف"); } catch (e) {} return r; }
     busy = true;
     if (mode !== "shared") {
-      var st = LiveCore.state(D, doc, Date.now()), r = LiveCore.check(D, st, pk, a, opt, M.uid);
+      var cr = LiveDept.check(D, doc, dk, pk, a, opt, M.uid, Date.now()), r = cr.r;
       if (WR[r.k]) {
         if (doc.n >= LiveCore.MAXEV) { busy = false; return Promise.resolve({ k: "full" }); }
-        doc.n++; var e = { t: Date.now(), u: M.uid, n: M.name, p: pk, a: r.a, k: r.k, d: r.d }; if (r.o != null) e.o = r.o; doc.ev[doc.n] = e;
+        var en = LiveDept.enc(dk, cr.st.amb && cr.st.amb.i, r);
+        doc.n++; var e = { t: Date.now(), u: M.uid, n: M.name, p: pk, a: en.a, k: en.k, d: r.d }; if (r.o != null) e.o = r.o; doc.ev[doc.n] = e;
         var pr = doc.pts[M.uid] || { n: M.name, p: 0, ok: 0, no: 0 }; doc.pts[M.uid] = { n: M.name, p: pr.p + r.d, ok: pr.ok + (r.k === "ok" ? 1 : 0), no: pr.no + (r.k === "ok" ? 0 : 1), t: Date.now() };
         lsSet(PK, doc); emit();
       }
@@ -428,12 +580,12 @@ var LiveCore = (function () {
       return fs.runTransaction(A.db, function (tx) {
         return tx.get(ref).then(function (s) {
           if (!s.exists()) { res = { k: "retry", code: mkErr }; return; }
-          var cur = conv(s.data()), st = LiveCore.state(D, cur, Date.now()), r = LiveCore.check(D, st, pk, a, opt, M.uid); res = r;
+          var cur = conv(s.data()), cr = LiveDept.check(D, cur, dk, pk, a, opt, M.uid, Date.now()), r = cr.r; res = r;
           if (!WR[r.k]) return;
           if (cur.n >= LiveCore.MAXEV) { res = { k: "full" }; return; }
           var prev = (s.data().pts || {})[M.uid];
           if (prev && prev.t && prev.t.toMillis && Date.now() - prev.t.toMillis() < 2500) { res = { k: "slow", ms: 2600 - (Date.now() - prev.t.toMillis()) }; return; }
-          var n = cur.n + 1, e = { t: fs.serverTimestamp(), u: M.uid, n: M.name, p: pk, a: r.a, k: r.k, d: r.d }, pr = cur.pts[M.uid] || { p: 0, ok: 0, no: 0 }, up = { n: n };
+          var en = LiveDept.enc(dk, cr.st.amb && cr.st.amb.i, r), n = cur.n + 1, e = { t: fs.serverTimestamp(), u: M.uid, n: M.name, p: pk, a: en.a, k: en.k, d: r.d }, pr = cur.pts[M.uid] || { p: 0, ok: 0, no: 0 }, up = { n: n };
           if (r.o != null) e.o = r.o;
           up["ev." + n] = e; up["pts." + M.uid] = { n: M.name, p: pr.p + r.d, ok: pr.ok + (r.k === "ok" ? 1 : 0), no: pr.no + (r.k === "ok" ? 0 : 1), t: fs.serverTimestamp() };
           tx.update(ref, up); tx.set(fs.doc(A.db, "live", id, "log", String(n)), e);
@@ -441,12 +593,12 @@ var LiveCore = (function () {
       });
     }).then(function () {
       // 28w: the rules keep 2 s between two steps of one student — a quick 2nd answer waits its turn (the room shows «⏳») instead of failing
-      if (res && res.k === "slow" && !again) return new Promise(function (r) { setTimeout(r, Math.max(300, Math.min(2600, res.ms | 0))); }).then(function () { busy = false; return act(pk, a, opt, 1); });
+      if (res && res.k === "slow" && !again) return new Promise(function (r) { setTimeout(r, Math.max(300, Math.min(2600, res.ms | 0))); }).then(function () { busy = false; return act(pk, a, opt, 1, dk); });
       return after(res || { k: "err" });
     }, function (e) {
       busy = false; console.warn("nursin live act", e && e.code);
       if (e && e.code === "permission-denied") {        // a lost race / the 2 s rule (the doc still reads) → once more on fresh data; rules not published → preview
-        return fs.getDoc(ref).then(function () { return again ? { k: "denied", code: e.code } : new Promise(function (r) { setTimeout(r, 2600); }).then(function () { return act(pk, a, opt, 1); }); },
+        return fs.getDoc(ref).then(function () { return again ? { k: "denied", code: e.code } : new Promise(function (r) { setTimeout(r, 2600); }).then(function () { return act(pk, a, opt, 1, dk); }); },
           function () { goPreview("rules"); return { k: "rules" }; });
       }
       return { k: "err", code: (typeof navigator !== "undefined" && navigator.onLine === false) ? "offline" : (e && e.code) || "err" };
@@ -487,20 +639,30 @@ var LiveCore = (function () {
   /* ---- 🏠 the home card «🔴 حالة لايف · باقي X ساعات», right ABOVE «🧭 مسار اليوم» (Abdullah's wish) ---- */
   function homeCard(st) {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;
-    var cs = st.cs, ended = st.end, nm = function (x) { return T(x.p.nm).split(" ")[0]; };
-    var pills = st.P.map(function (x) { return '<span class="hzlvp ' + x.st + (x.over && !ended ? " fin" : "") + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st, x.p.sex)) + "</span>"; }).join("");
+    var Hh = hospital() || {}; st = Hh.er || st; var E0 = st, cs = st.cs, ended = st.end, nm = function (x) { return T(x.p.nm).split(" ")[0]; };
+    function pills(S) { var ended = S && S.end; return S ? S.P.map(function (x) { return '<span class="hzlvp ' + x.st + (x.over && !ended ? " fin" : "") + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st, x.p.sex)) + "</span>"; }).join("") : ""; }
     // 28v: an ended case says so plainly — «🏁 انتهت الحالة» + when the next one starts (never a card that still looks running)
     var top = ended ? (FR() ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()) : leftWords(st.t1 - Date.now());
-    // 👥 how many students are in the room right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
-    var PR = W.LivePresRoom, ppl = !ended && mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1;
+    // 👥 how many students are in the hospital right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
+    var PR = W.LivePresRoom, ppl = mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1;
     if (ppl > 0) top += " · 👥 " + ppl;
     var soon = mode === "preview" && why === "rules" ? '<small class="hzlvs">' + (FR() ? "🔴 Le cas partagé arrive bientôt — essaie-le maintenant" : "🔴 الحالة اللايف رح تشتغل قريباً — جرّبها هلّق") + "</small>" : "";
-    var h = '<a class="hzlive' + (ended ? " end" : "") + '" href="games.html#live" data-nofr>' +
-      '<span class="hzlvh"><b>' + (FR() ? "🔴 Cas en direct" : "🔴 حالة لايف") + "</b><span class=\"hzlvt\"> · " + esc(top) + "</span></span>" +
-      '<span class="hzlvc">' + esc(cs.ic + " " + T(cs.t)) + "</span>" + '<span class="hzlvps">' + pills + "</span>" + soon +
+    // 28z 🏥 every department in one line each (its case + its two patients), then the ambulances (the last one; never the exact next time)
+    var I = LiveDept.INFO, rows = ["er", "k", "n"].map(function (k) { var S = k === "er" ? E0 : Hh[k]; if (!S) return "";
+      return '<span class="hzlvd"><b>' + I[k].ic + " " + esc(T(I[k].t)) + '</b><span class="hzlvc">' + esc(S.cs.ic + " " + T(S.cs.t)) + '</span><span class="hzlvps">' + (S.end ? '<span class="hzlvp ok fin">🏁 ' + (FR() ? "Terminé" : "خلصت") + "</span>" : pills(S)) + "</span></span>"; }).join("");
+    var A = Hh.amb, amb = "";
+    if (A) {
+      var X = Hh.x, last = A.cur ? (FR() ? "🚑 Dernière ambulance : " : "🚑 آخر إسعاف: ") + fmtHM(A.cur.t) + (X && X.P[0] ? " · " + nm(X.P[0]) + " " + stLabel(X.P[0].st, X.P[0].p.sex) : "") : "";
+      var nx = A.next ? (A.next - Date.now() < 45 * 6e4 ? (FR() ? "🚨 Une ambulance arrive bientôt !" : "🚨 في إسعاف جاية قريباً!") : (FR() ? "🚨 D'autres ambulances arrivent aujourd'hui, à l'improviste" : "🚨 في إسعافات جاية اليوم بوقت مش معروف")) : "";
+      amb = '<span class="hzlva">' + esc([last, nx].filter(Boolean).join(" · ") || (FR() ? "🚑 Pas d'ambulance pour l'instant" : "🚑 ما إجت إسعاف بعد")) + "</span>";
+    }
+    var h = '<a class="hzlive hzhosp' + (ended ? " end" : "") + '" href="games.html#live" data-nofr>' +
+      '<span class="hzlvh"><b>' + (FR() ? "🏥 L'hôpital · 🔴 Cas en direct" : "🏥 المستشفى · 🔴 حالة لايف") + "</b><span class=\"hzlvt\"> · " + esc(top) + "</span></span>" +
+      rows + amb + soon +
       '<span class="hzlvgo">' + (ended ? (FR() ? "📋 Voir les bonnes étapes ←" : "📋 شوف الخطوات الصح ←") : (FR() ? "🏥 Entre et soigne ←" : "🏥 فوت ساعد ←")) + "</span></a>";
     if (box.innerHTML !== h) box.innerHTML = h;
   }
+  function fmtHM(t) { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(t)); } catch (e) { return ""; } }
   function homeInit() {
     var tries = 0;
     (function wait() {
@@ -510,7 +672,7 @@ var LiveCore = (function () {
       if (W.requestIdleCallback) W.requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 600);
     })();
   }
-  W.LiveCase = { load: load, start: start, off: off, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
+  W.LiveCase = { dep: function () { return dep; }, setDep: setDep, stateOf: stateOf, hospital: hospital, load: load, start: start, off: off, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
     archive: archive, pushOn: pushOn, setPush: setPush, stLabel: stLabel, left: left, leftWords: leftWords, stepName: stepName, actName: actName, T: T, esc: esc, FR: FR, homeCard: homeCard,
     cool: cool, PK: PK, HK: HK, preview: goPreview };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { if (d.getElementById("hz")) homeInit(); }); else if (d.getElementById("hz")) homeInit();
