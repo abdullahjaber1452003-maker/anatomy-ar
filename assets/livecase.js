@@ -14,7 +14,13 @@
    so every phone and the worker compute the same patients from the same timestamps, with or without the cron. */
 var LiveCore = (function () {
   var H = 36e5, DAY = 864e5, C0 = 50, REC = 4, HARM = -15, DRIFT_FROM = 8, MAXEV = 600, SLOW = 0.5;   // SLOW: a neglected patient loses rate×0.5 health points an hour
-  var PTS = { ok: 5, urg: 6, file: 3, end: 4, acc: 3, mon: 4, bad: -8, ord: -3, neu: -2, no: -3 };
+  var PTS = { ok: 5, urg: 6, file: 3, end: 4, acc: 3, mon: 4, bad: -8, ord: -3, neu: -2, no: -3, mild: -1, call2: 1, hint: -1, scr: 2, scr1: 1 };
+  // 28y (Abdullah, Nov 3 5:05 PM «في شغلات بحس لازم فيني أفقسها وما عم بقدر»): softer, clearer steps.
+  // SAFE = harmless acts: as a step they may come any time after ① the accueil (no need to wait for the whole dossier); the treatments
+  // (📞, drugs, fluids, blood, sonde, GDS…) still wait for ① + the vitals 📟 + the urgent gestures. HMAX = «💡 طرف خيط» paid hints per patient per student.
+  var SAFE = { eval: 1, pouls: 1, swallow: 1, gly: 1, ecg: 1, mon: 1, bilan: 1, calm: 1, repos: 1, es: 1, jeun: 1, pos_semi: 1, pos_tete30: 1, pos_pls: 1,
+    pos_trend: 1, leg_down: 1, vvp: 1, o2: 1, airway: 1, refroid: 1, isol: 1, stop: 1, stopdrug: 1, immob: 1, paravent: 1 };
+  var INTIM = ["sonde", "ecg", "refroid", "cpr", "shock"], HMAX = 3;   // intimate gestures: 🩻 the curtain (paravent) comes before them
   var GAIN = { urg: 10, soin: 7, mon: 3, acc: 2, end: 2, file: 0 };
   var LIM = { sys: [30, 230], dia: [15, 140], fc: [25, 220], fr: [4, 50], spo2: [40, 100], t: [34, 41.5], gcs: [3, 15] };
   var FMT = null;
@@ -46,7 +52,16 @@ var LiveCore = (function () {
   function caseById(D, id) { for (var i = 0; i < D.cases.length; i++) if (D.cases[i].id === id) return D.cases[i]; return null; }
   var WHY = {
     acc: { ar: "الاستقبال أوّل شي: بتعرّف عن حالك، بتتأكّد من الهوية وبتحطّلو سوار، وبتركّزو منيح بالتخت.", fr: "L'accueil d'abord : se présenter, vérifier l'identité, poser le bracelet, installer le patient." },
-    mon: { ar: "Monitorage = تاخد العلامات الحيوية (TA، FC، FR، SpO₂، T°) وتراقبا — بلاها ما فيك تقيّم.", fr: "Monitorage = prendre et surveiller les constantes (TA, FC, FR, SpO₂, T°) — sans elles, pas d'évaluation." }
+    mon: { ar: "Monitorage = تاخد العلامات الحيوية (TA، FC، FR، SpO₂، T°) وتراقبا — بلاها ما فيك تقيّم.", fr: "Monitorage = prendre et surveiller les constantes (TA, FC, FR, SpO₂, T°) — sans elles, pas d'évaluation." },
+    safe: { ar: "ما بيضرّ، بس مش هيدا يلّي ناقصو هلّق — ما انحسبت ولا نقطة.", fr: "Sans danger, mais ce n'est pas ce qui manque maintenant — 0 point." },
+    mild: { ar: "مش ضروري لهالمريض — ما في سبب بقصّتو أو بأرقامو.", fr: "Pas nécessaire pour ce patient — rien dans son histoire ni ses constantes." },
+    inv: { ar: "إجراء غازي (invasif) بلا سبب عند هالمريض — كل إجراء إلو خطر (وجع، التهاب).", fr: "Geste invasif sans indication chez ce patient — tout geste a ses risques." },
+    rx: { ar: "💊 مش بوصفة هالمريض — ما منعطي دوا ما وصفو الطبيب إلو.", fr: "💊 Pas sur la prescription de ce patient — jamais un médicament non prescrit." },
+    pulse: { ar: "❌ عندو نبض وعم يتنفّس — تدليك القلب أو الصدمة الكهربا بيأذوه (بس للـ arrêt cardiaque).", fr: "❌ Il a un pouls et respire — massage ou choc électrique le blessent (seulement en arrêt cardiaque)." },
+    awake: { ar: "❌ واعي (Glasgow ≥ 9) — Guedel أو Ambu بيعملولو استفراغ وبيأذوه.", fr: "❌ Conscient (Glasgow ≥ 9) — Guedel ou Ambu provoquent vomissements et lésions." },
+    nonew: { ar: "📞 الطبيب: «ما في شي جديد تقلّي؟ اتصل بس يصير في جديد (أرقام، فحص، تغيير بحالتو)».", fr: "📞 Le médecin : « Rien de nouveau ? Rappelle quand il y a du nouveau (constantes, examen, changement). »" },
+    scr: { ar: "🩻 احترام الخصوصية (pudeur) — سكّرت الستارة قبل الفحص/العناية الحميمة. برافو.", fr: "🩻 Respect de l'intimité (pudeur) — paravent tiré avant l'examen / les soins intimes. Bravo." },
+    scr1: { ar: "🩻 منيح إنّك سكّرتا — بس الأحسن تسكّرا قبل الإجراء الحميم (ECG، sonde…).", fr: "🩻 Bien — mais le mieux est de tirer le paravent AVANT le geste intime (ECG, sonde…)." }
   };
   // the ordered procedure of one patient: ① accueil ② évaluation + dossier (+ gestes urgents) ③ soins ④ surveillance ⑤ transmissions
   function steps(D, cs, p) {
@@ -119,7 +134,7 @@ var LiveCore = (function () {
     // that was later (a case first created at 7 PM — the day the worker was deployed — used to be counted as neglected since 08:00 and was
     // «lost» before anybody could see it). A doc without at0 (older days) keeps 08:00.
     var t0 = dayStart(key), t1 = dayStart(nextKey(key)), a0 = +doc.at0 || 0, tD = Math.max(t0 + DRIFT_FROM * H, a0 < t1 ? a0 : 0), tL = Math.min(now, t1);
-    var P = cs.pts.map(function (p) { var L = steps(D, cs, p), by = {}; L.forEach(function (s) { by[s.id] = s; }); return { p: p, k: p.k, L: L, by: by, done: {}, c: C0, lost: null, fin: null, all: false, soins: false, bad: [], wrong: [], last: null }; });
+    var P = cs.pts.map(function (p) { var L = steps(D, cs, p), by = {}; L.forEach(function (s) { by[s.id] = s; }); return { p: p, k: p.k, L: L, by: by, done: {}, c: C0, lost: null, fin: null, all: false, soins: false, bad: [], wrong: [], last: null, hints: [], calls: [], screen: null }; });
     var evs = evList(doc), end = null, tp = t0, used = [];
     function upd(x) {
       x.all = x.L.every(function (s) { return !!x.done[s.id]; });
@@ -161,9 +176,13 @@ var LiveCore = (function () {
       var x = P[e.p === "b" ? 1 : 0];
       if (out(x)) continue;                // a step on a patient who is already ✅ / 💔 changes nothing (he stays as he ended)
       used.push(e); x.last = e.t;
+      // 28y: 💡 a paid hint and 🩻 the curtain are not steps of the procedure (no health change); a 📞 call with nothing new is not a mistake of the procedure
+      if (e.a === "hint") { x.hints.push(e); continue; }
+      if (e.a === "paravent") { if (e.k === "ok" && !x.screen) x.screen = { t: e.t, u: e.u, n: e.n, i: e.i }; continue; }
       if (e.k === "ok") { var s = x.by[e.a]; if (s && !x.done[s.id]) { x.done[s.id] = { t: e.t, u: e.u, n: e.n, i: e.i }; x.c = Math.max(0, Math.min(100, x.c + s.g)); upd(x); if (x.all) x.fin = e.t; } }
       else if (e.k === "bad") { x.bad.push(e); x.c = Math.max(0, x.c + HARM); if (x.c <= 0) { x.lost = e.t; x.c = 0; } }
-      else x.wrong.push(e);
+      else if (!(e.a === "call" && e.k === "neu")) x.wrong.push(e);
+      if (e.a === "call") x.calls.push({ t: e.t, u: e.u, n: e.n, k: e.k, sig: sig(x) });
       fin();
     }
     if (!end) { adv(tL); fin(); }
@@ -173,27 +192,74 @@ var LiveCore = (function () {
       x.over = x.lost != null ? { w: "lost", t: x.lost } : x.all ? { w: "ok", t: x.fin } : null;   // 28x: this patient's own end
       x.n = x.L.filter(function (s) { return !!x.done[s.id]; }).length; x.tot = x.L.length;
       x.next = end || x.over ? [] : x.L.filter(function (s) { return avail(x, s); });
-      x.ph = x.next.length ? x.next[0].ph : 6;
+      x.ph = 6; x.L.forEach(function (s) { if (!x.done[s.id] && s.ph < x.ph) x.ph = s.ph; });   // 28y: the phase = the lowest one with a step still to do
+      if (end || x.over) x.ph = x.next.length ? x.next[0].ph : 6;
     });
     return { key: key, id: docId(key), cs: cs, t0: t0, t1: t1, from: tD, end: end, P: P, ev: used, all: evs, pts: doc.pts || {}, n: doc.n | 0, now: now };
   }
-  function avail(x, s) {
-    if (x.done[s.id]) return false;
-    for (var i = 0; i < s.after.length; i++) if (!x.done[s.after[i]]) return false;
-    for (var j = 0; j < x.L.length; j++) if (x.L[j].ph < s.ph && !x.done[x.L[j].id]) return false;
-    return true;
-  }
-  function missing(x, s) {                  // what still has to come before this step (for the «order» why)
+  // 28y: what has to come before a step — softer than «the whole previous phase»: its own «after» steps; ① accueil before anything else;
+  // a treatment (📞, drugs, fluids, sonde…) after ① + the vitals 📟 + the urgent gestures; ④ surveillance and ⑤ transmissions after everything before them
+  function gate(x, s) {
     var m = [];
     s.after.forEach(function (a) { if (!x.done[a] && x.by[a]) m.push(x.by[a]); });
-    x.L.forEach(function (q) { if (q.ph < s.ph && !x.done[q.id] && m.indexOf(q) < 0) m.push(q); });
+    if (s.ph > 1) x.L.forEach(function (q) {
+      if (q === s || x.done[q.id] || m.indexOf(q) > -1) return;
+      if (q.ph === 1 || (s.ph >= 4 && q.ph < s.ph) || (s.ph === 3 && !SAFE[s.a] && (q.id === "mon" || (q.urg && q.ph < 3)))) m.push(q);
+    });
     return m;
   }
+  function avail(x, s) { return !x.done[s.id] && !gate(x, s).length; }
+  function missing(x, s) { return gate(x, s); }   // what still has to come before this step (for the «order» why)
+  function sig(x) {                         // 📞 «something new» since the last call = a step done, a harmful act, or his state changed
+    var n = 0; for (var k in x.done) n++;
+    return n + ":" + x.bad.length + ":" + (x.lost != null ? "l" : x.c < 25 ? "c" : x.c < 55 ? "u" : "i");
+  }
+  // an act that is NOT one of this patient's steps: harmless (0, nothing saved) · not needed (−1) · invasive / not prescribed (−2) · harmful
+  function extra(D, p, a) {
+    var v = p.vit, A = D.A && D.A[a], I = A && A.need && D.I && D.I[A.need];
+    if (I && I.rx) return { k: "neu", d: PTS.neu, why: WHY.rx };
+    var arrest = v.fr < 6 || v.sys < 50;
+    if ((a === "cpr" || a === "shock") && !arrest) return { k: "bad", d: PTS.bad, why: WHY.pulse };
+    if ((a === "guedel" || a === "vent") && v.gcs >= 9) return { k: "bad", d: PTS.bad, why: WHY.awake };
+    if ((p.xok || []).indexOf(a) > -1) return { k: "safe", why: WHY.safe };   // the bank's own «sensible here too» list (28y audit)
+    var ok = { guedel: v.gcs <= 8, vent: v.gcs <= 8 && v.fr < 12, eval: 1, pouls: 1, mon: 1, gly: 1, ecg: 1, bilan: 1, calm: 1, repos: 1, es: 1, jeun: 1, pos_tete30: 1, vvp: 1, leg_down: 1, swallow: v.gcs >= 13,
+      o2: v.spo2 < 95, airway: v.gcs <= 8, pos_pls: v.gcs <= 8, pos_semi: v.fr >= 22 || v.spo2 < 94, refroid: v.t >= 38, isol: v.t >= 38,
+      gds: v.spo2 < 92 || v.fr >= 28, bio: v.t >= 38.5, sonde: v.sys < 90 };
+    if (ok[a]) return { k: "safe", why: WHY.safe };
+    if ({ sonde: 1, gds: 1, bio: 1, remp: 1, sang: 1, immob: 1, cpr: 1, shock: 1, vent: 1, guedel: 1 }[a]) return { k: "neu", d: PTS.neu, why: WHY.inv };
+    return { k: "neu", d: PTS.mild, why: WHY.mild };
+  }
+  // 💡 «طرف خيط»: the next useful step of a patient — the urgent ones first, then the lowest phase, a gesture before a dossier field
+  function clue(D, st, pk) {
+    var x = st.P[pk === "b" ? 1 : 0]; if (!x || x.over || st.end || !x.next.length) return null;
+    var n = x.next.slice().sort(function (a, b) { return ((b.urg ? 1 : 0) - (a.urg ? 1 : 0)) || (a.ph - b.ph) || ((a.kind === "file" ? 1 : 0) - (b.kind === "file" ? 1 : 0)) || (x.L.indexOf(a) - x.L.indexOf(b)); });
+    return { s: n[0], ph: x.ph, todo: x.L.filter(function (s) { return !x.done[s.id]; }) };
+  }
   // a student tries something on patient pk → { k: ok|bad|ord|neu|no|repeat|over|pover|wait, d: points, a: what is stored, o, s: step, why, miss }
-  function check(D, st, pk, a, opt) {
+  // 28y: + safe (harmless, 0, nothing saved) · early (harmless but before ① — nothing saved) · doc0 (📞 too early: the doctor asks for what is missing,
+  // nothing saved) · a 📞 again = +1 when something is new, −1 «ما في جديد» · hint = 💡 −1 (≤ HMAX per patient per student: hmax) · paravent = 🩻 +2 before
+  // the intimate gestures, +1 after
+  function check(D, st, pk, a, opt, uid) {
     if (st.end) return { k: "over" };
-    var x = st.P[pk === "b" ? 1 : 0], p = x.p, s, b, i;
+    var x = st.P[pk === "b" ? 1 : 0], p = x.p, s, b, i, m;
     if (x.over) return { k: "pover", w: x.over.w, x: x };   // 28x: this patient is finished (✅ / 💔) — the other one is still waiting
+    if (a === "hint") {
+      if (!x.next.length) return { k: "nohint" };
+      var hu = x.hints.filter(function (e) { return e.u === uid; }).length;
+      return hu >= HMAX ? { k: "hmax", n: hu } : { k: "neu", d: PTS.hint, a: a, left: HMAX - hu - 1 };
+    }
+    if (a === "paravent") {
+      if (x.screen) return { k: "repeat", s: { id: "paravent", a: a, kind: "act" }, scr: x.screen };
+      var pre = !INTIM.some(function (id) { return x.by[id] && x.done[id]; });
+      return { k: "ok", d: pre ? PTS.scr : PTS.scr1, a: a, s: { id: "paravent", a: a, kind: "act", ph: 0, after: [], why: pre ? WHY.scr : WHY.scr1 } };
+    }
+    if (a === "call") {
+      s = x.by.call;
+      if (s && !x.done.call) { m = gate(x, s); return m.length ? { k: "doc0", a: a, s: s, miss: m } : { k: "ok", d: s.pt, a: a, s: s, doc: 1 }; }
+      var lc = x.calls.length ? x.calls[x.calls.length - 1] : null;
+      if (!lc || lc.sig !== sig(x)) return { k: "ok", d: PTS.call2, a: a, s: s || { id: "call", a: a, kind: "act", ph: 3, after: [] }, doc: 2 };
+      return { k: "neu", d: PTS.mild, a: a, why: WHY.nonew, doc: 3 };
+    }
     if (a.indexOf("f_") === 0) {
       s = x.by[a]; if (!s) return { k: "neu", d: PTS.neu, a: a };
       if (x.done[s.id]) return { k: "repeat", s: s };
@@ -204,9 +270,10 @@ var LiveCore = (function () {
     }
     for (i = 0; i < p.bad.length; i++) { b = p.bad[i]; if (b.a === a) return { k: "bad", d: PTS.bad, a: a, why: b.why }; }
     s = x.by[a];
-    if (!s) return { k: "neu", d: PTS.neu, a: a };
+    if (!s) { var xr = extra(D, p, a); return xr.k === "safe" ? { k: "safe", a: a, why: xr.why } : { k: xr.k, d: xr.d, a: a, why: xr.why }; }
     if (x.done[s.id]) return { k: "repeat", s: s };
-    if (!avail(x, s)) return { k: "ord", d: PTS.ord, a: a, s: s, miss: missing(x, s) };
+    m = gate(x, s);
+    if (m.length) return SAFE[s.a] ? { k: "early", a: a, s: s, miss: m } : { k: "ord", d: PTS.ord, a: a, s: s, miss: m };
     return { k: "ok", d: s.pt, a: a, s: s };
   }
   // the record kept in «📚 الحالات السابقة»: the right order with who did each step, the mistakes, who helped
@@ -238,13 +305,14 @@ var LiveCore = (function () {
   function pushOk(u, kind, now, day) { if (!u || u.livePush === false) return false; if (kind === "new") return u.liveDay !== day; return now - (+u.liveAt || 0) >= H; }
   return { RANK: RANK, changes: changes, pushOk: pushOk, H: H, DAY: DAY, PTS: PTS, GAIN: GAIN, C0: C0, MAXEV: MAXEV, DRIFT_FROM: DRIFT_FROM, bOff: bOff, dayKey: dayKey, dayStart: dayStart, nextKey: nextKey, docId: docId, keyOf: keyOf,
     hash: hash, rng: rng, order: order, pick: pick, caseById: caseById, steps: steps, opts: opts, vitals: vitals, bucket: bucket, evList: evList,
-    state: state, avail: avail, out: function (x) { return !!(x && x.over); }, missing: missing, check: check, summary: summary, WHY: WHY };
+    state: state, avail: avail, out: function (x) { return !!(x && x.over); }, missing: missing, check: check, summary: summary, WHY: WHY,
+    gate: gate, sig: sig, extra: extra, clue: clue, SAFE: SAFE, INTIM: INTIM, HMAX: HMAX };
 })();
 /* ==/live-core== */
 
   if (typeof window !== "undefined") window.LiveCore = LiveCore;
   if (!d || !d.addEventListener) return;
-  var V = "20261028x", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261028y", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -344,7 +412,7 @@ var LiveCore = (function () {
     function after(r) { busy = false; if (r.k === "no") setCool(pk, a); if (r.k === "ok" && mode === "shared" && W.NursinStudy && W.NursinStudy.activity) try { W.NursinStudy.activity("game", r.d, "🔴 حالة لايف"); } catch (e) {} return r; }
     busy = true;
     if (mode !== "shared") {
-      var st = LiveCore.state(D, doc, Date.now()), r = LiveCore.check(D, st, pk, a, opt);
+      var st = LiveCore.state(D, doc, Date.now()), r = LiveCore.check(D, st, pk, a, opt, M.uid);
       if (WR[r.k]) {
         if (doc.n >= LiveCore.MAXEV) { busy = false; return Promise.resolve({ k: "full" }); }
         doc.n++; var e = { t: Date.now(), u: M.uid, n: M.name, p: pk, a: r.a, k: r.k, d: r.d }; if (r.o != null) e.o = r.o; doc.ev[doc.n] = e;
@@ -360,7 +428,7 @@ var LiveCore = (function () {
       return fs.runTransaction(A.db, function (tx) {
         return tx.get(ref).then(function (s) {
           if (!s.exists()) { res = { k: "retry", code: mkErr }; return; }
-          var cur = conv(s.data()), st = LiveCore.state(D, cur, Date.now()), r = LiveCore.check(D, st, pk, a, opt); res = r;
+          var cur = conv(s.data()), st = LiveCore.state(D, cur, Date.now()), r = LiveCore.check(D, st, pk, a, opt, M.uid); res = r;
           if (!WR[r.k]) return;
           if (cur.n >= LiveCore.MAXEV) { res = { k: "full" }; return; }
           var prev = (s.data().pts || {})[M.uid];
@@ -415,7 +483,7 @@ var LiveCore = (function () {
     if (s.kind === "file") { var F = D.fields[s.f]; return F.ic + " " + T(F); }
     var A = D.A[s.a]; return A ? A.ic + " " + T(A) : s.a;
   }
-  function actName(a) { if (String(a).indexOf("f_") === 0) { var F = D.fields[a.slice(2)]; return F ? F.ic + " " + T(F) : a; } var A = D.A[a]; return A ? A.ic + " " + T(A) : a; }
+  function actName(a) { if (a === "hint") return FR() ? "💡 Indice" : "💡 طرف خيط"; if (String(a).indexOf("f_") === 0) { var F = D.fields[a.slice(2)]; return F ? F.ic + " " + T(F) : a; } var A = D.A[a]; return A ? A.ic + " " + T(A) : a; }
   /* ---- 🏠 the home card «🔴 حالة لايف · باقي X ساعات», right ABOVE «🧭 مسار اليوم» (Abdullah's wish) ---- */
   function homeCard(st) {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;

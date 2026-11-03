@@ -169,3 +169,28 @@ html[data-theme="night"] .lcr-lockb{background:#2a1f12;border-color:#92400e}html
 .hzlvp.fin{opacity:.72;filter:grayscale(.35)}
 html[data-theme="night"] .lcr-pc.fin{background:rgba(30,41,59,.7)}html[data-theme="night"] .lcr-pfin{color:#5eead4}
 html[data-theme="night"] .lcr-pover{background:rgba(20,83,45,.45);border-color:rgba(74,222,128,.4)}html[data-theme="night"] .lcr-pover.lost{background:rgba(51,65,85,.6);border-color:rgba(148,163,184,.35)}
+
+/* 💡 28y: every closed button says why · 🩻 the curtain · 📞 again · 🧴 each bed its IV · «طرف خيط» · 📤 what is still missing */
+.lcr-leg{margin:0 0 8px;font-size:11.5px;line-height:1.5;padding:6px 9px;border-radius:10px;background:rgba(15,118,110,.07);color:#335b57}
+.lcr-act.need{opacity:.86}.lcr-act.need small,.lcr-act.rxq small{color:#b45309;opacity:1;font-weight:700}.lcr-act.rxq{border-style:dashed;border-color:#f59e0b}
+.lcr-act.off{opacity:.5}
+.lcr-hit{border-color:#7c3aed!important;box-shadow:0 0 0 3px rgba(124,58,237,.28);animation:lcrHit 1.2s ease-in-out infinite}
+.lcr-fld.lcr-hit{border-radius:12px;padding:4px 6px}
+@keyframes lcrHit{50%{box-shadow:0 0 0 6px rgba(124,58,237,.12)}}
+@media (prefers-reduced-motion:reduce){.lcr-hit{animation:none}}
+.lcr-hint{margin:6px 0 8px;padding:6px 8px;border-radius:14px;background:rgba(253,224,71,.14);border:1px solid rgba(234,179,8,.35)}
+.lcr-hint.on{padding:8px 10px 10px}.lcr-hint p{margin:4px 0;font-size:13px;line-height:1.5}.lcr-hint p.small{font-size:12px;opacity:.85}
+.lcr-hintb{border:0;background:none;padding:2px 0;font-weight:800;font-size:13.5px!important;color:#a16207!important;cursor:pointer}
+.lcr-hph b{color:#0f766e}.lcr-hleft{border-top:1px dashed rgba(161,98,7,.3);padding-top:5px}
+.lcr-hint .lcr-btn{margin-top:6px;font-size:12.5px!important;padding:7px 12px}
+.lcr-hgot{margin:8px 0 2px!important;padding:7px 10px;border-radius:10px;background:rgba(124,58,237,.08);display:flex;flex-direction:column;gap:2px}.lcr-hgot small{font-size:12px;opacity:.85}
+.lcr-priv h4{color:#2563eb}
+.lcr-handg{margin-top:10px}.lcr-hand{border-color:#0f766e!important;font-weight:800}
+.lcr-left{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74}.lcr-left b{font-size:13px}
+.lcr-left ul{margin:4px 0;padding-inline-start:18px}.lcr-left li{font-size:12.5px;margin:2px 0}.lcr-left small{font-size:11.5px;opacity:.8}
+.lcr-callh{margin:6px 0 2px;opacity:.75;font-size:12px}
+html[data-theme="night"] .lcr-leg{background:rgba(94,234,212,.08);color:#a7d8d1}
+html[data-theme="night"] .lcr-act.need small,html[data-theme="night"] .lcr-act.rxq small{color:#fbbf24}
+html[data-theme="night"] .lcr-hint{background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.3)}html[data-theme="night"] .lcr-hintb{color:#fcd34d!important}
+html[data-theme="night"] .lcr-hph b{color:#5eead4}html[data-theme="night"] .lcr-hgot{background:rgba(167,139,250,.14)}
+html[data-theme="night"] .lcr-priv h4{color:#93c5fd}html[data-theme="night"] .lcr-left{background:#2a1f12;border-color:#92400e}
