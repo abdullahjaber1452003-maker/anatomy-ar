@@ -160,7 +160,7 @@ test('friends + levels: page, nav link and account script on every page, Firebas
   for (const p of pages) {
     const h = read(p);
     assert.ok(h.includes('<a href="friends.html"'), p + ' nav links friends.html');
-    assert.strictEqual((h.match(/assets\/account\.js\?v=20261029a/g) || []).length, 1, p + ' account.js once with cache tag');
+    assert.strictEqual((h.match(/assets\/account\.js\?v=20261029b/g) || []).length, 1, p + ' account.js once with cache tag');
     assert.ok(!h.includes('gstatic.com/firebasejs'), p + ' Firebase loads only through assets/fb.js, never in page HTML');
   }
   const f = read('friends.html');
@@ -314,7 +314,7 @@ test('phase 3: live + exams pages, nav, module loading, rules for rooms / exams 
 
 test('3D page: short ad screen first (once per session, 5 s, «كمّل ←», no reward), models wait for it', () => {
   const g = read('assets/gate3d.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/gate3d.js?v=20261029a') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
+  assert.ok(h.indexOf('assets/gate3d.js?v=20261029b') > -1 && h.indexOf('assets/gate3d.js') < h.indexOf('assets/viewer.js'), 'gate runs before the viewer');
   assert.ok(g.includes('sessionStorage') && g.includes('WAIT=5') && g.includes('كمّل ←') && g.includes('إعلان') && g.includes('الصفحة عم تحضّر'), 'once per session, 5 s, button, label');
   assert.ok(g.includes('9892bba2f704f8ea66787de07f9f7be3') && g.includes('srcdoc') && g.includes('https://bauval.org/22/'), 'existing 300x250 unit in its own srcdoc iframe');
   assert.ok(!/points|نقاط|location\.(href|assign|replace)|history\.(push|replace)State/.test(g), 'no reward, no redirect, no history tricks');
@@ -361,7 +361,7 @@ test('classes page: nav on every page, signed-in only shell, light top banner (n
   assert.strictEqual((h.match(/assets\/ads\.js\?v=/g) || []).length, 1); assert.ok(h.includes('ca-pub-2554036492962277') && h.includes('G-7MY0Z597WC'));
   const rh = js.slice(js.indexOf('function resultHtml('), js.indexOf('\n}\n', js.indexOf('function resultHtml(')));
   assert.ok(!/adx|bauval/.test(js.replace(rh, '')), 'no ads inside the class exam (only on its result)');
-  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261029a'), 'quiz bank + weak points loaded');
+  assert.ok(h.indexOf('assets/quiz-data.js') < h.indexOf('assets/weak.js') && h.includes('assets/weak.js?v=20261029b'), 'quiz bank + weak points loaded');
   assert.ok(acc.includes("page==='classes.html'") && fb.includes('mod("classes")') && fb.includes('getElementById("classes-app")'), 'Firebase + module load on classes page');
   assert.ok(js.includes('A.signInCard(') && js.includes('NOT_READY') && js.includes('permission-denied'), 'signed-out prompt + friendly message before rules v4');
   assert.ok(js.includes('runTransaction') && js.includes('"weeks", C.wk') && js.includes('"starts", C.wk + "_" + A.user.uid') && js.includes('"results", C.wk + "_" + A.user.uid'), 'one exam per week (transaction), start marker + result per student');
@@ -592,7 +592,7 @@ test('📢 announcements (Oct 25): banner + 🔔 on every page from one public r
   assert.ok(a.includes('textContent') && !/innerHTML\s*=\s*[^;]*ann\./.test(a), 'announcement text is never injected as HTML');
   assert.ok(a.includes('nursin_ann_seen_v1') && a.includes('localStorage'), 'dismiss remembered per browser');
   assert.ok(a.includes('.catch('), 'missing rules / doc are silent');
-  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261029a" defer><\/script>/, p);
+  for (const p of pages.concat('admin.html')) assert.match(read(p), /<script src="assets\/announce\.js\?v=20261029b" defer><\/script>/, p);
   const ad = read('admin.html');
   assert.match(ad, /name="robots" content="noindex/); assert.ok(ad.includes('id="admin-app"'));
   assert.ok(!ad.includes('adsbygoogle') && !ad.includes('bauval'), 'no ads on the admin page');
@@ -634,7 +634,7 @@ test('💬 chats (Oct 25): friends 1:1 + groups ≤ 15, text ≤ 500, members-on
 
 test('🩸 blood flow on the 3D heart (Oct 25): «مسار الدم» particles blue → red at the lungs, Ar–Fr step captions, small/big circulation, play/pause + step', () => {
   const f = read('assets/flow.js'), v = read('assets/viewer.js'), h = read('3d.html'), css = read('assets/style.css');
-  assert.ok(h.indexOf('assets/flow.js?v=20261029a') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
+  assert.ok(h.indexOf('assets/flow.js?v=20261029b') > -1 && h.indexOf('assets/flow.js') < h.indexOf('assets/viewer.js'), 'flow.js before the viewer on 3d.html');
   assert.ok(v.includes("key==='heart'&&window.nursinFlow"), 'viewer hands the heart to the flow');
   assert.ok(f.includes('🩸 مسار الدم') && f.includes('التالي ▶') && f.includes('⏸ وقّف') && f.includes('▶ كمّل'), 'button, play/pause, next');
   const order = ['Veines caves','Oreillette droite','Valve tricuspide','Ventricule droit','Valve pulmonaire','Artère pulmonaire','Poumons','Veines pulmonaires','Oreillette gauche','Valve mitrale','Ventricule gauche','Valve aortique','Aorte','Organes'];
@@ -654,7 +654,7 @@ test('💧 liquid blood flow (Oct 25): flowing stream instead of dots on the 3D 
   assert.ok(f.includes('🐢 السرعة') && /min="0\.25" max="1\.5"/.test(f) && f.includes('spd=0.5') && f.includes('nursin_flow_speed'), 'speed 0.25×–1.5×, default 0.5×, remembered');
   assert.ok(f.includes('beat') && f.includes("'class':'fov fdyn'") && css.includes('.fdyn{will-change:transform}'), 'heartbeat pulse; moving layer kept apart so static vessels are not repainted');
   assert.ok(/@media \(min-width:860px\)\{[^@]*\.viewer\.flowon>\.fbody\{grid-column:2/.test(css), 'beside the heart on desktop, below on phones');
-  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261029a'), '3d.html mentions it, fresh cache tag');
+  assert.ok(h.includes('🐢 السرعة') && h.includes('assets/flow.js?v=20261029b'), '3d.html mentions it, fresh cache tag');
 });
 
 test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service worker, 📲 install, opt-in, worker ping, rules v8', () => {
@@ -668,7 +668,7 @@ test('🔔 app mode + chat notifications (Oct 25): manifest, push-only service w
   for (const p of pages.concat('admin.html', 'chat.html')) {
     const h = read(p);
     assert.ok(h.includes('<link rel="manifest" href="/manifest.json">') && h.includes('<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'), p + ' manifest + apple icon');
-    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
+    assert.equal((h.match(/<script src="assets\/pwa\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p + ' pwa.js once');
   }
   const sw = read('sw.js');
   assert.ok(sw.includes('"push"') && sw.includes('showNotification') && sw.includes('"notificationclick"') && sw.includes('/chat.html?c='), 'push + tap opens the chat');
@@ -706,14 +706,14 @@ test('📢 broadcast notifications (Oct 25): owner-only «إشعار للكل» 
   const r = read('firestore.rules');
   assert.ok(r.includes('allow list: if isAnnOwner();') && r.includes("affectedKeys().hasOnly(['d'])") && r.includes('addedKeys().size() == 0') && r.includes('changedKeys().size() == 0'), 'v9: owner lists + only removes devices');
   assert.ok(r.includes("hasOnly(['d', 'updatedAt'])") && r.includes('match /chats/{cid}') && r.includes('match /announcements/{id}'), 'v9 keeps v8');
-  assert.ok(read('index.html').includes('assets/pwa.js?v=20261029a'), 'fresh cache tag');
+  assert.ok(read('index.html').includes('assets/pwa.js?v=20261029b'), 'fresh cache tag');
 });
 
 test('🧭 tidy navigation + 👋 welcome card (Oct 26): five groups, every page reachable, sign-in then notifications once per device, «بعدين» on each step, no ads inside', () => {
   const all = fs.readdirSync(SITE).filter(f => f.endsWith('.html'));
   for (const p of all) {
     const h = read(p);
-    assert.equal((h.match(/<script src="assets\/nav\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p + ' nav.js once with cache tag');
+    assert.equal((h.match(/<script src="assets\/nav\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p + ' nav.js once with cache tag');
     assert.ok(h.indexOf('assets/account.js?v=') < h.indexOf('assets/nav.js?v='), p + ' nav.js after account.js (uses Nursin.loadFB)');
     assert.ok(!h.includes('20261025l'), p + ' old cache tag gone');
   }
@@ -765,7 +765,7 @@ test('🧭 tidy navigation + 👋 welcome card (Oct 26): five groups, every page
 test('⚖️ law lessons (Oct 26): lessons from a data list (his notes only), 4-grade table, licence conditions, «قريباً» placeholder, 10 law quiz questions, listed in nav/home/quiz/live/tutor/admin', () => {
   const h = read('law.html');
   assert.ok(h.includes('id="lawlessons"') && h.includes('data-practice="class"') && h.includes('data-practice="blanks" data-t="law"') && h.includes('quiz.html?t=law'));
-  for (const s of ['law-data.js', 'blanks-data.js', 'law.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029a'), s);
+  for (const s of ['law-data.js', 'blanks-data.js', 'law.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029b'), s);
   assert.ok(h.indexOf('assets/law.js') < h.indexOf('assets/practice.js'), 'lessons render before practice mounts');
   assert.ok(h.indexOf('class="adx adx-box"') > h.indexOf('id="blanks"') && h.indexOf('class="adx adx-top"') < h.indexOf('id="lessons"'), 'ads only above/below, none inside lessons or quizzes');
   const w = {}; new Function('window', read('assets/law-data.js'))(w);
@@ -818,7 +818,7 @@ test('✍️ «عبّي الفراغ» + 📝 «كويز متل الصف» (Oct 
   assert.ok(js.includes('summer-forest-fd40') && js.includes('FIX_MAX'), '✨ صحّحلي uses the existing tutor worker, small daily cap');
   assert.ok(!/adsbygoogle|adx/.test(js), 'no ads inside practice');
   const q = read('quiz.html'), qs = q.indexOf('id="qsets"'), pm = q.indexOf('data-pm="blanks"');
-  assert.ok(pm > -1 && q.includes('id="pmode"') && q.includes('assets/practice.js?v=20261029a'));
+  assert.ok(pm > -1 && q.includes('id="pmode"') && q.includes('assets/practice.js?v=20261029b'));
   const qsEnd = q.indexOf('<div id="quiz"'); assert.ok(pm > qsEnd - 400 && !q.slice(qs, q.indexOf('class="chips pmodes"')).includes('data-pm'), 'mode chips are outside #qsets');
   assert.ok(read('assets/nav.js').includes('quiz.html#blanks') && js.includes('"#blanks"'));
 });
@@ -833,7 +833,7 @@ test('🔒 sign-in gate (Oct 26): lessons show a preview then a lock card, quizz
   const g = read('assets/gate.js'), css = read('assets/style.css');
   for (const p of pages.concat(['admin.html', 'chat.html'])) {
     const h = read(p), head = h.slice(0, h.indexOf('</head>'));
-    assert.ok(head.includes('<script src="assets/gate.js?v=20261029a"></script>'), p + ': gate.js in <head>, synchronous (locked before first paint)');
+    assert.ok(head.includes('<script src="assets/gate.js?v=20261029b"></script>'), p + ': gate.js in <head>, synchronous (locked before first paint)');
   }
   for (const p of ['cardio.html', 'neuro.html', 'henderson.html', 'law.html', '3d.html']) assert.ok(g.includes('"' + p + '": 1'), p + ' is a lesson page');
   assert.ok(g.includes('"quiz.html": 1'));
@@ -902,7 +902,7 @@ test('🔒 tutor lock + 🎯 one-tap weak points + ✅ today\'s goals (Oct 26, 1
   assert.ok(wk.includes('ما في أخطاء لهلّق') && /streak>=GRAD/.test(wk) && /GRAD=2/.test(wk), 'empty text + 2-in-a-row rule kept');
   assert.ok(read('assets/quiz.js').includes('start:function(sel,n){start(sel,n||0,true);}'));
   // goals: on every page, pure build() from existing data, done marks per day
-  for (const p of pages.concat(['admin.html', 'chat.html'])) assert.ok(read(p).includes('<script src="assets/goals.js?v=20261029a" defer></script>'), p + ' has goals.js');
+  for (const p of pages.concat(['admin.html', 'chat.html'])) assert.ok(read(p).includes('<script src="assets/goals.js?v=20261029b" defer></script>'), p + ' has goals.js');
   const G = require(path.join(SITE, 'assets/goals.js'));
   const b = G.build({ weak: 3, exams: [{ id: '2026-10-26-ecg', n: 'ECG + Arythmies' }, { id: '2026-10-26-ic', n: 'IC' }], st: { '2026-10-26-ic': { s: 'done' } }, classes: { list: [{ name: 'LT', mine: null, week: { n: 15 }, dq: { mine: null } }] }, done: { weak: 1 } });
   assert.deepStrictEqual(b.map(x => [x.e, x.href, x.done]), [['🎯', 'quiz.html?t=weak', true], ['📅', 'quiz.html?exam=2026-10-26-ecg', false], ['📅', 'quiz.html?exam=2026-10-26-ic', true], ['🏫', 'classes.html', false], ['❓', 'classes.html#cdq', false], ['⏱️', 'index.html#study', false], ['🎮', 'games.html', false]]);
@@ -1038,7 +1038,7 @@ test('🏢 الإدارة (Oct 26, his handwritten pages): lessons from a data l
   const h = read('mgmt.html');
   assert.ok(h.includes('id="mgmtlessons"') && h.includes('data-practice="blanks" data-t="mgmt"') && h.includes('quiz.html?t=mgmt'));
   assert.ok(!h.includes('data-practice="class"') && !h.includes('كويز متل الصف'), 'class-style quiz stays law-only');
-  for (const s of ['mgmt-data.js', 'blanks-data.js', 'mgmt.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029a'), s);
+  for (const s of ['mgmt-data.js', 'blanks-data.js', 'mgmt.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029b'), s);
   assert.ok(h.indexOf('assets/mgmt.js') < h.indexOf('assets/practice.js'));
   assert.ok(h.indexOf('class="adx adx-box"') > h.indexOf('id="blanks"') && h.indexOf('class="adx adx-top"') < h.indexOf('id="lessons"'), 'ads only above/below, none inside lessons or quizzes');
   const w = {}; new Function('window', read('assets/mgmt-data.js'))(w);
@@ -1085,7 +1085,7 @@ test('✅ الجودة والاعتماد + 💊 الأدوية (Oct 26, from hi
   for (const [t, page, data] of [['quality', 'quality.html', 'quality-data.js'], ['pharma', 'pharma.html', 'pharma-data.js']]) {
     const h = read(page);
     assert.ok(h.includes('data-practice="blanks" data-t="' + t + '"') && h.includes('quiz.html?t=' + t) && !h.includes('كويز متل الصف'), page);
-    for (const s of [data, 'blanks-data.js', t + '.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029a'), page + ' ' + s);
+    for (const s of [data, 'blanks-data.js', t + '.js', 'practice.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029b'), page + ' ' + s);
     assert.ok(h.indexOf('class="adx adx-box"') > h.indexOf('id="blanks"') && h.indexOf('class="adx adx-top"') < h.indexOf('id="lessons"'), page + ': no ads inside lessons/quizzes');
     const q = w.QUIZ.filter(x => x.t === t); assert.strictEqual(q.length, { quality: 38 + 18, pharma: 39 + 18 }[t], t);   // Nov 1: + 🎯 امتحان الفصل questions
     const ans = [0, 1, 2].map(a => q.filter(x => x.a === a).length); assert.ok(Math.min(...ans) >= 4, t + ' answers spread ' + ans);
@@ -1133,7 +1133,7 @@ test('Monetag removal kept the other ads + analytics: AdSense, GA4, Adsterra loa
     if (!['admin.html', 'chat.html', 'hifzi.html', 'me.html', 'notes.html', 'highlights.html', 'midterm.html', 'suggest.html', 'homework.html'].includes(f)) assert.ok(h.includes('ca-pub-2554036492962277'), f + ' AdSense kept');   // Oct 29: no ads on حفظي / أنا · Nov 1: none on 🎯 امتحان الفصل, none on 🛠️ the suggestion box, none on 📌 الوظائف
     assert.ok(h.includes('G-7MY0Z597WC'), f + ' GA4 kept');
   }
-  for (const p of ['index.html', 'cardio.html', 'quiz.html']) assert.ok(/assets\/ads\.js\?v=20261029a/.test(read(p)), p + ' Adsterra loader kept, fresh tag');
+  for (const p of ['index.html', 'cardio.html', 'quiz.html']) assert.ok(/assets\/ads\.js\?v=20261029b/.test(read(p)), p + ' Adsterra loader kept, fresh tag');
   assert.ok(read('assets/ads.js').includes('735f5c76ee5abde951ff9d70e2263fab'), 'Adsterra 320x50 key kept');
   assert.equal(read('ads.txt').trim(), 'google.com, pub-2554036492962277, DIRECT, f08c47fec0942fa0', 'ads.txt unchanged');
 });
@@ -1192,7 +1192,7 @@ test('📝 مادة ← دروسها (Oct 26): every subject page has a whole-su
 test('🎮 games page (Oct 26, 6:04 PM): 3 games from the site\'s own quiz bank + drug cards, subject picker, points + 🔥, in nav/home/sitemap, no ads', () => {
   const g = read('games.html');
   for (const k of ['id="gpick"', 'data-g="match"', 'data-g="tf"', 'data-g="mem"', 'id="garea"', 'id="wkch"']) assert.ok(g.includes(k), 'games.html ' + k);
-  for (const s of ['quiz-data.js', 'pharma-data.js', 'games.js', 'study.js', 'account.js', 'nav.js']) assert.ok(g.includes('assets/' + s + '?v=20261029a'), 'games.html loads ' + s);
+  for (const s of ['quiz-data.js', 'pharma-data.js', 'games.js', 'study.js', 'account.js', 'nav.js']) assert.ok(g.includes('assets/' + s + '?v=20261029b'), 'games.html loads ' + s);
   assert.ok(!/bauval|ads\.js|mtag\.js|class="adx/.test(g), 'no ad units inside the games page');
   const gj = read('assets/games.js'), sj = read('assets/study.js');
   assert.ok(!/bauval|adsbygoogle|adx|nap5k/.test(gj + sj), 'no ads in games / timer / challenge code');
@@ -1226,8 +1226,8 @@ test('🔥 study streak + ⏱️ pomodoro + 🏆 weekly challenge + 🎯 quiz be
   assert.ok(S.POMO_PTS === 5 && S.POMO_CAP === 8 && S.DUR.f === 25 * 60e3 && S.DUR.s === 5 * 60e3 && S.DUR.l === 15 * 60e3, '25 / 5 / 15 min, 5 points, 8 rounds a day');
   const sj = read('assets/study.js');
   for (const k of ['navigator.vibrate', 'AudioContext', 'SET = 4', 'جرّب حالك قبل ما تقرا', 'برافو! خود بريك وكافئ حالك 🍫', 'تحدّي الأسبوع', 'class="prq"'.replace('class="prq"', 'className = "prq"')]) assert.ok(sj.includes(k), 'study.js ' + k);
-  const h = read('me.html'); assert.ok(h.includes('<section id="study"') && h.includes('assets/study.js?v=20261029a'), '👤 أنا: streak + timer + weekly card (Oct 29: moved from the home page)');
-  for (const p of ['cardio.html', 'neuro.html', 'henderson.html', 'law.html', 'mgmt.html', 'quality.html', 'pharma.html', 'quiz.html']) assert.ok(read(p).includes('assets/study.js?v=20261029a'), p + ' loads study.js');
+  const h = read('me.html'); assert.ok(h.includes('<section id="study"') && h.includes('assets/study.js?v=20261029b'), '👤 أنا: streak + timer + weekly card (Oct 29: moved from the home page)');
+  for (const p of ['cardio.html', 'neuro.html', 'henderson.html', 'law.html', 'mgmt.html', 'quality.html', 'pharma.html', 'quiz.html']) assert.ok(read(p).includes('assets/study.js?v=20261029b'), p + ' loads study.js');
   // weekly points + badges + «day counts on a finished quiz/game/pomodoro» on the existing profile fields (rules unchanged)
   const c2 = { window: {} }; vm.createContext(c2); vm.runInContext(read('assets/account.js'), c2); const N = c2.window.Nursin;
   assert.strictEqual(N.weekStart('2026-11-01'), '2026-10-26', 'week starts Monday'); assert.strictEqual(N.weekStart('2026-10-26'), '2026-10-26');
@@ -1276,7 +1276,7 @@ test('✅ goals: ⏱️ one pomodoro + 🎮 ONE game (not all) required, 📖 ne
   // 📖 the lesson registry: on every page before account.js, every topic and every lesson listed, documented "added" field
   const lj = read('assets/lessons.js');
   assert.ok(lj.includes('HOW TO ADD A NEW LESSON') && lj.includes("added: 'YYYY-MM-DD'"), 'how to set added is documented');
-  for (const p of pages.concat(['admin.html', 'chat.html'])) { const h = read(p); assert.ok(/<script src="assets\/lessons\.js\?v=20261029a" defer><\/script>(<script src="assets\/hifz\.js\?v=20261029a" defer><\/script>)?(<script src="assets\/notes\.js\?v=20261029a" defer><\/script>(<script src="assets\/highlight\.js\?v=20261029a" defer><\/script>(<script src="assets\/name\.js\?v=20261029a" defer><\/script>)?)?)?<script src="assets\/account\.js\?v=20261029a"/.test(h), p + ' loads lessons.js (+ hifz.js) before account.js'); }
+  for (const p of pages.concat(['admin.html', 'chat.html'])) { const h = read(p); assert.ok(/<script src="assets\/lessons\.js\?v=20261029b" defer><\/script>(<script src="assets\/hifz\.js\?v=20261029b" defer><\/script>)?(<script src="assets\/notes\.js\?v=20261029b" defer><\/script>(<script src="assets\/highlight\.js\?v=20261029b" defer><\/script>(<script src="assets\/name\.js\?v=20261029b" defer><\/script>)?)?)?<script src="assets\/account\.js\?v=20261029b"/.test(h), p + ' loads lessons.js (+ hifz.js) before account.js'); }
   const w = {}; w.window = w; vm.createContext(w);
   for (const f of ['lessons.js', 'quiz-data.js', 'account.js']) vm.runInContext(read('assets/' + f), w);
   const L = w.NursinLessons, N = w.Nursin;
@@ -1305,7 +1305,7 @@ test('✅ goals: ⏱️ one pomodoro + 🎮 ONE game (not all) required, 📖 ne
   L.list.pop();
   // 🎚️ levels + ⌨️ fill game
   const gh = read('games.html'), gj = read('assets/games.js');
-  assert.ok(gh.includes('id="glv"') && gh.includes('data-g="fill"') && gh.includes('assets/blanks-data.js?v=20261029a'), 'level picker + 4th game');
+  assert.ok(gh.includes('id="glv"') && gh.includes('data-g="fill"') && gh.includes('assets/blanks-data.js?v=20261029b'), 'level picker + 4th game');
   assert.ok(gj.includes('match: 5, tf: 60, mem: 6') && gj.includes('match: 7, tf: 45, mem: 8') && gj.includes('match: 9, tf: 30, mem: 10') && gj.includes('Math.max(0, ok - bad)'), 'سهل/وسط/صعب sizes + −1 on صعب');
   const gw = {}; for (const f of ['quiz-data.js', 'pharma-data.js', 'blanks-data.js', 'games.js']) new Function('window', read('assets/' + f))(gw);
   const NG = gw.NursinGames;
@@ -1317,7 +1317,7 @@ test('✅ goals: ⏱️ one pomodoro + 🎮 ONE game (not all) required, 📖 ne
 test('🪜 سلّم المراحل (Oct 26, 7:44 PM): 5 levels back to back, 4 quiz-bank questions each, 20→8 s, 3 ❤️, counts as a game, best level saved, no ads', () => {
   const gh = read('games.html'), gj = read('assets/games.js');
   assert.ok(gh.includes('data-g="stage"') && gh.includes('سلّم المراحل'), 'card on games.html');
-  assert.ok(gh.includes('assets/games.js?v=20261029a') && gh.includes('assets/quiz-data.js?v=20261029a'), 'fresh cache tag');
+  assert.ok(gh.includes('assets/games.js?v=20261029b') && gh.includes('assets/quiz-data.js?v=20261029b'), 'fresh cache tag');
   const gw = {}; for (const f of ['quiz-data.js', 'pharma-data.js', 'blanks-data.js', 'games.js']) new Function('window', read('assets/' + f))(gw);
   const NG = gw.NursinGames, S = NG.STAGE;
   assert.strictEqual(S.levels, 5, '5 levels'); assert.strictEqual(S.lives, 3, '3 lives'); assert.strictEqual(S.per, 4, '4 questions a level');
@@ -1334,7 +1334,7 @@ test('🪜 سلّم المراحل (Oct 26, 7:44 PM): 5 levels back to back, 4 q
 
 test('❌/✅ games (Oct 26, 9:05 PM): every game shows the correction right away and ends with «📋 أخطاءك» + «🎯 راجع أخطاءك» (no points)', () => {
   const gh = read('games.html'), gj = read('assets/games.js'), css = read('assets/style.css');
-  assert.ok(gh.includes('assets/games.js?v=20261029a') && gh.includes('assets/style.css?v=20261029a'), 'fresh cache tag');
+  assert.ok(gh.includes('assets/games.js?v=20261029b') && gh.includes('assets/style.css?v=20261029b'), 'fresh cache tag');
   assert.ok(gj.includes('❌ إنت اخترت: ') && gj.includes('✅ الصح: ') && gj.includes('كمّل ⬅️'), 'the correction line + «كمّل»');
   // each game's wrong branch records the mistake and shows the line
   const body = (name, nextName) => { const a = gj.indexOf('function ' + name + '('), b = gj.indexOf('function ' + nextName + '(', a + 1); assert.ok(a > 0 && b > a, name); return gj.slice(a, b); };
@@ -1358,7 +1358,7 @@ test('❌/✅ games (Oct 26, 9:05 PM): every game shows the correction right awa
 
 test('🔔 goal reminders (Oct 26, 9:56 PM): switch «ذكّرني بأهدافي» on the goals card + today\'s goals mirrored onto the own profile for the worker v4 cron', () => {
   const gs = read('assets/goals.js'), css = read('assets/style.css');
-  assert.ok(read('index.html').includes('assets/goals.js?v=20261029a'), 'fresh cache tag');
+  assert.ok(read('index.html').includes('assets/goals.js?v=20261029b'), 'fresh cache tag');
   assert.ok(gs.includes('🔔 إشعارات الأستاذ عثمان') && !gs.includes('data-rem="at"') && gs.includes('data-rem="qf"') &&   // Oct 29 11:49 PM: Osman decides when; no time picker   // renamed Oct 28 10:29 PM («أهداف اليوم» → «درس اليوم»)
     gs.includes('role="switch"') && gs.includes('gpHtml()') && /\.gosheet \.gopsw/.test(css), 'the switch is on the goals card');
   assert.ok(gs.includes('P.enable(A)') && gs.includes('goalPush: true') && gs.includes('goalPush: false'), 'uses the existing push subscribe flow, stored on the profile');
@@ -1377,7 +1377,7 @@ test('🔔 goal reminders (Oct 26, 9:56 PM): switch «ذكّرني بأهداف�
 
 test('🚑 ناوبة بالطوارئ (Oct 27): ER sim game on games.html, 7 cases from the réa notes, each step one best answer + an explanation', () => {
   const gh = read('games.html'), gj = read('assets/games.js'), dj = read('assets/ersim-data.js'), css = read('assets/style.css');
-  assert.ok(gh.includes('data-g="er"') && gh.includes('ناوبة بالطوارئ') && gh.includes('assets/ersim-data.js?v=20261029a') && gh.indexOf('ersim-data.js') < gh.indexOf('assets/games.js'), 'card + data script before games.js');
+  assert.ok(gh.includes('data-g="er"') && gh.includes('ناوبة بالطوارئ') && gh.includes('assets/ersim-data.js?v=20261029b') && gh.indexOf('ersim-data.js') < gh.indexOf('assets/games.js'), 'card + data script before games.js');
   assert.ok(gj.includes('function erGame(') && gj.includes('function erCase(') && gj.includes('g === "er" ? erGame') && gj.includes('finish("er", ok'), 'game wired through the shared finish() (points caps + 🎮 goal)');
   const body = gj.slice(gj.indexOf('function erCase('), gj.indexOf('w.NursinGames ='));
   assert.ok(body.includes('addMiss(') && body.includes('fbLine(') && body.includes('paintBar(-1)') && body.includes('paintBar(1)'), 'correction + status bar reacts');
@@ -1404,7 +1404,7 @@ test('🚑 ناوبة بالطوارئ (Oct 27): ER sim game on games.html, 7 ca
 
 test('🚑 ER sim v2 (Oct 27, 10:17 AM): realistic scenes + game HUD, tap spots open the same steps, each case has dialogue lines from its own data', () => {
   const gh = read('games.html'), gj = read('assets/games.js'), sj = read('assets/ersim-scene.js'), css = read('assets/style.css'), cr = read('credits.html');
-  assert.ok(gh.includes('assets/ersim-scene.js?v=20261029a') && gh.indexOf('ersim-scene.js') < gh.indexOf('assets/games.js'), 'scene script before games.js');
+  assert.ok(gh.includes('assets/ersim-scene.js?v=20261029b') && gh.indexOf('ersim-scene.js') < gh.indexOf('assets/games.js'), 'scene script before games.js');
   for (const k of ['a', 'b', 'c', 'd']) {
     const f = path.join(SITE, 'assets/er-scene-' + k + '.webp'), b = fs.readFileSync(f);
     assert.ok(b.slice(0, 4).toString() === 'RIFF' && b.slice(8, 12).toString() === 'WEBP' && b.length <= 150 * 1024, 'scene ' + k + ' webp ≤150 KB');
@@ -1437,7 +1437,7 @@ test('🚑 ER sim v2 (Oct 27, 10:17 AM): realistic scenes + game HUD, tap spots 
 
 test('🚑 ER sim v3 (Oct 27, 12:36 PM): each case is a living story — free actions (≥8), every action has an effect + a line from the notes, the patient gets worse untreated and better with the right sequence', () => {
   const gh = read('games.html'), gj = read('assets/games.js'), sj = read('assets/ersim-scene.js'), yj = read('assets/ersim-story.js'), css = read('assets/style.css');
-  assert.ok(gh.includes('assets/ersim-story.js?v=20261029a') && gh.indexOf('ersim-story.js') < gh.indexOf('ersim-scene.js') && gh.indexOf('ersim-scene.js') < gh.indexOf('assets/games.js'), 'story engine before the scene and games.js');
+  assert.ok(gh.includes('assets/ersim-story.js?v=20261029b') && gh.indexOf('ersim-story.js') < gh.indexOf('ersim-scene.js') && gh.indexOf('ersim-scene.js') < gh.indexOf('assets/games.js'), 'story engine before the scene and games.js');
   assert.ok(gj.includes('function erStory(') && gj.includes('finish("er", stars') && gj.includes('nursin_er3_v1') && gj.includes('addMiss(') && gj.includes('fbLine('), 'wired into finish() (points caps + 🎮 goal), saved for reload, mistakes reviewed');
   for (const s of ['📋 المهام', 'ملف المريض', 'سلّم', 'data-ers="pause"', 'ers-red', 'E.tick(', 'E.doAct(']) assert.ok(sj.includes(s), 'room UI: ' + s);
   assert.ok(css.includes('.ers-tasks') && /prefers-reduced-motion:reduce\)\{\.ers-mon\.alarm/.test(css) && css.indexOf('.ers-tasks') < css.indexOf('.adx{'), 'css (before .adx), reduced motion');
@@ -1512,7 +1512,7 @@ test('👨‍🏫 الأستاذ عثمان: renamed everywhere, pooled lines, b
   const files = fs.readdirSync(SITE).filter(f => f.endsWith('.html')).concat(fs.readdirSync(path.join(SITE, 'assets')).filter(f => /\.(js|css)$/.test(f)).map(f => 'assets/' + f));
   for (const f of files) assert.ok(!/الأستاذ المساعد|الاستاذ المساعد/.test(read(f)), f + ' still names «الأستاذ المساعد»');
   assert.ok(read('tutor.html').includes('<h1>👨‍🏫 الأستاذ عثمان</h1>') && read('assets/nav.js').includes('["tutor.html", "👨‍🏫", "اسأل الأستاذ عثمان"'), 'tutor page + in the 📚 sheet (Oct 29)');
-  for (const f of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) { const h = read(f); if (h.includes('assets/nav.js')) assert.ok(h.indexOf('assets/osman.js?v=20261029a') > -1 && h.indexOf('assets/osman.js') < h.indexOf('assets/nav.js'), f + ' loads osman.js before nav.js'); }
+  for (const f of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) { const h = read(f); if (h.includes('assets/nav.js')) assert.ok(h.indexOf('assets/osman.js?v=20261029b') > -1 && h.indexOf('assets/osman.js') < h.indexOf('assets/nav.js'), f + ' loads osman.js before nav.js'); }
   // the data file: ≥30 wrong lines, a stronger pool for 3 in a row, praise; every line has ar; no tags; no ad code near
   const store = {}; const ctx = { window: {}, document: { createElement: () => ({}), dispatchEvent() {} }, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); } }, CustomEvent: function () {} };
   vm.createContext(ctx); vm.runInContext(read('assets/osman.js'), ctx);
@@ -1579,7 +1579,7 @@ test('🇫🇷 language switch (Oct 27, 10:49 AM): «فرنسي وعربي» / �
   assert.ok(nav.includes('🇫🇷+🇱🇧 فرنسي وعربي') && nav.includes('🇫🇷 Français seulement') && nav.includes('a.push(langRow());') && !nav.includes('a.push(langRow(), osmRow());') && nav.includes('langPick() +'), 'toggle in ☰ beside Osman + in the welcome card');
   assert.ok((nav.match(/w\.Lang\.set\(lg\.getAttribute\("data-lang"\)\)/g) || []).length === 2 && nav.includes('data-nofr'));
   for (const p of pages.concat('admin.html')) {
-    const h = read(p), i = h.indexOf('<script src="assets/lang.js?v=20261029a"></script>');
+    const h = read(p), i = h.indexOf('<script src="assets/lang.js?v=20261029b"></script>');
     assert.ok(i > 0 && i < h.indexOf('assets/gate.js') && i < h.indexOf('</head>'), p + ': lang.js in <head> before gate.js');
     assert.ok(fs.existsSync(path.join(SITE, 'assets/fr/p-' + p.replace('.html', '') + '.js')), p + ' page dictionary');
   }
@@ -2049,7 +2049,7 @@ test('🏠 home tiles + 🎨 themes + ✏️ prize presets + 🧹 quiz page (Oct
   assert.ok(read('assets/nav.js').includes('lastLesson: lastLesson') && tj.includes('NursinNav.lastLesson'), '📖 last lesson from the existing record');
   // 🎨 themes: on every page, synchronously in <head>, before the stylesheet (no flash)
   for (const p of pages.concat(['chat.html', 'admin.html'])) {
-    const x = read(p), t = x.indexOf('<script src="assets/theme.js?v=20261029a"></script>');
+    const x = read(p), t = x.indexOf('<script src="assets/theme.js?v=20261029b"></script>');
     assert.ok(t > -1 && t < x.indexOf('assets/style.css') && t < x.indexOf('</head>'), 'theme.js first in <head>: ' + p);
   }
   const th = read('assets/theme.js'), css = read('assets/style.css');
@@ -2101,7 +2101,7 @@ test('🔁 مراجعة اليوم + ⚠️ الأخطاء الشائعة + 📝
   const h = read('index.html'), q = read('quiz.html');
   const hz = read('assets/hifz.js');
   assert.ok(read('assets/home.js').includes('k: "rev"') && read('assets/home.js').includes('"quiz.html?t=review"') && hz.includes('href="quiz.html?t=review"') && hz.includes('S.count()'), 'home «📌 الأهمّيات»: 🔁 مراجعة اليوم with the due count (Oct 29)');
-  assert.ok(q.includes('id="qrev"') && q.indexOf('assets/srs.js?v=20261029a') < q.indexOf('assets/quiz.js?v=20261029a') && h.includes('assets/srs.js?v=20261029a'), 'quiz button + srs.js loaded');
+  assert.ok(q.includes('id="qrev"') && q.indexOf('assets/srs.js?v=20261029b') < q.indexOf('assets/quiz.js?v=20261029b') && h.includes('assets/srs.js?v=20261029b'), 'quiz button + srs.js loaded');
   // ⚠️ common mistakes card: high on the home page (right below the tiles), static fallback inside, no ad anywhere near it
   const hp = read('hifzi.html'), cm = hp.slice(hp.indexOf('<section id="cmist"'), hp.indexOf('</section>', hp.indexOf('<section id="cmist"')));
   assert.ok(hp.indexOf('id="rmap"') < hp.indexOf('id="weak"') && hp.indexOf('id="weak"') < hp.indexOf('id="cmist"'), 'on 🗺️ حفظي: map → weak points → common mistakes (Oct 29)');
@@ -2224,7 +2224,7 @@ test('🏆 weekly knockout (Oct 29, 1:06 PM «متل بطولة كرة القد�
 
 test('🚑 réa subject (Oct 29): rea.html + lesson ABG from his slides, 12-question quiz, answers spread and never the longest; new mgmt/law lessons and quizzes', () => {
   const h = read('rea.html');
-  for (const s of ['rea-data.js', 'rea.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029a'), s);
+  for (const s of ['rea-data.js', 'rea.js', 'quiz-data.js']) assert.ok(h.includes('assets/' + s + '?v=20261029b'), s);
   assert.ok(read('index.html').includes('href="rea.html"'), 'linked from the home subject list');
   const w = {}; new Function('window', read('assets/rea-data.js'))(w);
   const r1 = w.REA.lessons[0]; assert.strictEqual(r1.k, 'r1'); assert.ok(r1.n.includes('ABG'));
@@ -2294,7 +2294,7 @@ test('🗺️ retention: decaying 0–100 score, colours, events move it, 2 days
 test('🗺️ retention: hifz.js on every page right after lessons.js; dots on subject pages; red lessons feed Osman', () => {
   for (const f of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) {
     const h = read(f); if (!h.includes('assets/lessons.js')) continue;
-    assert.ok(h.includes('<script src="assets/lessons.js?v=20261029a" defer></script><script src="assets/hifz.js?v=20261029a" defer></script>'), f);
+    assert.ok(h.includes('<script src="assets/lessons.js?v=20261029b" defer></script><script src="assets/hifz.js?v=20261029b" defer></script>'), f);
   }
   const hz = read('assets/hifz.js'), co = read('assets/coach.js');
   assert.ok(hz.includes('function paintDots') && hz.includes('class="rdot r-'), 'dots beside lesson titles');
@@ -2334,7 +2334,7 @@ test('🗺️ حفظي + 👤 أنا pages: weak points, common mistakes, retent
 test('🃏 flashcards + 📄 one-page summary on every lesson page, from the lesson\'s own content, away from ads', () => {
   const c = read('assets/cards.js');
   for (const p of ['cardio.html', 'neuro.html', 'henderson.html', 'law.html', 'mgmt.html', 'quality.html', 'pharma.html', 'rea.html']) {
-    const h = read(p); assert.ok(h.includes('assets/cards.js?v=20261029a') && h.includes('assets/srs.js?v=20261029a'), p);
+    const h = read(p); assert.ok(h.includes('assets/cards.js?v=20261029b') && h.includes('assets/srs.js?v=20261029b'), p);
   }
   assert.ok(c.includes('insertBefore') && c.includes('.lqz'), 'buttons sit before the lesson quiz link, never next to an ad');
   assert.ok(c.includes('nursin:flash') && c.includes('NursinSRS'), 'a wrong card goes to the review queue and lowers retention');
@@ -2521,7 +2521,7 @@ test('📒 notes page + wiring: notes.html (no ads), reachable from 👤 أنا,
   assert.ok(!/ca-pub-|adsbygoogle|ads\.js|class="adx|bauval/.test(h), 'no ads on notes.html');
   for (const p of pages.concat(['admin.html', 'chat.html'])) {
     const s = read(p);
-    assert.equal((s.match(/<script src="assets\/notes\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p + ' notes.js once');
+    assert.equal((s.match(/<script src="assets\/notes\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p + ' notes.js once');
     const at = f => s.indexOf('<script src="assets/' + f);
     assert.ok(at('lessons.js') < at('notes.js') && at('notes.js') < at('account.js'), p + ' after the lesson registry, before Firebase');
     assert.ok(s.includes('<li><a href="notes.html"><span aria-hidden="true">📒</span> <bdi>ملاحظاتي</bdi>'), p + ' ☰ menu');
@@ -2548,7 +2548,7 @@ const quizRules = (grp, label) => {
 test('👴 geri + 🏘️ community render: own pages, 10 / 6 lessons, quiz per lesson, linked everywhere (Oct 30)', () => {
   for (const [p, data, v, n, t] of [['geri.html', 'geri-data.js', 'GERI', 10, 'geri'], ['community.html', 'comm-data.js', 'COMM', 8, 'comm']]) {
     const h = read(p);
-    for (const s of [data, 'subject.js', 'quiz-data.js', 'cards.js', 'srs.js', 'notes.js', 'hifz.js', 'lessons.js']) assert.ok(h.includes('assets/' + s + '?v=20261029a'), p + ' loads ' + s);
+    for (const s of [data, 'subject.js', 'quiz-data.js', 'cards.js', 'srs.js', 'notes.js', 'hifz.js', 'lessons.js']) assert.ok(h.includes('assets/' + s + '?v=20261029b'), p + ' loads ' + s);
     assert.ok(h.includes('data-var="' + v + '"') && h.includes('data-t="' + t + '"'), p + ' renderer hook');
     const w = {}; new Function('window', read('assets/' + data))(w); const L = w[v].lessons;
     assert.strictEqual(L.length, n, p + ': ' + n + ' lessons'); L.forEach(x => assert.ok(x.k && x.n && x.html.length > 1500, x.k));
@@ -2627,10 +2627,10 @@ function retainCtx(extra) {
 }
 const B2_LESSON_PAGES = ['cardio.html','neuro.html','henderson.html','medsurg.html','geri.html','community.html','rea.html','pharma.html','law.html','mgmt.html','quality.html'];
 test('🧠 Build 2: assets/retain.js on every lesson page (after cards.js), home, حفظي and quiz (before quiz.js), with the cache tag', () => {
-  for (const p of B2_LESSON_PAGES) { const h = read(p); assert.equal((h.match(/<script src="assets\/retain\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p); assert.ok(h.indexOf('assets/cards.js') < h.indexOf('assets/retain.js'), p + ' after cards.js'); }
-  for (const p of ['index.html', 'hifzi.html', 'quiz.html']) assert.equal((read(p).match(/assets\/retain\.js\?v=20261029a/g) || []).length, 1, p);
+  for (const p of B2_LESSON_PAGES) { const h = read(p); assert.equal((h.match(/<script src="assets\/retain\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p); assert.ok(h.indexOf('assets/cards.js') < h.indexOf('assets/retain.js'), p + ' after cards.js'); }
+  for (const p of ['index.html', 'hifzi.html', 'quiz.html']) assert.equal((read(p).match(/assets\/retain\.js\?v=20261029b/g) || []).length, 1, p);
   const q = read('quiz.html'); assert.ok(q.indexOf('assets/retain.js') < q.indexOf('assets/quiz.js'), 'retain before quiz.js');
-  const r = read('assets/retain.js'); assert.ok(r.includes('var V = "20261029a"'), 'data files load with the same tag');
+  const r = read('assets/retain.js'); assert.ok(r.includes('var V = "20261029b"'), 'data files load with the same tag');
   assert.ok(read('assets/cards.js').includes('blocks: blocks, openDeck:'), 'cards.js shares its lesson walk + opens a given deck');
 });
 test('🧠 Build 2 text tools: Arabic folding + French accents, and key-point coverage by keywords', () => {
@@ -2758,7 +2758,7 @@ test('🏠 home «G» (Oct 31 2026): header + search + chips → «🧭 مسار
   const h = read('index.html'), js = read('assets/home.js'), css = read('assets/home.css'), uj = read('assets/ui.js'), uc = read('assets/ui.css');
   const main = h.slice(h.indexOf('<main'), h.indexOf('</main>'));
   assert.ok(main.indexOf('id="hz"') > -1 && main.indexOf('id="hz"') < main.indexOf('id="duel"') && !main.includes('id="osmhome"'), '#hz first in main; the old cards are path steps now (Oct 31 2026)');
-  assert.ok(h.includes('<body class="home hz ui">') && h.includes('<link rel="stylesheet" href="assets/home.css?v=20261029a">') && h.includes('<script src="assets/home.js?v=20261029a" defer></script>'), 'home files with cache tag');
+  assert.ok(h.includes('<body class="home hz ui">') && h.includes('<link rel="stylesheet" href="assets/home.css?v=20261029b">') && h.includes('<script src="assets/home.js?v=20261029b" defer></script>'), 'home files with cache tag');
   assert.ok(h.indexOf('<script src="assets/home.js') > h.indexOf('<script src="assets/retain.js') && h.indexOf('<script src="assets/home.js') < h.indexOf('<script src="assets/ads.js'), 'home.js after the data scripts');
   assert.ok(h.includes('<noscript><style>body.hz .topbar{display:block!important}</style></noscript>'), 'no-JS keeps the old header');
   assert.ok(!/adx|bauval|adsbygoogle|ad-slot/.test(js) && !/adx|bauval|adsbygoogle|ad-slot/.test(uj) && !/\.adx|ad-slot/.test(css.replace('/*', '')) && !/\.adx|ad-slot/.test(uc), 'no ad markup in the home files or the shared shell');
@@ -2970,11 +2970,11 @@ test('🫧 Liquid Glass on EVERY page (Oct 31 2026 6:45 AM «هيدا الشي �
   for (const p of pages) {
     const h = read(p), i = U.info(p);
     assert.ok(/<body class="([^"]* )?ui( [^"]*)?">/.test(h), p + ': body.ui');
-    const css = h.indexOf('<link rel="stylesheet" href="assets/ui.css?v=20261029a">'), st = h.indexOf('assets/style.css?v=20261029a');
+    const css = h.indexOf('<link rel="stylesheet" href="assets/ui.css?v=20261029b">'), st = h.indexOf('assets/style.css?v=20261029b');
     assert.ok(css > st && st > -1, p + ': ui.css after style.css');
     if (h.includes('assets/tutor.css')) assert.ok(css > h.indexOf('assets/tutor.css'), p + ': after the page css');
     if (h.includes('assets/home.css')) assert.ok(css < h.indexOf('assets/home.css'), p + ': before home.css');
-    const js = h.indexOf('<script src="assets/ui.js?v=20261029a" defer></script>');
+    const js = h.indexOf('<script src="assets/ui.js?v=20261029b" defer></script>');
     assert.ok(js > -1 && js < h.indexOf('<script src="assets/nav.js'), p + ': ui.js before nav.js');
     if (h.includes('<script src="assets/home.js')) assert.ok(js < h.indexOf('<script src="assets/home.js'), p + ': ui.js before home.js');
     assert.strictEqual((h.match(/assets\/ui\.(css|js)\?v=/g) || []).length, 2, p + ': loaded once each');
@@ -3029,7 +3029,7 @@ test('🖍️ highlighter (Oct 31 2026 7:35–7:37 AM): on every page after the 
   const all = fs.readdirSync(SITE).filter(f => f.endsWith('.html'));
   for (const p of all) {
     const h = read(p);
-    assert.strictEqual((h.match(/<script src="assets\/highlight\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p + ' highlight.js once');
+    assert.strictEqual((h.match(/<script src="assets\/highlight\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p + ' highlight.js once');
     const at = f => h.indexOf('<script src="assets/' + f);
     assert.ok(at('notes.js') < at('highlight.js') && at('highlight.js') < at('account.js') && at('highlight.js') < at('ui.js'), p + ': after notes.js (📝 on a highlight), before account.js and ui.js (header 🖊️)');
   }
@@ -3220,7 +3220,7 @@ test('✏️ «غيّر اسمك» (Oct 31 2026): name.js on every page, 2–20 
   // on every page, once, fresh tag, before account.js (fb.js reads it at sign-in) and ui.js (sheet)
   for (const p of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) {
     const h = read(p), at = s => h.indexOf('assets/' + s + '?v=');
-    assert.strictEqual((h.match(/<script src="assets\/name\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, p + ' name.js once');
+    assert.strictEqual((h.match(/<script src="assets\/name\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p + ' name.js once');
     assert.ok(at('name.js') < at('account.js') && at('name.js') < at('ui.js'), p + ' name.js before account.js and ui.js');
   }
   const js = read('assets/name.js');
@@ -3263,7 +3263,7 @@ test('✏️ «غيّر اسمك» (Oct 31 2026): name.js on every page, 2–20 
   assert.ok(read('assets/classes.js').includes('ownerNow(members, cls)'), 'class owner name from his member card');
   // entry points: «أنا» (card button + settings row) and the avatar sheet (✏️ next to the name + account row); «الكل» #name; me.html#ui-name
   const me = read('assets/me.js'); assert.ok((me.match(/data-nm-open/g) || []).length >= 2 && me.includes('"nursin:name"'), '«أنا» entry points');
-  assert.ok(/name\.js\?v=20261029a/.test(read('me.html')) && /me\.js\?v=20261029a/.test(read('me.html')), 'me.html loads it');
+  assert.ok(/name\.js\?v=20261029b/.test(read('me.html')) && /me\.js\?v=20261029b/.test(read('me.html')), 'me.html loads it');
   const ui = read('assets/ui.js');
   assert.ok(/class="hznmb" type="button" data-nm-open/.test(ui) && /href="me\.html#ui-name" data-nm-open/.test(ui), 'avatar sheet entry points');
   assert.ok(ui.includes('["#name", "✏️", "اسمي", "Mon nom"]') && ui.includes('case "name":') && ui.includes('|theme|name)$/'), '«الكل» + hash');
@@ -3301,7 +3301,7 @@ test('🔗 «اربط» (Oct 31 2026 «بلش ب ١و٢و٣»): link questions t
   // quiz page: a «🔗 اربط» chip, the bank after quiz-data, the mode in quiz.js
   const qh = read('quiz.html');
   assert.ok(qh.includes('data-set="link">🔗 اربط'), 'quiz chip');
-  for (const p of ['quiz.html', 'index.html', 'hifzi.html']) { const h = read(p); assert.ok(h.includes('assets/link-data.js?v=20261029a') && h.indexOf('assets/quiz-data.js') < h.indexOf('assets/link-data.js'), p + ' loads the link bank after the quiz bank'); }
+  for (const p of ['quiz.html', 'index.html', 'hifzi.html']) { const h = read(p); assert.ok(h.includes('assets/link-data.js?v=20261029b') && h.indexOf('assets/quiz-data.js') < h.indexOf('assets/link-data.js'), p + ' loads the link bank after the quiz bank'); }
   const qj = read('assets/quiz.js');
   assert.ok(qj.includes("if(sel==='link')return (window.LINKQ||[]).slice();") && qj.includes("🔗 الرابط: "), 'quiz.js runs t=link and labels the link explanation');
   // counted like any answer: weak points, spaced review (k ids accepted), both lessons' memory
@@ -3346,7 +3346,7 @@ test('🧠 «حيلة حفظ» (Oct 31 2026): every lesson has 1–3 memory tric
   assert.ok(read('assets/highlight.js').includes('closest("details.topic[id]")'), 'the highlighter keys parts by details.topic, so the nested card keeps the lesson part');
   assert.ok(read('hifzi.html').includes('<section id="tricks"') && ex.includes('function trickPage()'), 'all tricks on حفظي');
   const ui = read('assets/ui.js'); assert.ok(ui.includes('["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"]') && ui.includes('["quiz.html?t=link", "🔗", "اربط", "Relier"]'), '«الكل» lists both');
-  for (const p of pages.concat('admin.html', 'chat.html')) { const h = read(p); assert.ok(h.includes('<script src="assets/extra.js?v=20261029a" defer></script>') && h.indexOf('assets/ui.js') < h.indexOf('assets/extra.js'), p + ' loads extra.js after ui.js'); }
+  for (const p of pages.concat('admin.html', 'chat.html')) { const h = read(p); assert.ok(h.includes('<script src="assets/extra.js?v=20261029b" defer></script>') && h.indexOf('assets/ui.js') < h.indexOf('assets/extra.js'), p + ' loads extra.js after ui.js'); }
   const css = read('assets/ui.css'); assert.ok(css.includes('details.xtrk') && !/xtrk[^}]*backdrop-filter/.test(css), 'card styled, no extra blur');
 });
 test('🌅 «سؤال الصبح» deep link (/?mq=<id>, worker v10): opens that one question in a sheet, answered in place, counted like a quiz answer; the site mirrors the ids the worker may pick; nothing changes while v9 runs', () => {
@@ -3471,14 +3471,14 @@ test('🎯 countdown to Monday Nov 16 2026 (Beirut), day-by-day plan (every subj
   const st = M.step('2026-11-01'); assert.ok(st && st.k === 'mid' && st.e === '🎯' && /quiz\.html\?t=mid&s=/.test(st.href) && st.left === 15);
   assert.strictEqual(M.step('2026-11-14').s, 'weak'); assert.strictEqual(M.step('2026-11-16'), null, 'gone on exam day'); assert.strictEqual(M.step('2026-12-01'), null);
   const h = read('midterm.html');
-  assert.ok(h.includes('id="mid-app"') && h.includes('assets/midterm.js?v=20261029a'), 'page + script');
+  assert.ok(h.includes('id="mid-app"') && h.includes('assets/midterm.js?v=20261029b'), 'page + script');
   assert.ok(!h.includes('ca-pub-2554036492962277') && !/735f5c76|f0cd90c8|9892bba2|adx/.test(h) && !h.includes('assets/ads.js'), 'no ad on the exam page');
   const js = read('assets/midterm.js'); assert.ok(js.includes('classList.add("rton")'), 'page ads hidden');
   for (const k of ["Examen complet ⏱️", "Plan de révision", "Tes leçons les plus faibles", "Lundi 16 novembre 2026"]) assert.ok(js.includes(k), '🇫🇷 ' + k);
   assert.ok(read('assets/fr/p-midterm.js').includes('Examen de mi-semestre') && read('assets/lang.js').includes('midterm: 1'), 'French page dictionary');
   const { ctx, run } = homeCtx(); run('assets/ui.js'); const U = ctx.NursinUI;
   assert.ok(U.PAGES['midterm.html'] && JSON.stringify(U.ALL).includes('"midterm.html"'), '«الكل» → 🎯 امتحان الفصل');
-  assert.ok(read('quiz.html').indexOf('src="assets/midterm.js') < read('quiz.html').indexOf('src="assets/quiz.js') && read('index.html').indexOf('src="assets/midterm.js') < read('index.html').indexOf('src="assets/home.js') && read('index.html').includes('src="assets/homework.js?v=20261029a'), 'loaded before quiz.js / home.js');
+  assert.ok(read('quiz.html').indexOf('src="assets/midterm.js') < read('quiz.html').indexOf('src="assets/quiz.js') && read('index.html').indexOf('src="assets/midterm.js') < read('index.html').indexOf('src="assets/home.js') && read('index.html').includes('src="assets/homework.js?v=20261029b'), 'loaded before quiz.js / home.js');
   assert.ok(read('sitemap.xml').includes('midterm.html') && read('assets/account.js').includes("page==='midterm.html'"), 'sitemap + Firebase for the sync');
 });
 test('🧭 the path keeps «مسار اليوم» whole: + ONE 🎯 step until Nov 15 + 📌 homework steps, still 5–7 steps, Osman first', () => {
@@ -3528,7 +3528,7 @@ test('📌 admin «زيد وظيفة»: form + list + delete on homework/{id}; r
 
 test('🛠️ «شو بدك نضيف أو نعدّل؟» page: suggest.html (no ads), in «الكل» under أدواتي + 👤 أنا, Firebase loaded there, French page dictionary', () => {
   const h = read('suggest.html');
-  assert.ok(h.includes('id="sg-app"') && h.includes('src="assets/suggest.js?v=20261029a"') && /<body class="sgpage ui">/.test(h), 'page + script + glass shell');
+  assert.ok(h.includes('id="sg-app"') && h.includes('src="assets/suggest.js?v=20261029b"') && /<body class="sgpage ui">/.test(h), 'page + script + glass shell');
   assert.ok(!/ca-pub-|adsbygoogle|ads\.js|class="adx|bauval|735f5c76|f0cd90c8|9892bba2/.test(h), 'no ad near the suggestion box');
   assert.ok(h.includes('<meta name="robots" content="noindex">') && h.includes('G-7MY0Z597WC'), 'noindex, GA kept');
   const { ctx, run } = homeCtx(); run('assets/ui.js'); const U = ctx.NursinUI;
@@ -3577,7 +3577,7 @@ test('🛠️ admin «الاقتراحات»: all entries newest first with the 
   for (const k of ['function sugAdmin(API, el)', 'sugAdmin(API, el); }', 'orderBy("at", "desc"), limit(300)', 'data-sgf=', 'data-sgset', 'data-sgreply', 'data-sgdel', 'updateDoc(ref, { status: t.dataset.sgset })', '{ reply: r, rAt: serverTimestamp() }', 'deleteDoc(ref)', 'sgbadge', 'x.name', 'X.rulesMsg(true)'])
     assert.ok(a.includes(k), 'admin.js ' + k);
   assert.ok(a.indexOf('sugAdmin(API, el)') > a.indexOf('if (!(u && u.email === OWNER && u.emailVerified))'), 'behind the same admin check as the homework card');
-  assert.ok(read('admin.html').includes('src="assets/suggest.js?v=20261029a"'), 'admin page has the helpers');
+  assert.ok(read('admin.html').includes('src="assets/suggest.js?v=20261029b"'), 'admin page has the helpers');
   assert.ok(read('assets/ui.css').includes('.sgchip.on{') && read('assets/ui.css').includes('html[data-theme=night] .sgs-done'), 'glass styles, light + dark');
   const f21 = '/home/user/tab/files/nursin-rules-v21.txt', f20 = '/home/user/tab/files/nursin-rules-v20.txt';
   if (fs.existsSync(f21) && fs.existsSync(f20)) {
@@ -3634,7 +3634,7 @@ test('🖼️ diagrams (20261028m): the 12 approved teaching diagrams are in the
       assert.equal(a.k, subj === 'henderson' ? '' : a.l.split(':')[1], x.id + ' lesson element id');
       assert.ok(lessonText(a.p, a.k).includes(norm(a.c)), x.id + ' anchor «' + a.c + '» is in ' + a.l);
       const h = read(a.p);
-      assert.equal((h.match(/<script src="assets\/diagrams\.js\?v=20261029a" defer><\/script>/g) || []).length, 1, a.p + ' loads diagrams.js once, fresh tag');
+      assert.equal((h.match(/<script src="assets\/diagrams\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, a.p + ' loads diagrams.js once, fresh tag');
       assert.ok(h.indexOf('assets/diagrams.js') > h.indexOf('assets/highlight.js') && h.indexOf('assets/diagrams.js') > h.indexOf('assets/lessons.js'), a.p + ' after lessons/highlighter');
       places++;
     }
@@ -3662,7 +3662,7 @@ test('🖼️ diagrams: figure is lazy, outside the highlighter + translator, ga
 
 test('🖼️ diagrams: «رسومات الدروس» on حفظي lists them all (tap = viewer, link = lesson), ar + fr', () => {
   const h = read('hifzi.html'), js = read('assets/diagrams.js');
-  assert.ok(h.includes('<section id="ndggal"') && h.includes('<script src="assets/diagrams.js?v=20261029a" defer></script>'), 'section + script on hifzi');
+  assert.ok(h.includes('<section id="ndggal"') && h.includes('<script src="assets/diagrams.js?v=20261029b" defer></script>'), 'section + script on hifzi');
   assert.ok(js.includes('getElementById("ndggal")') && js.includes('"رسومات الدروس", "Schémas des leçons"') && js.includes('"🖼️ رسومات", "🖼️ Schémas"') && js.includes('lessonHref(a)'), 'gallery drawn in both languages');
   assert.ok(js.includes('classList.contains("gl-out")') && read('assets/ui.css').includes('html.gl-out .ndgth img{filter:blur'), 'signed out: thumbnails locked like the lessons (gate.js)');
   assert.ok(!/adx|bauval|adsbygoogle\.push/.test(h.slice(h.indexOf('<main'), h.indexOf('</main>'))), 'no ad in حفظي');
@@ -3739,8 +3739,8 @@ test('📌 built-in homework (no Firestore): in «مسار اليوم» for ever
 test('📌 homework.html «الوظائف»: list + one homework (questions typed out + the teacher\'s photo, tap = the zoom viewer), from the path step and «الكل», ar + fr, no ads', () => {
   const h = read('homework.html');
   assert.ok(!/ca-pub-|adsbygoogle|ads\.js|class="adx|bauval|735f5c76|f0cd90c8|9892bba2/.test(h), 'no ad on the homework page');
-  assert.ok(h.includes('id="hw-app"') && h.indexOf('assets/homework-static.js?v=20261029a') > -1 && h.indexOf('assets/homework-static.js') < h.indexOf('assets/homework.js?v=20261029a') && h.includes('assets/diagrams.js?v=20261029a') && h.includes('assets/lessons.js'), 'data before logic, zoom viewer, subject names');
-  const ix = read('index.html'); assert.ok(ix.indexOf('assets/homework-static.js?v=20261029a') > -1 && ix.indexOf('assets/homework-static.js') < ix.indexOf('assets/homework.js'), 'home loads the built-in homework too');
+  assert.ok(h.includes('id="hw-app"') && h.indexOf('assets/homework-static.js?v=20261029b') > -1 && h.indexOf('assets/homework-static.js') < h.indexOf('assets/homework.js?v=20261029b') && h.includes('assets/diagrams.js?v=20261029b') && h.includes('assets/lessons.js'), 'data before logic, zoom viewer, subject names');
+  const ix = read('index.html'); assert.ok(ix.indexOf('assets/homework-static.js?v=20261029b') > -1 && ix.indexOf('assets/homework-static.js') < ix.indexOf('assets/homework.js'), 'home loads the built-in homework too');
   const { ctx, run } = homeCtx(); run('assets/ui.js'); const U = ctx.NursinUI;
   assert.strictEqual(U.info('homework.html').ar, 'الوظائف'); assert.strictEqual(U.info('homework.html').fr, 'Devoirs');
   assert.ok(JSON.stringify(U.ALL).includes('["homework.html","📌","الوظائف","Devoirs","hw"]'), '«الكل» → 📌 الوظائف (with a count badge)');
@@ -4023,8 +4023,8 @@ test('🏥 غرفة الطوارئ: wiring — first big card on games.html, ré
   assert.ok(grid.indexOf('data-room="1"') > -1 && grid.indexOf('data-room="1"') < grid.indexOf('data-g="match"'), 'room card first in the list');
   assert.ok(gh.includes('غرفة الطوارئ — امشِ لعند المريض') && gh.includes('🏥'), 'card text');
   assert.ok(gh.includes('data-g="er"'), 'old 🚑 modes still reachable');
-  for (const f of ['assets/erroom-data.js', 'assets/erroom.js']) assert.ok(gh.includes(f + '?v=20261029a'), f + ' with cache tag');
-  assert.ok(gh.includes('assets/erroom.css?v=20261029a') && gh.indexOf('erroom-data.js') < gh.indexOf('assets/erroom.js'), 'css + data before engine');
+  for (const f of ['assets/erroom-data.js', 'assets/erroom.js']) assert.ok(gh.includes(f + '?v=20261029b'), f + ' with cache tag');
+  assert.ok(gh.includes('assets/erroom.css?v=20261029b') && gh.indexOf('erroom-data.js') < gh.indexOf('assets/erroom.js'), 'css + data before engine');
   assert.ok(rh.includes('href="games.html#room"') && rh.includes('غرفة الطوارئ — امشِ لعند المريض') && rh.includes('Salle d\'urgence'), 'réa subject page entry (ar + fr)');
   for (const s of [js, css, dj]) assert.ok(!/bauval|adsbygoogle|ads\.js|class="adx|mtag/.test(s), 'no ads in the ER room');
   assert.ok(js.includes('S.activity("game", pts') && js.includes('ROUND_MAX = 20'), 'points through the shared game points (≤ 20)');
@@ -4109,7 +4109,7 @@ test('🗂️ wiring: smooth fold css (light + dark through the glass tokens), �
   assert.ok(sc.includes('.gacc.open .gah .gcv{transform:rotate(180deg)}') && sc.includes('.gab[hidden]{display:none}'), 'fallback ☰ styles');
   assert.ok(uj.includes('data-hz="learn" data-t="1"') && uj.includes('class="hzmid') && uj.includes('href="hifzi.html" data-t="3"') && uj.includes('data-hz="all" data-t="4"'), 'pill nav unchanged');
   for (const s of ['☰ القائمة', 'أدوات التعلّم', 'المجتمع', 'حسابي', 'الدروس']) assert.ok(fr.includes('"' + s + '"'), 'fr dictionary: ' + s);
-  for (const p of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) { const h = read(p); assert.ok(h.includes('assets/ui.js?v=20261029a') && h.includes('assets/nav.js?v=20261029a'), p + ' cache tag'); }
+  for (const p of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) { const h = read(p); assert.ok(h.includes('assets/ui.js?v=20261029b') && h.includes('assets/nav.js?v=20261029b'), p + ' cache tag'); }
 });
 
 // 🙋 «اسأل عثمان» (Nov 1 2026, 28q) — assets/ask.js under every question
@@ -4243,7 +4243,7 @@ test('🖍️ 28r: «تعليماتي» lists the highlights of EVERY lesson pag
   assert.deepStrictEqual(Array.from(H.locate(t, old)), [t.indexOf('على الأقل'), t.indexOf('على الأقل') + 9], 'old anchor still lands');
   const js = read('assets/highlight.js');
   assert.ok(js.includes('var all = mine(), cnt = {};') && !/pageDraw[\s\S]{0,400}h\.pg === page/.test(js.slice(js.indexOf('function pageDraw'))), 'the page draws mine() — no page filter');
-  assert.ok(read('highlights.html').includes('assets/highlight.js?v=20261029a') && read('law.html').includes('assets/highlight.js?v=20261029a'), 'fresh tag');
+  assert.ok(read('highlights.html').includes('assets/highlight.js?v=20261029b') && read('law.html').includes('assets/highlight.js?v=20261029b'), 'fresh tag');
 });
 
 
@@ -4325,7 +4325,7 @@ test('📒🙋 28s wiring: «اسأل عثمان» in the 📝 note sheet (every
   assert.ok(aj.includes('noteHydrate();') && aj.includes('else if (el._nsrc) npaint(el);'), 'hydrated + repainted on sign-in');
   const css = read('assets/ui.css'), blk = css.slice(css.indexOf('/* 📒🙋 28s'));
   assert.ok(blk.includes('.nosm{') && blk.includes('var(--uisoft') && blk.includes('.hlitem{flex-wrap:wrap}') && blk.includes('min-width:0') && !/position:fixed|backdrop-filter|adx/.test(blk), 'glass tokens, fits, no blur / ads');
-  for (const p of ['notes.html', 'highlights.html', 'law.html', 'quiz.html', 'cardio.html']) { const h = read(p); assert.ok(h.includes('assets/ask.js?v=20261029a') && h.includes('assets/notes.js?v=20261029a'), p + ' tag s'); }
+  for (const p of ['notes.html', 'highlights.html', 'law.html', 'quiz.html', 'cardio.html']) { const h = read(p); assert.ok(h.includes('assets/ask.js?v=20261029b') && h.includes('assets/notes.js?v=20261029b'), p + ' tag s'); }
   for (const p of ['notes.html', 'highlights.html']) assert.ok(!/adsbygoogle"|data-ad-slot|bauval|class="ad-slot"/.test(read(p).replace(/<script async src="https:\/\/pagead2[^>]*><\/script>/, '')), p + ' no ad units');
 });
 
@@ -4481,8 +4481,8 @@ test('#176 28t live pushes: new case once a day, 📉/📈 only on real changes,
 });
 test('#177 28t live wiring: home card above «🧭 مسار اليوم», games card + #live, «الكل» → 🧠, preview until the rules are published, no ads, tag t', () => {
   const hj = read('assets/home.js'); assert.ok(hj.includes('<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath"'), 'card slot right above the path');
-  const ih = read('index.html'); assert.ok(ih.includes('assets/livecase.css?v=20261029a') && ih.includes('assets/livecase.js?v=20261029a'));
-  const gh = read('games.html'); assert.ok(gh.indexOf('livecase.js?v=20261029a') > gh.indexOf('erroom.js?v=20261029a') && gh.indexOf('livecase-room.js?v=20261029a') > gh.indexOf('livecase.js?v=20261029a'), 'after the solo room (stations + paths)');
+  const ih = read('index.html'); assert.ok(ih.includes('assets/livecase.css?v=20261029b') && ih.includes('assets/livecase.js?v=20261029b'));
+  const gh = read('games.html'); assert.ok(gh.indexOf('livecase.js?v=20261029b') > gh.indexOf('erroom.js?v=20261029b') && gh.indexOf('livecase-room.js?v=20261029b') > gh.indexOf('livecase.js?v=20261029b'), 'after the solo room (stations + paths)');
   assert.ok(/data-live="1"/.test(gh) && gh.indexOf('data-live="1"') < gh.indexOf('data-room="1"'), 'games card first');
   assert.ok(read('assets/ui.js').includes('["games.html#live", "🔴", "حالة لايف", "Cas en direct", "nw"]'), '«الكل» → 🧠');
   assert.ok(read('assets/nav.js').includes('row(["games.html#live", "🔴", "حالة لايف"'), '☰ too');
@@ -4603,7 +4603,7 @@ test('👥 28u wiring: presence only in the shared room (signed in + rules v22),
   assert.ok(rj.includes('"✋ " + LP.names(on[k], FR())') && rj.includes('<p class="lcr-pbed" hidden></p>') && rj.includes('✋ {n} عم يشتغل عهالتخت هلّق'), '✋ over the bed + a soft hint in the sheet (the transaction stays the guard)');
   assert.ok(lj.includes('if (ppl > 0) top += " · 👥 " + ppl;') && lj.includes('mode === "shared" && PR ? PR.homeCount('), 'home card «👥 N» only when shared');
   assert.ok(css.includes('.lcr-ppl{') && css.includes('html[data-theme="night"] .lcr-ppl') && css.includes('.lcr-ptoast.on') && css.includes('html[data-theme="night"] .lcr-pbed'), 'light + dark');
-  for (const p of ['index.html', 'games.html']) { const h = read(p); assert.ok(h.indexOf('assets/livepres.js?v=20261029a') > h.indexOf('assets/livecase.js?v=20261029a'), p + ' loads livepres.js after the engine'); }
+  for (const p of ['index.html', 'games.html']) { const h = read(p); assert.ok(h.indexOf('assets/livepres.js?v=20261029b') > h.indexOf('assets/livecase.js?v=20261029b'), p + ' loads livepres.js after the engine'); }
   const gh = read('games.html'); assert.ok(gh.indexOf('livepres.js') < gh.indexOf('livecase-room.js'), 'before the room');
   assert.ok(!/adsbygoogle|bauval|adx|ad-slot/.test(pj + rj), 'no ads in the game');
 });
@@ -5151,7 +5151,7 @@ test('#208 28z 🏥 the floor: one continuous hospital (🧠 · 🫀 · 🚑 + t
   assert.ok(rj.includes('C.opts(DK(), st.cs, x.p, f)') && rj.includes('C.clue(DK(), st, k)') && rj.includes('L.cool(ckey(x.k)'), 'each department answers with its own bank (same choices as the check)');
   for (const k of ['hosp', 'walk', 'sirenT', 'sirenGo', 'noAmb', 'bed2Empty', 'sndOn', 'welcome', 'ambDone', 'inDep']) assert.ok(new RegExp(k + ': \\{ ar: "[^"]+", fr: "[^"]+"').test(rj), k + ' AR+FR');
   assert.ok(!/adsbygoogle|data-ad-slot|bauval|adsterra|monetag/i.test(rj + css + lj + read('assets/livepres.js')), 'no ads on the hospital');
-  assert.ok(lj.includes('setDep: setDep, stateOf: stateOf, hospital: hospital') && lj.includes('var V = "20261029a"'), 'engine API + tag z');
+  assert.ok(lj.includes('setDep: setDep, stateOf: stateOf, hospital: hospital') && lj.includes('var V = "20261029b"'), 'engine API + tag z');
   assert.ok(read('games.html').includes('🏥 المستشفى · حالة لايف'), 'games card');
 });
 test('#209 28z 🏠 home card «🏥 المستشفى»: each department\'s case + patients, the last ambulance, never the exact time of the next one', () => {
@@ -5181,7 +5181,7 @@ test('🔁 v2: a RIGHT answer enters too, from every place (quiz, lesson quizzes
   has('assets/quiz.js', 'S.answer(q,ok)'); has('assets/extra.js', 'SR.answer(q, ok)'); has('assets/home.js', 'w.NursinSRS.answer(q, ok)'); has('assets/cards.js', 'S.record(c.q, good)');
   has('assets/retain.js', 'SR.answer(sq, good)'); has('assets/practice.js', 'SR.answer(q, ok)'); has('assets/games.js', 'srs(it.src, good)'); has('assets/games.js', 'srs(b, good)');
   has('assets/duel.js', 'window.NursinSRS.record(q0, pick === q0.a)'); has('assets/classes.js', 'window.NursinSRS.record(q, ok)'); has('assets/classes.js', 'window.NursinSRS.record(q, p.ans[i] === q.a)');
-  for (const p of ['games.html', 'classes.html', 'index.html', 'quiz.html', 'hifzi.html', 'cardio.html']) assert.ok(read(p).includes('assets/srs.js?v=20261029a'), p + ' loads srs.js');
+  for (const p of ['games.html', 'classes.html', 'index.html', 'quiz.html', 'hifzi.html', 'cardio.html']) assert.ok(read(p).includes('assets/srs.js?v=20261029b'), p + ' loads srs.js');
   assert.ok(read('games.html').indexOf('assets/srs.js') < read('games.html').indexOf('assets/games.js'), 'before games.js');
   // review resolves every kind: bank, 🔗, ✍️ (a typed blank becomes 3 choices), 🩺 (when the cases are loaded)
   const B = [{ id: 'b01', t: 'law', s: 'A ___ B', a: 'x', o: ['x', 'y', 'z'] }, { id: 'b02', t: 'law', s: 'C ___', a: 'p', alts: ['pp'] }, { id: 'b03', t: 'law', s: 'D ___', a: 'r' }, { id: 'b04', t: 'law', s: 'E ___', a: 's' }];
@@ -5286,4 +5286,132 @@ test('🔁 v2: «مسار اليوم» ALWAYS has the «🔁 التكرار ال
   assert.strictEqual((sj.match(/<p>[123]️⃣ /g) || []).length, 3, '«شو هيدا؟» = 3 lines');
   const hz = read('assets/hifz.js'); assert.ok(hz.includes('id = "srscard"') && hz.includes('S.nextLine()') && hz.includes('data-srswhat'), 'حفظي card: N today + الجاية + شو هيدا؟');
   assert.ok(!/adx|ad-slot|adsbygoogle|bauval/.test(sj), 'no ads in srs.js');
+});
+
+// ---------- 29b 📒 «سجل حالاتي» (Abdullah, Nov 3 2026 9:54 PM: «كل حالة منحلّها بالمشفى، بس تخلص، تنحط الخطوات الصحيحة بسجل عند كل مستخدم جرّب حل») ----------
+const deq = (a, b, m) => assert.deepStrictEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)), m);   // vm arrays come from another realm
+function logLoad() {
+  const vm = require('node:vm'), ctx = { console }; ctx.window = ctx; vm.createContext(ctx);
+  for (const f of ['assets/erroom-data.js', 'assets/livecase-data.js', 'assets/livecase.js', 'assets/caselog.js']) vm.runInContext(read(f), ctx);
+  const D = ctx.LIVECASE, E = ctx.ERROOM; D.A = Object.assign({}, E.actions, D.acts); D.I = Object.assign({}, E.items, D.items);
+  return { C: ctx.LiveCore, X: ctx.LiveDept, G: ctx.NursinLogCore, D };
+}
+function logSolve(X, C, D, doc, dk, pk, t, who, ai, until) {
+  for (let g = 0; g < 80; g++) {
+    const st = X.state(D, doc, dk, t, ai); if (!st) break; const x = st.P[pk === 'b' ? 1 : 0]; if (x.over || st.end || (until && g >= until)) break;
+    const cl = C.clue(st.DK, st, pk); if (!cl) break; const o = cl.s.kind === 'file' ? C.opts(st.DK, st.cs, x.p, cl.s.f).a : undefined;
+    deptAdd(X, D, doc, dk, t, who(g), pk, cl.s.id, o, ai); t += 3e4;
+  }
+  return t;
+}
+function logDay() {
+  const L = logLoad(), { C, X, D } = L, key = '2026-11-05', t0 = C.dayStart(key);
+  const doc = { day: C.docId(key), c: C.pick(D, key), n: 0, ev: {}, pts: {}, at0: t0 + 9 * 36e5 };
+  const A = ['u1', 'Abdullah Jaber'], B = ['u2', 'Rami Haddad'], Z = ['u3', 'Zeina'];
+  let t = t0 + 9 * 36e5 + 6e4;
+  t = logSolve(X, C, D, doc, 'k', 'a', t, g => g % 4 === 3 ? B : A);                 // 🫀 bed 1: u1 + u2 stabilise him
+  deptAdd(X, D, doc, 'k', t, Z, 'b', 'hint'); t += 3e4;                               // u3 only took a 💡 on bed 2 (not «acted»)
+  deptAdd(X, D, doc, 'k', t, B, 'b', 'acc'); t += 3e4;                                // u2 started bed 2, nobody finishes him
+  return Object.assign(L, { key, t0, doc, t, A, B, Z });
+}
+test('#215 29b 📒 an entry is made when a patient ends, for each student who acted on HIM only (✅ stabilised · 💔 lost · ⏰ midnight / next ambulance), department + ambulance ids', () => {
+  const { C, X, D, G, key, t0, doc, t } = logDay(), id0 = C.docId(key);
+  const e1 = G.build(C, X, D, doc, ['u1'], t + 6e4), e2 = G.build(C, X, D, doc, ['u2'], t + 6e4), e3 = G.build(C, X, D, doc, ['u3'], t + 6e4);
+  deq(e1.map(e => e.id), [id0 + '.k.a'], 'u1: his stabilised cardio patient, nothing for the bed he never touched');
+  assert.strictEqual(e1[0].o, 'ok'); assert.strictEqual(e1[0].dk, 'k'); assert.ok(e1[0].c.startsWith('k0'), 'the department case id');
+  deq(e2.map(e => e.id), [id0 + '.k.a'], 'u2 helped bed 1 → his entry too; bed 2 is still running → none yet');
+  assert.strictEqual(e3.length, 0, 'a 💡 alone is not acting on the patient');
+  const night = G.build(C, X, D, doc, ['u2'], t0 + 864e5 + 6e4).map(e => e.id + ':' + e.o).sort();
+  assert.strictEqual(night[0], id0 + '.k.a:ok'); assert.ok([id0 + '.k.b:lost', id0 + '.k.b:time'].includes(night[1]), 'bed 2 left alone → 💔 (neglect) or ⏰ at midnight, logged for the one who acted');
+  const st2 = X.state(D, doc, 'k', t + 6e4); if (!st2.P[1].over) { const tl = G.build(C, X, D, doc, ['u2'], t0 + 864e5 + 6e4).find(e => e.pk === 'b'); assert.ok(tl.t <= t0 + 864e5, 'ended that day'); }
+  // 💔 lost by neglect (ER, nobody cared after the accueil) + an ambulance patient
+  const T = X.ambTimes(key); deptAdd(X, D, doc, 'er', T[0] - 6e4, ['u1', 'A'], 'a', 'acc'); deptAdd(X, D, doc, 'x', T[0] + 6e4, ['u1', 'A'], 'a', 'acc', undefined, 1);
+  const all = G.build(C, X, D, doc, ['u1'], t0 + 864e5 + 6e4), er = all.find(e => e.id === id0 + '.er.a'), amb = all.find(e => e.id === id0 + '.x1.a');
+  assert.ok(er && ['lost', 'time'].includes(er.o), 'the ER patient he touched is logged'); assert.ok(amb && amb.dk === 'x' && amb.ai === 1 && ['lost', 'time'].includes(amb.o), '🛏️ ambulance 1 entry');
+  assert.ok(!all.some(e => e.id === id0 + '.er.b'), 'never the ER bed he did not touch');
+  const nb = G.build(C, X, D, doc, ['u1'], T[0] + 6e4); assert.ok(!nb.some(e => e.dk === 'x'), 'the ambulance patient is not logged while he is still on the bay');
+});
+test('#216 29b 📒 catch-up: a student away when his patient ended gets the same entry on his next visit (from the day doc); merging twice adds nothing; the phone-only (preview, uid «me») days too', () => {
+  const { C, X, D, G, key, doc, t } = logDay(), at = G.build(C, X, D, doc, ['u1'], t + 6e4)[0];
+  const later = G.build(C, X, D, JSON.parse(JSON.stringify(doc)), ['u1'], t + 3 * 864e5)[0];
+  assert.strictEqual(later.id, at.id); deq([later.o, later.t, later.pts, later.s1, later.my], [at.o, at.t, at.pts, at.s1, at.my], 'days later = the same entry');
+  const store = {}; deq(G.merge(store, [at]), [at.id]); deq(G.merge(store, [later]), [], 'already there → nothing new');
+  const pv = JSON.parse(JSON.stringify(doc)); for (const k in pv.ev) if (pv.ev[k].u === 'u1') pv.ev[k].u = 'me';
+  assert.strictEqual(G.build(C, X, D, pv, ['me'], t + 6e4)[0].id, at.id, 'a preview day on this phone');
+  const js = read('assets/caselog.js');
+  assert.ok(js.includes('DAYS = 10') && js.includes('fin[x.id] = 1') && js.includes('"live", x.id') && js.includes('HK') && js.includes('autoCatch'), 'the last 10 days are read once each (past days marked done), preview days from nursin_live_hist_v1');
+  assert.ok(read('assets/livecase.js').includes('raw: function () { return D ? rawDoc() : null; }'), 'today\'s whole doc (every department) from the live room');
+});
+test('#217 29b 📒 his steps against the right ones: ✅ he did it · 👥 a classmate did · ⏭️ nobody; his own acts ✅ / ❌ (harmful, wrong answer) / ⚠️ (not now, not needed) / 💡; the why of every step', () => {
+  const { C, X, D, G, key, t0 } = logDay();
+  const doc = { day: C.docId(key), c: C.pick(D, key), n: 0, ev: {}, pts: {}, at0: t0 + 9 * 36e5 }; let t = t0 + 9 * 36e5 + 6e4;
+  const A = ['u1', 'Abdullah'], B = ['u2', 'Rami'];
+  deptAdd(X, D, doc, 'er', t, A, 'a', 'hint'); t += 3e4;
+  deptAdd(X, D, doc, 'er', t, A, 'a', 'acc'); t += 3e4;
+  const st0 = X.state(D, doc, 'er', t), q = C.opts(D, st0.cs, st0.P[0].p, 'id'); deptAdd(X, D, doc, 'er', t, A, 'a', 'f_id', (q.a + 1) % 4); t += 3e4;   // a wrong answer
+  deptAdd(X, D, doc, 'er', t, A, 'a', 'f_tr'); t += 3e4;                                                                                            // ⑤ far too early → ⚠️
+  const bad = (st0.P[0].p.bad || [])[0]; if (bad) { deptAdd(X, D, doc, 'er', t, A, 'a', bad.a); t += 3e4; }                                         // harmful
+  t = logSolve(X, C, D, doc, 'er', 'a', t, g => g < 3 ? B : A, undefined, 8);
+  const e = G.build(C, X, D, doc, ['u1'], t0 + 864e5 + 6e4).find(x => x.id.endsWith('.er.a')), c = G.ctx(C, X, D, e), r = G.compare(c.L, e);
+  assert.ok(c && c.p && c.L.length > 10 && c.cs.id === doc.c, 'case, patient and ordered steps rebuilt from the bank');
+  assert.strictEqual(r.steps.length, c.L.length); assert.ok(r.n.ok >= 1 && r.n.team >= 1 && r.n.miss >= 1, 'me + team + missed all present');
+  assert.strictEqual(r.n.ok + r.n.team + r.n.miss, c.L.length);
+  assert.ok(r.steps.find(s => s.m === 'team').by === 'Rami', 'the classmate\'s first name');
+  assert.strictEqual(r.acts[0].m, 'hint'); assert.strictEqual(r.acts[2].m, 'bad', 'a wrong dossier answer = ❌'); assert.strictEqual(r.acts[3].m, 'warn', 'too early = ⚠️');
+  if (bad) assert.strictEqual(r.acts[4].m, 'bad', 'a harmful act = ❌');
+  assert.strictEqual(e.pts, e.my.reduce((s, m) => s + m[2], 0), 'his points on this patient');
+  assert.ok(c.L.every(s => s.kind === 'file' || (s.why && s.why.ar && s.why.fr)), 'every gesture has its why (AR + FR)');
+  // a harmful act in a department is stored as «no» but logged as ❌ harmful
+  const dd = { day: C.docId(key), c: C.pick(D, key), n: 0, ev: {}, pts: {}, at0: t0 + 9 * 36e5 }; let u = t0 + 10 * 36e5;
+  const kc = X.state(D, dd, 'k', u), kb = (kc.P[0].p.bad || [])[0]; deptAdd(X, D, dd, 'k', u, A, 'a', 'acc'); u += 3e4;
+  if (kb) { deptAdd(X, D, dd, 'k', u, A, 'a', kb.a); const ke = G.build(C, X, D, dd, ['u1'], t0 + 864e5 + 6e4)[0]; assert.ok(ke.my.some(m => m[1] === 'bad'), 'department harm decoded'); }
+  const js = read('assets/caselog.js');
+  for (const k of ['📋 الخطوات الصح (بالترتيب)', "📋 Les bonnes étapes (dans l'ordre)", '✍️ خطواتك إنت', '✍️ Tes étapes', 'فاتت — ما حدا عملها', 'إنت عملتها', '✅ صح · ❌ غلط/مضرّ · ⚠️ مش بوقتها · ⏭️ فاتت · 👥 عملها غيرك']) assert.ok(js.includes(k), k);
+  assert.ok(js.includes('C.opts(c.DK, c.cs, c.p, s.f)') && js.includes('T(s.why)') && js.includes('C.WHY.nonew'), 'dossier answer / gesture why / doctor «nothing new»');
+});
+test('#218 29b 📒 the list: newest first, filters by department and outcome; the account copy «lg0…lg3» round-trips and stays inside rules v22 (srs/main ≤ 400 keys) next to the 🔁 keys, which never wipe it', () => {
+  const { G } = logLoad();
+  const mk = (id, dk, o, t) => ({ v: 1, id, day: '2026-11-0' + id[7], dk, ai: dk === 'x' ? 2 : 0, c: 'lc01', erc: 'lc02', pk: 'a', o, t, pts: 5, s1: ['acc', 'f_id'], s2: { mon: 'Rami' }, my: [['acc', 'ok', 3, null, t], ['f_id', 'no', -3, 2, t + 1]], u: 'u1', at: t });
+  const L = [mk('20261101.er.a', 'er', 'ok', 1), mk('20261102.k.a', 'k', 'lost', 3), mk('20261102.x2.a', 'x', 'time', 2), mk('20261103.n.a', 'n', 'ok', 4)];
+  deq(G.filter(L).map(e => e.id), ['20261103.n.a', '20261102.k.a', '20261102.x2.a', '20261101.er.a'], 'newest first');
+  deq(G.filter(L, { dk: 'k' }).map(e => e.id), ['20261102.k.a']); deq(G.filter(L, { dk: 'x' }).map(e => e.dk), ['x']);
+  deq(G.filter(L, { o: 'ok' }).map(e => e.id), ['20261103.n.a', '20261101.er.a']); assert.strictEqual(G.filter(L, { dk: 'n', o: 'lost' }).length, 0);
+  const store = {}; G.merge(store, L); const P = G.pack(store);
+  deq(Object.keys(P), ['lg0', 'lg1', 'lg2', 'lg3']); assert.ok(Object.values(P).every(v => typeof v === 'string'));
+  const back = G.unpack(Object.assign({ z0: 'q001,1,2026-11-06,abc' }, P)); assert.strictEqual(back.length, 4, 'the 🔁 keys are not log lines');
+  const b2 = back.find(e => e.id === '20261102.x2.a'); deq([b2.dk, b2.ai, b2.o, b2.c, b2.erc, b2.t, b2.pts, b2.s1, Object.keys(b2.s2), b2.my[1]], ['x', 2, 'time', 'lc01', 'lc02', 2, 5, ['acc', 'f_id'], ['mon'], ['f_id', 'no', -3, 2, 3]]);
+  const big = {}; for (let i = 0; i < 300; i++) big['20261' + String(100 + i % 30).padStart(3, '0') + '.er.' + (i % 2 ? 'a' : 'b') + i] = mk('2026110' + (i % 9) + '.er.a', 'er', 'ok', i);
+  const many = {}; for (let i = 0; i < 500; i++) { const e = mk('20261' + String(i).padStart(3, '0') + '.k.a', 'k', 'ok', i); e.id = String(20260000 + i) + '.k.a'; many[e.id] = e; }
+  G.merge(many, []); assert.ok(Object.keys(many).length <= G.MAXE, 'the phone keeps at most ' + G.MAXE);
+  const Pm = G.pack(many); assert.strictEqual(G.unpack(Pm).length, G.SYNC, 'the account keeps the newest ' + G.SYNC); assert.ok(Object.keys(Pm).length + 8 <= 400, 'with the 🔁 «z» keys still ≤ 400 (rules v22)');
+  const srs = read('assets/srs.js'), qs = read('assets/qstats.js'), js = read('assets/caselog.js');
+  assert.ok(srs.includes('!/^(z|lg)\\d+$/.test(k)'), '🔁 does not take «lg» keys for an old v1 copy');
+  assert.ok(qs.includes('{ items, t: fs.serverTimestamp() }, { merge: true }') && qs.includes('srsLg') && qs.includes('W.NursinLog.packed'), '🔁 pushes merge; an old v1 rewrite puts the «lg» lines back');
+  assert.ok(js.includes('"srs", "main"), { items: P, t: A.fs.serverTimestamp() }, { merge: true }'), '📒 writes only its own keys (merge)');
+  assert.ok(!/nursin-rules-v23/.test(js), 'no new rules');
+});
+test('#219 29b 📒 wiring: «📒» in the hospital top bar + the ended-case card, a line in the room when one of his patients is logged; a card on حفظي + hifzi.html#caselog; «الكل»; tag b; its own layer above the room, light + dark, no ads', () => {
+  for (const p of ['index.html', 'games.html', 'hifzi.html']) { const h = read(p); assert.strictEqual((h.match(/<script src="assets\/caselog\.js\?v=20261029b" defer><\/script>/g) || []).length, 1, p); }
+  const g = read('games.html'); assert.ok(g.indexOf('assets/livecase-room.js') < g.indexOf('assets/caselog.js'));
+  const r = read('assets/livecase-room.js');
+  assert.ok(r.includes('data-lclog="1" aria-label="\' + esc(u("myLog")) + \'">📒</button>') && r.includes('data-lclog="1">\' + esc(u("myLog"))'), 'top bar + ended card');
+  assert.ok(r.includes('w.NursinLog.open("room")') && r.includes('d.addEventListener("nursin:caselog"') && r.includes('myLog: { ar: "📒 سجل حالاتي", fr: "📒 Mon carnet de cas" }'), 'opens the log; says when an entry lands');
+  assert.ok(read('assets/ui.js').includes('["hifzi.html#caselog", "📒", "سجل حالاتي", "Carnet de cas", "nw"]'), '«الكل»');
+  const js = read('assets/caselog.js');
+  assert.ok(js.includes('id = "clgcard"') && js.includes('location.hash === "#caselog"') && js.includes('data-clgopen'), 'حفظي card + #caselog');
+  assert.ok(js.includes('var V = "20261029b"') && /assets\/(erroom-data|livecase)\.js/.test(js), 'loads the bank where the page has none, same cache tag');
+  assert.ok(!/adsbygoogle|ads\.js|adx|ad-slot/.test(js), 'no ads in the log');
+  const css = read('assets/ui.css'), blk = css.slice(css.indexOf('/* 📒 29b'), css.indexOf('/* 📒🙋 28s'));
+  assert.ok(blk.includes('.clg{position:fixed;inset:0;z-index:2147483060') && blk.includes('html[data-theme="night"] .clg{'), 'above the room (2147483000), dark theme');
+  assert.ok(!/backdrop-filter/.test(blk) && blk.includes('max-width:640px') && blk.includes('overflow-x:auto'), 'no extra blur; fits 390 px (chips scroll)');
+  for (const k of ['📒 سجل حالاتي', '📒 Mon carnet de cas', '🔁 زيد للتكرار المتباعد', '🔁 Ajouter à la révision espacée', 'محفوظ عهالتلفون بس', 'Gardé sur ce téléphone seulement']) assert.ok(js.includes(k), k);
+});
+test('#220 29b 📒 «🔁 زيد للتكرار المتباعد»: the quiz questions of the lessons the patient is about (topics from his story/dossier/source), new ones first, into 🔁 v2', () => {
+  const { C, X, D, G } = logLoad(), vm = require('node:vm'), ctx = {}; ctx.window = ctx; vm.createContext(ctx); vm.runInContext(read('assets/quiz-data.js'), ctx);
+  const Q = ctx.QUIZ, ids = new Set(Q.map(q => q.id)), lc01 = C.caseById(D, 'lc01');
+  assert.ok(G.topics(lc01, lc01.pts[0]).includes('infarctus'), 'an infarctus patient → infarctus questions');
+  const r = G.keyQs(C, Q, lc01, lc01.pts[0], 'x', k => k === 'q001', 5);
+  assert.strictEqual(r.ids.length, 5); assert.ok(r.ids.every(i => ids.has(i) && /^q\d{3,4}$/.test(i)) && !r.ids.includes('q001'), 'real quiz ids (🔁 v2 tracks them), the ones already in it last');
+  for (const dk of ['k', 'n']) for (const c of X.cases(D, dk)) for (const p of c.pts) assert.ok(G.keyQs(C, Q, c, p, c.id, null, 5).ids.length >= 3, c.id + p.k + ' has questions');
+  assert.ok(read('assets/caselog.js').includes('S.add(r.ids)') && read('assets/srs.js').includes('add: function (qids)'), '🔁 v2 add (due tomorrow)');
 });
