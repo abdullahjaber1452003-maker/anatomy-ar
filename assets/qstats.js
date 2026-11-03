@@ -62,17 +62,23 @@ async function count(qid, ok) {
 }
 
 /* ---- 2 · 🔁 spaced repetition: a copy under the student's own users/{uid}/srs/main ---- */
-let srsT = 0;
+let srsT = 0, srsOld = false, srsLg = {};
 async function srsPull() {
   const S = W.NursinSRS, { db, fs, user } = API; if (!S || !user) return;
   try { const s = await fs.getDoc(fs.doc(db, "users", user.uid, "srs", "main")); const r = s.exists() ? (s.data().items || {}) : {};
+    // 29b 📒: the same doc also carries «lg0…» (سجل حالاتي, assets/caselog.js) — a push never wipes them (merge write); only an old v1
+    // copy (plain keys) is rewritten whole, and then the «lg…» lines go back in with it
+    srsOld = Object.keys(r).some(k => !/^(z|lg)\d+$/.test(k)); srsLg = {}; Object.keys(r).forEach(k => { if (/^lg\d+$/.test(k)) srsLg[k] = r[k]; });
     S.merge(r); if (S.behind ? S.behind(r) : Object.keys(S.items()).some(k => !r[k] || (r[k].m | 0) < (S.items()[k].m | 0))) srsPush(); }   // 🔁 v2: packed copy (assets/srs.js pack/unpack), an old v1 copy still merges
   catch (e) { if (denied(e)) off.srs = true; }
 }
 function srsPush() {
   clearTimeout(srsT); if (off.srs) return;
   srsT = setTimeout(() => { const S = W.NursinSRS, { db, fs, user } = API; if (!S || !user) return;
-    fs.setDoc(fs.doc(db, "users", user.uid, "srs", "main"), { items: S.remote ? S.remote() : S.items(), t: fs.serverTimestamp() }).catch(e => { if (denied(e)) off.srs = true; }); }, 4000);
+    const items = S.remote ? S.remote() : S.items(), ref = fs.doc(db, "users", user.uid, "srs", "main");
+    if (!srsOld) return fs.setDoc(ref, { items, t: fs.serverTimestamp() }, { merge: true }).catch(e => { if (denied(e)) off.srs = true; });
+    const P = W.NursinLog && W.NursinLog.packed ? W.NursinLog.packed() : {}; Object.assign(items, Object.values(P).some(Boolean) ? P : srsLg);
+    fs.setDoc(ref, { items, t: fs.serverTimestamp() }).then(() => { srsOld = false; }, e => { if (denied(e)) off.srs = true; }); }, 4000);
 }
 
 /* ---- 3 · ⚠️ home card: the 5 questions students got wrong most this week (one read) ---- */

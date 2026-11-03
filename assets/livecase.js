@@ -452,7 +452,7 @@ var LiveDept = (function (C) {
 
   if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261029a", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261029b", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -674,6 +674,7 @@ var LiveDept = (function (C) {
   }
   W.LiveCase = { dep: function () { return dep; }, setDep: setDep, stateOf: stateOf, hospital: hospital, load: load, start: start, off: off, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
     archive: archive, pushOn: pushOn, setPush: setPush, stLabel: stLabel, left: left, leftWords: leftWords, stepName: stepName, actName: actName, T: T, esc: esc, FR: FR, homeCard: homeCard,
-    cool: cool, PK: PK, HK: HK, preview: goPreview };
+    cool: cool, PK: PK, HK: HK, preview: goPreview,
+    raw: function () { return D ? rawDoc() : null; } };   // 29b 📒 the whole day doc (every department) — assets/caselog.js builds each student's «سجل حالاتي» from it
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { if (d.getElementById("hz")) homeInit(); }); else if (d.getElementById("hz")) homeInit();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

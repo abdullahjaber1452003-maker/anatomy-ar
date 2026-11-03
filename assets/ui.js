@@ -50,7 +50,7 @@
     { k: "study", e: "🧠", ar: "أدوات التعلّم", fr: "Outils d'étude", items: [
       ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"], ["quiz.html", "⚡", "كويز", "Quiz"],
       ["midterm.html", "🎯", "امتحان الفصل 16/11", "Examen 16/11"], ["exams.html", "📅", "الامتحانات", "Examens"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"],
-      ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#live", "🔴", "حالة لايف", "Cas en direct", "nw"], ["games.html#room", "🏥", "غرفة الطوارئ", "Salle d'urgence", "nw"],
+      ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#live", "🔴", "حالة لايف", "Cas en direct", "nw"], ["games.html#room", "🏥", "غرفة الطوارئ", "Salle d'urgence", "nw"], ["hifzi.html#caselog", "📒", "سجل حالاتي", "Carnet de cas", "nw"],
       ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
       ["#case", "🩺", "حالة مريض", "Cas clinique"], ["quiz.html#weak", "🎯", "نقاط ضعفك", "Points faibles"], ["hifzi.html", "🗺️", "حفظي", "Ma mémoire"],
       ["#cards", "🃏", "البطاقات", "Cartes"], ["hifzi.html#tricks", "🧠", "حِيَل الحفظ", "Astuces mémo"], ["quiz.html?t=link", "🔗", "اربط", "Relier"],

@@ -14,7 +14,7 @@
 (function (w, d) {
   var API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var CKEY = "nursin_tutor_day_v1", LIMIT = 15, BONUS = 5, MAX_UNLOCKS = 3, SKEY = "nursin_ask_v1", KEEP = 8, MAXK = 40, MAXQ = 500, TIMEOUT = 40000, SNIP = 2200;
-  var V = "20261029a", L3 = "abcdef";
+  var V = "20261029b", L3 = "abcdef";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

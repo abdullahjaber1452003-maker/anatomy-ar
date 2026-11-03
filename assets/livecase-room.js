@@ -77,6 +77,7 @@
     endLost2: { ar: "💔 خسرنا {a} و{b}", fr: "💔 Nous avons perdu {a} et {b}" }, nextIn: { ar: "⏳ الحالة الجاية بعد", fr: "⏳ Prochain cas dans" },
     endNobody: { ar: "🏁 الحالة خلصت — شوف 📋 الخطوات الصح", fr: "🏁 Cas terminé — vois 📋 les bonnes étapes" },
     seeSteps: { ar: "📋 الخطوات الصح", fr: "📋 Bonnes étapes" },
+    myLog: { ar: "📒 سجل حالاتي", fr: "📒 Mon carnet de cas" }, logged: { ar: "📒 {n} انحفظ بسجلّك", fr: "📒 {n} : ajouté à ton carnet" }, loggedW: { ar: "الخطوات الصح وخطواتك إنت — كبّس 📒 فوق", fr: "Les bonnes étapes et les tiennes — touche 📒 en haut" },
     retry: { ar: "⏳ الحالة عم تتحضّر — جرّب كمان شوي", fr: "⏳ Le cas se prépare — réessaie dans un instant" },
     denied: { ar: "🔒 ما انحفظت خطوتك — السيرفر رفضها", fr: "🔒 Action refusée par le serveur" },
     deniedWhy: { ar: "جرّب كمان شوي. إذا ضلّت هيك سكّر الغرفة وارجع فوت.", fr: "Réessaie dans un moment ; sinon ferme la salle et reviens." },
@@ -155,7 +156,7 @@
     ov = d.createElement("div"); ov.className = "lcr"; ov.hidden = true; ov.setAttribute("data-nofr", ""); ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true");
     ov.innerHTML = '<div class="lcr-top"><button type="button" class="lcr-x" data-lcx="1" aria-label="' + esc(u("close")) + '">✕</button>' +
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
-      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
+      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
       '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div></div>' +
       '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas></div>' +
@@ -253,7 +254,7 @@
       overKey = k; el.hidden = false;
       el.innerHTML = '<div class="lcr-ovc" role="status"><b class="lcr-ovt">' + esc(u("ended")) + '</b><p class="lcr-ovw">' + esc(endWhy()) + "</p>" +
         (st.dep === "x" ? '<p class="lcr-ovn">' + esc(u("ambDone")) + "</p>" : '<p class="lcr-ovn">' + esc(u("nextIn")) + ' <b class="lcr-ovcd" dir="ltr"></b></p>') + '<div class="lcr-ova">' +
-        '<button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeSteps")) + '</button><button type="button" class="lcr-btn" data-lcarch="1">' + esc(u("archive")) + "</button></div></div>";
+        '<button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeSteps")) + '</button><button type="button" class="lcr-btn" data-lcarch="1">' + esc(u("archive")) + '</button><button type="button" class="lcr-btn" data-lclog="1">' + esc(u("myLog")) + "</button></div></div>";
     }
     overTick();
   }
@@ -856,6 +857,12 @@
     f.className = "lcr-fb on " + kind; f.innerHTML = "<p><b>" + esc(title) + "</b></p>" + (why ? '<p class="small">' + esc(why) + "</p>" : "");
     clearTimeout(fbT); fbT = setTimeout(function () { f.classList.remove("on"); }, kind === "bad" || kind === "ord" ? 6000 : 3800);
   }
+  // 29b 📒 a patient this student helped just finished → his entry is in «سجل حالاتي» (one line, the room's own feedback box)
+  d.addEventListener("nursin:caselog", function (e) {
+    var ids = (e && e.detail && e.detail.added) || []; if (!ov || ov.hidden || !ids.length || !w.NursinLog) return;
+    var n = ids.map(function (id) { return w.NursinLog.nameOf(id); }).filter(Boolean).join(" · ");
+    setTimeout(function () { say("good", u("logged", { n: n || "🛏️" }), u("loggedW")); }, 1600);
+  });
   function doAct(k, a, opt) {
     if (!st) return say("ord", u("retry"));
     if (st.end) return say("neutral", u("over"), L.nextWords(st.t1 - Date.now()));
@@ -957,6 +964,7 @@
     if (g("data-lcarch")) return archPanel();
     if (g("data-lcday")) return archOne(g("data-lcday"));
     if (g("data-lcpush")) return pushPanel();
+    if (g("data-lclog")) { if (w.NursinLog) w.NursinLog.open("room"); return; }      // 29b 📒 «سجل حالاتي» (assets/caselog.js, its own layer above the room)
     if (g("data-lcpset")) { L.setPush(g("data-lcpset") === "1").then(function (ok) { if (!ok) say("bad", u("pushErr")); pushPanel(); }); return; }
   }
 

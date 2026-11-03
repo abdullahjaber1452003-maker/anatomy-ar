@@ -623,6 +623,53 @@ html[data-theme=night] .askth .asku p{color:#04201d}
 .asklock{margin-top:8px}.asklock .btn{margin-top:6px}
 @media (prefers-reduced-motion:reduce){.askty .tdots i{animation:none}}
 
+/* 📒 29b «سجل حالاتي» (assets/caselog.js): its own full-screen glass layer — above the 🏥 room, no ads under it */
+html.clg-open,html.clg-open body{overflow:hidden}
+.clg{position:fixed;inset:0;z-index:2147483060;display:flex;flex-direction:column;background:var(--hzbg,#eef4f3);color:var(--hzink,#0f1f22);font:14px/1.5 "Cairo","Noto Naskh Arabic",system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px);animation:clgIn .22s ease-out}
+.clg[hidden]{display:none}
+@keyframes clgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.clg-top{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:var(--hzglass2,rgba(255,255,255,.8));border-bottom:1px solid var(--hzline,rgba(0,0,0,.08))}
+.clg-x{flex:0 0 38px;width:38px;height:38px;border-radius:50%;border:1px solid var(--hzedge,rgba(255,255,255,.7));background:var(--hzglass,rgba(255,255,255,.6));color:inherit;font-size:16px;cursor:pointer}
+.clg-tt{flex:1 1 auto;font-size:17px;font-weight:900}
+.clg-n{min-width:26px;padding:2px 9px;border-radius:99px;background:var(--hzaccsoft,rgba(15,157,143,.12));color:var(--hzacc,#0f766e);font-weight:800;text-align:center}.clg-n:empty{display:none}
+.clg-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:12px 12px 28px;max-width:640px;width:100%;margin:0 auto;box-sizing:border-box}
+.clg-lead{margin:0 0 6px;font-weight:600}.clg-leg{margin:0 0 10px;font-size:12.5px;color:var(--hzmut,#5a6e71)}
+.clg-ch{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.clg-ch::-webkit-scrollbar{display:none}
+.clg-ch button{flex:0 0 auto;min-height:36px;padding:5px 12px;border-radius:99px;border:1px solid var(--hzedge,rgba(255,255,255,.7));background:var(--hzglass,rgba(255,255,255,.6));color:inherit;font:700 13px/1.2 "Cairo",system-ui,sans-serif;cursor:pointer}
+.clg-ch button.on{background:var(--hzacc,#0f766e);border-color:transparent;color:#fff}
+.clg-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.clg-row{display:flex;align-items:center;gap:10px;width:100%;text-align:start;padding:10px 12px;border-radius:20px;border:1px solid var(--hzedge,rgba(255,255,255,.7));background:var(--hzglass2,rgba(255,255,255,.8));box-shadow:var(--hzshadow,0 6px 18px rgba(0,0,0,.06));color:inherit;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;border-inline-start:5px solid #64748b}
+.clg-row.ok{border-inline-start-color:#16a34a}.clg-row.lost{border-inline-start-color:#dc2626}.clg-row.time{border-inline-start-color:#f59e0b}
+.clg-ric{flex:0 0 auto;font-size:24px}
+.clg-rt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}.clg-rt b{font-size:15px}.clg-rt small{color:var(--hzmut,#5a6e71);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clg-rs{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-size:11.5px}.clg-rs i{font-style:normal;white-space:nowrap}.clg-rs b{font-size:14px}
+.clg-empty{text-align:center;padding:24px 8px;color:var(--hzmut,#5a6e71)}.clg-empty p:first-child{font-size:40px;margin:0}
+.clg-note{margin:14px 0 0;font-size:12.5px;color:var(--hzmut,#5a6e71)}
+.clg-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:7px 15px;border-radius:99px;border:1px solid var(--hzedge,rgba(255,255,255,.7));background:var(--hzglass2,rgba(255,255,255,.8));color:var(--hzink,#0f1f22);font:700 14px/1.2 "Cairo",system-ui,sans-serif;text-decoration:none;cursor:pointer}
+.clg-btn.on{background:var(--hzacc,#0f766e);color:#fff;border-color:transparent}
+.clg-back{border:0;background:none;color:var(--hzacc,#0f766e);font:800 14px/1.2 "Cairo",system-ui,sans-serif;padding:4px 0 10px;cursor:pointer}
+.clg-hd{padding:12px;border-radius:22px;background:var(--hzglass2,rgba(255,255,255,.8));border:1px solid var(--hzedge,rgba(255,255,255,.7));box-shadow:var(--hzshadow,0 6px 18px rgba(0,0,0,.06))}
+.clg-hd small{color:var(--hzmut,#5a6e71)}.clg-hd h2{margin:2px 0 6px;font-size:18px}
+.clg-pt{margin:0 0 6px}.clg-out{display:inline-block;margin-inline-start:4px;padding:1px 9px;border-radius:99px;font-size:12.5px;font-weight:800;background:rgba(100,116,139,.15)}
+.clg-out.ok{background:rgba(22,163,74,.15);color:#15803d}.clg-out.lost{background:rgba(220,38,38,.13);color:#b91c1c}.clg-out.time{background:rgba(245,158,11,.16);color:#b45309}
+.clg-who{margin:0}.clg-story{margin:2px 0 6px;font-size:13px;color:var(--hzmut,#5a6e71)}.clg-src{margin:0;font-size:12px;color:var(--hzacc,#0f766e)}.clg-src.g{color:#b45309}
+.clg-sum{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}.clg-sum span{padding:3px 10px;border-radius:99px;background:var(--hzglass,rgba(255,255,255,.6));border:1px solid var(--hzedge,rgba(255,255,255,.7));font-weight:800;font-size:13px}.clg-sum .pts{margin-inline-start:auto;color:var(--hzacc,#0f766e)}
+.clg h3{margin:14px 0 6px;font-size:15.5px}
+.clg-steps,.clg-mine{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.clg-steps li,.clg-mine li{padding:8px 10px;border-radius:16px;background:var(--hzglass2,rgba(255,255,255,.8));border:1px solid var(--hzedge,rgba(255,255,255,.7));border-inline-start:4px solid #64748b}
+.clg-steps li.clg-ph{padding:4px 2px 0;background:none;border:0;font-weight:900;font-size:13px;color:var(--hzacc,#0f766e)}
+.clg-steps li.me,.clg-mine li.ok{border-inline-start-color:#16a34a}.clg-steps li.team{border-inline-start-color:#0ea5e9}.clg-steps li.miss{border-inline-start-color:#f59e0b}
+.clg-mine li.bad{border-inline-start-color:#dc2626}.clg-mine li.warn{border-inline-start-color:#f59e0b}.clg-mine li.hint{border-inline-start-color:#a855f7}
+.clg-steps p,.clg-mine p{margin:2px 0 0;font-size:13px;color:var(--hzmut,#5a6e71)}
+.clg-by{display:block;font-size:12px;color:var(--hzmut,#5a6e71)}.clg-mine small{margin-inline-start:6px;color:var(--hzmut,#5a6e71);font-size:12px}.clg-mine i{font-style:normal;color:var(--hzmut,#5a6e71)}
+.clg-acts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}.clg-done{font-weight:800;color:#15803d}
+.clg-toast{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);max-width:calc(100% - 28px);padding:9px 16px;border-radius:18px;background:#0f172a;color:#fff;font-weight:700;text-align:center;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+.clg-toast.on{opacity:1;transform:translate(-50%,0)}
+.clg-wait{text-align:center;color:var(--hzmut,#5a6e71)}
+.clgcard{margin-bottom:10px}
+html[data-theme="night"] .clg{background:var(--hzbg,#05171a);color:var(--hzink,#ecfbf8)}
+html[data-theme="night"] .clg-out.ok,html[data-theme="night"] .clg-done{color:#4ade80}html[data-theme="night"] .clg-out.lost{color:#f87171}html[data-theme="night"] .clg-out.time,html[data-theme="night"] .clg-src.g{color:#fbbf24}
+html[data-theme="night"] .clg-toast{background:#e2e8f0;color:#0f172a}
 /* 📒🙋 28s: «اسأل عثمان» about a note / a highlight + his answers shown inside the note (assets/ask.js, notes.js, highlight.js) — glass tokens, night follows */
 .nosm{margin:6px 0 8px;padding:8px 10px;border-radius:14px;background:var(--uisoft,rgba(255,255,255,.55));border:1px solid var(--hzline,rgba(15,40,44,.08));color:var(--hzink,inherit);min-width:0}
 .nosq{margin:0 0 4px;font-weight:700;color:var(--hzacc,#0f766e);line-height:1.6;overflow-wrap:anywhere}

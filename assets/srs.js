@@ -290,7 +290,7 @@
   }
   function behind(remote) {                                 // does the account copy miss anything this phone has?
     var r = unpack(remote), l = load().items;
-    return Object.keys(remote || {}).some(function (k) { return !/^z\d+$/.test(k); }) || Object.keys(l).some(function (k) { return okId(k) && (!r[k] || num(r[k].m) < num(l[k].m)); });
+    return Object.keys(remote || {}).some(function (k) { return !/^(z|lg)\d+$/.test(k); }) || Object.keys(l).some(function (k) { return okId(k) && (!r[k] || num(r[k].m) < num(l[k].m)); });
   }
 
   w.NursinSRS = {
