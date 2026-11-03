@@ -74,11 +74,13 @@
       if (w.NursinAsk) w.NursinAsk.mount(el.querySelector(".qcard"), askC(false));
       function done(ok, given) {
         if (ok) st.ok++;
+        var SR = w.NursinSRS, sr = null; try { if (SR && SR.answer && q.id) sr = SR.answer(q, ok); } catch (e) {}   // 🔁 التكرار المتباعد v2: every ✍️ answer enters
         el.querySelectorAll(".opt").forEach(function (b) { b.disabled = true; if (b.getAttribute("data-o") === q.a) b.classList.add("ok"); else if (b.getAttribute("data-o") === given && !ok) b.classList.add("bad"); });
         var f = el.querySelector(".ptype"); if (f) { f.querySelector("input").disabled = true; f.querySelector("button").disabled = true; }
         el.querySelector(".pgap").textContent = q.a; el.querySelector(".pgap").classList.add(ok ? "pok" : "pbad");
         el.querySelector(".pfb").innerHTML = '<div class="expl">' + (ok ? "✅ صح!" : "❌ الجواب: <b>" + esc(q.a) + "</b>") + '</div>' + (w.Osman ? (ok ? w.Osman.right() : w.Osman.wrong()) : "") + '<p><button class="btn pri" type="button" data-next>' + (st.i + 1 < st.qs.length ? "التالي ←" : "النتيجة ←") + '</button></p>';
         el.querySelector("[data-next]").onclick = function () { st.i++; draw(); };
+        if (sr && SR.tagHtml) { var ex = el.querySelector(".pfb .expl"); if (ex) { ex.insertAdjacentHTML("afterend", SR.tagHtml(sr)); var cr = ok && SR.confRow ? SR.confRow(q) : null, tg = el.querySelector(".pfb .srtag"); if (cr && tg) tg.parentNode.insertBefore(cr, tg.nextSibling); } }
         if (w.NursinAsk) w.NursinAsk.mount(el.querySelector(".qcard"), askC(true, given));
       }
       el.querySelectorAll(".opt").forEach(function (b) { b.onclick = function () { var g = b.getAttribute("data-o"); done(g === q.a, g); }; });

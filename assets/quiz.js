@@ -1,10 +1,10 @@
 (function(){
   var root=document.getElementById('quiz');if(!root||!window.QUIZ)return;
   var L='abc',state=null,W=window.Weak,S=window.NursinSRS,panel=document.getElementById('weak');
-  /* 🧠 Build 2 (Oct 30 2026, assets/retain.js): 📝 «الامتحان الأسبوعي المختلط» (sel 'mixed', quiz.html?t=mixed), 🎯 «متأكد ولا محزّر؟»
-     (after picking an option and BEFORE the answer shows: one tap or «تخطّي»; a right answer marked محزّر goes back to tomorrow's review
-     and to نقاط ضعفك exactly like a wrong one; never in exams / challenges / tournament / class quiz — they run unchanged), ❓ «ليش؟»
-     (after a right answer, 1 in 3 or always when محزّر, if the question has a why-question in assets/why-data.js; else nothing). */
+  /* 🧠 Build 2 (Oct 30 2026, assets/retain.js): 📝 «الامتحان الأسبوعي المختلط» (sel 'mixed', quiz.html?t=mixed), 🎯 confidence
+     (Nov 3 2026, SRS v2: AFTER a right answer «✅ كنت متأكد» (longer interval) / «🤔 حزرت» (shorter + نقاط ضعفك); no tap = a normal right answer;
+     never in timed / scored modes: exams / challenges / tournament / class quiz / midterm mock — recorded silently), ❓ «ليش؟»
+     (after a right answer, 1 in 3 or always after «حزرت», if the question has a why-question in assets/why-data.js; else nothing). */
   var RT=window.Retain,tmr=0;
   function T2(ar,fr){return RT&&RT.T?RT.T(ar,fr):ar;}
   function adsOff(on){document.documentElement.classList.toggle('rton',!!on);}   // no ad on screen during / after the mixed exam
@@ -21,6 +21,7 @@
     if(sel==='all')return QUIZ.slice();
     if(sel==='weak')return W?W.questions():[];
     if(sel==='review')return S?S.questions():[];
+    if(sel==='reviewmore')return S?S.questions({more:true}):[];   // 🔁 beyond today's 20 (overflow due items), only on his tap
     if(sel==='note')return state&&state.sel==='note'?state.qs.slice():[];
     if(sel==='mixed')return RT?RT.weekly(RT.WN):[];
     if(sel==='link')return (window.LINKQ||[]).slice();   // 🔗 «اربط»: an old lesson tied to a new one (assets/link-data.js, Oct 31 2026)   // 📒 «سؤال من ملاحظاتي» (quiz.html?qid=…, assets/notes.js)
@@ -56,9 +57,12 @@
     if(scroll)root.scrollIntoView({block:'start'});
   }
   function emptyReview(scroll){
-    state=null;chips('');var t=S?S.total():0;
-    root.innerHTML='<div class="qcard wemptycard"><p class="qq">🔁 ما في شي للمراجعة اليوم 🎉</p><p>كل سؤال بتغلط فيه أو بتعلّمه «😓 صعبة» بيرجعلك بعد يوم، بعدين ٣ أيام، بعدين ٧، بعدين ١٤.'+(t?' عندك '+t+' سؤال ناطرين يومن.':'')+'</p><p><button class="btn pri" id="go20" type="button">🔀 ابدأ كويز ٢٠ سؤال</button></p></div>';
+    state=null;chips('');var st=S&&S.status?S.status():{total:0},mo=S&&S.more?S.more():0;
+    root.innerHTML='<div class="qcard wemptycard"><p class="qq">'+T2('✅ خلّصت مراجعة اليوم 🎉','✅ Révision du jour terminée 🎉')+'</p><p>'+T2('كل سؤال بتحلّو، صح أو غلط، بينحطّ بالتكرار المتباعد وبيرجعلك بوقتو (١ ← ٣ ← ٧ ← ١٤ ← ٣٠ ← ٦٠ ← ١٢٠ يوم).','Chaque question à laquelle tu réponds, juste ou fausse, entre dans la révision espacée et revient au bon moment (1 → 3 → 7 → 14 → 30 → 60 → 120 jours).')+(st.total?' '+T2('عندك '+st.total+' سؤال بالدورة.',st.total+' question(s) dans le cycle.'):'')+'</p>'+
+      (S&&S.nextLine?'<p class="small srnext">'+S.nextLine()+'</p>':'')+
+      '<p>'+(mo?'<button class="btn pri" id="gomore" type="button">🔁 '+T2('كمّل '+Math.min(mo,S.CAP||20)+' إضافي (من الجاية)','Continuer : '+Math.min(mo,S.CAP||20)+' de plus')+'</button> ':'')+'<button class="btn'+(mo?'':' pri')+'" id="go20" type="button">🔀 '+T2('ابدأ كويز ٢٠ سؤال','Quiz de 20 questions')+'</button> <button class="btn sm" type="button" data-srswhat>'+T2('شو هيدا؟','C\'est quoi ?')+'</button></p></div>';
     $('#go20').addEventListener('click',function(){start('all',20,true);});
+    var gm=$('#gomore');if(gm)gm.addEventListener('click',function(){start('reviewmore',0,true);});
     if(scroll)root.scrollIntoView({block:'start'});
   }
   function mixedIntro(scroll){
@@ -79,11 +83,12 @@
   function tick(){var s=state;if(!s||!s.timed){clearInterval(tmr);return;}var left=Math.max(0,Math.round((s.timed-Date.now())/1000)),el=root.querySelector('.wxclk');if(el){el.textContent='⏱️ '+Math.floor(left/60)+':'+('0'+left%60).slice(-2);el.classList.toggle('low',left<=60);}if(left<=0){clearInterval(tmr);s.timeUp=true;done();}}
   function start(sel,n,scroll,les,force){
     clearInterval(tmr);adsOff(sel==='mixed');
+    if((sel==='review'||sel==='reviewmore')&&S&&S.needsCases&&S.needsCases()&&window.NursinMid&&!start.lc){start.lc=1;root.innerHTML='<div class="qcard"><p>⏳</p></div>';return window.NursinMid.loadCases().then(function(){start(sel,n,scroll,les,force);});}   // 🩺 case questions in today's review
     if(sel==='mixed'&&!force)return mixedIntro(scroll);
     if(les&&!QGROUPS[sel])les='';
     var qs=pool(sel,les);
     if(qs.length<3&&isLesson(sel,les)&&!(force&&qs.length))return few(sel,les,qs,scroll);
-    if(!qs.length){if(sel==='weak')return emptyWeak(scroll);if(sel==='review')return emptyReview(scroll);if(sel==='mixed')return mixedIntro(scroll);qs=QUIZ.slice();sel='all';les='';}
+    if(!qs.length){if(sel==='weak')return emptyWeak(scroll);if(sel==='review'||sel==='reviewmore')return emptyReview(scroll);if(sel==='mixed')return mixedIntro(scroll);qs=QUIZ.slice();sel='all';les='';}
     if(sel!=='mixed')qs=shuffle(qs.slice());if(n&&n<qs.length)qs=qs.slice(0,n);
     state={sel:sel,les:les||'',qs:qs,i:0,score:0,wrong:[],grad:0};
     if(sel==='mixed'){state.by={};state.timed=force&&force.timed?Date.now()+RT.WMIN*60000:0;}
@@ -91,7 +96,7 @@
     render();
     if(scroll)root.scrollIntoView({block:'start'});
   }
-  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?'🔁 مراجعة اليوم':sel==='note'?'📒 سؤال من ملاحظاتي':sel==='mixed'?'📝 '+T2('الامتحان الأسبوعي المختلط','Examen mixte de la semaine'):sel==='link'?T2('🔗 اربط: درس قديم مع جديد','🔗 Relier : ancienne et nouvelle leçon'):sel==='mid'?'🎯 '+T2('امتحان الفصل: ','Examen : ')+(window.NursinMid&&state?NursinMid.subjName(state.subj):''):sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
+  function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?T2('🔁 التكرار المتباعد · مراجعة اليوم','🔁 Révision espacée du jour'):sel==='reviewmore'?T2('🔁 مراجعة إضافية','🔁 Révision en plus'):sel==='note'?'📒 سؤال من ملاحظاتي':sel==='mixed'?'📝 '+T2('الامتحان الأسبوعي المختلط','Examen mixte de la semaine'):sel==='link'?T2('🔗 اربط: درس قديم مع جديد','🔗 Relier : ancienne et nouvelle leçon'):sel==='mid'?'🎯 '+T2('امتحان الفصل: ','Examen : ')+(window.NursinMid&&state?NursinMid.subjName(state.subj):''):sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
   function render(){
     var s=state,q=s.qs[s.i];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>'+(s.timed?'<b class="wxclk"></b> · ':'')+'سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
@@ -128,41 +133,34 @@
       if(row)row.innerHTML='<small>✂️ انحذف '+(q.o.length>=4?'جوابين غلط':'جواب غلط')+(r.left!=null?' · باقيلك '+r.left:'')+'</small>';
     });
   }
-  // 🎯 «متأكد ولا محزّر؟»: the picked option is marked, the answer shows only after one tap (متأكد / محزّر / تخطّي); another option can still be picked
-  function pick(k){
-    var s=state;if(!s)return;
-    root.querySelectorAll('.opt').forEach(function(b){b.classList.toggle('picked',+b.dataset.k===k);});
-    var row=root.querySelector('.cfrow');
-    if(!row){row=document.createElement('div');row.className='cfrow';row.innerHTML='<span>🎯 '+T2('متأكد ولا محزّر؟','Sûr(e) ou au hasard ?')+'</span><button class="btn sm cfs" type="button" data-cf="sure">✅ '+T2('متأكد','Sûr(e)')+'</button><button class="btn sm cfg" type="button" data-cf="guess">🤔 '+T2('محزّر','Au hasard')+'</button><button class="btn sm cfk" type="button" data-cf="">'+T2('تخطّي','Passer')+'</button>';
-      var fb=$('#fb');fb.parentNode.insertBefore(row,fb);
-      row.addEventListener('click',function(e){var b=e.target.closest('button[data-cf]');if(!b)return;var pk=root.querySelector('.opt.picked');row.remove();if(pk)answer(+pk.dataset.k,b.getAttribute('data-cf'));});
-    }
-  }
-  function answer(k,conf){
-    if(conf===undefined&&RT&&RT.confOn(state))return pick(k);   // 🎯 normal modes ask first; scored modes answer at once, unchanged
-    var s=state,q=s.qs[s.i],ok=k===q.a;var cfr=root.querySelector('.cfrow');if(cfr)cfr.remove();
+  function answer(k){
+    var s=state,q=s.qs[s.i],ok=k===q.a;
     if(root.querySelector('.opt[disabled]:not(.gone)'))return;
     var pr=root.querySelector('.p50row');if(pr)pr.remove();
     root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;if(kk===q.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
     if(ok)s.score++;else s.wrong.push(q);(s.picks||(s.picks={}))[q.id]=k;
     if(q.t==='ecg'||q.t==='arythmies'){s.eN=(s.eN|0)+1;if(ok)s.eOk=(s.eOk|0)+1;}   // for the «ملك الـ ECG» badge
     var rec=W?W.record(q,ok):null;if(rec==='graduated')s.grad++;
-    var sr=S?S.record(q,ok):'none';   // 🔁 spaced repetition: wrong = back tomorrow; right on a due review = next step
-    var guessed=ok&&conf==='guess';
-    if(guessed){if(S&&S.hard){S.hard(q);sr='guess';}if(W){W.record(q,false);rec='guessed';}}   // 🎯 right but guessed = scheduled exactly like a wrong answer
+    var sres=S&&S.answer?S.answer(q,ok):null;   // 🔁 التكرار المتباعد v2 (Nov 3): EVERY answer enters, right or wrong (bank, 🔗, ✍️, 🩺 ids)
+    var cf=ok&&S&&S.confRow&&RT&&RT.confOn(s)&&!s.timed;   // 🎯 «✅ كنت متأكد / 🤔 حزرت» after a RIGHT answer; never in timed / scored modes (recorded as a normal right answer)
     if(s.mid&&q._l){var lb=s.byL[q._l]||(s.byL[q._l]=[0,0]);lb[1]++;if(ok)lb[0]++;}   // 🎯 امتحان الفصل: per lesson
     if(s.by&&RT){var lid=window.NursinRet&&window.NursinRet.ofQ?window.NursinRet.ofQ(q):null,lx=null;(window.NLESSONS&&NLESSONS.list||[]).forEach(function(x){if(x.s+':'+(x.l||x.t)===lid)lx=x;});var sk=lx?RT.groupOf(lx.s):q.t;var bb=s.by[sk]||(s.by[sk]=[0,0]);bb[1]++;if(ok)bb[0]++;}
     try{document.dispatchEvent(new CustomEvent('nursin:answer',{detail:{qid:q.id,ok:ok,set:s.sel}}));}catch(e){}   // ⚠️ class + site counters (assets/qstats.js)
     refresh();
     var O=window.Osman,om=O?(ok?O.right():O.wrong()):'';   // 👨‍🏫 الأستاذ عثمان (assets/osman.js)
-    $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(guessed?'<p class="small wtag cfnote">🤔 '+T2('حزّرتها صح؟ رح ترجعلك بمراجعة بكرا وبنقاط ضعفك متل الغلط.','Trouvée au hasard ? Elle revient demain en révision et dans tes points faibles, comme une erreur.')+'</p>':conf==='sure'&&!ok?'<p class="small wtag cfnote">⚠️ '+T2('كنت متأكد وطلع غلط: انتبه لهالنقطة بالذات.','Tu étais sûr(e) et c\'était faux : fais bien attention à ce point.')+'</p>':'')+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
-      (!S||guessed||(s.mid&&q._k!=='q')?'':!ok?'<p class="small wtag">🔁 رح يرجعلك بكرا بمراجعة اليوم</p>':sr==='next'?'<p class="small wtag">🔁 برافو، بيرجع بعد '+S.STEPS[S.items()[q.id].s]+' أيام</p>':sr==='done'?'<p class="small wtag">🎉 خلص من المراجعة (حفظتو)</p>':'<p class="small srsh"><button class="btn sm" id="srhard" type="button">😓 صعبة، رجّعلي ياها</button></p>');
-    var hb=$('#srhard');if(hb)hb.addEventListener('click',function(){S.hard(q);hb.parentNode.innerHTML='🔁 تمام، بترجعلك بكرا';refresh();});
+    $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
+      (S&&sres&&S.tagHtml?S.tagHtml(sres):'');
+    var whyOn=false;
     // ❓ «ليش؟» — only after a right answer, never in timed/scored modes; nothing at all when the question has no why-question
-    var y=ok&&RT&&RT.confOn(s)&&!s.timed?RT.whyFor(q,conf==='guess'):null;
-    if(y){var wb=document.createElement('div');wb.className='whyq';wb.innerHTML='<p class="whyqq">❓ '+y.q+'</p>'+y.o.map(function(o,j){return '<button class="opt" type="button" data-w="'+j+'"><span class="l" dir="ltr">'+L[j]+'</span><span>'+o+'</span></button>';}).join('')+'<p class="small whyr" aria-live="polite"></p>';
-      $('#fb').appendChild(wb);
-      wb.addEventListener('click',function(e){var b=e.target.closest('.opt');if(!b||b.disabled)return;var j=+b.dataset.w,good=j===y.a;wb.querySelectorAll('.opt').forEach(function(o){var jj=+o.dataset.w;o.disabled=true;if(jj===y.a)o.classList.add('ok');else if(jj===j)o.classList.add('bad');});wb.querySelector('.whyr').textContent=good?T2('✅ بالظبط، هيدا السبب.','✅ Exactement, c\'est la raison.'):T2('❌ السبب الصح هوّي ('+L[y.a]+'). رجاع اقرا الشرح فوق.','❌ La bonne raison est ('+L[y.a]+'). Relis l\'explication au-dessus.');});}
+    function showWhy(guessed){
+      if(whyOn)return;var y=ok&&RT&&RT.confOn(s)&&!s.timed?RT.whyFor(q,guessed):null;if(!y)return;whyOn=true;
+      var wb=document.createElement('div');wb.className='whyq';wb.innerHTML='<p class="whyqq">❓ '+y.q+'</p>'+y.o.map(function(o,j){return '<button class="opt" type="button" data-w="'+j+'"><span class="l" dir="ltr">'+L[j]+'</span><span>'+o+'</span></button>';}).join('')+'<p class="small whyr" aria-live="polite"></p>';
+      var at=$('#fb .askslot')||null;if(at)$('#fb').insertBefore(wb,at);else $('#fb').appendChild(wb);
+      wb.addEventListener('click',function(e){var b=e.target.closest('.opt');if(!b||b.disabled)return;var j=+b.dataset.w,good=j===y.a;wb.querySelectorAll('.opt').forEach(function(o){var jj=+o.dataset.w;o.disabled=true;if(jj===y.a)o.classList.add('ok');else if(jj===j)o.classList.add('bad');});wb.querySelector('.whyr').textContent=good?T2('✅ بالظبط، هيدا السبب.','✅ Exactement, c\'est la raison.'):T2('❌ السبب الصح هوّي ('+L[y.a]+'). رجاع اقرا الشرح فوق.','❌ La bonne raison est ('+L[y.a]+'). Relis l\'explication au-dessus.');});
+    }
+    if(cf){var cr=S.confRow(q,{onPick:function(kind){if(kind!=='guess')return;if(W)W.record(q,false);var n=document.createElement('p');n.className='small wtag cfnote';n.textContent=T2('🤔 حزّرتها؟ انضافت كمان لنقاط ضعفك لحتى تثبت.','🤔 Devinée ? Elle va aussi dans tes points faibles pour bien la fixer.');var c2=$('#fb .srcfok');if(c2&&c2.parentNode)c2.parentNode.insertBefore(n,c2.nextSibling);showWhy(true);}});
+      if(cr){var ex=$('#fb .srtag')||$('#fb .expl');ex.parentNode.insertBefore(cr,ex.nextSibling);}}
+    showWhy(false);
     askUp(s,q,k);
     var nx=$('#next');nx.hidden=false;nx.textContent=s.i+1<s.qs.length?'التالي ←':'شوف النتيجة 🏁';nx.focus();
   }
@@ -236,7 +234,7 @@
       if(s.sel==='weak')h+='<p>'+(s.grad?'🎉 طلع '+s.grad+' من نقاط ضعفك. ':'')+(left?'باقي '+left+' بنقاط ضعفك.':'خلصت كل نقاط ضعفك 🔥')+'</p>';
       else if(s.wrong.length)h+='<p>🎯 الأسئلة يلي غلطت فيها انحفظت بنقاط ضعفك.</p>';}
     h+='<p id="qpts" class="qpts" aria-live="polite"></p>';
-    if(s.sel==='review'&&S){var rl=S.count();h+='<p>🔁 '+(rl?'باقي '+rl+' للمراجعة اليوم.':'خلصت مراجعة اليوم 🔥')+'</p>';}
+    if((s.sel==='review'||s.sel==='reviewmore')&&S){var rl=S.count();h+='<p>🔁 '+(rl?T2('باقي '+rl+' للمراجعة اليوم.',rl+' encore à réviser aujourd\'hui.'):T2('✅ خلّصت مراجعة اليوم 🔥','✅ Révision du jour terminée 🔥'))+'</p>'+(S.nextLine?'<p class="small srnext">'+S.nextLine()+'</p>':'');}
     h+=s.cq?'<div id="cqres" class="cqres" aria-live="polite"><p class="small">⏳ عم نحفظ علامتك ونجيب علامات الصف…</p></div><p><a class="btn pri" href="index.html">🏠 رجوع للرئيسية</a></p></div>':s.exam?'<p><a class="btn pri" href="exams.html">📅 رجوع للامتحانات</a></p></div>':s.challenge?'<p><a class="btn pri" href="friends.html">⚔️ رجوع لتحدّياتي</a></p></div>':'<p><button class="btn pri" id="again">جرّب مرّة تانية</button>'+(W&&W.count()&&s.sel!=='weak'?' <button class="btn" id="toweak" type="button">🎯 كويز من أخطائك</button>':'')+'</p></div>';
     if(!s.cq)h+='<div class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>'; // result-screen banner (below the score card, never during questions)
     if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':q.t==='geri'?'geri.html':q.t==='comm'?'community.html':q.t==='medsurg'?'medsurg.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}

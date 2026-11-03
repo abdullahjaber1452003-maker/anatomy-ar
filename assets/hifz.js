@@ -187,7 +187,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261028z", jobs = [];
+    var v = "?v=20261029a", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });
@@ -290,9 +290,24 @@
     if (cnt) { var c = counts(); cnt.innerHTML = '<i class="rdot r-green"></i>' + c.green + ' <i class="rdot r-yellow"></i>' + c.yellow + ' <i class="rdot r-red"></i>' + c.red; }
   }
 
+  /* ---------------- 🔁 حفظي: the spaced-repetition card (Nov 3 2026, SRS v2): N today · 📅 الجاية: بكرا X · هالأسبوع Y · «شو هيدا؟» ---------------- */
+  var srsTry = 0;
+  function srsCard() {
+    var box = d.getElementById("rmap"), S = w.NursinSRS; if (!box) return;
+    if (!S || !S.status) { if (srsTry++ < 20) setTimeout(srsCard, 100); return; }   // srs.js loads after this file
+    var el = d.getElementById("srscard"); if (!el) { el = d.createElement("div"); el.id = "srscard"; el.className = "srscard"; box.parentNode.insertBefore(el, box); }
+    var st = S.status();
+    el.innerHTML = '<p class="srsct"><b>' + esc(T("🔁 التكرار المتباعد", "🔁 Révision espacée")) + "</b> · " + esc(st.n ? T(st.n + " سؤال اليوم", st.n + " question(s) aujourd'hui") : T("✅ خلّصت مراجعة اليوم", "✅ Révision du jour terminée")) +
+      ' <span class="small">(' + esc(T(st.total + " سؤال بالدورة", st.total + " question(s) dans le cycle")) + ")</span></p>" +
+      '<p class="small srnext">' + esc(S.nextLine()) + "</p>" +
+      '<p class="srsbt">' + (st.n ? '<a class="btn sm pri" href="quiz.html?t=review">' + esc(T("▶ راجع هلّق", "▶ Réviser")) + "</a> " : "") + '<button class="btn sm" type="button" data-srswhat>' + esc(T("شو هيدا؟", "C'est quoi ?")) + "</button></p>";
+  }
+  if (d && d.addEventListener) d.addEventListener("nursin:srs", function () { setTimeout(srsCard, 30); });
+
   /* ---------------- 🗺️ hifzi.html: the retention map by مادة ---------------- */
   function mapPage() {
     var box = d.getElementById("rmap"); if (!box) return;
+    try { srsCard(); } catch (e) {}
     var all = list(), S = subjects(), c = counts(), by = {}, order = [];
     var NLx = w.NursinLessons, GR = (NLx && NLx.groups) || {}, gof = function (s) { return NLx && NLx.groupOf ? NLx.groupOf(s) : s; };
     all.forEach(function (l) { var k = gof(l.s); if (!by[k]) { by[k] = []; order.push(k); } by[k].push(l); });   // 🏥 Med-Surg = القلب + الأعصاب + Henderson + التسريب (ids unchanged)

@@ -13,7 +13,7 @@
    since Oct 31 2026 6:45 AM («هيدا الشي يتم على الكل»): assets/ui.js + assets/ui.css, the same on every page. This file draws the home only.
    No ad markup anywhere in this file; the page's banner sits under «موادي» and the old cards (assets/style.css + index.html). */
 (function (w, d) {
-  var PK = "nursin_path_v1", AK = "nursin_avatar_v1", DAY = 864e5, V = 2;
+  var PK = "nursin_path_v1", AK = "nursin_avatar_v1", DAY = 864e5, V = 3;   // v3 (Nov 3 2026): «🔁 التكرار المتباعد» pinned in every day's path
   // the shared shell (assets/ui.js, every page): the floating nav, the sheets («الكل», «المواد»), the avatar picker, the lesson readers
   function U() { return w.NursinUI || {}; }
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -127,10 +127,10 @@
     (x.imp || []).slice(0, 2).forEach(function (g) { if (g && g.ik) add({ k: "imp", e: g.e || "📅", ik: g.ik, n: g.n || "", s: g.s || "", href: g.href || "index.html" }, 2); });
     // 📌 the teacher's homework (admin → homework/, assets/homework.js) until its due date · 🎯 ONE «تحضير امتحان الفصل» step until Nov 15 (assets/midterm.js)
     (x.hw || []).slice(0, 2).forEach(function (w0) { if (w0 && w0.id) add({ k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw" }, 1); });
-    if (x.mid && x.mid.k === "mid") add({ k: "mid", e: "🎯", id: x.mid.id, s: x.mid.s, s2: x.mid.s2 || "", light: x.mid.light | 0, left: x.mid.left | 0, href: x.mid.href }, 2);
+    if (x.mid && x.mid.k === "mid") add({ k: "mid", e: "🎯", id: x.mid.id, s: x.mid.s, s2: x.mid.s2 || "", light: x.mid.light | 0, left: x.mid.left | 0, href: x.mid.href }, 1.9);   // 1.9: kept before a 2nd ⭐ when 🔁 takes its pinned place
     if (x.tn) add({ k: "duel", e: "⚔️", op: x.tn.op || "", href: "index.html#duel" }, 2);
-    var due = x.due | 0;
-    if (due > 0) add({ k: "rev", e: "🔁", base: due, n: Math.min(due, 10), href: "quiz.html?t=review" + (due > 10 ? "&n=10" : "") }, 3);
+    // 🔁 التكرار المتباعد — ALWAYS on the path (Abdullah, Nov 3 2026 7:02 PM), right after Osman; the day's list is ≤ 20 (assets/srs.js)
+    add({ k: "rev", e: "🔁", base: x.due | 0, href: "quiz.html?t=review" }, 0.5);
     // 📖 the lesson of the day: the timetable's «درس اليوم», else where he stopped, else the first unread
     var cur = null;
     if (x.today && x.today.id && (!cls.length || (x.today.id !== cls[0].id && x.today.id !== (cls[1] && cls[1].id)))) {
@@ -233,7 +233,7 @@
     function ins(s) {
       s.at = now; p.steps.push(s); p.steps.sort(function (a, b) { return ORDER[a.k] - ORDER[b.k]; }); ch = true;
       while (p.steps.length > MAXS) {           // drop the lightest step not done yet (never Osman / class / ⭐)
-        var drop = -1; p.steps.forEach(function (t, i) { if (/^(osm|cls|imp|duel|mid|hw)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
+        var drop = -1; p.steps.forEach(function (t, i) { if (/^(osm|rev|cls|imp|duel|mid|hw)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
         if (drop < 0) break; p.steps.splice(drop, 1);
       }
     }
@@ -247,6 +247,7 @@
     var tn = tnNow(); if (tn && tn.k === "todo" && !keys["duel:"]) ins({ k: "duel", e: "⚔️", op: tn.op || "", href: "index.html#duel", pr: 2 });
     hwNow().forEach(function (w0) { var s = { k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw", pr: 1 }; if (!keys[skey(s)] && p.steps.filter(function (t) { return t.k === "hw"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
     var mi = midNow(); if (mi && !p.steps.some(function (t) { return t.k === "mid"; })) { mi.pr = 2; ins(mi); }
+    if (!p.steps.some(function (t) { return t.k === "rev"; })) ins({ k: "rev", e: "🔁", base: 0, href: "quiz.html?t=review", pr: 0.5 });   // 🔁 pinned, even on a path made before
     if (ch) { lsSet(PK, p); push(p); }
     return p;
   }
@@ -263,7 +264,7 @@
     if ((p.done || {})[key]) return true;
     switch (s.k) {
       case "osm": var A = p.ans || {}; return s.qs && s.qs.length ? s.qs.every(function (q) { return A[q] != null; }) : vis > 0 && back(vis);
-      case "rev": var S = w.NursinSRS, c = S && S.count ? S.count() : 0; return c <= Math.max(0, (s.base | 0) - (s.n | 0));
+      case "rev": var S = w.NursinSRS; return !!(S && S.count) && S.count() === 0;   // 🔁 today's list (≤ 20 + new ones) all answered
       case "today": if (s.pk) { var m = lsGet("nursin_read_v1") || {}; if (m[s.pk] || (s.pk.indexOf("#") > 0 && m[s.pk.split("#")[0]])) return true; } r = retRec(s.id); return !!(r && (r.rd || 0) > at);
       case "cls": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at) || (!!s.id2 && readAfter(s.id2, at));
       case "cont": case "new": r = s.id ? retRec(s.id) : null; if ((r && (r.rd || 0) > at) || readAfter(s.id, at)) return true; return !s.id && vis > 0 && back(vis);
@@ -347,7 +348,12 @@
         return { tag: T("📌 تذكير بالوظيفة", "📌 Rappel de devoir"), t: T("وظيفة: ", "Devoir : ") + "<bdi data-nofr>" + esc(s.n).replace(/\([^()]{1,40}\)/g, function (m) { return '<span style="white-space:nowrap">' + m + "</span>"; }) + "</bdi>",   // Nov 1 2026: the teacher's title as written (isolated, never word-translated), the due date on its own line
           sub: ["📅 " + T("التسليم ", "À rendre le ") + dueTxt(s.due), SB ? esc(T(SB.ar, SB.fr || SB.ar)) : esc(s.subj || ""), hn ? "<span data-nofr>" + esc(hn) + "</span>" : ""].filter(Boolean).join(" · "), min: 2 };
       case "duel": return { tag: T("⭐ البطولة", "⭐ Le tournoi"), t: T("⚔️ دورك اليوم بالبطولة", "⚔️ C'est ton tour au tournoi") + (s.op ? T(" ضد ", " contre ") + "<bdi>" + esc(s.op) + "</bdi>" : ""), sub: T("٥ أسئلة بـ٨ دقايق، الرابح بيطلع عالدور الجاي", "5 questions en 8 minutes, le gagnant passe au tour suivant"), min: 4 };
-      case "rev": return { tag: T("⭐ مراجعة", "⭐ Révision"), t: T("🔁 " + s.n + " أسئلة مراجعة", "🔁 " + s.n + " questions à réviser"), sub: T("مستحقّين اليوم من حفظك", "Prévues aujourd'hui dans ta mémoire"), min: Math.max(3, Math.round(s.n * 0.6)) };
+      case "rev": var SR = w.NursinSRS, st = SR && SR.status ? SR.status() : { n: 0, nNew: 0, nOld: 0, planned: 0, total: 0 };
+        return { tag: T("🔁 التكرار المتباعد", "🔁 Révision espacée"), n: st.n,
+          t: st.n ? T(st.n + " سؤال اليوم", st.n + " question" + (st.n > 1 ? "s" : "") + " aujourd'hui") : st.planned || st.total ? T("✅ خلّصت مراجعة اليوم", "✅ Révision du jour terminée") : T("🌱 كل سؤال بتحلّو بيفوت هون", "🌱 Chaque question à laquelle tu réponds arrive ici"),
+          sub: st.n ? (st.nNew && st.nOld ? T(st.nOld + " مراجعة + " + st.nNew + " جداد من دروسك", st.nOld + " à revoir + " + st.nNew + " nouvelles de tes leçons") : st.nNew ? T(st.nNew + " أسئلة جداد من الدروس يلّي قريتها", st.nNew + " nouvelles questions des leçons lues") : T("مستحقّين اليوم، الأقدم أوّل", "Prévues aujourd'hui, les plus anciennes d'abord"))
+            : st.planned || st.total ? T("برافو 👏 الباقي بيرجعلك بوقتو", "Bravo 👏 le reste revient au bon moment") : T("حلّ كويز أو اقرا درس، وبكرا بتلاقي أسئلتك هون", "Fais un quiz ou lis une leçon : demain tes questions seront ici"),
+          min: Math.max(2, Math.round(st.n * 0.6)) };
       case "today": return { tag: T("⭐ درس اليوم", "⭐ Leçon du jour"), t: "📖 " + nm, sub: s.more ? T("+" + s.more + " من دروس هالأسبوع", "+" + s.more + " des leçons de la semaine") : T("قراية قصيرة من جدول صفّك", "Une courte lecture du programme de ta classe"), min: 6 };
       case "cont": return { tag: T("درس", "Leçon"), t: T("كمّل: ", "Continue : ") + nm, sub: s.part ? esc(s.part) : T("من وين وقفت", "Là où tu t'es arrêté(e)"), min: 6 };
       case "new": return { tag: T("درس جديد", "Nouvelle leçon"), t: nm, sub: T("خمس دقايق قراءة بيكفّوا لنبلّش", "Cinq minutes de lecture pour commencer"), min: 5 };
@@ -387,7 +393,7 @@
   }
   /* 🧑‍🏫 Osman inside the path: greeting + mood (once a day, the same nursin_mood_v1 assets/coach.js reads), then 2 questions of the
      quiz bank, answered here: ✅/❌ + the explanation, like a real quiz answer (weak points, reviews and the lesson's memory move). */
-  var MK = "nursin_mood_v1", fbQ = "", openK = "";
+  var MK = "nursin_mood_v1", fbQ = "", openK = "", osmSr = null;
   function moodNow() { var m = lsGet(MK); return m && m.d === today() ? m.m : ""; }
   function qById(id) { var Q = (w.QUIZ || []).concat(w.LINKQ || []); for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
   function osmPrompt(s) { var n = curName(s); return T("اشرحلي بالمختصر أهم نقاط درس «" + n + "»، وبعدين اسألني سؤال واحد عليه", "Explique-moi en bref les points clés de la leçon « " + n + " », puis pose-moi une question dessus"); }
@@ -410,6 +416,11 @@
     if (fq && A[fq.id] != null) {                       // the answer just given: ✅/❌ + why
       var ok = A[fq.id] === fq.a;
       h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح! برافو", "✅ Correct ! Bravo") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + (fq.ls ? T("🔗 الرابط: ", "🔗 Le lien : ") : "") + esc(fq.x) + "</p>" : "") + "</div>";
+      var SRo = w.NursinSRS;
+      if (SRo && osmSr && osmSr.id === fq.id && SRo.tagHtml) {
+        if (osmSr.p) h += '<p class="small wtag srcfok">' + esc(osmSr.p === "sure" ? T("✅ تمام، ما رح يرجع قبل ", "✅ Parfait, elle ne revient pas avant ") + SRo.daysTxt(osmSr.r.days) : T("🤔 ولا يهمّك، بيرجعلك ", "🤔 Pas grave, elle revient ") + SRo.inTxt(osmSr.r.days)) + "</p>";
+        else { h += SRo.tagHtml(osmSr.r); if (osmSr.ok) h += '<div class="cfrow srcf"><span>' + T("🎯 كيف كان جوابك؟", "🎯 Ta réponse, c'était…") + '</span><button class="btn sm cfs" type="button" data-hzcf="sure">' + T("✅ كنت متأكد", "✅ J'étais sûr(e)") + '</button><button class="btn sm cfg" type="button" data-hzcf="guess">' + T("🤔 حزرت", "🤔 J'ai deviné") + "</button></div>"; }
+      }
       h += askS(fq, A[fq.id]);   // 🙋 «اسأل عثمان» (assets/ask.js) under the answered question
       if (nA >= qs.length) h += '<p class="hzoq">' + (nOk === qs.length ? T("🔥 " + nOk + "/" + qs.length + "! الأستاذ عثمان فخور فيك", "🔥 " + nOk + "/" + qs.length + " ! Le Professeur Osman est fier de toi") : T("💪 " + nOk + "/" + qs.length + ". الغلطات رح ترجعلك بالمراجعة 🔁", "💪 " + nOk + "/" + qs.length + ". Tes erreurs reviendront en révision 🔁")) + "</p>";
       h += '<div class="hzoa">' + (nA < qs.length ? '<button type="button" class="go" data-hznext>' + T("السؤال التاني", "Question suivante") + " " + CHEV + "</button>" : '<button type="button" class="go" data-hznext>' + T("خلصنا", "Terminé") + " ✓</button>").replace("data-hznext>" + T("خلصنا", "Terminé"), "data-hznext data-end>" + T("خلصنا", "Terminé")) + "</div>";
@@ -444,6 +455,14 @@
           '<span class="hzhwbt"><a class="btn sm hzhwgo" href="homework.html?id=' + encodeURIComponent(s.id) + '" data-step="' + esc(k) + '">' + T("📄 الأسئلة", "📄 Questions") + "</a>" +   // Nov 1 2026: opens the homework page (questions + the teacher's photo)
           '<a class="btn sm hzhwosm" href="tutor.html?hw=' + encodeURIComponent(s.id) + '" data-step="' + esc(k) + '">' + T("🧑‍🏫 اشرحلي مع عثمان", "🧑‍🏫 Explique-moi avec Osman") + "</a>" +   // Nov 1 2026 (28m): Osman explains it, he tries, Osman corrects
           '<button type="button" class="btn sm hzhwok' + (D[k] ? " on" : "") + '" data-hzhw="' + esc(s.id) + '" aria-pressed="' + (D[k] ? "true" : "false") + '">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : T("سلّمتها ✅", "Je l'ai rendu ✅")) + "</button></span></div></li>";
+        continue;
+      }
+      if (s.k === "rev") {                              // 🔁 pinned: N today + what is coming + «شو هيدا؟» (not one big link: two buttons inside)
+        var SRx = w.NursinSRS, nl = SRx && SRx.nextLine ? SRx.nextLine() : "";
+        h += '<div class="bx hzhwbx hzrevbx' + (x.n ? " hot" : "") + '"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ خلصت", "✅ Fait") : "~" + x.min + T(" د", " min")) + "</span></span>" +
+          (st.indexOf("now") === 0 ? "<h3>" + x.t + "</h3>" : "<b>" + x.t + "</b>") + "<small>" + x.sub + "</small>" + (nl ? '<small class="hzrevnx">' + esc(nl) + "</small>" : "") +
+          '<span class="hzhwbt">' + (x.n ? '<a class="btn sm pri hzrevgo" href="' + esc(s.href) + '" data-step="' + esc(k) + '">' + T("▶ راجع هلّق", "▶ Réviser") + "</a>" : "") +
+          '<button type="button" class="btn sm" data-srswhat>' + T("شو هيدا؟", "C'est quoi ?") + "</button></span></div></li>";
         continue;
       }
       var duel = s.k === "duel";
@@ -544,8 +563,14 @@
       p.ans[q.id] = k; fbQ = q.id; save(p);
       var ok = k === q.a;
       try { if (w.Weak) w.Weak.record(q, ok); } catch (x) {}
-      try { if (w.NursinSRS) w.NursinSRS.record(q, ok); } catch (x) {}
+      var srr = null; try { if (w.NursinSRS) srr = w.NursinSRS.answer ? w.NursinSRS.answer(q, ok) : w.NursinSRS.record(q, ok); } catch (x) {}
       try { var R = w.NursinRet, id = R && R.ofQ ? R.ofQ(q) : null; if (id && R.apply) R.apply(id, ok ? "ok" : "bad"); if (q.ls && R.apply) q.ls.forEach(function (y) { R.apply(y, ok ? "ok" : "bad"); }); } catch (x) {}   // 🔗 both lessons
+      osmSr = srr && typeof srr === "object" ? { id: q.id, r: srr, ok: ok, p: "" } : null;   // 🔁 drawn by osmHtml: the SRS line + «✅ كنت متأكد / 🤔 حزرت»
+      draw(); return;
+    }
+    if ((b = t.closest("[data-hzcf]"))) {                // 🎯 confidence after a right answer to Osman
+      var SRc = w.NursinSRS, kind = b.getAttribute("data-hzcf"), qq = osmSr ? qById(osmSr.id) : null; if (!SRc || !qq || osmSr.p) return;
+      osmSr.r = SRc.regrade(qq, kind) || osmSr.r; osmSr.p = kind; if (kind === "guess") try { if (w.Weak) w.Weak.record(qq, false); } catch (x) {}
       draw(); return;
     }
     if ((b = t.closest("[data-hzhw]"))) {                // 📌 «سلّمتها ✅» (tap again to undo)
@@ -570,7 +595,7 @@
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });
     w.addEventListener("pageshow", redraw); w.addEventListener("focus", redraw);
-    w.addEventListener("storage", function (e) { if (e.key === PK || e.key === AK || e.key === "nursin_ret_v1" || e.key === "nursin_srs_v1" || e.key === "nursin_read_v1" || e.key === "nursin_use_v1") redraw(); });
+    w.addEventListener("storage", function (e) { if (e.key === PK || e.key === AK || e.key === "nursin_ret_v1" || e.key === "nursin_srs_v1" || e.key === "nursin_srs_v2" || e.key === "nursin_read_v1" || e.key === "nursin_use_v1") redraw(); });
     setTimeout(redraw, 1500); setTimeout(redraw, 4000);       // the bell, the streak and the profile arrive a bit later
     setInterval(function () { if (!d.hidden) redraw(); }, 5 * 60e3);   // ⏰ 2:30 PM on a class day: «راجع درس اليوم» joins by itself
     if (location.hash === "#avatar") setTimeout(function () { if (U().picker) U().picker(null); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }, 700);

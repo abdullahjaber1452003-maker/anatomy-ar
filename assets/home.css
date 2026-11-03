@@ -155,3 +155,8 @@ html[data-theme=night] .hzhwbx .hzhwok.on{color:#86efac}
   background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff;box-shadow:0 3px 10px rgba(225,29,72,.3)}
 .hzsuga{flex:0 0 auto;color:var(--hzacc);font-size:13px;font-weight:900}
 html[data-theme=night] .hzsug{background:linear-gradient(135deg,color-mix(in srgb,var(--hzacc) 20%,transparent),color-mix(in srgb,var(--hzacc2) 9%,transparent)),var(--hzglass2)}
+/* 🔁 «التكرار المتباعد» — the pinned step (Nov 3 2026) */
+.hzrevbx .hzrevnx{color:var(--hzacc,#0f766e);font-weight:700}
+html[data-theme=night] .hzrevbx .hzrevnx{color:#5eead4}
+.hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent;font-weight:800}
+html[data-theme=night] .hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}

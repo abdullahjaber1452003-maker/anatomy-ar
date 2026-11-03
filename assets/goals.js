@@ -207,7 +207,8 @@
   var RK = "nursin_rem_v1", REM_DEF = { at: "18:00", qf: "22:30", qt: "08:00" };
   function remGet() { var o = lsGet(RK) || {}; return { at: /^\d\d:\d\d$/.test(o.at) ? o.at : REM_DEF.at, qf: /^\d\d:\d\d$/.test(o.qf) ? o.qf : REM_DEF.qf, qt: /^\d\d:\d\d$/.test(o.qt) ? o.qt : REM_DEF.qt }; }
   function srsDue() {
-    var x = null; try { x = JSON.parse(localStorage.getItem("nursin_srs_v1") || "null"); } catch (e) {}
+    try { if (window.NursinSRS && window.NursinSRS.dueByDay) return window.NursinSRS.dueByDay(14); } catch (e) {}   // 🔁 v2: ≤ 20 a day, overflow rolled on
+    var x = null; try { x = JSON.parse(localStorage.getItem("nursin_srs_v2") || localStorage.getItem("nursin_srs_v1") || "null"); } catch (e) {}
     var out = {}, t = today(), end = new Date(Date.parse(t + "T12:00:00Z") + 14 * 864e5).toISOString().slice(0, 10);
     if (x && x.items) Object.keys(x.items).forEach(function (k) { var dd = String(x.items[k].d || ""); if (!/^\d{4}-\d\d-\d\d$/.test(dd) || dd > end) return; if (dd < t) dd = t; out[dd] = (out[dd] | 0) + 1; });
     return out;

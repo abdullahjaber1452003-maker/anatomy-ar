@@ -10,7 +10,7 @@
    No ads here; every sheet adds html.rton (page ads hidden while it is open). French = the items' own fr copies (Lang.fr). */
 (function (w, d) {
   "use strict";
-  var V = "20261028z", MQK = "nursin_mq_v1";
+  var V = "20261029a", MQK = "nursin_mq_v1";
   var page = ((w.location && w.location.pathname) || "/index.html").split("/").pop() || "index.html";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -49,10 +49,11 @@
     else if (it) { it.streak++; it.last = Date.now(); if (it.streak >= 2) { delete x.items[q.id]; r = "graduated"; } else r = "progress"; }
     if (r) lsSet(K, x); return r;
   }
+  var lastSr = null;
   function record(q, ok, set) {
     var rec = null;
     try { rec = weakRecord(q, ok); } catch (e) {}
-    try { if (w.NursinSRS && w.NursinSRS.record) w.NursinSRS.record(q, ok); } catch (e) {}
+    lastSr = null; try { var SR = w.NursinSRS; if (SR && SR.answer) lastSr = SR.answer(q, ok); else if (SR && SR.record) SR.record(q, ok); } catch (e) {}   // 🔁 v2: right answers enter too
     try { d.dispatchEvent(new CustomEvent("nursin:answer", { detail: { qid: q.id, ok: ok, set: set || "link" } })); } catch (e) {}   // hifz.js: lesson memory (both lessons of a 🔗)
     return rec;
   }
@@ -83,17 +84,20 @@
       var cls = cur.ans == null ? "" : k === q.a ? " ok" : k === cur.ans ? " bad" : "";
       h += '<button class="opt' + cls + '" type="button" data-xk="' + k + '"' + (cur.ans != null ? " disabled" : "") + '><span class="l" dir="ltr">' + "abc".charAt(k) + "</span><span>" + op + "</span></button>";
     });
+    var cfQ = null;
     if (cur.ans != null) {
-      var ok = cur.ans === q.a;
+      var ok = cur.ans === q.a, SR = w.NursinSRS;
       h += '<div class="expl' + (ok ? "" : " w") + '">' + (ok ? T("✅ <b>صح!</b> ", "✅ <b>Correct !</b> ") : T("❌ <b>الجواب الصح: ", "❌ <b>Bonne réponse : ") + "abc".charAt(q.a) + "</b> — ") +
         (q.t === "link" ? '<span class="xlx">' + T("🔗 الرابط: ", "🔗 Le lien : ") + "</span>" : "") + q.x + "</div>";
       if (cur.rec === "added") h += '<p class="small wtag">' + T("🎯 انضاف لنقاط ضعفك، وبيرجعلك بكرا بالمراجعة 🔁", "🎯 Ajoutée à tes points faibles, elle revient demain en révision 🔁") + "</p>";
       else if (cur.rec === "graduated") h += '<p class="small wtag">' + T("🎉 طلع من نقاط ضعفك", "🎉 Sortie de tes points faibles") + "</p>";
+      if (cur.sr && SR && SR.tagHtml) { h += SR.tagHtml(cur.sr); if (ok && SR.confRow) cfQ = q; }
       h += '<div class="xqact">' + (cur.i + 1 < n ? '<button class="btn pri" type="button" data-xnext>' + T("التالي ←", "Suivante →") + "</button>" : (o.end ? o.end(cur) : "")) + "</div>";
     }
     if (w.NursinAsk) h += w.NursinAsk.slot(w.NursinAsk.fromQ(q, { answered: cur.ans != null, pick: cur.ans != null ? cur.ans : undefined, surface: "sheet:" + (o.set || "") }));   // 🙋 «اسأل عثمان» (assets/ask.js): free practice, a hint before answering
     h += "</div>";
     box.innerHTML = h;
+    if (cfQ) { var cr = w.NursinSRS.confRow(cfQ), tg = box.querySelector(".srtag"); if (cr && tg) tg.parentNode.insertBefore(cr, tg.nextSibling); }   // «✅ كنت متأكد / 🤔 حزرت»
   }
   d.addEventListener("click", function (e) {
     var t = e.target; if (!t || !t.closest) return;
@@ -101,7 +105,7 @@
     if (b && cur && cur.ans == null) {
       var q = cur.o.qs[cur.i], k = +b.getAttribute("data-xk"), ok = k === q.a;
       cur.ans = k; if (ok) cur.ok++;
-      cur.rec = record(q, ok, cur.o.set);
+      cur.rec = record(q, ok, cur.o.set); cur.sr = lastSr;
       if (cur.o.onAnswer) try { cur.o.onAnswer(q, k, ok); } catch (x) {}
       draw(); return;
     }
@@ -234,8 +238,8 @@
     function add(id) { if (id && !seen[id] && out.length < max && /^[\w-]{1,12}$/.test(id)) { seen[id] = 1; out.push(id); } }
     var wk = (lsGet("nursin_weak_v1") || {}).items || {};
     Object.keys(wk).sort(function (a, b) { return ((wk[b].miss | 0) - (wk[a].miss | 0)) || ((+wk[b].last || 0) - (+wk[a].last || 0)); }).slice(0, 4).forEach(add);
-    var sr = (lsGet("nursin_srs_v1") || {}).items || {};
-    Object.keys(sr).filter(function (k) { return String(sr[k].d || "") <= dk; }).slice(0, 3).forEach(add);
+    var sr = ((lsGet("nursin_srs_v2") || lsGet("nursin_srs_v1") || {}).items) || {};   // 🔁 v2 store (v1 until migrated)
+    Object.keys(sr).filter(function (k) { return /^(?:q\d{3,4}|k\d{2,3})$/.test(k) && String(sr[k].d || "") <= dk; }).slice(0, 3).forEach(add);
     var st = lsGet(MQK); if (st && st.id) { var i = out.indexOf(st.id); if (i > -1 && out.length > 1) out.splice(i, 1); }   // not yesterday's again
     return out;
   }

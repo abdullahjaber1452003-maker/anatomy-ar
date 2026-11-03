@@ -70,6 +70,8 @@
     return out.length >= 6 ? out : pairs(s);
   }
   // true / false statements: the question + its right option (true) or a wrong option (false)
+  // 🔁 التكرار المتباعد v2 (Nov 3 2026): a timed game answer enters silently as a normal right / wrong answer (no confidence question here)
+  function srs(q, good) { try { if (q && q.id && w.NursinSRS && w.NursinSRS.record) w.NursinSRS.record(q, !!good); } catch (e) {} }
   function tf(s) {
     var out = [];
     quiz().forEach(function (q) {
@@ -226,6 +228,7 @@
       var b = e.target.closest && e.target.closest("[data-a]"); if (!b || lock) return;
       var it = items[i], good = (b.getAttribute("data-a") === "1") === it.ok, box = d.getElementById("tfq");
       if (good) { ok++; osmOk(); } else bad++;
+      srs(it.src, good);
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq " + (good ? "ok" : "no");
       lock = true;
@@ -296,6 +299,7 @@
     function answer(typed) {
       if (lock || !d.getElementById("fq")) return; var b = items[i], good = typed != null && fillOk(b, typed), box = d.getElementById("fq");
       if (good) { ok++; osmOk(); } else bad++;
+      srs(b, good);
       d.getElementById("tfok").textContent = ok; d.getElementById("tfbad").textContent = bad;
       box.className = "tfq fq " + (good ? "ok" : "no");
       lock = true;

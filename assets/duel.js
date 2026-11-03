@@ -332,7 +332,9 @@ async function play(el, cid, pair, qs, done) {
     clearInterval(timer);
     timer = setInterval(() => { left = Q_SEC - Math.floor((Date.now() - st.qa) / 1000); const t = sh.querySelector(".dqt"); if (t) t.textContent = Math.max(0, left) + "s"; if (left <= 0) next(-1); }, 500);
   };
-  const next = pick => { clearInterval(timer); st.picks[st.i] = pick; st.i++; st.qa = Date.now(); save(); showQ(); };
+  const next = pick => { clearInterval(timer); st.picks[st.i] = pick;
+    try { const q0 = qs[st.i]; if (q0 && q0.id && window.NursinSRS) window.NursinSRS.record(q0, pick === q0.a); } catch (e) {}   // 🔁 التكرار المتباعد v2: a timed duel answer enters silently (normal right / wrong)
+    st.i++; st.qa = Date.now(); save(); showQ(); };
   showQ();
 }
 async function show(el, cid) {

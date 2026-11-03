@@ -456,6 +456,7 @@ async function dqAnswer(box, q, k, dk) {
     box.querySelectorAll("button.opt").forEach(b => { b.disabled = false; }); return;
   }
   try { if (window.Weak) window.Weak.record(q, ok); } catch (e) {}
+  try { if (window.NursinSRS) window.NursinSRS.record(q, ok); } catch (e) {}   // 🔁 التكرار المتباعد v2: the class «سؤال اليوم» enters too
   let ans = []; try { ans = await dqLoad(dk); } catch (e) {}
   const first = dqSummary(ans).first, iWon = !!(ok && first && first.uid === me);
   const act = A.logActivity ? await A.logActivity(1, N.ecgCount([q], [k]), iWon ? ["dq1"] : []) : null;
@@ -690,6 +691,7 @@ async function submit(qs, p) {
   }
   progSave(null);
   try { if (window.Weak) qs.forEach((q, i) => window.Weak.record(q, p.ans[i] === q.a)); } catch (e) {}
+  try { if (window.NursinSRS) qs.forEach((q, i) => window.NursinSRS.record(q, p.ans[i] === q.a)); } catch (e) {}   // 🔁 v2: the class exam enters silently
   C.mine = r; C.results.push(r);
   goalDone("cls:" + C.cid);
   $("#cexam").innerHTML = '<p class="cintro">👨‍🏫 ' + esc(C.week.intro) + "</p>" + resultHtml(r, p, qs) + '<p id="cact"></p>';

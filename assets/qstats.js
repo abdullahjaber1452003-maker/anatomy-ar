@@ -66,13 +66,13 @@ let srsT = 0;
 async function srsPull() {
   const S = W.NursinSRS, { db, fs, user } = API; if (!S || !user) return;
   try { const s = await fs.getDoc(fs.doc(db, "users", user.uid, "srs", "main")); const r = s.exists() ? (s.data().items || {}) : {};
-    S.merge(r); const l = S.items(); if (Object.keys(l).some(k => !r[k] || (r[k].m | 0) < (l[k].m | 0))) srsPush(); }
+    S.merge(r); if (S.behind ? S.behind(r) : Object.keys(S.items()).some(k => !r[k] || (r[k].m | 0) < (S.items()[k].m | 0))) srsPush(); }   // 🔁 v2: packed copy (assets/srs.js pack/unpack), an old v1 copy still merges
   catch (e) { if (denied(e)) off.srs = true; }
 }
 function srsPush() {
   clearTimeout(srsT); if (off.srs) return;
   srsT = setTimeout(() => { const S = W.NursinSRS, { db, fs, user } = API; if (!S || !user) return;
-    fs.setDoc(fs.doc(db, "users", user.uid, "srs", "main"), { items: S.items(), t: fs.serverTimestamp() }).catch(e => { if (denied(e)) off.srs = true; }); }, 4000);
+    fs.setDoc(fs.doc(db, "users", user.uid, "srs", "main"), { items: S.remote ? S.remote() : S.items(), t: fs.serverTimestamp() }).catch(e => { if (denied(e)) off.srs = true; }); }, 4000);
 }
 
 /* ---- 3 · ⚠️ home card: the 5 questions students got wrong most this week (one read) ---- */

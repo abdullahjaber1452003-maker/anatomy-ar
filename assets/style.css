@@ -1158,6 +1158,10 @@ html.rton .adx,html.rton .ad-slot{display:none!important}
 html[data-theme=night] .rtrb .ok{color:#86efac}html[data-theme=night] .rtrb .no{color:#fca5a5}html[data-theme=night] .rtrb .fx{color:#93c5fd}
 @media (prefers-reduced-motion:reduce){.rtshake{animation:none}.rtbar b{transition:none}}
 
+/* 🔁 التكرار المتباعد v2 (Nov 3 2026): the SRS line under an answer, «✅ كنت متأكد / 🤔 حزرت», the حفظي card, «شو هيدا؟» sheet */
+.srtag{color:var(--pri2)}.srcf{border-style:solid}.srcfok{margin:6px 0 0;color:var(--pri2);font-weight:700}
+.srscard{display:block;margin:0 0 12px;padding:12px 14px;border-radius:var(--r);background:var(--tint);border:1px solid var(--line)}.srscard p{margin:2px 0}.srsct{font-size:1.02rem}.srnext{color:var(--mut)}.srsbt{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px!important}
+.srwhat p{margin:0 0 10px;line-height:1.7}
 /* 🌙 «ليلي» — generated from the fixed light colours above (Oct 28): light backgrounds → dark surfaces, dark text → light, light borders → dark; hues kept. Ads untouched. */
 html[data-theme=night] h4{color:#f0c6b8}
 html[data-theme=night] .box.tip{background:#17202b;border-color:#30435a}
