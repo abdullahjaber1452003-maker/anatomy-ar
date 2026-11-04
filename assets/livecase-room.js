@@ -105,6 +105,7 @@
     endOk: { ar: "✅ برافو للفريق! المريضين صارو مستقرّين", fr: "✅ Bravo l'équipe ! Les deux patients sont stables" },
     endLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" },
     ended: { ar: "🏁 انتهت الحالة", fr: "🏁 Cas terminé" },
+    openGo: { ar: "🏥 المستشفى مفتوح · 🪑 مرضى جداد ({n})", fr: "🏥 L'hôpital reste ouvert · 🪑 nouveaux patients ({n})" },
     // 28x: each patient ends on his own; the other one keeps going
     pOk: { ar: "✅ {n} استقرّ — برافو للفريق 👏", fr: "✅ {n} est stabilisé·e — bravo l'équipe 👏" }, pLost: { ar: "💔 خسرنا {n}", fr: "💔 Nous avons perdu {n}" },
     pGoOn: { ar: "🛏️ {n} بعدو بحاجة إلكن — كمّلو معو هلّق", fr: "🛏️ {n} a encore besoin de vous — continuez avec lui/elle" },
@@ -314,7 +315,10 @@
     var el = q(".lcr-pts"); if (!el || !st) return;
     if (st.end) {
       var lost = st.end.w === "lost" ? X(st.end.pk) : null;
-      el.innerHTML = '<div class="lcr-end"><b>' + esc(u("ended") + " · " + endWhy()) + "</b><small>⏳ " + esc(L.nextWords(st.t1 - Date.now())) + " 🌙</small></div>";
+      // 29h 🏥 (Abdullah, Nov 4 9:38 PM): only a small note — the next daily case time + «the hospital stays open» (walk-ins keep coming to 🪑)
+      var wn = waitList().length;
+      el.innerHTML = '<div class="lcr-end lcr-endn"><span class="lcr-endt"><b>' + esc(u("ended")) + "</b> <small>" + esc(st.dep === "x" ? u("ambDone") : "⏳ " + L.nextWords(st.t1 - Date.now())) + "</small> <i>· " + esc(endWhy()) + "</i></span>" +
+        '<button type="button" class="lcr-endgo" data-lcgo="wt">' + esc(u("openGo", { n: wn })) + "</button></div>";
       return;
     }
     el.innerHTML = st.P.map(function (x, i) {
@@ -339,15 +343,9 @@
   var overKey = "", overT = 0;
   function overPaint() {
     var el = q(".lcr-over"); if (!el || !st) return;
-    if (!st.end) { if (!el.hidden) { el.hidden = true; el.innerHTML = ""; overKey = ""; } return; }
-    var k = (st.dep || "") + st.id + st.end.w + (st.end.pk || "") + (FR() ? "fr" : "ar");
-    if (k !== overKey) {
-      overKey = k; el.hidden = false;
-      el.innerHTML = '<div class="lcr-ovc" role="status"><b class="lcr-ovt">' + esc(u("ended")) + '</b><p class="lcr-ovw">' + esc(endWhy()) + "</p>" +
-        (st.dep === "x" ? '<p class="lcr-ovn">' + esc(u("ambDone")) + "</p>" : '<p class="lcr-ovn">' + esc(u("nextIn")) + ' <b class="lcr-ovcd" dir="ltr"></b></p>') + '<div class="lcr-ova">' +
-        '<button type="button" class="lcr-btn on" data-lcend="1">' + esc(u("seeSteps")) + '</button><button type="button" class="lcr-btn" data-lcarch="1">' + esc(u("archive")) + '</button><button type="button" class="lcr-btn" data-lclog="1">' + esc(u("myLog")) + "</button></div></div>";
-    }
-    overTick();
+    // 29h 🏥: no «🏁 انتهت الحالة» card over the room any more (it took every tap = the whole hospital looked locked) — the next case time is
+    // a small note in the cards strip (cards()) and new 🚶 walk-ins keep arriving in 🪑 the waiting room
+    if (!el.hidden) { el.hidden = true; el.innerHTML = ""; overKey = ""; }
   }
   function overTick() {
     if (!st || !st.end) return; var cd = q(".lcr-ovcd"); if (!cd) return;
@@ -373,25 +371,18 @@
   function size() {
     fsize();
     if (!cv || !E) return; var stg = q(".lcr-stage"), wv = stg.clientWidth, hv = stg.clientHeight; if (!wv || !hv) return;
-    // 29g 🛏️ (Abdullah, Nov 4 2:57 PM «الشخصيات من فوق، ما في شي مبيّن»): the stage shrinks when the banner/patient cards appear, so the room is
-    // re-fitted whenever the stage changes size (a ResizeObserver, not only window resize), and on a short phone stage it never goes below
-    // CAM_MIN scale — the room is then taller than the stage and a camera follows the nurse (the canvas slides inside the stage)
-    var fit = Math.min(wv / E.W, hv / E.H); scale = Math.max(fit, Math.min(wv / E.W, CAM_MIN)); dpr = Math.min(2, w.devicePixelRatio || 1);
+    // 29g 🛏️: the room is re-fitted whenever the stage changes size (a ResizeObserver, not only window resize).
+    // 29h 📱 (Abdullah, Nov 4 5:28 PM «لازم تبيّن بدون الزوم»): the WHOLE room is always on the screen — no scrolling camera, no crop.
+    // On a phone the room gets the space first (fsize() keeps the floor map small enough, the banner and the cards are compact).
+    var fit = Math.min(wv / E.W, hv / E.H); scale = fit; dpr = Math.min(2, w.devicePixelRatio || 1);
     var cw = Math.round(E.W * scale), ch = Math.round(E.H * scale);
-    cv.style.width = cw + "px"; cv.style.height = ch + "px";
+    cv.style.width = cw + "px"; cv.style.height = ch + "px"; cv.style.transform = "";
     cv.width = Math.round(E.W * scale * dpr); cv.height = Math.round(E.H * scale * dpr); bg = null;
-    cam.h = ch; cam.vh = hv; cam.y = camWant(); camApply(true);
   }
-  var CAM_MIN = 0.62, cam = { y: 0, h: 0, vh: 0, px: null }, stRO = null;
-  function camWant() { if (!(cam.h > cam.vh + 1)) return 0; var fy = nurse ? nurse.y : E.H / 2; return Math.max(0, Math.min(cam.h - cam.vh, fy * scale - cam.vh * 0.5)); }
-  function camApply(force) {
-    if (!cv) return; var off = cam.h > cam.vh + 1 ? Math.round((cam.h - cam.vh) / 2 - cam.y) : 0;
-    if (!force && off === cam.px) return; cam.px = off; cv.style.transform = off ? "translateY(" + off + "px)" : "";
-  }
-  function camTick(dt) { if (!(cam.h > cam.vh + 1)) { if (cam.px) camApply(true); return; } var tg = camWant(); cam.y += (tg - cam.y) * Math.min(1, dt * 5 || 1); camApply(false); }
+  var stRO = null, ROOM_MIN = 0.55;
   function stWatch() { if (stRO || !w.ResizeObserver) return; var stg = q(".lcr-stage"); if (!stg) return; var lw = 0, lh = 0;
-    stRO = new w.ResizeObserver(function () { var a = stg.clientWidth, b = stg.clientHeight; if (a === lw && b === lh) return; lw = a; lh = b; if (ov && !ov.hidden) size(); }); stRO.observe(stg); }
-  w.LiveRoomCam = function () { return { scale: scale, h: cam.h, vh: cam.vh, off: cam.px || 0 }; };
+    stRO = new w.ResizeObserver(function () { var a = stg.clientWidth, b = stg.clientHeight; if (a === lw && b === lh) return; lw = a; lh = b; if (ov && !ov.hidden) w.requestAnimationFrame(function () { if (ov && !ov.hidden) size(); }); }); stRO.observe(stg); }   // 29h: size() on the next frame (it moves the floor map → no ResizeObserver loop)
+  w.LiveRoomCam = function () { var stg = q(".lcr-stage"); return { scale: scale, h: Math.round(E.H * scale), vh: stg ? stg.clientHeight : 0, off: 0 }; };
   function go() { stop(); last = 0; raf = w.requestAnimationFrame(loop); }
   function stop() { if (raf) w.cancelAnimationFrame(raf); raf = 0; }
   function loop(ts) {
@@ -406,7 +397,6 @@
     presFrame(dt);
     draw(ts / 1000);
     floorDraw(ts / 1000, dt);
-    camTick(dt);
   }
   function night() { return d.documentElement.getAttribute("data-theme") === "night"; }
   function pal() {
@@ -783,7 +773,7 @@
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
   function onTap(e) {
     if (trv) { e.preventDefault(); return; }
-    if (st && st.end) { e.preventDefault(); return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); }   // 28v: never a dead tap
+    // 29h 🏥 (Abdullah, Nov 4 9:38 PM): the hospital never locks — after the daily case the room stays walkable (doors, 🛗, 🪑, beds = their steps)
     if (svcRoom()) { if (sheet || panel) return; e.preventDefault(); return svcTap(toL(e)); }
     if (sheet || panel || !G) return; e.preventDefault();
     var p = toL(e), k = R.hitStation(p.x, p.y, 6);
@@ -1149,6 +1139,11 @@
   function fsize() {
     if (!fcv) return; var box = fcv.parentNode, wv = box.clientWidth - 12; if (wv <= 0) return;
     fsc = Math.min(wv / FW, 1.9); fdpr = Math.min(2, w.devicePixelRatio || 1);
+    if (ov) {                                               // 29h 📱 the room first (phone + laptop): it keeps ≥ ROOM_MIN scale, the floor map takes what is left (≥ 84 px)
+      var used = 0; [".lcr-top", ".lcr-ban", ".lcr-pts", ".lcr-bar", ".lcr-flt"].forEach(function (s0) { var e0 = q(s0); if (e0) used += e0.offsetHeight; });
+      var free = ov.clientHeight - used - 14, mapH = Math.max(84, free - Math.round(E.H * Math.min(ROOM_MIN, (box.clientWidth || 360) / E.W)));
+      if (ov.clientHeight > 0 && free > 0) fsc = Math.min(fsc, mapH / FH);
+    }
     fcv.style.width = Math.round(FW * fsc) + "px"; fcv.style.height = Math.round(FH * fsc) + "px";
     fcv.width = Math.round(FW * fsc * fdpr); fcv.height = Math.round(FH * fsc * fdpr);
   }

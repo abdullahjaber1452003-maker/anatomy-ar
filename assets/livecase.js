@@ -581,11 +581,21 @@ var LiveDept = (function (C) {
     for (var i = 0; i < c; i++) offs.push(Math.floor(r() * (slack + 1)));
     offs.sort(function (a, b) { return a - b; });
     var ids = shuffle(B.map(function (b, j) { return j; }), C.rng(C.hash("wkp-" + key)));
-    return offs.map(function (o, j) { var t = t0 + (WK_FROM + o + WK_GAP * j) * MIN; return { i: j + 1, dk: "w" + pad2(j + 1), t: t, until: t + WSTAY, b: B[ids[j % ids.length]] }; });
+    var out = offs.map(function (o, j) { var t = t0 + (WK_FROM + o + WK_GAP * j) * MIN; return { i: j + 1, dk: "w" + pad2(j + 1), t: t, until: t + WSTAY, b: B[ids[j % ids.length]] }; });
+    // 29h 🏥 (Abdullah, Nov 4 9:38 PM «خلصت الحالة عم يتقفل كل شي»): the hospital never closes — once today's 🚑 ER case is over, a walk-in
+    // comes every AFT_GAP min (08:00–24:00 slots, the same on every phone: «w11»… «w58», still «w\d\d_tg…» = rules v22 unchanged);
+    // a slot only shows (and can only be triaged) while the ER case of the day is finished (erDone)
+    var r2 = C.rng(C.hash("wkx-" + key)), ids2 = shuffle(B.map(function (b, j) { return j; }), C.rng(C.hash("wkxp-" + key)));
+    for (var s = 0; s < AFT_N; s++) { var tx = t0 + (AFT_FROM + s * AFT_GAP + Math.floor(r2() * 6)) * MIN; out.push({ i: AFT_I0 + s, dk: "w" + pad2(AFT_I0 + s), t: tx, until: tx + WSTAY, b: B[ids2[s % ids2.length]], aft: 1 }); }
+    return out;
   }
+  var AFT_FROM = 8 * 60, AFT_GAP = 20, AFT_N = 48, AFT_I0 = 11;
+  function walkAt(L, dk) { for (var i = 0; i < L.length; i++) if (L[i].dk === dk) return L[i]; return null; }
+  function erDone(D, raw, now) { var s = null; try { s = state(D, raw, "er", now); } catch (e) { s = null; } return !!(s && s.end); }
   function walkCheck(D, doc, dk, a, uid, now) {
-    var key = C.keyOf(doc && doc.day) || C.dayKey(now), L = walkIns(D, key), x = L[(+dk.slice(1)) - 1];
+    var key = C.keyOf(doc && doc.day) || C.dayKey(now), L = walkIns(D, key), x = walkAt(L, dk);
     if (!x || now < x.t) return { k: "noamb" };
+    if (x.aft && !erDone(D, doc, now) && !admitted(evOf(doc, dk, 0, "a"), x.b.dk)) return { k: "noamb" };
     var evs = evOf(doc, dk, 0, "a"), inn = admitted(evs, x.b.dk); if (inn) return { k: "adm", by: inn };
     if (now > x.until) return { k: "gone" };
     return triage(x.b, x.b.dk, a, evs, uid);
@@ -602,8 +612,9 @@ var LiveDept = (function (C) {
     var A = ambNow(key, now);
     if (A.cur) { var sx = null; try { sx = state(D, raw, "x", now); } catch (e) { sx = null; }
       if (sx && !sx.end) { var xa = sx.P[0]; if (!xa.over && !adm(raw, "x", "a", A.cur.i)) out.push({ dk: "x", ai: A.cur.i, pk: "a", p: xa.p, x: xa, since: A.cur.t, kind: "amb", cs: sx.cs }); } }
+    var done = null;
     walkIns(D, key).forEach(function (w) {
-      if (now < w.t || now > w.until) return; if (admitted(evOf(raw, w.dk, 0, "a"), w.b.dk)) return;
+      if (now < w.t || now > w.until) return; if (w.aft && !(done = done == null ? erDone(D, raw, now) : done)) return; if (admitted(evOf(raw, w.dk, 0, "a"), w.b.dk)) return;
       out.push({ dk: w.dk, ai: 0, pk: "a", p: w.b, x: null, since: w.t, kind: "walk", w: w });
     });
     return out;
@@ -627,7 +638,7 @@ var LiveDept = (function (C) {
 
   if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261029g", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261029h", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
