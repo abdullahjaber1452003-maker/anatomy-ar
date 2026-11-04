@@ -315,3 +315,13 @@ html[data-theme="night"] .lcr-wtc{background:rgba(13,148,136,.18)!important}
 [data-theme="night"] .lcr-fu.due{background:rgba(220,38,38,.2)}
 @media (prefers-reduced-motion:reduce){.lcr-fu.due,.lcr-fub i.due{animation:none}}
 .lcr.lcr-pon .lcr-fb,.lcr.lcr-pon .lcr-ptoast,.lcr.lcr-pon .lcr-work{display:none}
+
+/* 29e 🧼 🔄 🚪 👨‍👩‍👦 ⚠️ the routines + 🧾 the services */
+.lcr-rout{margin-top:10px;padding:8px 10px;border-radius:14px;background:rgba(13,148,136,.07);border:1px solid rgba(13,148,136,.18)}
+.lcr-rout h4{margin:0 0 6px;font-size:.86rem}
+.lcr-pks{flex-basis:100%;margin-top:4px}.lcr-pks p{margin:2px 0}
+.lcr-adm{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.lcr-adm li{padding:6px 9px;border-radius:10px;background:rgba(14,116,144,.07)}.lcr-adm small{display:block;opacity:.8}
+.lcr-wl .lcr-act{text-align:start}
+html.dark .lcr-rout,[data-theme="dark"] .lcr-rout{background:rgba(45,212,191,.08);border-color:rgba(45,212,191,.2)}
+html.dark .lcr-adm li,[data-theme="dark"] .lcr-adm li{background:rgba(103,232,249,.08)}

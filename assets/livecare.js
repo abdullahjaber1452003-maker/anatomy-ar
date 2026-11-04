@@ -66,7 +66,8 @@ var LiveCare = (function () {
   function prune(list, now) { return list.filter(function (f) { return now - f.at < KEEP; }); }
   // the payslip lines of each day (the day of the due time): { YYYYMMDD: { reas, late } }
   function extras(list, dayOf) {
-    var o = {}; list.forEach(function (f) { if (f.s !== "ok" && f.s !== "miss") return; var k = dayOf(f.due), r = o[k] || (o[k] = { reas: 0, late: 0 });
+    var o = {}; list.forEach(function (f) { if (f.s !== "ok" && f.s !== "miss") return; if (f.z) return;   // 29e: f.z = paid in the shared doc (z fu / z fx)
+      var k = dayOf(f.due), r = o[k] || (o[k] = { reas: 0, late: 0 });
       if (f.s === "ok") r.reas += REAS; else r.late += LATE; }); return o;
   }
   function left(ms) { ms = Math.max(0, ms); var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;

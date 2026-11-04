@@ -15,6 +15,46 @@
   var peers = {}, pList = [], pPrev = null, pQ = { join: [], left: [] }, pToastT = 0, pT = 0, avImg = {}, mySpr = null;
   var T = L.T, esc = L.esc, FR = L.FR;
   var U = {
+    // 29e 🧼 🔄 🚪 👨‍👩‍👦 ⚠️ 🧪 the routines + the services
+    rubBtn: { ar: "فرك اليدين (SHA)", fr: "Friction hydro-alcoolique" }, rubOn: { ar: "إيديك نضاف ✓", fr: "mains propres ✓" }, rubOff: { ar: "إيديك مش نضاف", fr: "mains à désinfecter" },
+    rubGo: { ar: "🧴 عم تفرك إيديك بالـ SHA… (٢٠–٣٠ ثانية بالحقيقة)", fr: "🧴 Friction hydro-alcoolique… (20–30 s en vrai)" }, rubSink: { ar: "🚰 عم تغسل إيديك…", fr: "🚰 Lavage des mains…" },
+    rubW: { ar: "كل الإيد: الكفّ، بين الأصابع، الإبهام، الأظافر والمعصم", fr: "Toute la main : paumes, entre les doigts, pouces, ongles, poignets" },
+    rubBefore: { ar: "هلّق فيك تلمس المريض (قبل التماس ✓)", fr: "Tu peux toucher le patient (avant le contact ✓)" }, rubBeforeOk: { ar: "🧼 فركت إيديك قبل ما تلمس المريض", fr: "🧼 Mains désinfectées avant le contact" },
+    rubAfter: { ar: "🧼 فركت إيديك بعد ما خلصت مع {n}", fr: "🧼 Mains désinfectées après {n}" }, rubWhy: { ar: "نظافة الإيدين قبل وبعد كل مريض = أهم شي ضدّ العدوى بالمستشفى", fr: "Hygiène des mains avant et après chaque patient = la 1re barrière contre les infections nosocomiales" },
+    rubOther: { ar: "🧼 لمست {n} — افرك إيديك قبل ما تلمس {m}", fr: "🧼 Tu as touché {n} — désinfecte tes mains avant {m}" }, rubHow: { ar: "🧴 «فرك اليدين» بورقة التخت، أو 🚰 المغسلة", fr: "🧴 «Friction» dans la fiche du lit, ou 🚰 le lavabo" },
+    routT: { ar: "🧼 روتين التمريض", fr: "🧼 Routines infirmières" },
+    pkReady: { ar: "🧾 بـ {s}: الطلب تبع {n} قيد التحضير", fr: "🧾 {s} : la demande pour {n} est en cours" }, pkReadyW: { ar: "روح جيبو بإيدك (+20 ل.ن) — أو بيطلع لعندك بعد شوي", fr: "Va la chercher (+20 L.N) — sinon elle montera d'elle-même" },
+    pkAuto: { ar: "🛵 وصل الطلب تبع {n} من {s} لعالقسم", fr: "🛵 La demande de {n} est arrivée de {s}" }, pkWait: { ar: "⏳ بعد {s} ث", fr: "⏳ encore {s} s" }, pkWaitW: { ar: "لسّا عم يحضّروه", fr: "En préparation" },
+    pkGot: { ar: "📥 جبت الطلب تبع {n}", fr: "📥 Tu as récupéré la demande de {n}" }, pkGotW: { ar: "انحطّ بملفّو (🧾 بورقة التخت)", fr: "Ajouté à son dossier (🧾 dans la fiche du lit)" },
+    pkTake: { ar: "جاهز — خدو", fr: "Prêt — récupérer" }, pkAt: { ar: "جاهز بـ {s} — روح جيبو", fr: "prêt à {s} — va le chercher" }, pkN: { ar: "🧾 {n} طلب جاهز", fr: "🧾 {n} demande(s) prête(s)" }, pkN0: { ar: "🧾 ما في طلبات هلّق", fr: "🧾 Aucune demande" },
+    pkRule: { ar: "كل فحص أو صورة أو وصفة أو كيس دم بتطلبو عند التخت بيجهز هون: إذا جبتو بإيدك +20 ل.ن، وإذا ما إجيت بيطلع لعالقسم لحالو بعد ٣ دقايق.", fr: "Chaque examen, image, ordonnance ou poche demandée au lit est préparée ici : la chercher = +20 L.N ; sinon elle monte seule au bout de 3 min." },
+    pkNone_lab: { ar: "ما في عيّنات منك هلّق — اسحب دم (🧪 Bilan / GDS) عند التخت", fr: "Aucun prélèvement de toi — fais un bilan / GDS au lit" }, pkNone_rad: { ar: "ما في صور مطلوبة منك هلّق", fr: "Aucune image demandée" },
+    pkNone_ph: { ar: "ما في وصفات هلّق — بعد ما تتصل بالطبيب 📞 الوصفة بتجهز هون", fr: "Aucune ordonnance — après l'appel 📞 elle se prépare ici" }, pkNone_bb: { ar: "ما في أكياس دم مطلوبة — لما الطبيب يطلب نقل دم بيجهز هون", fr: "Aucune poche demandée" },
+    radDone: { ar: "الصورة انعملت والطبيب عم يقراها", fr: "Cliché fait, lu par le médecin" }, bbDone: { ar: "كيس الدم جاهز بعد فحص التطابق (groupe + compatibilité) ✓", fr: "Poche prête après contrôle de compatibilité ✓" }, phDone: { ar: "أدوية الوصفة جاهزة ✓", fr: "Médicaments de l'ordonnance prêts ✓" },
+    svcSub_lab: { ar: "🧪 هون بتجهز نتائج الفحوصات", fr: "🧪 Les résultats d'analyses se récupèrent ici" }, svcSub_rad: { ar: "🩻 هون بتنعمل الصور وبتجهز", fr: "🩻 Les images se font et se récupèrent ici" },
+    svcSub_ph: { ar: "💊 هون بتجهز أدوية الوصفات", fr: "💊 Les ordonnances se préparent ici" }, svcSub_bb: { ar: "🩸 أكياس الدم بالبرّاد على +٤°", fr: "🩸 Poches de sang conservées à +4 °C" },
+    svcSub_adm: { ar: "🛎️ كل مريض فات اليوم ووين صار", fr: "🛎️ Chaque patient admis aujourd'hui et où il en est" }, svcSub_ns: { ar: "🔄 التسليم بين الشفتات + ⏰ مواعيدك", fr: "🔄 Relève entre équipes + ⏰ tes rendez-vous" },
+    svcSub_or: { ar: "🔪 غرفة العمليات — بتجي حالاتها قريباً 🔜", fr: "🔪 Bloc opératoire — ses cas arrivent bientôt 🔜" }, svcSub_sspi: { ar: "🛏️ الإنعاش بعد العملية (SSPI) — 🔜", fr: "🛏️ Salle de réveil (SSPI) — 🔜" },
+    svcSub_psy: { ar: "🧠 الطب النفسي — بتجي حالاتو لما يصير في درس عنو 🔜", fr: "🧠 Psychiatrie — ses cas viendront avec une leçon 🔜" }, svcSub_ster: { ar: "🧺 التعقيم: العدّة بتتغسل، بتتعقّم بالـ Autoclave وبتتغلّف قبل ما ترجع عالأقسام", fr: "🧺 Stérilisation : lavage, autoclave, emballage avant retour dans les services" },
+    svcSub_cln: { ar: "🧹 التنظيف: الشراشف النضاف والوسخين ما بيختلطو أبداً", fr: "🧹 Entretien : linge propre et sale ne se croisent jamais" }, svcSub_arch: { ar: "🗄️ ملفّات المرضى", fr: "🗄️ Dossiers des patients" }, svcSub_stf: { ar: "☕ لوح الإعلانات والرواتب", fr: "☕ Tableau d'affichage et salaires" },
+    admWait: { ar: "ناطر", fr: "en attente" }, admNone: { ar: "لسّا ما فات حدا اليوم", fr: "Personne d'admis aujourd'hui" },
+    hoWhat: { ar: "🔄 التسليم (Transmissions): قبل ما تفلّ، خبّر الشفت الجاية عن مرضى الطابق — ٣ أسئلة، مرّة بكل شفت", fr: "🔄 Relève : avant de partir, transmets les patients de l'étage — 3 questions, une fois par équipe" },
+    hoNone: { ar: "ما في مرضى بالتخوت بهالطابق هلّق — فوّت مرضى من 🪑 الانتظار أوّل", fr: "Aucun patient dans les lits de cet étage — fais entrer des patients d'abord" },
+    hoQ_motif: { ar: "شو مشكلة {n} ({d})؟", fr: "Quel est le problème de {n} ({d}) ?" }, hoQ_surv: { ar: "شو لازم الشفت الجاية تراقب عند {n}؟", fr: "Que doit surveiller l'équipe suivante chez {n} ?" }, hoQ_st: { ar: "كيف وضع {n} هلّق؟", fr: "Comment va {n} maintenant ?" },
+    hoSend: { ar: "📤 سلّم الشفت ({n}/3)", fr: "📤 Faire la relève ({n}/3)" }, hoOk: { ar: "🔄 سلّمت الشفت: {n}/3 صح", fr: "🔄 Relève faite : {n}/3 juste" }, hoWhy: { ar: "تسليم واضح = استمرارية العناية وسلامة المريض", fr: "Une relève claire = continuité des soins et sécurité" },
+    hoDone: { ar: "✅ سلّمت هالشفت ({n}/3)", fr: "✅ Relève faite pour cette équipe ({n}/3)" }, hoNext: { ar: "الشفتات: ٧ الصبح · ٣ الضهر · ١١ بالليل", fr: "Équipes : 7 h · 15 h · 23 h" }, hoBoard: { ar: "📋 {n} مريض بتخوت هالطابق", fr: "📋 {n} patient(s) dans les lits" },
+    dcBtn: { ar: "خروج + تثقيف (Sortie)", fr: "Sortie + éducation" }, dcT: { ar: "خروج {n}", fr: "Sortie de {n}" }, dcHow: { ar: "اختار شو بتقلّو قبل ما يروح عالبيت (التثقيف) — الصح بس", fr: "Choisis ce que tu lui dis avant le retour à domicile — seulement le juste" },
+    dcGo: { ar: "🚪 خلّص الخروج", fr: "🚪 Valider la sortie" }, dcNone: { ar: "اختار شي تقلّو قبل ما يطلع", fr: "Choisis d'abord quoi lui dire" }, dcOk: { ar: "🚪 {n} طلع عالبيت — التخت فضي", fr: "🚪 {n} rentre chez lui — lit libéré" },
+    dcMiss: { ar: "نقص: {m} · غلط: {b}", fr: "Manquait : {m} · erreurs : {b}" }, dcAll: { ar: "تثقيف كامل 👏", fr: "Éducation complète 👏" }, dcDone: { ar: "✅ {n} طلع عالبيت", fr: "✅ {n} est sorti" },
+    dcGone: { ar: "🛏️ تخت نضيف وفاضي", fr: "🛏️ Lit propre et libre" }, dcHome: { ar: "طلع", fr: "sorti" }, dcGoneT: { ar: "🚪 {n} طلع عالبيت", fr: "🚪 {n} est rentré chez lui" }, dcGoneW: { ar: "التخت فاضي لمريض جديد", fr: "Lit libre pour un nouveau patient" },
+    genInfo: { ar: "معلومات عامة — مش من دروسك", fr: "Notions générales — pas dans tes cours" },
+    famBtn: { ar: "زيارة العيلة: عندن سؤال", fr: "Visite de la famille : une question" }, famOf: { ar: "تبع {n}", fr: "de {n}" }, famOk: { ar: "👨‍👩‍👦 جاوبت العيلة صح", fr: "👨‍👩‍👦 Bonne réponse à la famille" }, famNo: { ar: "👨‍👩‍👦 مش هيك…", fr: "👨‍👩‍👦 Pas tout à fait…" },
+    incBtn: { ar: "عبّي تقرير الحادث (Fiche d'événement indésirable)", fr: "Remplir la fiche d'événement indésirable" }, incT: { ar: "تقرير حادث — Fiche d'événement indésirable", fr: "Fiche d'événement indésirable" },
+    incWhat: { ar: "صار غلط ضرّ المريض. التبليغ مش عقاب: هو لنتعلّم ونحسّن الجودة وسلامة المريض.", fr: "Une erreur a nui au patient. Déclarer n'est pas une punition : c'est pour apprendre et améliorer la qualité et la sécurité." },
+    incFact: { ar: "شو صار + الساعة", fr: "Ce qui s'est passé + l'heure" }, incSend: { ar: "📤 بعت التقرير", fr: "📤 Envoyer la fiche" }, incRetry: { ar: "🔁 عيد الأسئلة", fr: "🔁 Recommencer" }, incAgain: { ar: "لازم ٢ من ٣ صح — جرّب كمان مرّة", fr: "Il faut 2 sur 3 — réessaie" },
+    incOk: { ar: "⚠️ بعتت تقرير الحادث", fr: "⚠️ Fiche envoyée" }, incWhy: { ar: "التبليغ عن الحادث = إدارة المخاطر وسلامة المريض (درس الجودة)", fr: "Déclarer = gestion des risques et sécurité du patient (cours qualité)" }, incDone: { ar: "✅ التقرير انبعت", fr: "✅ Fiche envoyée" },
+    incSrc: { ar: "من دروسك: الجودة (إدارة المخاطر وسلامة المريض، الملف الطبي) + القانون", fr: "Tes cours : qualité (gestion des risques, dossier médical) + législation" },
+    incAsk: { ar: "⚠️ صار أذى للمريض — عبّي تقرير الحادث بورقة التخت (+30 ل.ن)", fr: "⚠️ Acte dangereux — remplis la fiche d'événement indésirable (+30 L.N)" }, incAskW: { ar: "الزر ⚠️ تحت «🧼 روتين التمريض»", fr: "Le bouton ⚠️ sous «🧼 Routines»" },
     title: { ar: "🔴 حالة لايف", fr: "🔴 Cas en direct" }, close: { ar: "سكّر", fr: "Fermer" },
     // 28z 🏥 the hospital floor
     hosp: { ar: "🏥 المستشفى", fr: "🏥 L'hôpital" }, here: { ar: "📍 إنت هون", fr: "📍 Tu es ici" }, corr: { ar: "الممرّ", fr: "Couloir" },
@@ -187,6 +227,8 @@
   var GROUPS = [["eval", ["eval", "pouls", "swallow", "gly", "ecg", "mon", "bilan", "gds", "bio"]], ["pos", ["pos_semi", "pos_trend", "pos_pls", "pos_tete30", "leg_down", "repos"]],
     ["soin", ["acc", "airway", "o2", "vent", "guedel", "vvp", "remp", "stop", "stopdrug", "immob", "cpr", "shock", "sonde", "jeun", "es", "isol", "refroid", "calm", "drink"]],
     ["rx", ["adre", "nora", "atro", "dobu", "deca", "atb", "sang", "trinit", "aspi", "hep", "furo", "mann", "morph", "g30", "insu", "digi", "vitk", "digo", "aero", "para", "bicar", "phen"]]];
+  // 29e: the gestures added to the bank (D.acts with g + dk) join their group once, after the old ones
+  function grpAdd() { if (!D || grpAdd.done) return; grpAdd.done = 1; var GI = { ev: 0, pos: 1, soin: 2, rx: 3 }; Object.keys(D.acts || {}).forEach(function (a) { var A = D.acts[a], gi = GI[A.g]; if (gi == null) return; if (GROUPS[gi][1].indexOf(a) < 0) GROUPS[gi][1].push(a); }); }
   function q(s) { return ov && ov.querySelector(s); }
   function pk(i) { return i ? "b" : "a"; }
   function X(k) { return st && st.P[k === "b" ? 1 : 0]; }
@@ -222,7 +264,7 @@
     if (location.hash !== "#live") try { history.pushState({ lc: 1 }, "", "#live"); } catch (e) { location.hash = "live"; }
     q(".lcr-tt").textContent = depTitle();
     nurse = nurse || { x: 180, y: 560, dir: -Math.PI / 2, pts: [], goal: null, walkT: 0 };
-    L.start(onState).then(function (X) { D = X; if (!X) return; G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); flTabs();
+    L.start(onState).then(function (X) { D = X; if (!X) return; grpAdd(); G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); flTabs();
       if (w.NursinPay) setTimeout(function () { w.NursinPay.sync(); }, 1500); });   // 29d 💵 the past days of the payroll (once each)
     if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 1200); }   // 29d ⏰
   }
@@ -363,13 +405,85 @@
     c.fillStyle = col ? "#fff" : P.ink; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.fillText(txt, x, y + 0.5);
   }
   var LBL = { mon: [147, 76], o2: [199, 45], sink: [316, 326], cart: [181, 287], defib: [44, 325], drugs: [44, 520], phone: [299, 518] };
-  function bed(c, P, s, bl) {
-    c.fillStyle = "rgba(0,0,0,.10)"; rr(c, s.x + 3, s.y + 4, s.w, s.h, 10); c.fill();
-    c.fillStyle = P.frame; rr(c, s.x, s.y, s.w, s.h, 10); c.fill();
-    c.fillStyle = P.matt; rr(c, s.x + 5, s.y + 5, s.w - 10, s.h - 10, 7); c.fill();
-    c.fillStyle = P.pil; rr(c, s.x + 14, s.y + 9, s.w - 28, 22, 8); c.fill();
-    c.fillStyle = bl; rr(c, s.x + 7, s.y + 44, s.w - 14, s.h - 51, 6); c.fill();
+  /* 29e 🎨 «المنظر الجديد» (Abdullah, Nov 4 7:13 AM «ممكن تغيّر المنظر لأحسن إذا بيصير أحسن»): a drawn, game-like top-down hospital — vinyl floor
+     tiles tinted by the ward, thick walls with a baseboard and a framed sliding door, real beds (headboard, footboard + chart, side rails,
+     wheels, mattress, pillow, folded blanket), a bedside monitor per bed with a moving ECG, IV poles with a drip, curtains on ceiling rails,
+     soft ceiling-light pools. Everything is vector, drawn ONCE into the cached background (only the monitors, the patients and the nurses move). */
+  function tint(hex, a) { var n = parseInt(hex.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; }
+  function shell(c, P, dk, opt) {
+    opt = opt || {}; var nt = night(), W0 = E.W, H0 = E.H, col = DCOL[dk] || "#0f766e";
+    c.fillStyle = opt.floor || P.floor; c.fillRect(0, 0, W0, H0);
+    var tA = opt.tileA || (nt ? "rgba(255,255,255,.025)" : "rgba(255,255,255,.55)"), tB = opt.tileB || (nt ? "rgba(0,0,0,.18)" : "rgba(15,60,70,.045)"), sz = opt.tile || 24;
+    for (var gy = 12, row = 0; gy < H0 - 12; gy += sz, row++) for (var gx = 12, cl = 0; gx < W0 - 12; gx += sz, cl++) {
+      c.fillStyle = (row + cl) % 2 ? tB : tA; c.fillRect(gx, gy, sz, sz);
+      c.fillStyle = nt ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.7)"; c.fillRect(gx + 1, gy + 1, sz - 2, 1);           // the tile's lit edge
+    }
+    c.strokeStyle = P.tile; c.lineWidth = 0.6; c.beginPath(); for (var lx = 12; lx < W0 - 11; lx += sz) { c.moveTo(lx, 12); c.lineTo(lx, H0 - 12); } for (var ly = 12; ly < H0 - 11; ly += sz) { c.moveTo(12, ly); c.lineTo(W0 - 12, ly); } c.stroke();
+    if (dk && dk !== "er") { c.fillStyle = tint(col, nt ? 0.07 : 0.06); c.fillRect(12, 12, W0 - 24, H0 - 24); }
+    // soft pools of ceiling light
+    (opt.lights || [[90, 150], [270, 150], [180, 400]]).forEach(function (L0) { var g = c.createRadialGradient(L0[0], L0[1], 4, L0[0], L0[1], 120); g.addColorStop(0, nt ? "rgba(253,230,138,.07)" : "rgba(255,255,240,.45)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W0, H0); });
+    // walls: a thick top band (seen slightly from above), a baseboard, a darker outer line
+    var wt = 12, wl = nt ? "#2b424b" : "#7fa8a1", wf = nt ? "#3b5560" : "#a9c9c3", bb = nt ? "#1a2a30" : "#5f8a83";
+    c.fillStyle = wl; c.fillRect(0, 0, W0, wt); c.fillRect(0, H0 - wt, W0, wt); c.fillRect(0, 0, wt, H0); c.fillRect(W0 - wt, 0, wt, H0);
+    c.fillStyle = wf; c.fillRect(wt, wt - 4, W0 - 2 * wt, 4); c.fillStyle = tint(col, 0.55); c.fillRect(wt, wt - 1.5, W0 - 2 * wt, 1.5);    // the ward's colour stripe
+    c.fillStyle = bb; c.fillRect(wt, wt, W0 - 2 * wt, 1.2); c.fillRect(wt, H0 - wt - 1.2, W0 - 2 * wt, 1.2); c.fillRect(wt, wt, 1.2, H0 - 2 * wt); c.fillRect(W0 - wt - 1.2, wt, 1.2, H0 - 2 * wt);
+    c.strokeStyle = nt ? "#0d171b" : "#3f6660"; c.lineWidth = 1; c.strokeRect(0.5, 0.5, W0 - 1, H0 - 1);
+    // the door at the bottom: frame posts, two sliding leaves (half open), a floor mat
+    c.fillStyle = opt.floor || P.floor; c.fillRect(146, H0 - wt, 68, wt);
+    c.fillStyle = nt ? "#64748b" : "#475569"; c.fillRect(142, H0 - wt - 2, 5, wt + 2); c.fillRect(213, H0 - wt - 2, 5, wt + 2);
+    c.fillStyle = nt ? "rgba(148,197,232,.35)" : "rgba(186,230,253,.85)"; c.fillRect(147, H0 - 7, 18, 4); c.fillRect(195, H0 - 7, 18, 4);
+    c.strokeStyle = nt ? "#94a3b8" : "#64748b"; c.lineWidth = 0.8; c.strokeRect(147, H0 - 7, 18, 4); c.strokeRect(195, H0 - 7, 18, 4);
+    c.fillStyle = nt ? "#1e293b" : "#94a3b8"; rr(c, 156, H0 - wt - 16, 48, 12, 3); c.fill(); c.fillStyle = nt ? "#334155" : "#cbd5e1"; for (var mi = 0; mi < 5; mi++) c.fillRect(160 + mi * 9, H0 - wt - 14, 5, 8);
+    (opt.windows || []).forEach(function (wx) { c.fillStyle = nt ? "#1e3a5f" : "#bfe3f5"; c.fillRect(wx, 2, 40, 7); c.fillStyle = nt ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.75)"; c.fillRect(wx + 3, 3, 12, 2); c.strokeStyle = nt ? "#64748b" : "#5f8a83"; c.lineWidth = 1; c.strokeRect(wx, 2, 40, 7); c.beginPath(); c.moveTo(wx + 20, 2); c.lineTo(wx + 20, 9); c.stroke(); });
   }
+  function bed(c, P, s, bl) {
+    var nt = night(), x = s.x, y = s.y, W0 = s.w, H0 = s.h;
+    c.fillStyle = "rgba(0,0,0,.16)"; rr(c, x + 4, y + 6, W0, H0, 9); c.fill();                                               // shadow
+    c.fillStyle = "#1f2937"; [[x + 6, y + 8], [x + W0 - 6, y + 8], [x + 6, y + H0 - 6], [x + W0 - 6, y + H0 - 6]].forEach(function (p) { c.beginPath(); c.arc(p[0], p[1], 3.2, 0, 7); c.fill(); });   // wheels
+    c.fillStyle = nt ? "#64748b" : "#94a3b8"; rr(c, x + 2, y + 6, W0 - 4, H0 - 10, 8); c.fill();                                // the frame
+    c.fillStyle = P.matt; rr(c, x + 6, y + 12, W0 - 12, H0 - 22, 7); c.fill();                                                 // mattress
+    c.fillStyle = nt ? "rgba(0,0,0,.12)" : "rgba(15,23,42,.06)"; rr(c, x + 6, y + H0 - 26, W0 - 12, 16, 6); c.fill();
+    var hg = c.createLinearGradient(x, y, x, y + 12); hg.addColorStop(0, nt ? "#94a3b8" : "#e2e8f0"); hg.addColorStop(1, nt ? "#475569" : "#94a3b8");
+    c.fillStyle = hg; rr(c, x - 1, y, W0 + 2, 11, 5); c.fill(); c.strokeStyle = nt ? "#1e293b" : "#64748b"; c.lineWidth = 0.8; c.stroke();     // headboard
+    c.fillStyle = tint(bl, 0.9); rr(c, x + 6, y + 2.5, W0 - 12, 4, 2); c.fill();
+    c.fillStyle = nt ? "#475569" : "#cbd5e1"; rr(c, x - 1, y + H0 - 9, W0 + 2, 9, 4); c.fill(); c.strokeStyle = nt ? "#1e293b" : "#64748b"; c.stroke();   // footboard
+    c.fillStyle = nt ? "#e2e8f0" : "#fffdf5"; rr(c, x + W0 / 2 - 9, y + H0 - 16, 18, 11, 1.5); c.fill(); c.fillStyle = "#64748b"; c.fillRect(x + W0 / 2 - 4, y + H0 - 17, 8, 2.5);   // the chart clipboard
+    c.fillStyle = "#94a3b8"; for (var cl = 0; cl < 3; cl++) c.fillRect(x + W0 / 2 - 6, y + H0 - 13 + cl * 2.6, 12, 0.8);
+    c.fillStyle = P.pil; rr(c, x + 14, y + 13, W0 - 28, 22, 9); c.fill(); c.strokeStyle = nt ? "rgba(0,0,0,.25)" : "rgba(15,23,42,.10)"; c.lineWidth = 1; c.beginPath(); c.moveTo(x + 20, y + 24); c.quadraticCurveTo(x + W0 / 2, y + 28, x + W0 - 20, y + 24); c.stroke();
+    // the blanket with its folded top band and quilt lines
+    c.fillStyle = bl; rr(c, x + 7, y + 44, W0 - 14, H0 - 58, 6); c.fill();
+    c.fillStyle = "rgba(255,255,255,.35)"; rr(c, x + 7, y + 44, W0 - 14, 9, 5); c.fill();
+    c.strokeStyle = "rgba(255,255,255,.22)"; c.lineWidth = 0.8; c.beginPath(); for (var q2 = y + 66; q2 < y + H0 - 18; q2 += 16) { c.moveTo(x + 9, q2); c.lineTo(x + W0 - 9, q2); } c.stroke();
+    // side rails (half length, posts) on both sides
+    c.strokeStyle = nt ? "#cbd5e1" : "#64748b"; c.lineWidth = 2; [x + 2.5, x + W0 - 2.5].forEach(function (rx) { c.beginPath(); c.moveTo(rx, y + 30); c.lineTo(rx, y + 84); c.stroke(); });
+    c.fillStyle = nt ? "#e2e8f0" : "#475569"; [x + 2.5, x + W0 - 2.5].forEach(function (rx) { [30, 57, 84].forEach(function (py) { c.beginPath(); c.arc(rx, y + py, 1.6, 0, 7); c.fill(); }); });
+  }
+  // the IV pole of a bed: a 5-wheel base, the pole, a hook, the bag (fluid level), the drip chamber
+  function ivPole(c, px, py, nt, bag) {
+    c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(px + 1.5, py + 32, 8, 3.5, 0, 0, 7); c.fill();
+    c.strokeStyle = nt ? "#94a3b8" : "#64748b"; c.lineWidth = 1.1; for (var k = 0; k < 5; k++) { var an = k * 1.2566; c.beginPath(); c.moveTo(px, py + 31); c.lineTo(px + Math.cos(an) * 7, py + 31 + Math.sin(an) * 3); c.stroke(); }
+    c.lineWidth = 1.8; c.beginPath(); c.moveTo(px, py + 31); c.lineTo(px, py - 24); c.stroke(); c.lineWidth = 1.2; c.beginPath(); c.moveTo(px - 6, py - 24); c.lineTo(px + 6, py - 24); c.stroke();
+    c.fillStyle = nt ? "rgba(186,230,253,.55)" : "rgba(224,242,254,.95)"; rr(c, px - 5.5, py - 23, 11, 15, 3.5); c.fill(); c.strokeStyle = nt ? "#7dd3fc" : "#7aa7bf"; c.lineWidth = 0.8; c.stroke();
+    c.fillStyle = bag || (nt ? "#38bdf8" : "#7cc4ef"); rr(c, px - 4.5, py - 17, 9, 8, 2.5); c.fill();
+    c.fillStyle = nt ? "#e0f2fe" : "#ffffff"; rr(c, px - 1.5, py - 7, 3, 5, 1); c.fill();
+  }
+  // the bedside monitor (screen only; the trace is drawn live in draw())
+  function monBox(c, mx, my, nt) {
+    c.fillStyle = "rgba(0,0,0,.2)"; rr(c, mx + 1.5, my + 2, 22, 17, 3); c.fill();
+    c.fillStyle = nt ? "#334155" : "#1f2937"; rr(c, mx, my, 22, 17, 3); c.fill(); c.fillStyle = "#020617"; rr(c, mx + 2, my + 2, 18, 11, 1.5); c.fill();
+    c.fillStyle = "#64748b"; c.fillRect(mx + 4, my + 14.5, 3, 1.2); c.fillRect(mx + 9, my + 14.5, 3, 1.2); c.fillStyle = "#22c55e"; c.beginPath(); c.arc(mx + 17.5, my + 15, 0.9, 0, 7); c.fill();
+  }
+  // a curtain seen from above: a ceiling rail with soft folds
+  function curtain(c, x0, y0, x1, y1, nt, col) {
+    var n = Math.max(4, Math.round(Math.hypot(x1 - x0, y1 - y0) / 6)), dx = (x1 - x0) / n, dy = (y1 - y0) / n, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.strokeStyle = nt ? "#1e3a4c" : "#6b8fa3"; c.lineWidth = 6.5; c.beginPath();
+    for (var i = 0; i <= n; i++) { var o = (i % 2 ? 2.4 : -2.4); c[i ? "lineTo" : "moveTo"](x0 + dx * i + nx * o, y0 + dy * i + ny * o); } c.stroke();
+    c.strokeStyle = col || (nt ? "#4f7d99" : "#bfe1f2"); c.lineWidth = 4.4; c.stroke();
+    c.strokeStyle = nt ? "rgba(255,255,255,.18)" : "rgba(255,255,255,.75)"; c.lineWidth = 1; c.stroke();
+    c.lineCap = "butt"; c.lineJoin = "miter";
+  }
+  var MONP = { a: { x: 13, y: 70 }, b: { x: 326, y: 70 } };          // 29e: where each bed's monitor stands (by its head, against the wall)
   var SCR = { x0: 174, x1: 186, y0: 84, y1: 198 };              // 28y: the paravent between the beds (an obstacle on the walking grid too)
   function zig(c) { var n = 6, hgt = (SCR.y1 - SCR.y0) / n; c.beginPath(); for (var i = 0; i <= n; i++) c[i ? "lineTo" : "moveTo"](i % 2 ? SCR.x1 : SCR.x0, SCR.y0 + i * hgt); c.stroke(); }
   function screenGrid(G) {
@@ -378,35 +492,62 @@
     G.scr = 1; return G;
   }
   function room() {
-    var P = pal(), o = d.createElement("canvas"); o.width = cv.width; o.height = cv.height; var c = o.getContext("2d"); c.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-    c.fillStyle = P.floor; c.fillRect(0, 0, E.W, E.H);
-    c.strokeStyle = P.tile; c.lineWidth = 1; for (var gx = 12; gx < E.W; gx += 24) { c.beginPath(); c.moveTo(gx, 12); c.lineTo(gx, E.H - 12); c.stroke(); } for (var gy = 12; gy < E.H; gy += 24) { c.beginPath(); c.moveTo(12, gy); c.lineTo(E.W - 12, gy); c.stroke(); }
-    c.fillStyle = P.wall; c.fillRect(0, 0, E.W, 12); c.fillRect(0, E.H - 12, E.W, 12); c.fillRect(0, 0, 12, E.H); c.fillRect(E.W - 12, 0, 12, E.H);
-    c.fillStyle = P.floor; c.fillRect(146, E.H - 12, 68, 12);
-    var S = E.stations; bed(c, P, S.bed1, P.b1); bed(c, P, S.bed2, P.b2);
-    // 28y 🧴 each bed has its own IV pole with its own soluté (pied à perfusion) — taking the IV for one bed takes nothing from the other
-    [S.bed1, S.bed2].forEach(function (s, i) { var px = i ? s.x - 4 : s.x + s.w + 4, py = s.y + 54;
-      c.strokeStyle = "#94a3b8"; c.lineWidth = 1.4; c.beginPath(); c.moveTo(px, py - 22); c.lineTo(px, py + 30); c.stroke(); c.beginPath(); c.moveTo(px - 4, py + 30); c.lineTo(px + 4, py + 30); c.stroke();
-      c.fillStyle = night() ? "#9cc7dd" : "#dbeef8"; rr(c, px - 5, py - 21, 10, 13, 3); c.fill(); c.strokeStyle = "#7aa7bf"; c.lineWidth = 0.8; c.stroke(); });
-    // 28y 🩻 the curtain between the two beds (paravent, Abdullah: «شادر بالنص») — seen from above: a folding screen; everybody walks around it
-    c.lineCap = "round"; c.strokeStyle = night() ? "#3a5566" : "#7d8c96"; c.lineWidth = 5.5; zig(c); c.strokeStyle = night() ? "#5d86a3" : "#bcdcf0"; c.lineWidth = 3.6; zig(c); c.lineCap = "butt";
+    var P = pal(), nt = night(), dk = L.dep(), o = d.createElement("canvas"); o.width = cv.width; o.height = cv.height; var c = o.getContext("2d"); c.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    shell(c, P, dk, { lights: [[76, 140], [284, 140], [180, 330], [180, 520]], windows: [36, 284] });
+    var S = E.stations;
+    // the curtain rails around each bed (ceiling, dashed) with the curtain bunched at the head
+    [S.bed1, S.bed2].forEach(function (s) { c.strokeStyle = nt ? "rgba(148,163,184,.35)" : "rgba(100,116,139,.35)"; c.setLineDash([3, 3]); c.lineWidth = 1; c.strokeRect(s.x - 7, s.y - 4, s.w + 14, s.h + 10); c.setLineDash([]);
+      curtain(c, s.x - 7, s.y - 4, s.x - 7, s.y + 22, nt); curtain(c, s.x + s.w + 7, s.y - 4, s.x + s.w + 7, s.y + 22, nt); });
+    bed(c, P, S.bed1, P.b1); bed(c, P, S.bed2, P.b2);
+    // 28y 🧴 each bed has its own IV pole with its own soluté — 29e drawn as a real pole
+    [S.bed1, S.bed2].forEach(function (s, i) { var px = i ? s.x - 4 : s.x + s.w + 4, py = s.y + 54; ivPole(c, px, py, nt); });
+    // 29e 📟 a monitor by each bed's head (the trace moves when he is wired: «📟 Monitorage» done)
+    monBox(c, MONP.a.x, MONP.a.y, nt); monBox(c, MONP.b.x, MONP.b.y, nt);
+    // 28y 🩻 the paravent between the beds — 29e a curtain on its rail
+    curtain(c, (SCR.x0 + SCR.x1) / 2, SCR.y0, (SCR.x0 + SCR.x1) / 2, SCR.y1, nt);
+    c.fillStyle = nt ? "#94a3b8" : "#64748b"; c.beginPath(); c.arc((SCR.x0 + SCR.x1) / 2, SCR.y0, 2, 0, 7); c.arc((SCR.x0 + SCR.x1) / 2, SCR.y1, 2, 0, 7); c.fill();
     label(c, P, (SCR.x0 + SCR.x1) / 2, SCR.y1 + 12, "🩻 " + (FR() ? "Paravent" : "ستارة"));
-    var m = S.mon; c.fillStyle = "#26343c"; rr(c, m.x, m.y, m.w, m.h, 5); c.fill(); c.fillStyle = "#0b1418"; rr(c, m.x + 3, m.y + 3, m.w - 6, m.h - 9, 3); c.fill();
-    var x2 = S.o2; c.fillStyle = "#2fa86a"; rr(c, x2.x, x2.y, 20, x2.h, 4); c.fill(); c.fillStyle = "#1f8a55"; rr(c, x2.x + 23, x2.y + 2, 10, x2.h - 2, 5); c.fill();
-    var sk = S.sink; c.fillStyle = night() ? "#cfdade" : "#f6fafb"; rr(c, sk.x, sk.y, sk.w, sk.h, 8); c.fill(); c.fillStyle = "#cde3ea"; c.beginPath(); c.ellipse(sk.x + 13, sk.y + 25, 8, 15, 0, 0, 7); c.fill();
-    var ca = S.cart; c.fillStyle = "#d64545"; rr(c, ca.x + 2, ca.y + 2, ca.w - 4, ca.h - 4, 6); c.fill(); c.fillStyle = "#fff"; c.fillRect(ca.x + ca.w / 2 - 2, ca.y + 8, 4, 12); c.fillRect(ca.x + ca.w / 2 - 6, ca.y + 12, 12, 4);
-    var df = S.defib; c.fillStyle = "#f59e0b"; rr(c, df.x, df.y, df.w, df.h, 6); c.fill(); c.fillStyle = "#111"; rr(c, df.x + 6, df.y + 6, df.w - 12, 12, 2); c.fill();
-    var dg = S.drugs; c.fillStyle = night() ? "#2c4b5c" : "#d4ecf7"; rr(c, dg.x, dg.y, dg.w, dg.h, 5); c.fill(); var pills = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ec4899"];
-    for (var sh = 0; sh < 4; sh++) for (var pp = 0; pp < 3; pp++) { c.fillStyle = pills[(sh + pp) % 6]; rr(c, dg.x + 5 + pp * 8, dg.y + 12 + sh * 22, 6, 9, 2); c.fill(); }
-    var ph = S.phone; c.fillStyle = night() ? "#6b5338" : "#c89f6b"; rr(c, ph.x, ph.y, ph.w, ph.h, 6); c.fill(); c.fillStyle = "#1f2a30"; rr(c, ph.x + 46, ph.y + 4, 34, 18, 3); c.fill(); c.fillStyle = "#5fd6c6"; c.fillRect(ph.x + 49, ph.y + 7, 28, 12);
-    c.fillStyle = "#c0392b"; rr(c, ph.x + 10, ph.y + 9, 22, 14, 5); c.fill();
+    // the central monitor cart
+    var m = S.mon; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, m.x + 2, m.y + 3, m.w, m.h, 5); c.fill();
+    var mg = c.createLinearGradient(0, m.y, 0, m.y + m.h); mg.addColorStop(0, "#3b4a54"); mg.addColorStop(1, "#1f2a31"); c.fillStyle = mg; rr(c, m.x, m.y, m.w, m.h, 5); c.fill();
+    c.fillStyle = "#020617"; rr(c, m.x + 3, m.y + 3, m.w - 6, m.h - 9, 3); c.fill(); c.fillStyle = "rgba(61,245,154,.08)"; rr(c, m.x + 3, m.y + 3, m.w - 6, m.h - 9, 3); c.fill();
+    // O₂ wall outlet + cylinder
+    var x2 = S.o2; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, x2.x + 2, x2.y + 2, 20, x2.h, 4); c.fill();
+    var og = c.createLinearGradient(x2.x, 0, x2.x + 20, 0); og.addColorStop(0, "#1f8a55"); og.addColorStop(0.5, "#34d399"); og.addColorStop(1, "#15803d"); c.fillStyle = og; rr(c, x2.x, x2.y, 20, x2.h, 4); c.fill();
+    c.fillStyle = "#f8fafc"; c.beginPath(); c.arc(x2.x + 10, x2.y + 6, 3, 0, 7); c.fill(); c.fillStyle = "#1f8a55"; rr(c, x2.x + 23, x2.y + 2, 10, x2.h - 2, 5); c.fill(); c.fillStyle = "#e2e8f0"; c.beginPath(); c.arc(x2.x + 28, x2.y + 6, 2.2, 0, 7); c.fill();
+    // the sink + the 🧴 hand-rub dispenser (29e 🧼 hygiène des mains)
+    var sk = S.sink; c.fillStyle = "rgba(0,0,0,.16)"; rr(c, sk.x + 2, sk.y + 3, sk.w, sk.h, 8); c.fill(); c.fillStyle = nt ? "#cfdade" : "#f8fbfc"; rr(c, sk.x, sk.y, sk.w, sk.h, 8); c.fill(); c.strokeStyle = nt ? "#94a3b8" : "#cbd5e1"; c.lineWidth = 1; c.stroke();
+    var sg = c.createRadialGradient(sk.x + 13, sk.y + 25, 2, sk.x + 13, sk.y + 25, 15); sg.addColorStop(0, "#e0f2fe"); sg.addColorStop(1, "#9cc9d9"); c.fillStyle = sg; c.beginPath(); c.ellipse(sk.x + 13, sk.y + 25, 8, 15, 0, 0, 7); c.fill();
+    c.fillStyle = "#94a3b8"; c.fillRect(sk.x + 20, sk.y + 22, 7, 3); c.beginPath(); c.arc(sk.x + 13, sk.y + 25, 1.6, 0, 7); c.fillStyle = "#64748b"; c.fill();
+    c.fillStyle = "#e2e8f0"; rr(c, sk.x + 6, sk.y - 14, 14, 11, 3); c.fill(); c.fillStyle = "#38bdf8"; rr(c, sk.x + 8, sk.y - 12, 10, 5, 2); c.fill(); c.fillStyle = "#475569"; c.fillRect(sk.x + 11, sk.y - 3, 4, 2);
+    // the emergency cart (drawers, handle), the defibrillator, the drug cabinet (glass, boxes), the desk (computer, phone, files)
+    var ca = S.cart; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, ca.x + 4, ca.y + 5, ca.w - 4, ca.h - 4, 6); c.fill();
+    var cg = c.createLinearGradient(0, ca.y, 0, ca.y + ca.h); cg.addColorStop(0, "#ef4444"); cg.addColorStop(1, "#b91c1c"); c.fillStyle = cg; rr(c, ca.x + 2, ca.y + 2, ca.w - 4, ca.h - 4, 6); c.fill();
+    c.fillStyle = "rgba(255,255,255,.22)"; for (var dr = 0; dr < 3; dr++) rr(c, ca.x + 7, ca.y + 6 + dr * 11, ca.w - 14, 8, 2), c.fill();
+    c.fillStyle = "#fff"; c.fillRect(ca.x + ca.w / 2 - 2, ca.y + 9, 4, 12); c.fillRect(ca.x + ca.w / 2 - 6, ca.y + 13, 12, 4); c.fillStyle = "#e5e7eb"; c.fillRect(ca.x + 4, ca.y - 1, ca.w - 8, 3);
+    var df = S.defib; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, df.x + 2, df.y + 3, df.w, df.h, 6); c.fill(); var dg2 = c.createLinearGradient(0, df.y, 0, df.y + df.h); dg2.addColorStop(0, "#fbbf24"); dg2.addColorStop(1, "#d97706"); c.fillStyle = dg2; rr(c, df.x, df.y, df.w, df.h, 6); c.fill();
+    c.fillStyle = "#111827"; rr(c, df.x + 5, df.y + 5, df.w - 10, 13, 2); c.fill(); c.strokeStyle = "#22c55e"; c.lineWidth = 0.9; c.beginPath(); c.moveTo(df.x + 7, df.y + 12); c.lineTo(df.x + 12, df.y + 12); c.lineTo(df.x + 14, df.y + 8); c.lineTo(df.x + 16, df.y + 15); c.lineTo(df.x + 18, df.y + 12); c.lineTo(df.x + df.w - 7, df.y + 12); c.stroke();
+    c.fillStyle = "#1f2937"; c.beginPath(); c.arc(df.x + 10, df.y + 31, 4.5, 0, 7); c.arc(df.x + df.w - 10, df.y + 31, 4.5, 0, 7); c.fill();
+    var dg = S.drugs; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, dg.x + 2, dg.y + 3, dg.w, dg.h, 5); c.fill(); c.fillStyle = nt ? "#2c4b5c" : "#e6f4fa"; rr(c, dg.x, dg.y, dg.w, dg.h, 5); c.fill(); c.strokeStyle = nt ? "#5b8aa3" : "#94b9cc"; c.lineWidth = 1; c.stroke();
+    var pills = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ec4899"];
+    for (var sh = 0; sh < 4; sh++) { c.fillStyle = nt ? "#1c3442" : "#c9e3ef"; c.fillRect(dg.x + 3, dg.y + 21 + sh * 22, dg.w - 6, 1.5); for (var pp = 0; pp < 3; pp++) { c.fillStyle = pills[(sh + pp) % 6]; rr(c, dg.x + 5 + pp * 8, dg.y + 11 + sh * 22, 6, 9, 1.5); c.fill(); c.fillStyle = "rgba(255,255,255,.6)"; c.fillRect(dg.x + 6 + pp * 8, dg.y + 13 + sh * 22, 4, 2); } }
+    c.fillStyle = nt ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.35)"; c.fillRect(dg.x + 2, dg.y + 2, 6, dg.h - 4);
+    var ph = S.phone; c.fillStyle = "rgba(0,0,0,.18)"; rr(c, ph.x + 2, ph.y + 3, ph.w, ph.h, 6); c.fill(); var wg = c.createLinearGradient(0, ph.y, 0, ph.y + ph.h); wg.addColorStop(0, nt ? "#7a5f40" : "#d7b07c"); wg.addColorStop(1, nt ? "#5b4530" : "#b98b55"); c.fillStyle = wg; rr(c, ph.x, ph.y, ph.w, ph.h, 6); c.fill();
+    c.fillStyle = "#1f2a30"; rr(c, ph.x + 46, ph.y + 4, 34, 18, 3); c.fill(); c.fillStyle = "#5fd6c6"; c.fillRect(ph.x + 49, ph.y + 7, 28, 12); c.fillStyle = "#334155"; c.fillRect(ph.x + 60, ph.y + 22, 6, 4);
+    c.fillStyle = "#c0392b"; rr(c, ph.x + 10, ph.y + 9, 22, 14, 5); c.fill(); c.fillStyle = "#fef3c7"; rr(c, ph.x + 84, ph.y + 6, 10, 13, 1.5); c.fill();
     for (var k in LBL) { var s2 = S[k]; label(c, P, LBL[k][0], LBL[k][1], s2.ic + " " + T(s2) + (k === "phone" ? " · 📁" : "")); }
     return o;
   }
   var SC = { ok: "#16a34a", impr: "#ca8a04", unst: "#ea580c", crit: "#dc2626", lost: "#475569" };
   function patient(P, x, s, t) {
     var cxp = s.x + s.w / 2, v = x.v, br = x.st === "lost" ? 0 : Math.sin(t * Math.PI * 2 * Math.max(6, v.fr) / 60) * 1.4, done = x.done;
-    cx.fillStyle = "rgba(0,0,0,.13)"; rr(cx, cxp - 20 - br / 2, s.y + 50, 40 + br, 86, 16); cx.fill();
+    // 29e 🎨 his body under the blanket (it rises with his breathing) and his arms on top of it
+    var blc = s === E.stations.bed2 ? P.b2 : P.b1;
+    cx.fillStyle = "rgba(0,0,0,.10)"; rr(cx, cxp - 19 - br / 2, s.y + 52, 38 + br, 88, 16); cx.fill();
+    cx.fillStyle = blc; rr(cx, cxp - 18 - br / 2, s.y + 48, 36 + br, 86, 16); cx.fill();
+    cx.fillStyle = "rgba(255,255,255,.28)"; rr(cx, cxp - 13 - br / 2, s.y + 52, 14 + br / 2, 74, 8); cx.fill();
+    cx.fillStyle = "rgba(255,255,255,.5)"; rr(cx, cxp - 20 - br / 2, s.y + 46, 40 + br, 8, 4); cx.fill();
+    var sk0 = x.st === "lost" ? "#b8c2c8" : P.skin; cx.fillStyle = sk0; rr(cx, cxp - 22 - br / 2, s.y + 56, 6, 26, 3); cx.fill(); rr(cx, cxp + 16 + br / 2, s.y + 56, 6, 26, 3); cx.fill();
     var sk = P.skin; if (x.st === "lost") sk = "#b8c2c8"; else if (v.spo2 < 88) sk = "#c4d2d8"; else if (v.sys < 85) sk = "#ead8c8"; else if (v.t >= 38.5) sk = "#f0a98f";
     var hx = cxp, hy = s.y + 22; cx.fillStyle = sk; cx.beginPath(); cx.arc(hx, hy, 11, 0, 7); cx.fill();
     cx.fillStyle = x.p.sex === "f" ? "#5b3a26" : P.hair; cx.beginPath(); cx.arc(hx, hy - 4, x.p.sex === "f" ? 12.5 : 11, Math.PI * 1.02, Math.PI * 1.98); cx.fill();
@@ -434,6 +575,15 @@
   var admC = {}, admAt = 0;
   function inBed(x) { if (!x || x.ghost) return false; if (x.over) return true; var dk = L.dep(), now = Date.now(); if (now - admAt > 1000) { admC = {}; admAt = now; }
     var key = dk + x.k; if (!(key in admC)) admC[key] = !!L.admOf(dk, x.k, st && st.amb && st.amb.i); return admC[key]; }
+  // 29e 📟 a bedside monitor: his heart rate + a moving ECG when he is wired («📟 Monitorage» done), a dim standby line otherwise
+  function monTrace(mp, x, t) {
+    if (!mp) return; var X0 = mp.x + 2, Y0 = mp.y + 2, Wd = 18, on = !!(x && x.done && x.done.mon && x.v);
+    cx.lineWidth = 0.9; cx.strokeStyle = on ? (x.st === "crit" ? "#f87171" : "#4ade80") : "rgba(74,222,128,.25)"; cx.beginPath();
+    for (var i = 0; i <= Wd; i++) { var yv = 0; if (on) { var ph = (i / Wd * 1.6 + t * Math.max(30, x.v.fc || 60) / 60) % 1; yv = ph < 0.16 ? 0 : ph < 0.19 ? -0.8 : ph < 0.23 ? 4.2 : ph < 0.27 ? -1.6 : ph > 0.45 && ph < 0.55 ? 0.9 : 0; } cx[i ? "lineTo" : "moveTo"](X0 + i, Y0 + 7 - yv); }
+    cx.stroke();
+    if (on) { cx.font = "700 4.6px " + EMO; cx.fillStyle = "#4ade80"; cx.textAlign = "right"; cx.textBaseline = "top"; cx.direction = "ltr"; cx.fillText(String(Math.round(x.v.fc || 0)), X0 + Wd, Y0 + 0.2);
+      if (Math.sin(t * Math.PI * 2 * (x.v.fc || 60) / 60) > 0.85) { cx.fillStyle = "#f87171"; cx.beginPath(); cx.arc(X0 + 2, Y0 + 2, 1, 0, 7); cx.fill(); } }
+  }
   function draw(t) {
     if (!cv || !cx || !cv.width || !E) return;
     var svc = svcRoom();
@@ -442,12 +592,14 @@
     var P = pal(), S = E.stations, dk0 = L.dep();
     if (svc) { svcDraw(P, dk0, t); }
     else {
-    if (dk0 !== "er") { cx.fillStyle = DCOL[dk0]; cx.globalAlpha = 0.07; cx.fillRect(0, 0, E.W, E.H); cx.globalAlpha = 1; label(cx, P, E.W / 2, 7, depName(dk0), DCOL[dk0]); }
+    if (dk0 !== "er") label(cx, P, E.W / 2, 7, depName(dk0), DCOL[dk0]);
     if (st) {
       var m = S.mon, on = st.P.filter(function (x) { return x.done.mon && inBed(x); });
       on.forEach(function (x, j) { cx.strokeStyle = j ? "#7dd3fc" : "#3df59a"; cx.lineWidth = 1; cx.beginPath(); for (var i = 0; i <= 30; i++) { var ph = (i / 30 * 2 + t * (x.v.fc || 0) / 60) % 1, yv = ph < 0.16 ? 0 : ph < 0.18 ? -1 : ph < 0.21 ? 6 : ph < 0.24 ? -2 : 0; cx[i ? "lineTo" : "moveTo"](m.x + 4 + i, m.y + 10 + j * 10 - yv); } cx.stroke(); });
       st.P.forEach(function (x, i) { if (x.ghost) return; var s = i ? S.bed2 : S.bed1; s.k = pk(i);
-        if (inBed(x)) { patient(P, x, s, t); if (LCa) fuBadge(P, x, s, t); }
+        var gone = isHome(x); monTrace(MONP[pk(i)], !gone && inBed(x) ? x : null, t);                          // 29e 📟 the bedside monitor
+        if (gone) { label(cx, P, s.x + s.w / 2, s.y + s.h / 2 + 6, u("dcGone"), "#0f766e"); label(cx, P, s.x + s.w / 2, s.y + s.h + 12, "🚪 " + T(x.p.nm).split(" ")[0] + " · " + u("dcHome"), "#64748b"); return; }
+        if (inBed(x)) { patient(P, x, s, t); if (LCa) fuBadge(P, x, s, t); routMarks(P, x, s, t); }
         else { cx.fillStyle = night() ? "rgba(15,23,42,.35)" : "rgba(255,255,255,.55)"; rr(cx, s.x + 5, s.y + 40, s.w - 10, s.h - 46, 7); cx.fill();
           label(cx, P, s.x + s.w / 2, s.y + s.h / 2 + 6, u("waitBed"), "#0d9488"); label(cx, P, s.x + s.w / 2, s.y + s.h + 12, "🛏️ " + T(x.p.nm).split(" ")[0] + " · 🪑", "#64748b"); }
       });
@@ -461,12 +613,7 @@
   function nurseDraw(P) {
     var x = nurse.x, y = nurse.y, a = nurse.dir, sw = nurse.pts.length ? Math.sin(nurse.walkT * 12) : LCa && workMine().length ? Math.sin(Date.now() / 90) * 0.8 : 0;   // 29d: his hands work
     cx.fillStyle = "rgba(0,0,0,.18)"; cx.beginPath(); cx.ellipse(x + 2, y + 4, 14, 10, 0, 0, 7); cx.fill();
-    cx.save(); cx.translate(x, y); cx.scale(1.3, 1.3); cx.rotate(a + Math.PI / 2);
-    var sc = rankCol(L.me().uid, "#dc2626");                                                 // 29d: the scrubs take the colour of his rank (👔 purple)
-    cx.fillStyle = sc; [[-8, sw * 4], [8, -sw * 4]].forEach(function (p) { cx.beginPath(); cx.arc(p[0], p[1] - 1, 3, 0, 7); cx.fill(); });
-    cx.fillStyle = sc; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill(); cx.strokeStyle = "#dc2626"; cx.lineWidth = 1.4; cx.stroke();
-    cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill(); cx.fillStyle = P.hair; cx.beginPath(); cx.arc(0, 0.5, 5.6, 0, Math.PI); cx.fill();
-    cx.restore();
+    scrubs(x, y, a, sw, L.me().uid, 1.3, P, "#dc2626");                                     // 29d/29e: scrubs in the colour of his rank (👔 purple), a red ring = me
     if (hands.length) { cx.font = "9px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; hands.forEach(function (it, i) { var bx = x + (i ? 9 : -9) * (hands.length > 1 ? 1 : 0), by = y - 21; cx.fillStyle = "rgba(255,255,255,.92)"; cx.beginPath(); cx.arc(bx, by, 6.5, 0, 7); cx.fill(); cx.fillStyle = "#000"; cx.fillText((D.I[it] || {}).ic || "•", bx, by + 0.5); }); }
   }
 
@@ -555,12 +702,29 @@
     g.fillStyle = P.ink; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = FR() ? "ltr" : "rtl"; g.fillText(p.n, cxp, 7);
     e.key = key; e.spr = { c: c, w: wd, h: ht }; return e.spr;
   }
-  function peerBody(x, y, a, sw, col, P) {
+  function peerBody(x, y, a, sw, col, P, uid) {
     cx.fillStyle = "rgba(0,0,0,.16)"; cx.beginPath(); cx.ellipse(x + 2, y + 4, 13, 9, 0, 0, 7); cx.fill();
-    cx.save(); cx.translate(x, y); cx.scale(1.2, 1.2); cx.rotate(a + Math.PI / 2);
-    cx.fillStyle = col; [[-8, sw * 4], [8, -sw * 4]].forEach(function (q2) { cx.beginPath(); cx.arc(q2[0], q2[1] - 1, 3, 0, 7); cx.fill(); });
-    cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill(); cx.fillStyle = "rgba(255,255,255,.25)"; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill();
-    cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill(); cx.fillStyle = P.hair; cx.beginPath(); cx.arc(0, 0.5, 5.6, 0, Math.PI); cx.fill();
+    scrubs(x, y, a, sw, uid, 1.2, P, null, col);
+  }
+  // 29e 🎨 a nurse seen from above: scrubs top + sleeves in the colour of the RANK (🎓 sky · 🩺 teal · ⭐ navy · 👔 purple), arms swinging,
+  // a scrub cap (his own colour), a stethoscope from 🩺 ممرّض up, the 👔 supervisor's white collar
+  var SCRUB = { tr: "#5aa9d6", nu: "#14b8a6", sr: "#1e3a8a", sup: "#7c3aed" };
+  function scrubsCol(uid) { var t = tagOf(uid); return !t ? SCRUB.tr : t.sup ? SCRUB.sup : SCRUB[t.r.k] || SCRUB.tr; }
+  function scrubs(x, y, a, sw, uid, k, P, ring, cap) {
+    var col = scrubsCol(uid), t = tagOf(uid) || {}, rk = t.sup ? "sup" : (t.r && t.r.k) || "tr";
+    cx.save(); cx.translate(x, y); cx.scale(k, k); cx.rotate(a + Math.PI / 2);
+    cx.fillStyle = P.skin; [[-9, sw * 4], [9, -sw * 4]].forEach(function (p) { cx.beginPath(); cx.arc(p[0], p[1] + 1.5, 2.3, 0, 7); cx.fill(); });            // hands
+    cx.fillStyle = col; [[-8.5, sw * 4], [8.5, -sw * 4]].forEach(function (p) { rr(cx, p[0] - 2.6, p[1] - 4, 5.2, 6, 2.2); cx.fill(); });                 // sleeves
+    cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill();
+    cx.fillStyle = "rgba(255,255,255,.18)"; cx.beginPath(); cx.ellipse(-2, -0.5, 6, 3.5, 0, 0, 7); cx.fill();
+    cx.strokeStyle = "rgba(0,0,0,.25)"; cx.lineWidth = 0.7; cx.beginPath(); cx.moveTo(-3, -5); cx.lineTo(0, -1.5); cx.lineTo(3, -5); cx.stroke();          // V neck
+    if (rk === "sup") { cx.fillStyle = "#f8fafc"; cx.beginPath(); cx.moveTo(-4, -5.2); cx.lineTo(0, -2.2); cx.lineTo(4, -5.2); cx.lineTo(2.5, -6); cx.lineTo(0, -4); cx.lineTo(-2.5, -6); cx.fill(); }
+    if (rk !== "tr") { cx.strokeStyle = "#111827"; cx.lineWidth = 0.9; cx.beginPath(); cx.arc(0, -2.5, 5.2, 0.15 * Math.PI, 0.85 * Math.PI); cx.stroke(); cx.fillStyle = "#94a3b8"; cx.beginPath(); cx.arc(3.8, 3, 1.3, 0, 7); cx.fill(); }
+    cx.fillStyle = "#f8fafc"; rr(cx, 4, 0.5, 3, 2.2, 0.6); cx.fill();                                                                                      // ID badge
+    if (ring) { cx.strokeStyle = ring; cx.lineWidth = 1.4; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.stroke(); }
+    cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill();
+    cx.fillStyle = cap || col; cx.beginPath(); cx.arc(0, -0.2, 5.8, Math.PI * 0.05, Math.PI * 0.95, false); cx.fill();                                      // scrub cap
+    cx.fillStyle = "rgba(255,255,255,.3)"; cx.beginPath(); cx.arc(0, 1.2, 3.2, Math.PI * 0.2, Math.PI * 0.8); cx.fill();
     cx.restore();
   }
   function handIc(x, y) { cx.fillStyle = "#7c3aed"; cx.beginPath(); cx.arc(x, y, 7, 0, 7); cx.fill(); cx.font = "8px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = "#fff"; cx.fillText("✋", x, y + 0.5); }
@@ -575,7 +739,7 @@
     pList.forEach(function (p) {
       var e = peers[p.uid]; if (!e) return; var a = LP.alpha(now - p.at); if (a <= 0) return;
       var ps = at[p.uid] || e; cx.globalAlpha = a;
-      peerBody(ps.x, ps.y, e.dir, e.mv ? Math.sin(e.walkT * 12) : 0, rankCol(p.uid, LP.color(p.uid)), P);
+      peerBody(ps.x, ps.y, e.dir, e.mv ? Math.sin(e.walkT * 12) : 0, LP.color(p.uid), P, p.uid);
       var s = sprite(p, e); cx.drawImage(s.c, ps.x - s.w / 2, ps.y - 5 - s.h, s.w, s.h);
       if (p.b && a > 0.6) { on[p.b].push(p.n); handIc(ps.x + 12, ps.y - 17); }
       cx.globalAlpha = 1;
@@ -610,10 +774,10 @@
   function arrive(k) {
     if (typeof k === "object" && k) return svcArrive(k);                 // 29d: a spot of a service room (a chair, the desk, the counter)
     var S = E.stations[k]; nurse.dir = Math.atan2((S.y + S.h / 2) - nurse.y, (S.x + S.w / 2) - nurse.x);
-    if ((k === "bed1" || k === "bed2") && st && !st.end) { var xw = X(k === "bed1" ? "a" : "b"); if (xw && !xw.ghost && !inBed(xw)) return waitSheet(xw); }
+    if ((k === "bed1" || k === "bed2") && st && !st.end) { var xw = X(k === "bed1" ? "a" : "b"); if (xw && !xw.ghost && isHome(xw)) return say("neutral", u("dcGoneT", { n: nm(xw).split(" ")[0] }), u("dcGoneW")); if (xw && !xw.ghost && !inBed(xw)) return waitSheet(xw); }
     if (k === "bed2" && X("b") && X("b").ghost) return say("neutral", u("bed2Empty"));
     if (k === "bed1" || k === "bed2") return bedSheet(k === "bed1" ? "a" : "b", "care");
-    if (k === "sink") { washed = true; return say("good", u("washed")); }
+    if (k === "sink") return rub(true);                                                     // 29e 🧼 the sink: wash + its moment (before / after)
     if (k === "phone") return deskSheet();
     stationSheet(k);
   }
@@ -687,12 +851,11 @@
   // the room behind (drawn once): the floor, the walls, the doors, the furniture
   function svcBg(dk) {
     var P = pal(), nt = night(), o = d.createElement("canvas"); o.width = cv.width; o.height = cv.height; var c = o.getContext("2d"); c.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-    var fl = dk === "acc" ? (nt ? "#2a2118" : "#f3e8d6") : (nt ? "#14262a" : "#e6f2ef"), tl = dk === "acc" ? (nt ? "#33291e" : "#e8d8bf") : (nt ? "#1b3036" : "#d3e6e1");
-    c.fillStyle = fl; c.fillRect(0, 0, E.W, E.H);
-    if (dk === "acc") { c.strokeStyle = tl; c.lineWidth = 1; for (var py = 18; py < E.H; py += 22) { c.beginPath(); c.moveTo(12, py); c.lineTo(E.W - 12, py); c.stroke(); for (var px = (py / 22 % 2) * 40 + 12; px < E.W; px += 80) { c.beginPath(); c.moveTo(px, py); c.lineTo(px, py + 22); c.stroke(); } } }
-    else for (var gx = 12; gx < E.W; gx += 24) for (var gy = 12; gy < E.H; gy += 24) { if (((gx + gy) / 24) % 2) { c.fillStyle = tl; c.fillRect(gx, gy, 24, 24); } }
-    c.fillStyle = P.wall; c.fillRect(0, 0, E.W, 12); c.fillRect(0, E.H - 12, E.W, 12); c.fillRect(0, 0, 12, E.H); c.fillRect(E.W - 12, 0, 12, E.H);
-    c.fillStyle = fl; c.fillRect(146, E.H - 12, 68, 12);
+    var fl = dk === "acc" || dk === "arch" || dk === "stf" || dk === "adm" ? (nt ? "#2a2118" : "#f3e8d6") : (nt ? "#14262a" : "#e6f2ef");
+    if (dk === "acc" || dk === "arch" || dk === "stf" || dk === "adm") { shell(c, P, dk, { floor: fl, tile: 22, tileA: nt ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.35)", tileB: nt ? "rgba(0,0,0,.2)" : "rgba(120,80,30,.06)", windows: [40, 280] });
+      c.strokeStyle = nt ? "rgba(0,0,0,.25)" : "rgba(120,80,30,.12)"; c.lineWidth = 0.6; for (var py = 34; py < E.H - 12; py += 22) for (var px = ((py / 22) % 2) * 40 + 12; px < E.W - 12; px += 80) { c.beginPath(); c.moveTo(px, py); c.lineTo(px, py + 22); c.stroke(); } }
+    else shell(c, P, dk, { floor: fl, windows: dk === "wt" ? [] : [40, 280] });
+    if (dk !== "wt" && dk !== "acc") { svcArt(c, P, dk, nt); return o; }                     // 29e 🏥 every other room of the hospital
     if (dk === "wt") {
       c.fillStyle = fl; c.fillRect(E.W - 12, 282, 12, 96);                                  // the ER door (ambulances), by the stretcher
       c.fillStyle = nt ? "#6b5338" : "#c89f6b"; rr(c, DESK.x, DESK.y, DESK.w, DESK.h, 8); c.fill(); c.fillStyle = nt ? "#8a6b48" : "#dcb98a"; rr(c, DESK.x + 4, DESK.y + 4, DESK.w - 8, 16, 5); c.fill();
@@ -719,6 +882,98 @@
     }
     return o;
   }
+
+  /* 29e 🏥 the other rooms of the hospital, drawn (static, cached): the counter or desk you walk to (SPOT) opens what the room does */
+  var SPOT = {
+    lab: { x: 70, y: 60, w: 220, h: 54, at: { x: 180, y: 140 } }, rad: { x: 70, y: 60, w: 220, h: 54, at: { x: 180, y: 140 } }, ph: { x: 70, y: 60, w: 220, h: 54, at: { x: 180, y: 140 } },
+    bb: { x: 70, y: 60, w: 220, h: 54, at: { x: 180, y: 140 } }, adm: { x: 80, y: 70, w: 200, h: 50, at: { x: 180, y: 150 } },
+    ns0: { x: 90, y: 200, w: 180, h: 80, at: { x: 180, y: 310 } }, ns1: { x: 90, y: 200, w: 180, h: 80, at: { x: 180, y: 310 } }, ns2: { x: 90, y: 200, w: 180, h: 80, at: { x: 180, y: 310 } }, ns3: { x: 90, y: 200, w: 180, h: 80, at: { x: 180, y: 310 } },
+    arch: { x: 30, y: 60, w: 300, h: 300, at: { x: 180, y: 400 } }, stf: { x: 24, y: 40, w: 120, h: 120, at: { x: 90, y: 190 } },
+    or: { x: 120, y: 160, w: 120, h: 200, at: { x: 180, y: 400 } }, sspi: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } }, ster: { x: 30, y: 40, w: 300, h: 120, at: { x: 180, y: 200 } },
+    psy: { x: 60, y: 120, w: 240, h: 200, at: { x: 180, y: 360 } }, cln: { x: 40, y: 60, w: 280, h: 160, at: { x: 180, y: 260 } }, p: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } }, m: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } },
+    r: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } }, s: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } }, g: { x: 30, y: 60, w: 300, h: 200, at: { x: 180, y: 300 } } };
+  function sh0(c, x, y, wd, ht, r) { c.fillStyle = "rgba(0,0,0,.16)"; rr(c, x + 2.5, y + 3.5, wd, ht, r); c.fill(); }
+  function wood(c, x, y, wd, ht, nt) { sh0(c, x, y, wd, ht, 7); var g = c.createLinearGradient(0, y, 0, y + ht); g.addColorStop(0, nt ? "#7a5f40" : "#dcb98a"); g.addColorStop(1, nt ? "#56412b" : "#b98b55"); c.fillStyle = g; rr(c, x, y, wd, ht, 7); c.fill(); c.fillStyle = nt ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.35)"; rr(c, x + 3, y + 3, wd - 6, 5, 3); c.fill(); }
+  function steel(c, x, y, wd, ht, nt) { sh0(c, x, y, wd, ht, 5); var g = c.createLinearGradient(x, 0, x + wd, 0); g.addColorStop(0, nt ? "#475569" : "#cbd5e1"); g.addColorStop(0.5, nt ? "#64748b" : "#f1f5f9"); g.addColorStop(1, nt ? "#475569" : "#cbd5e1"); c.fillStyle = g; rr(c, x, y, wd, ht, 5); c.fill(); c.strokeStyle = nt ? "#334155" : "#94a3b8"; c.lineWidth = 0.8; c.stroke(); }
+  function screenAt(c, x, y, col) { c.fillStyle = "#1f2a30"; rr(c, x, y, 26, 17, 3); c.fill(); c.fillStyle = col || "#5fd6c6"; c.fillRect(x + 2.5, y + 2.5, 21, 11); c.fillStyle = "#334155"; c.fillRect(x + 10, y + 17, 6, 3); }
+  function staff(c, x, y, col, P) { c.fillStyle = "rgba(0,0,0,.15)"; c.beginPath(); c.ellipse(x + 1.5, y + 3, 11, 8, 0, 0, 7); c.fill(); c.fillStyle = col; c.beginPath(); c.ellipse(x, y + 2, 10, 6.5, 0, 0, 7); c.fill(); c.fillStyle = P.skin; c.beginPath(); c.arc(x, y, 5.5, 0, 7); c.fill(); c.fillStyle = P.hair; c.beginPath(); c.arc(x, y - 0.5, 5.7, Math.PI, 2 * Math.PI); c.fill(); }
+  function plant(c, x, y, nt) { c.fillStyle = "#92400e"; rr(c, x - 7, y + 4, 14, 11, 3); c.fill(); c.fillStyle = nt ? "#166534" : "#16a34a"; [[0, -4, 9], [-6, 1, 6], [6, 1, 6], [0, 3, 6]].forEach(function (q) { c.beginPath(); c.arc(x + q[0], y + q[1], q[2], 0, 7); c.fill(); }); c.fillStyle = "rgba(255,255,255,.2)"; c.beginPath(); c.arc(x - 2, y - 6, 3, 0, 7); c.fill(); }
+  function shelfRow(c, x, y, wd, cols, nt, seed) { steel(c, x, y, wd, 22, nt); for (var i = 0; i < Math.floor((wd - 6) / 9); i++) { c.fillStyle = cols[(i * 7 + seed) % cols.length]; rr(c, x + 4 + i * 9, y + 4, 7, 14, 1.5); c.fill(); c.fillStyle = "rgba(255,255,255,.45)"; c.fillRect(x + 5 + i * 9, y + 6, 5, 2); } }
+  function minibed(c, P, x, y, nt, col) { bed(c, P, { x: x, y: y, w: 70, h: 120 }, col || P.b1); }
+  function svcArt(c, P, dk, nt) {
+    var I = w.LiveDept.INFO[dk] || { ic: "🏥", t: { ar: "", fr: "" } }, col = DCOL[dk] || "#0f766e", soon = !!w.LiveDept.SOON[dk], SP = SPOT[dk], TT0 = function (a, f) { return FR() ? f : a; };
+    var base = dk.replace(/\d$/, "");
+    if (base === "lab" || base === "rad" || base === "ph" || base === "bb") {
+      // the service counter with its window, the staff behind it, the room's own machines
+      c.fillStyle = nt ? "rgba(148,197,232,.10)" : "rgba(186,230,253,.45)"; rr(c, 60, 20, 240, 36, 6); c.fill();
+      wood(c, 70, 60, 220, 30, nt); c.fillStyle = nt ? "#e2e8f0" : "#fffdf5"; rr(c, 150, 66, 60, 16, 3); c.fill(); c.fillStyle = col; c.font = "700 7px " + EMO; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.fillText(TT0("🧾 استلام", "🧾 Retrait"), 180, 74.5);
+      staff(c, 180, 40, base === "ph" ? "#16a34a" : base === "bb" ? "#b91c1c" : base === "rad" ? "#475569" : "#2563eb", P); screenAt(c, 100, 64); screenAt(c, 236, 64);
+      if (base === "lab") { steel(c, 24, 160, 90, 26, nt); [0, 1, 2, 3, 4, 5, 6].forEach(function (i) { c.fillStyle = ["#ef4444", "#a855f7", "#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#64748b"][i]; rr(c, 30 + i * 11, 165, 6, 16, 2); c.fill(); });
+        steel(c, 250, 160, 86, 60, nt); c.fillStyle = nt ? "#1e293b" : "#e2e8f0"; c.beginPath(); c.arc(293, 190, 20, 0, 7); c.fill(); c.strokeStyle = "#64748b"; c.lineWidth = 2; c.stroke(); c.fillStyle = "#475569"; c.beginPath(); c.arc(293, 190, 5, 0, 7); c.fill();
+        steel(c, 24, 260, 70, 110, nt); c.fillStyle = nt ? "#0f172a" : "#dbeafe"; rr(c, 30, 266, 58, 98, 4); c.fill(); for (var lr = 0; lr < 4; lr++) for (var lc = 0; lc < 4; lc++) { c.fillStyle = ["#fde68a", "#fca5a5", "#bfdbfe", "#bbf7d0"][(lr + lc) % 4]; rr(c, 34 + lc * 13, 272 + lr * 23, 9, 16, 2); c.fill(); }
+        label(c, P, 69, 200, TT0("🧪 أنابيب", "🧪 Tubes")); label(c, P, 293, 228, TT0("🌀 Centrifugeuse", "🌀 Centrifugeuse")); label(c, P, 59, 382, TT0("❄️ برّاد العيّنات", "❄️ Frigo"));
+        c.fillStyle = nt ? "#334155" : "#e5e7eb"; rr(c, 250, 290, 86, 60, 6); c.fill(); c.fillStyle = "#111827"; c.beginPath(); c.arc(285, 312, 8, 0, 7); c.fill(); c.fillStyle = "#475569"; c.fillRect(280, 320, 10, 24); c.fillRect(270, 342, 30, 5); label(c, P, 293, 362, TT0("🔬 Microscope", "🔬 Microscope")); }
+      if (base === "rad") { c.fillStyle = nt ? "#1e293b" : "#f1f5f9"; rr(c, 110, 200, 140, 230, 10); c.fill(); c.strokeStyle = nt ? "#475569" : "#94a3b8"; c.lineWidth = 1.2; c.stroke();
+        steel(c, 150, 230, 60, 170, nt); c.fillStyle = nt ? "#334155" : "#cbd5e1"; c.beginPath(); c.arc(180, 300, 26, 0, 7); c.fill(); c.fillStyle = "#facc15"; c.beginPath(); c.arc(180, 300, 6, 0, 7); c.fill(); c.strokeStyle = "#111827"; c.lineWidth = 1.4; for (var ri = 0; ri < 3; ri++) { c.beginPath(); c.arc(180, 300, 10, ri * 2.094, ri * 2.094 + 1.05); c.stroke(); }
+        c.fillStyle = "#0f172a"; rr(c, 266, 170, 64, 84, 5); c.fill(); c.strokeStyle = "#e2e8f0"; c.lineWidth = 1; c.beginPath(); c.moveTo(298, 182); c.lineTo(298, 242); for (var rb = 0; rb < 6; rb++) { c.moveTo(298, 190 + rb * 9); c.quadraticCurveTo(278, 196 + rb * 9, 276, 206 + rb * 9); c.moveTo(298, 190 + rb * 9); c.quadraticCurveTo(318, 196 + rb * 9, 320, 206 + rb * 9); } c.stroke();
+        c.fillStyle = nt ? "#7c2d12" : "#fde68a"; rr(c, 24, 170, 70, 120, 6); c.fill(); c.fillStyle = "#facc15"; c.beginPath(); c.arc(59, 200, 10, 0, 7); c.fill(); c.fillStyle = "#111827"; c.font = "11px " + EMO; c.fillText("☢️", 59, 201);
+        label(c, P, 180, 444, TT0("🩻 طاولة الأشعة", "🩻 Table de radio")); label(c, P, 298, 266, TT0("🖼️ صورة صدر", "🖼️ Cliché thorax")); label(c, P, 59, 302, TT0("🛡️ غرفة التحكّم", "🛡️ Poste protégé")); }
+      if (base === "ph") { var bx = ["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#a855f7", "#ec4899", "#f8fafc", "#0ea5e9"]; for (var sr = 0; sr < 6; sr++) { shelfRow(c, 24, 140 + sr * 44, 140, bx, nt, sr * 3); shelfRow(c, 196, 140 + sr * 44, 140, bx, nt, sr * 5 + 1); }
+        label(c, P, 94, 410, TT0("💊 رفوف الأدوية", "💊 Étagères")); label(c, P, 266, 410, TT0("💉 الحقن", "💉 Injectables")); }
+      if (base === "bb") { for (var fr0 = 0; fr0 < 3; fr0++) { var fx = 24 + fr0 * 108; steel(c, fx, 150, 96, 150, nt); c.fillStyle = nt ? "rgba(148,197,232,.15)" : "rgba(224,242,254,.9)"; rr(c, fx + 6, 156, 84, 138, 4); c.fill();
+          for (var br0 = 0; br0 < 4; br0++) for (var bc = 0; bc < 4; bc++) { c.fillStyle = (br0 + bc + fr0) % 5 ? "#b91c1c" : "#f59e0b"; rr(c, fx + 11 + bc * 19, 162 + br0 * 32, 13, 24, 4); c.fill(); c.fillStyle = "#f8fafc"; c.fillRect(fx + 13 + bc * 19, 166 + br0 * 32, 9, 5); } }
+        label(c, P, 180, 314, TT0("🩸 برّادات أكياس الدم (+4°C)", "🩸 Réfrigérateurs à sang (+4 °C)")); }
+    } else if (base === "adm") {
+      wood(c, 80, 70, 200, 34, nt); screenAt(c, 110, 76); screenAt(c, 224, 76); staff(c, 150, 52, "#0e7490", P); staff(c, 210, 52, "#0e7490", P);
+      c.strokeStyle = "#b45309"; c.lineWidth = 2; [[100, 170, 100, 330], [260, 170, 260, 330]].forEach(function (L0) { c.beginPath(); c.moveTo(L0[0], L0[1]); c.lineTo(L0[2], L0[3]); c.stroke(); });
+      c.fillStyle = "#facc15"; [170, 250, 330].forEach(function (yy) { c.beginPath(); c.arc(100, yy, 3.5, 0, 7); c.arc(260, yy, 3.5, 0, 7); c.fill(); });
+      for (var ch = 0; ch < 4; ch++) { c.fillStyle = nt ? "#475569" : "#94a3b8"; rr(c, 30 + ch * 0, 380 + ch * 40, 40, 28, 6); c.fill(); rr(c, 290, 380 + ch * 40, 40, 28, 6); c.fill(); }
+      plant(c, 30, 40, nt); plant(c, 330, 40, nt); label(c, P, 180, 120, TT0("🛎️ مكتب الاستقبال والدخول", "🛎️ Bureau des admissions"));
+    } else if (base === "ns") {
+      // the U-shaped nurse station, the whiteboard of the floor's patients, the medication trolley, the chart rack
+      wood(c, 90, 200, 180, 26, nt); wood(c, 90, 200, 26, 90, nt); wood(c, 244, 200, 26, 90, nt); screenAt(c, 130, 204); screenAt(c, 200, 204, "#93c5fd");
+      c.fillStyle = "#f8fafc"; rr(c, 60, 30, 240, 90, 6); c.fill(); c.strokeStyle = "#94a3b8"; c.lineWidth = 2; c.stroke(); c.fillStyle = "#64748b"; c.fillRect(60, 120, 240, 4);
+      c.fillStyle = "#2563eb"; c.font = "700 8px " + EMO; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.fillText(TT0("📋 لوح المرضى", "📋 Tableau des patients"), 180, 42);
+      c.strokeStyle = "#cbd5e1"; c.lineWidth = 0.8; for (var wl = 0; wl < 5; wl++) { c.beginPath(); c.moveTo(70, 56 + wl * 13); c.lineTo(290, 56 + wl * 13); c.stroke(); }
+      steel(c, 30, 330, 70, 44, nt); [0, 1, 2].forEach(function (i) { c.fillStyle = ["#ef4444", "#3b82f6", "#10b981"][i]; rr(c, 36 + i * 21, 336, 16, 32, 3); c.fill(); });
+      steel(c, 270, 320, 60, 70, nt); for (var cr = 0; cr < 5; cr++) { c.fillStyle = ["#fde68a", "#bfdbfe", "#fecaca", "#bbf7d0", "#e9d5ff"][cr]; rr(c, 276, 326 + cr * 12, 48, 9, 2); c.fill(); }
+      c.fillStyle = "#e2e8f0"; rr(c, 300, 230, 14, 12, 3); c.fill(); c.fillStyle = "#38bdf8"; rr(c, 302, 232, 10, 5, 2); c.fill();
+      label(c, P, 180, 300, TT0("🧑‍⚕️ محطة التمريض — 🔄 التسليم هون", "🧑‍⚕️ Poste de soins — 🔄 relève ici")); label(c, P, 65, 386, TT0("💊 عربة الأدوية", "💊 Chariot")); label(c, P, 300, 402, TT0("📁 الملفّات", "📁 Dossiers")); label(c, P, 307, 252, "🧴");
+    } else if (base === "arch") {
+      for (var ar0 = 0; ar0 < 5; ar0++) { steel(c, 30, 60 + ar0 * 60, 300, 30, nt); for (var fi = 0; fi < 26; fi++) { c.fillStyle = ["#fde68a", "#fca5a5", "#bfdbfe", "#bbf7d0", "#e9d5ff", "#fed7aa"][(fi + ar0) % 6]; rr(c, 35 + fi * 11.3, 64 + ar0 * 60, 9, 22, 1); c.fill(); } }
+      label(c, P, 180, 380, TT0("🗄️ ملفّات المرضى — 📒 سجل حالاتك و📚 الحالات السابقة", "🗄️ Dossiers — 📒 ton carnet et 📚 les cas passés"));
+    } else if (base === "stf") {
+      c.fillStyle = nt ? "#3b2f22" : "#a47148"; rr(c, 24, 40, 120, 120, 6); c.fill(); c.fillStyle = nt ? "#2a2118" : "#e9d5b5"; rr(c, 30, 46, 108, 108, 4); c.fill();
+      c.fillStyle = "#fef3c7"; rr(c, 38, 54, 44, 34, 2); c.fill(); c.fillStyle = "#dbeafe"; rr(c, 88, 58, 42, 30, 2); c.fill(); c.fillStyle = "#fce7f3"; rr(c, 44, 96, 80, 50, 2); c.fill(); c.fillStyle = "#ef4444"; [[60, 54], [109, 58], [84, 96]].forEach(function (p) { c.beginPath(); c.arc(p[0], p[1], 2.2, 0, 7); c.fill(); });
+      wood(c, 170, 230, 120, 70, nt); for (var cp = 0; cp < 4; cp++) { c.fillStyle = "#f8fafc"; c.beginPath(); c.arc(190 + cp * 27, 252, 5, 0, 7); c.fill(); c.fillStyle = "#78350f"; c.beginPath(); c.arc(190 + cp * 27, 252, 3, 0, 7); c.fill(); }
+      steel(c, 290, 40, 46, 60, nt); c.fillStyle = "#111827"; rr(c, 298, 50, 30, 18, 3); c.fill(); c.fillStyle = "#f97316"; c.beginPath(); c.arc(313, 82, 4, 0, 7); c.fill();
+      c.fillStyle = nt ? "#4c1d95" : "#7c3aed"; rr(c, 30, 420, 130, 40, 12); c.fill(); rr(c, 30, 410, 130, 14, 7); c.fill();
+      for (var lk = 0; lk < 6; lk++) { steel(c, 200 + (lk % 3) * 44, 400 + Math.floor(lk / 3) * 62, 40, 58, nt); c.fillStyle = "#94a3b8"; c.fillRect(232 + (lk % 3) * 44, 425 + Math.floor(lk / 3) * 62, 2, 8); }
+      label(c, P, 84, 170, TT0("📌 لوح الإعلانات — 💰 الرواتب", "📌 Tableau — 💰 salaires")); label(c, P, 313, 112, "☕ Café"); label(c, P, 95, 476, TT0("🛋️ كنباية", "🛋️ Canapé")); label(c, P, 266, 532, TT0("🔐 خزانات", "🔐 Casiers"));
+    } else if (base === "or") {
+      c.fillStyle = nt ? "#0f2a2a" : "#ccfbf1"; rr(c, 60, 120, 240, 300, 16); c.fill();
+      [[180, 230, 46], [120, 300, 30], [240, 300, 30]].forEach(function (L0) { var g = c.createRadialGradient(L0[0], L0[1], 4, L0[0], L0[1], L0[2]); g.addColorStop(0, "#fffbeb"); g.addColorStop(0.6, nt ? "#94a3b8" : "#e2e8f0"); g.addColorStop(1, "#64748b"); c.fillStyle = g; c.beginPath(); c.arc(L0[0], L0[1], L0[2], 0, 7); c.fill(); });
+      steel(c, 150, 180, 60, 180, nt); c.fillStyle = "#0d9488"; rr(c, 154, 200, 52, 140, 6); c.fill();
+      steel(c, 250, 380, 70, 40, nt); c.fillStyle = "#cbd5e1"; for (var ins = 0; ins < 6; ins++) c.fillRect(256 + ins * 10, 386, 3, 26);
+      steel(c, 34, 160, 50, 90, nt); screenAt(c, 46, 168, "#4ade80");
+      label(c, P, 180, 440, TT0("🔪 طاولة العمليات", "🔪 Table d'opération")); label(c, P, 59, 262, TT0("😴 Anesthésie", "😴 Anesthésie"));
+    } else if (base === "sspi" || base === "r" || base === "s" || base === "g" || base === "p" || base === "m" || base === "psy") {
+      if (base === "psy") { c.fillStyle = nt ? "#312e81" : "#e0e7ff"; rr(c, 60, 120, 240, 200, 20); c.fill(); c.fillStyle = nt ? "#4338ca" : "#a5b4fc"; rr(c, 80, 140, 200, 40, 14); c.fill(); rr(c, 80, 270, 90, 36, 12); c.fill(); rr(c, 190, 270, 90, 36, 12); c.fill(); plant(c, 300, 140, nt); plant(c, 60, 360, nt); }
+      else { var nb = base === "sspi" ? 3 : 2; for (var bi = 0; bi < nb; bi++) { var bx0 = nb === 3 ? 30 + bi * 108 : 50 + bi * 190; minibed(c, P, bx0, 70, nt, base === "p" ? "#fcd34d" : base === "m" ? "#f9a8d4" : P.b1); monBox(c, bx0 + 24, 44, nt); } }
+    } else if (base === "ster") {
+      for (var av = 0; av < 3; av++) { steel(c, 30 + av * 104, 40, 92, 90, nt); c.fillStyle = nt ? "#1e293b" : "#e2e8f0"; c.beginPath(); c.arc(76 + av * 104, 85, 30, 0, 7); c.fill(); c.strokeStyle = "#64748b"; c.lineWidth = 3; c.stroke(); c.fillStyle = "#22c55e"; c.beginPath(); c.arc(110 + av * 104, 50, 3, 0, 7); c.fill(); }
+      for (var sp = 0; sp < 3; sp++) { steel(c, 30, 230 + sp * 50, 300, 30, nt); for (var pk0 = 0; pk0 < 12; pk0++) { c.fillStyle = (pk0 + sp) % 3 ? "#bfdbfe" : "#a7f3d0"; rr(c, 36 + pk0 * 24, 234 + sp * 50, 20, 22, 2); c.fill(); c.strokeStyle = "#60a5fa"; c.lineWidth = 0.6; c.beginPath(); c.moveTo(36 + pk0 * 24, 245 + sp * 50); c.lineTo(56 + pk0 * 24, 245 + sp * 50); c.stroke(); } }
+      label(c, P, 180, 142, TT0("♨️ Autoclaves (تعقيم بالبخار)", "♨️ Autoclaves")); label(c, P, 180, 392, TT0("🧺 عُدّة معقّمة جاهزة", "🧺 Matériel stérile prêt"));
+    } else if (base === "cln") {
+      c.fillStyle = "#fde047"; rr(c, 50, 80, 70, 100, 8); c.fill(); c.fillStyle = "#2563eb"; rr(c, 60, 90, 50, 30, 6); c.fill(); c.strokeStyle = "#94a3b8"; c.lineWidth = 3; c.beginPath(); c.moveTo(85, 130); c.lineTo(85, 60); c.stroke();
+      for (var lc0 = 0; lc0 < 2; lc0++) { steel(c, 160 + lc0 * 90, 70, 80, 120, nt); c.fillStyle = lc0 ? "#fecaca" : "#f8fafc"; for (var ln = 0; ln < 4; ln++) { rr(c, 166 + lc0 * 90, 78 + ln * 27, 68, 20, 4); c.fill(); } }
+      c.fillStyle = "#facc15"; c.beginPath(); c.moveTo(180, 300); c.lineTo(196, 330); c.lineTo(164, 330); c.closePath(); c.fill(); c.fillStyle = "#111827"; c.font = "700 12px " + EMO; c.fillText("!", 180, 322);
+      label(c, P, 85, 196, TT0("🧹 عربة التنظيف", "🧹 Chariot de ménage")); label(c, P, 245, 206, TT0("🧺 الشراشف (نضيف / وسخ)", "🧺 Linge propre / sale")); label(c, P, 180, 346, TT0("⚠️ أرض مبلولة", "⚠️ Sol mouillé"));
+    }
+    label(c, P, 180, E.H - 22, u("exitC"));
+    label(c, P, 180, base === "ns" ? 140 : 150, I.ic + " " + T(I.t), col);
+    if (soon) { c.fillStyle = nt ? "rgba(15,23,42,.55)" : "rgba(255,255,255,.65)"; rr(c, 60, 470, 240, 40, 10); c.fill(); label(c, P, 180, 490, u("soonT") + " · " + (FR() ? "pas encore de cas" : "لسّا ما في حالات"), "#b45309"); }
+  }
   var triSel = null, svcSay = 0;
   function svcDraw(P, dk, t) {
     if (dk === "wt") {
@@ -727,6 +982,11 @@
       var sp = L0.filter(function (o) { return !o.at.str; }); if (sp.length) { var k = Math.floor(t / 4) % sp.length, o2 = sp[k];
         var sel2 = triSel && L0.filter(function (o) { return wkey(o.x) === triSel; })[0]; if (sel2) o2 = sel2; bubble(cx, P, o2.at.x, o2.at.y - (o2.at.str ? 72 : 52), sayOf(o2.x.p)); }
       var WL = waitList(); if (WL.length) label(cx, P, 180, 166, u("waitN", { n: WL.length }), "#0d9488");
+    } else if (SPOT[dk] && /^(lab|rad|ph|bb)$/.test(dk)) {                                    // 29e 🧾 how many results / drugs wait at this counter
+      var n9 = pkOpen(dk).length; label(cx, P, 180, 104, n9 ? u("pkN", { n: n9 }) : u("pkN0"), n9 ? "#16a34a" : null);
+      if (n9 && Math.sin(t * 4) > 0) { cx.strokeStyle = "#16a34a"; cx.lineWidth = 2; rr(cx, 148, 64, 64, 20, 4); cx.stroke(); }
+    } else if (/^ns\d$/.test(dk)) { var hp = hoPatients(FLR(dk)).length; label(cx, P, 180, 160, u("hoBoard", { n: hp }), "#0f766e");
+      hoPatients(FLR(dk)).slice(0, 5).forEach(function (o, i) { cx.font = "700 7px " + EMO; cx.fillStyle = "#1e3a8a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.direction = FR() ? "ltr" : "rtl"; cx.fillText(T(o.x.p.nm).split(" ")[0] + " · " + w.LiveDept.INFO[o.dk].ic + " · " + L.stLabel(o.x.st, o.x.p.sex).split(" ")[0], 180, 56 + i * 13); });
     } else if (dk === "acc") {
       var pay = w.NursinPay; if (!pay) return;
       var B = pay.weekBoard(pay.core.monday(C.dayKey(Date.now()))).slice(0, 5);
@@ -744,12 +1004,19 @@
       if (p.x > DESK.x - 6 && p.x < DESK.x + DESK.w + 6 && p.y > DESK.y - 6 && p.y < DESK.y + DESK.h + 30) return svcGo({ x: 180, y: DESK.y + DESK.h + 28 }, { k: "desk" });
     } else if (dk === "acc") {
       if (p.y < 150 || (p.x < 160 && p.y > 170 && p.y < 360)) return svcGo(p.y < 150 ? { x: 180, y: 140 } : { x: 90, y: 370 }, { k: "acc" });
+    } else if (SPOT[dk]) {                                                                     // 29e: every other room's counter / desk / board
+      var sp = SPOT[dk]; if (p.x > sp.x - 8 && p.x < sp.x + sp.w + 8 && p.y > sp.y - 8 && p.y < sp.y + sp.h + 30) return svcGo(sp.at, { k: "svc", dk: dk });
     }
     nurse.goal = null; nurse.pts = [{ x: Math.max(24, Math.min(E.W - 24, p.x)), y: Math.max(24, Math.min(E.H - 24, p.y)) }]; mark = { x: p.x, y: p.y, t: 0 };
   }
   function svcGo(spot, goal) { nurse.goal = goal; nurse.pts = [spot]; mark = { x: spot.x, y: spot.y, t: 0 }; }
   function svcArrive(g) {
     if (g.k === "acc") return accPanel();
+    if (g.k === "svc") { var b0 = g.dk.replace(/\d$/, "");
+      if (b0 === "arch") { if (w.NursinLog) w.NursinLog.open("room"); else archPanel(); return; }
+      if (b0 === "stf") return accPanel("week");
+      if (w.LiveDept.SOON[g.dk] || b0 === "or" || b0 === "sspi" || b0 === "psy" || b0 === "ster" || b0 === "cln") return say("neutral", depName(g.dk), u("svcSub_" + b0) || u("soonW"));
+      return sheetOpen("svc", g.dk); }
     if (g.k === "desk") return waitListSheet();
     if (g.k === "tri") { var o = waitList().filter(function (x) { return wkey(x) === g.id; })[0]; if (!o) { triSel = null; return say("neutral", u("triBy", { n: "…" })); } triPick = { pr: 0, dc: "" }; return sheetOpen("tri", g.id); }
   }
@@ -832,12 +1099,22 @@
      🧠 الأعصاب · 🫀 القلب · 🚑 الطوارئ along one corridor, the ER entrance with «🛏️ سرير الإسعاف» where the ambulances stop. Each small
      room shows its two beds (status colours), the students in it (👥 N) and me (📍). A tap on another room → my nurse walks to the door of
      the big room, the big room shrinks into the floor, the nurse walks along the corridor, and the new department grows into the big room. */
+  // 29e: four floors; each has a row of rooms above the corridor and a row below it (the 🛗 always bottom-left)
   var FW = 360, FH = 156, ROOMS = { n: { x: 6, y: 4, w: 108, h: 60, f: 1 }, k: { x: 126, y: 4, w: 108, h: 60, f: 1 }, er: { x: 246, y: 4, w: 108, h: 60, f: 0 }, x: { x: 246, y: 96, w: 108, h: 28, f: 0 },
-    r: { x: 246, y: 4, w: 108, h: 60, f: 1 }, s: { x: 6, y: 4, w: 170, h: 60, f: 2 }, g: { x: 184, y: 4, w: 170, h: 60, f: 2 },
-    acc: { x: 6, y: 4, w: 64, h: 60, f: 0 }, lab: { x: 74, y: 4, w: 54, h: 60, f: 0 }, rad: { x: 132, y: 4, w: 54, h: 60, f: 0 }, ph: { x: 190, y: 4, w: 52, h: 60, f: 0 },
-    wt: { x: 46, y: 96, w: 194, h: 30, f: 0 }, el: { x: 6, y: 96, w: 34, h: 30, f: -1 } };
-  var DCOL = { er: "#dc2626", k: "#e11d48", n: "#7c3aed", x: "#ea580c", r: "#0891b2", s: "#475569", g: "#a16207", wt: "#0d9488", acc: "#ca8a04", lab: "#2563eb", rad: "#64748b", ph: "#16a34a" },
+    r: { x: 246, y: 4, w: 108, h: 60, f: 1 }, s: { x: 6, y: 4, w: 100, h: 60, f: 2 }, g: { x: 258, y: 4, w: 96, h: 60, f: 2 },
+    acc: { x: 6, y: 4, w: 46, h: 60, f: 0 }, lab: { x: 56, y: 4, w: 46, h: 60, f: 0 }, rad: { x: 106, y: 4, w: 46, h: 60, f: 0 }, ph: { x: 156, y: 4, w: 42, h: 60, f: 0 }, bb: { x: 202, y: 4, w: 40, h: 60, f: 0 },
+    wt: { x: 46, y: 96, w: 100, h: 30, f: 0 }, adm: { x: 150, y: 96, w: 48, h: 30, f: 0 }, ns0: { x: 202, y: 96, w: 40, h: 30, f: 0 },
+    ns1: { x: 46, y: 96, w: 80, h: 30, f: 1 }, or: { x: 110, y: 4, w: 70, h: 60, f: 2 }, sspi: { x: 184, y: 4, w: 70, h: 60, f: 2 }, ns2: { x: 46, y: 96, w: 70, h: 30, f: 2 }, ster: { x: 120, y: 96, w: 70, h: 30, f: 2 },
+    p: { x: 6, y: 4, w: 110, h: 60, f: 3 }, m: { x: 120, y: 4, w: 110, h: 60, f: 3 }, psy: { x: 234, y: 4, w: 120, h: 60, f: 3 },
+    ns3: { x: 46, y: 96, w: 60, h: 30, f: 3 }, stf: { x: 110, y: 96, w: 70, h: 30, f: 3 }, cln: { x: 184, y: 96, w: 56, h: 30, f: 3 }, arch: { x: 244, y: 96, w: 60, h: 30, f: 3 },
+    el: { x: 6, y: 96, w: 34, h: 30, f: -1 } };
+  var DCOL = { er: "#dc2626", k: "#e11d48", n: "#7c3aed", x: "#ea580c", r: "#0891b2", s: "#475569", g: "#a16207", wt: "#0d9488", acc: "#ca8a04", lab: "#2563eb", rad: "#64748b", ph: "#16a34a",
+    adm: "#0e7490", ns0: "#0f766e", ns1: "#0f766e", ns2: "#0f766e", ns3: "#0f766e", or: "#334155", sspi: "#0369a1", bb: "#b91c1c", ster: "#6d28d9", arch: "#78716c", psy: "#4f46e5", p: "#f59e0b", m: "#db2777", cln: "#65a30d", stf: "#92400e" },
     SCOL = { ok: "#16a34a", impr: "#eab308", unst: "#f97316", crit: "#dc2626", lost: "#64748b" };
+  var SHORT = { ns: { ar: "التمريض", fr: "Soins" }, adm: { ar: "استقبال", fr: "Accueil" }, sspi: { ar: "إنعاش", fr: "SSPI" }, or: { ar: "عمليات", fr: "Bloc" }, ster: { ar: "تعقيم", fr: "Stéril." },
+    arch: { ar: "أرشيف", fr: "Archives" }, cln: { ar: "تنظيف", fr: "Entretien" }, stf: { ar: "استراحة", fr: "Pause" }, bb: { ar: "بنك الدم", fr: "Sang" }, lab: { ar: "مختبر", fr: "Labo" },
+    rad: { ar: "أشعة", fr: "Radio" }, ph: { ar: "صيدلية", fr: "Pharma" }, acc: { ar: "محاسبة", fr: "Compta" }, psy: { ar: "النفسي", fr: "Psychiatrie" } };
+  var FLS = [{ ar: "الأرضي", fr: "RDC" }, { ar: "الأوّل", fr: "1er" }, { ar: "التاني", fr: "2e" }, { ar: "التالت", fr: "3e" }];   // 29e: short tab names (4 tabs at 390 px)
   var CORR_Y = 80, vf = 0, vfAt = 0, elT = 0;                      // 29d 🛗: vf = the floor drawn on the strip (mine, or one I peek at with the tabs)
   function FLR(dk) { return w.LiveDept.floorOf(dk); }
   function depName(dk) { var I = w.LiveDept.INFO[dk || L.dep()]; return I.ic + " " + T(I.t); }
@@ -877,9 +1154,9 @@
   function viewF() { if (trv) return trv.leg && trv.leg.ride ? (trv.lt < 0.5 ? trv.leg.f0 : trv.leg.f1) : myFloor(); return vfAt && Date.now() - vfAt < 45000 ? vf : FLR(L.dep()); }
   function flTabs() {
     var el = q(".lcr-flt"); if (!el) return; var f0 = viewF(), mf = myFloor(), W0 = waitList().length;
-    el.innerHTML = '<span class="lcr-fll">🛗</span>' + [2, 1, 0].map(function (f) {
+    el.innerHTML = '<span class="lcr-fll">🛗</span>' + [3, 2, 1, 0].map(function (f) {
       var cnt = pAll.filter(function (p) { return FLR(p.dep) === f; }).length + (mf === f ? 1 : 0);
-      return '<button type="button" role="tab" class="lcr-flb' + (f === f0 ? " on" : "") + (f === mf ? " me" : "") + '" data-lcfl="' + f + '" aria-selected="' + (f === f0) + '">' + esc(T(w.LiveDept.FLN[f])) +
+      return '<button type="button" role="tab" class="lcr-flb' + (f === f0 ? " on" : "") + (f === mf ? " me" : "") + '" data-lcfl="' + f + '" aria-selected="' + (f === f0) + '">' + esc(T(FLS[f])) +
         (cnt && w.LivePresRoom && w.LivePresRoom.active() ? " <small>👥" + cnt + "</small>" : "") + (f === 0 && W0 ? ' <small class="w">🪑' + W0 + "</small>" : "") + "</button>";
     }).join("");
   }
@@ -910,16 +1187,19 @@
       roomBox(c, k, r, on, col, nt);
       c.font = "700 " + (r.w < 70 ? 7 : 8.5) + "px " + EMO; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.textAlign = "center"; c.fillStyle = nt ? "#dff3ee" : "#17323a";
       var I = w.LiveDept.INFO[k];
-      if (k !== "x" && k !== "wt") { if (r.w < 70) { c.font = "11px " + EMO; c.fillText(I.ic, r.x + r.w / 2, r.y + 13); c.font = "700 6.6px " + EMO; c.fillText(T(I.t), r.x + r.w / 2, r.y + 26); } else c.fillText(depName(k), r.x + r.w / 2, r.y + 9); }
+      if (k !== "x" && k !== "wt") { var sn = T(SHORT[k] || SHORT[k.replace(/\d$/, "")] || I.t);
+        if (r.h < 40) { c.font = "9px " + EMO; c.fillText(I.ic, r.x + r.w / 2, r.y + 9); c.font = "700 " + (r.w < 50 ? 5.6 : 6.4) + "px " + EMO; c.fillText(sn, r.x + r.w / 2, r.y + 21); }
+        else if (r.w < 70) { c.font = "11px " + EMO; c.fillText(I.ic, r.x + r.w / 2, r.y + 13); c.font = "700 " + (r.w < 46 ? 6 : 6.6) + "px " + EMO; c.fillText(sn, r.x + r.w / 2, r.y + 26); }
+        else c.fillText(r.w < 100 ? I.ic + " " + sn : depName(k), r.x + r.w / 2, r.y + 9); }
       if (soon) { c.save(); c.globalAlpha = 0.5; c.strokeStyle = nt ? "#475569" : "#cbd5e1"; c.lineWidth = 1; for (var hx = r.x - r.h; hx < r.x + r.w; hx += 8) { c.beginPath(); c.moveTo(Math.max(r.x, hx), r.y + Math.max(0, r.x - hx)); c.lineTo(Math.min(r.x + r.w, hx + r.h), r.y + Math.min(r.h, r.x + r.w - hx)); c.stroke(); } c.restore();
         c.font = "700 " + (r.w < 70 ? 6.4 : 8) + "px " + EMO; c.fillStyle = nt ? "#fde68a" : "#92400e"; c.fillText(u("soonT"), r.x + r.w / 2, r.y + r.h - (r.w < 70 ? 14 : 18)); }
       if (k === "acc") { var pay = w.NursinPay; c.font = "700 6.4px " + EMO; c.fillStyle = nt ? "#fde68a" : "#854d0e"; c.fillText(pay ? pay.money(pay.mine()) : "💵", r.x + r.w / 2, r.y + 42); }
       if (k === "wt") {                                          // 🪑 the chairs; each waiting patient a small seated dot (red pulse = 🔴 by his signs)
         c.font = "700 7.5px " + EMO; c.fillStyle = nt ? "#99f6e4" : "#115e59"; c.textAlign = FR() ? "left" : "right"; c.fillText(depName("wt"), FR() ? r.x + 6 : r.x + r.w - 6, r.y + 8); c.textAlign = "center";
         var seats = WL.filter(function (x) { return x.kind !== "amb"; });
-        for (var si = 0; si < 10; si++) { var sx = r.x + 10 + si * 18, sy = r.y + 20; c.fillStyle = nt ? "#334155" : "#cbd5e1"; rr(c, sx - 5, sy - 3, 10, 8, 2); c.fill();
+        var nseat = Math.max(3, Math.floor((r.w - 8) / 15)); for (var si = 0; si < nseat; si++) { var sx = r.x + 10 + si * 15, sy = r.y + 20; c.fillStyle = nt ? "#334155" : "#cbd5e1"; rr(c, sx - 5, sy - 3, 10, 8, 2); c.fill();
           var wv = seats[si]; if (wv) { var pr = w.LiveDept.prio(wv.p).pr; c.fillStyle = pr === 1 ? "#dc2626" : "#0f766e"; if (pr === 1) c.globalAlpha = 0.55 + 0.45 * Math.sin(t * 6); c.beginPath(); c.arc(sx, sy - 2, 3.4, 0, 7); c.fill(); c.globalAlpha = 1; } }
-        if (seats.length > 10) label(c, P, r.x + r.w - 14, r.y + 8, "+" + (seats.length - 10));
+        if (seats.length > nseat) label(c, P, r.x + r.w - 14, r.y + 8, "+" + (seats.length - nseat));
       }
       if (S && S.P && k !== "wt") {                              // the beds (empty while the patient waits outside)
         var beds = k === "x" ? [{ x: r.x + r.w - 40, y: r.y + 5, w: 34, h: 18 }] : [{ x: r.x + 8, y: r.y + 18, w: 40, h: 26 }, { x: r.x + r.w - 48, y: r.y + 18, w: 40, h: 26 }];
@@ -977,7 +1257,7 @@
   function onFloorTap(e) {
     e.preventDefault(); if (trv) return;
     var r = fcv.getBoundingClientRect(), x = (e.clientX - r.left) / fsc, y = (e.clientY - r.top) / fsc, f = viewF();
-    var o0 = ROOMS.el; if (x >= o0.x - 4 && x <= o0.x + o0.w + 4 && y >= o0.y - 4 && y <= o0.y + o0.h + 4) { vf = (f + 1) % 3; vfAt = Date.now(); flTabs(); return say("neutral", u("elev") + " · " + T(w.LiveDept.FLN[vf]), u("elevW")); }
+    var o0 = ROOMS.el; if (x >= o0.x - 4 && x <= o0.x + o0.w + 4 && y >= o0.y - 4 && y <= o0.y + o0.h + 4) { vf = (f + 1) % w.LiveDept.FLN.length; vfAt = Date.now(); flTabs(); return say("neutral", u("elev") + " · " + T(w.LiveDept.FLN[vf]), u("elevW")); }
     for (var k in ROOMS) { var o = ROOMS[k]; if (o.f !== f) continue; if (x >= o.x - 4 && x <= o.x + o.w + 4 && y >= o.y - 4 && y <= o.y + o.h + 4) return walkTo(k); }
     if (f === 0 && y > 128 && x < 244) { var H0 = hNow(); if (H0 && H0.amb && H0.amb.cur) return walkTo(L.admOf("x", "a", H0.amb.cur.i) ? "x" : "wt"); return say("neutral", u("noAmb"), u("noAmb2")); }
   }
@@ -986,7 +1266,6 @@
     var esc0 = arguments[1];                                    // 29d: the patient I wheel in (his first name), if any
     if (trv) return; var cur = L.dep();
     if (dk === cur) return say("neutral", u("inDep", { d: depName(dk) }));
-    if (w.LiveDept.SOON[dk]) return say("neutral", u("soonD", { d: depName(dk) }), u("soonW"));
     if (Object.keys(work).length) workAll("wkGone");             // 29d ⏳ leaving the room stops what his hands were doing
     if (dk === "x") { var H0 = hosp(); if (!H0 || !H0.amb || !H0.amb.cur) return say("neutral", u("noAmb"), u("noAmb2")); }
     sheetClose(); panelClose(); hintOpen = null; handOpen = null;
@@ -1046,7 +1325,8 @@
   function sheetClose() { sheet = null; openQ = null; var s = q(".lcr-sheet"); if (s) s.hidden = true; if (Object.keys(work).length) workPaint(); }
   function sheetPaint() {
     if (!sheet || !st) return; var el = q(".lcr-shin"), h = "";
-    if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else if (sheet.kind === "tri") h = triHtml(sheet.k); else if (sheet.kind === "wait") h = waitHtml(sheet.k); else if (sheet.kind === "fu") h = fuListHtml(); else h = stationHtml(sheet.k);
+    if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else if (sheet.kind === "tri") h = triHtml(sheet.k); else if (sheet.kind === "wait") h = waitHtml(sheet.k); else if (sheet.kind === "fu") h = fuListHtml(); else if (sheet.kind === "svc") h = svcHtml(sheet.k); else if (sheet.kind === "dc") h = dcHtml(sheet.k);
+    else if (sheet.kind === "fam") h = famHtml(sheet.k); else if (sheet.kind === "inc") h = incHtml(sheet.k); else h = stationHtml(sheet.k);
     // 28w: a repaint never lands under a finger (a snapshot arriving between touchstart and touchend swallowed the tap on iPhone) and an unchanged sheet is not rebuilt
     if (sheetTouch) { sheetLate = true; return; }
     if (h !== el.__h) { var sc = el.scrollTop; el.innerHTML = h; el.__h = h; el.scrollTop = sc; }
@@ -1063,6 +1343,7 @@
     if (LCa) { var wb = work[pidOf(k)]; if (wb) h += '<div class="lcr-wkin">' + workHtml(wb, Date.now()).replace(/<b dir="ltr">\d+s<\/b>/, "") + "</div>"; h += fuHtml(k); }   // 29d ⏳ + ⏰
     h += '<div class="lcr-tabs" role="tablist">' + ["care", "file", "story"].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (t === tab) + '" class="lcr-tab' + (t === tab ? " on" : "") + '" data-lctab="' + t + '">' + esc(u(t)) + "</button>"; }).join("") + "</div>";
     if (!x.over && !st.end) h += hintHtml(x);
+    if (tab === "care" && !st.end && (!x.over || x.over.w === "ok")) h += routBtns(x);           // 29e 🧼 🚪 👨‍👩‍👦 ⚠️ 🧾
     if (x.over && !st.end) {                                     // 28x: his case is finished — his steps stay, the other bed is one tap away
       var o = st.P[k === "b" ? 0 : 1];
       h += '<div class="lcr-pover ' + x.over.w + '" role="status"><b>' + esc(x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) })) + "</b>" +
@@ -1080,7 +1361,8 @@
     h += '<div class="lcr-grp lcr-priv"><h4>' + esc(u("privacy")) + '</h4><div class="lcr-acts"><button type="button" class="lcr-act' + (x.screen ? " done" : "") + '" data-lcact="paravent">' +
       (x.screen ? "✅ " + esc(u("scrOn")) + "<small>" + esc(u("by") + " " + x.screen.n) + "</small>" : "🩻 " + esc(T(D.A.paravent || {}))) + "</button></div></div>";
     GROUPS.forEach(function (g) {
-      var btns = g[1].filter(function (a) { return D.A[a] && D.A[a].at === "bed" && !(acc0 && a === "acc"); }).map(function (a) {
+      // 29e: a ward's own gestures (A.dk) show in that ward — and always when they are one of HIS steps
+      var dk9 = L.dep(); var btns = g[1].filter(function (a) { var A9 = D.A[a]; return A9 && A9.at === "bed" && !(acc0 && a === "acc") && (!A9.dk || A9.dk.indexOf(dk9) > -1 || x.by[a]); }).map(function (a) {
         var A = D.A[a], s = x.by[a], done = s && x.done[s.id], need = A.need, bk = need && BEDSIDE[need], has = !need || bk || hands.indexOf(need) > -1,
           I = need && D.I[need], rxq = I && I.rx && !x.done.call, St = I && E.stations[I.st], hit = hl && hl.k === x.k && hl.id === a && !done;
         // 28y: a mark says why a button is not ready yet (and the tap says it in words): ✋ + where the thing is · 📞? the doctor first · 🧴 at this bed
@@ -1219,7 +1501,8 @@
     var A = D.A[a], x = X(k);
     if (x && x.over) return overSay(x);                         // 28x: nothing more to do on a finished patient — the other one is waiting
     // 28y: every closed button says WHY on the tap — «✋ لازم أوّل: …» (the dashed «✋» buttons: the thing is not in your hands yet)
-    if (A && A.at === "bed" && !washed && a !== "paravent") return say("ord", u("must") + " " + u("mWash"));
+    if (A && A.at === "bed" && !washed && a !== "paravent") return say("ord", u("must") + " " + u("mWash"), u("rubHow"));
+    if (A && A.at === "bed" && a !== "paravent" && !hygOk(k)) return;                                  // 29e 🧼 another patient = clean hands again
     if (A && A.need && !BEDSIDE[A.need] && hands.indexOf(A.need) < 0) { var I = D.I[A.need], S = E.stations[I.st]; return say("ord", u("must") + " " + u("mItem", { i: I.ic + " " + T(I), s: S.ic + " " + T(S) }), u("leg")); }
     if (A && A.needDone && !x.done[A.needDone]) return say("ord", u("must") + " " + u("mVvp"));
     if (A && A.need && D.I[A.need].rx && !x.done.call) return say("ord", u("must") + " " + u("mCall"));
@@ -1278,11 +1561,14 @@
     if (!LCa || !r || !D) return; var now = Date.now(), S = careLoad(), x = X(k), id = pidOf(k), ch = false;
     if (r.k === "ok" && LCa.follow(a)) { var f = LCa.give(S.fu, { pid: id, dk: L.dep(), ai: curAi(L.dep()), pk: k, nm: x ? nm(x) : "", a: a }, now);
       if (f) { ch = true; setTimeout(function () { say("good", u("fuSet", { n: f.nm.split(" ")[0], h: fmtT(f.due), m: f.m }), u("fuSetW", { a: fuName(f), g: fmtT(f.at) })); }, 2600); } }
-    if (r.k !== "bad" && LCa.REV[LCa.base(a)]) { var rs = LCa.reassess(S.fu, id, a, now); if (rs.ok.length) { ch = true; reevSay(rs.ok, x); } }
+    if (r.k !== "bad" && LCa.REV[LCa.base(a)]) { var rs = LCa.reassess(S.fu, id, a, now); if (rs.ok.length) { ch = true; reevSay(rs.ok, x); rs.ok.forEach(function (f) { fuPay(f, "fu"); }); } }
     if (ch) { careSave(); if (sheet) sheetPaint(); }
   }
   function vitLine(x) { var v = (x && x.v) || {}; var R0 = function (n, k) { n = +n; return isFinite(n) ? (k ? n.toFixed(1) : Math.round(n)) : "?"; };
     return u("fuVit") + "TA " + R0(v.sys) + "/" + R0(v.dia) + " · FC " + R0(v.fc) + " · SpO₂ " + R0(v.spo2) + "% · T° " + R0(v.t, 1); }
+  // 29e ⏰ the follow-up is paid in the shared doc (z fu on time +30 / z fx missed −20 — and a missed one makes his patient a bit worse): the phone
+  // stops counting it itself (f.z) once the event is written
+  function fuPay(f, code) { if (!f || f.z || !f.pk) return; if (String(f.pid || "").indexOf(dayId()) !== 0) return; bz(f.pk, code, f.dk, function (r) { if (r.k === "ok" || r.k === "neu" || r.k === "bzmax") { f.z = 1; careSave(); } }); }
   function reevSay(ok, x) { setTimeout(function () { say("good", u("fuOk", { n: ok[0].nm.split(" ")[0], p: ok.length * LCa.REAS }), vitLine(x)); }, 1400); }
   // ⏰ the button «أعد التقييم»: 5 s at the bed, local only (nothing shared changes), settles his follow-ups
   function reev(k) {
@@ -1290,7 +1576,7 @@
     if (!open0.length) return say("neutral", u("fuNone"), vitLine(x));
     workRun(k, "reev", null, function () {
       var now = Date.now(), S = careLoad(), rs = LCa.reassess(S.fu, pidOf(k), "reev", now);
-      if (rs.ok.length) { careSave(); say("good", u("fuOk", { n: nm(x).split(" ")[0], p: rs.ok.length * LCa.REAS }), vitLine(X(k))); }
+      if (rs.ok.length) { rs.ok.forEach(function (f) { fuPay(f, "fu"); }); careSave(); say("good", u("fuOk", { n: nm(x).split(" ")[0], p: rs.ok.length * LCa.REAS }), vitLine(X(k))); }
       else if (rs.early.length) say("neutral", u("fuEarly", { n: nm(x).split(" ")[0], h: fmtT(rs.early[0].due) }), vitLine(X(k)));
       else say("neutral", u("fuNone"), vitLine(X(k)));
       if (sheet) sheetPaint();
@@ -1323,7 +1609,8 @@
   function careTick() {
     if (!LCa || !ov || ov.hidden) return; var S = careLoad(), now = Date.now(), ch = false;
     LCa.ringing(S.fu, now, S.rung).forEach(function (f) { S.rung[f.id] = 1; ch = true; say("ord", u("fuDue", { n: f.nm.split(" ")[0] }), u("fuDueW", { a: fuName(f), m: Math.round((now - f.at) / 6e4) })); if (snd) chime(); });
-    var miss = LCa.sweep(S.fu, now); if (miss.length) { ch = true; say("bad", u("fuMiss", { n: miss[0].nm.split(" ")[0], p: miss.length * LCa.LATE }), u("fuMissW")); }
+    var miss = LCa.sweep(S.fu, now); if (miss.length) { ch = true; say("bad", u("fuMiss", { n: miss[0].nm.split(" ")[0], p: miss.length * LCa.LATE }), u("fuMissW")); miss.forEach(function (f) { fuPay(f, "fx"); }); }
+    try { pkTick(now); } catch (e) {}
     if (ch) { careSave(); if (sheet) sheetPaint(); }
     var nb = S.fu.filter(function (f) { var s0 = LCa.status(f, now); return s0 === "soon" || s0 === "due"; }).length, op = S.fu.filter(function (f) { var s0 = LCa.status(f, now); return s0 !== "ok" && s0 !== "miss"; }).length;
     var bi = q(".lcr-fub i"); if (bi) { bi.hidden = !op; bi.textContent = op; bi.className = nb ? "due" : ""; }
@@ -1354,6 +1641,11 @@
   function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) })); if (sheet) sheetPaint(); }
   function result(k, a, r) {
     try { careAfter(k, a, r); } catch (e) { console.warn("nursin care", e); }
+    try {                                                                                      // 29e 🧪 🩻 🩸 💊 the services · ⚠️ the report
+      if (r && r.k === "ok" && svcOf(a)) pkAdd(k, a, svcOf(a));
+      if (r && r.k === "ok" && a === "call") { var xr = X(k); if (xr && xr.L.some(function (s) { return s.kind === "act" && s.after.indexOf("call") > -1 && D.A[s.a] && D.A[s.a].g === "rx" && !xr.done[s.id]; })) pkAdd(k, "call", "ph"); }
+      if (r && (r.k === "bad" || r.k === "no") && a.indexOf("f_") !== 0 && (D.inc || []).length) setTimeout(function () { say("ord", u("incAsk"), u("incAskW")); }, 4200);
+    } catch (e) { console.warn("nursin rout", e); }
     var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d + (w.NursinPay ? " · " + payTxt(r.d * 10) : "") : "";   // 29d 💵 every point = 10 ل.ن
     // 28w: close only THIS field's question — the answer of the field before (queued, saved a second later) used to close the one being answered
     function shut() { if (openQ === k + String(a).replace(/^f_/, "")) openQ = null; }
@@ -1387,12 +1679,233 @@
     else say("bad", u("err"), u("errWhy") + (r.code ? " (" + r.code + ")" : ""));   // 28v: every failed write is said out loud
     if (sheet) sheetPaint();
   }
+
+  /* ---------------- 29e 🧼 🔄 🚪 👨‍👩‍👦 ⚠️ the nurse's routines + 🧪 🩻 💊 🩸 the services ----------------
+     (Abdullah, Nov 4 7:19–7:20 AM: «ضيفن كلّن»: handover, hand hygiene, discharge + education, family visits, incident report — each one
+     affects the salary.) Every routine done right is ONE event on its patient in the shared day doc (LiveDept.bonus: «z<code>»), so it is
+     paid in the class salary + ranking under rules v22; what it shows on the phone (the results fetched, the answered questions) is kept in
+     nursin_rout_v1. */
+  var RK = "nursin_rout_v1", rout = null;
+  function routLoad() { if (rout) return rout; try { rout = JSON.parse(localStorage.getItem(RK) || "null"); } catch (e) { rout = null; } if (!rout || rout.v !== 1) rout = { v: 1, pk: [], fa: {}, inc: {}, ho: {}, hh: { t: null, pend: 0 } }; return rout; }
+  function routSave() { try { var R0 = routLoad(), now = Date.now(); R0.pk = R0.pk.filter(function (x) { return now - x.t < 2 * 864e5; }); localStorage.setItem(RK, JSON.stringify(R0)); } catch (e) {} }
+  function rawNow() { return (L.raw && L.raw()) || null; }
+  function rOf(x, dk) { dk = dk || L.dep(); var raw = rawNow(); if (!raw || !x) return LDp().routines(null, dk, "a", 0, ""); return LDp().routines(raw, dk, x.k, curAi(dk), L.me().uid); }
+  function LDp() { return w.LiveDept; }
+  function isHome(x) { if (!x || x.ghost || !x.over || x.over.w !== "ok") return false; return !!rOf(x).dc; }
+  // one routine event, queued behind the steps (2 s rule); onDone(r) when it is written
+  function bz(k, code, dk, onDone) {
+    var tw = setTimeout(function () { say("neutral", u("saving")); }, 900);
+    actQ = actQ.then(function () { return L.act(k, "z" + code, undefined, 0, dk || L.dep()); }).then(function (r) { clearTimeout(tw); r = r || {}; if (r.k === "busy") return new Promise(function (res) { setTimeout(res, 1500); }).then(function () { return L.act(k, "z" + code, undefined, 0, dk || L.dep()); }).then(function (r2) { if (onDone) onDone(r2 || {}); }); if (onDone) onDone(r); }, function () { clearTimeout(tw); });
+  }
+  function bzPay(r) { return r && r.d ? " " + (r.d > 0 ? "+" : "") + r.d + (w.NursinPay ? " · " + payTxt(r.d * 10) : "") : ""; }
+
+  // 🧼 hand hygiene (friction hydro-alcoolique): BEFORE touching a patient and AFTER — the 🧴 next to every bed or the 🚰 sink.
+  // Touching another patient with the same hands is refused («🧼 لمست X …»); each rub at the right moment pays (≤ 2 per patient)
+  function rub(fromSink) {
+    var R0 = routLoad(), H = R0.hh; if (rubbing) return;
+    rubbing = 1; say("neutral", u(fromSink ? "rubSink" : "rubGo"), u("rubW"));
+    setTimeout(function () { rubbing = 0; washed = true; var was = H.t; H.t = null; H.pend = 1; routSave();
+      if (was) { var p0 = String(was).split("|"); if (p0[0] === dayId()) { bz(p0[3], "hh", p0[1], function (r) { if (r.k === "ok") say("good", u("rubAfter", { n: p0[4] || "" }) + bzPay(r), u("rubWhy")); else say("good", u("washed")); }); return; } }
+      say("good", u("washed"), u("rubBefore"));
+      if (sheet) sheetPaint(); }, Math.max(600, 4000 * ACTX));
+  }
+  var rubbing = 0;
+  // called by doAct before a gesture on patient k: true = go on
+  function hygOk(k) {
+    var R0 = routLoad(), H = R0.hh, x = X(k), id = [dayId(), L.dep(), curAi(L.dep()), k, x ? nm(x).split(" ")[0] : ""].join("|");
+    if (H.t && H.t.split("|").slice(0, 4).join("|") !== id.split("|").slice(0, 4).join("|")) { washed = false; say("ord", u("rubOther", { n: H.t.split("|")[4] || "", m: x ? nm(x).split(" ")[0] : "" }), u("rubHow")); if (sheet) sheetPaint(); return false; }
+    if (!H.t && H.pend) { H.pend = 0; bz(k, "hh", null, function (r) { if (r.k === "ok") setTimeout(function () { say("good", u("rubBeforeOk") + bzPay(r), u("rubWhy")); }, 2400); }); }
+    H.t = id; routSave(); return true;
+  }
+
+  // 🧪 🩻 💊 🩸 the services: a test / an image / a prescription / a blood bag ordered at the bed is READY at its service after a short
+  // while — walk there and fetch it (+20 ل.ن, the result goes into his dossier); if nobody goes, it comes up to the ward by itself after 3 min
+  var SVCA = { bilan: "lab", gds: "lab", bio: "lab", gly: null, radio: "rad", echo: "rad", sang: "bb" }, PK_READY = 15000, PK_AUTO = 180000;
+  function svcOf(a) { if (SVCA[a]) return SVCA[a]; var A = D && D.A[a]; return A && A.svc ? A.svc : null; }
+  function pkAdd(k, a, svc) {
+    var R0 = routLoad(), x = X(k), now = Date.now(), dk = L.dep(), id = [dayId(), dk, curAi(dk), k, svc, a].join("|");
+    if (R0.pk.some(function (p) { return p.id === id; })) return;
+    R0.pk.push({ id: id, svc: svc, dk: dk, ai: curAi(dk), k: k, a: a, nm: x ? nm(x) : "", t: now, rd: now + PK_READY * ACTX, got: 0, auto: 0 }); routSave();
+    setTimeout(function () { say("neutral", u("pkReady", { s: depName(svc), n: x ? nm(x).split(" ")[0] : "" }), u("pkReadyW")); }, 2600);
+  }
+  function pkTick(now) { var R0 = routLoad(), ch = false; R0.pk.forEach(function (p) { if (!p.got && !p.auto && now > p.t + PK_AUTO * ACTX) { p.auto = now; ch = true; if (ov && !ov.hidden) say("neutral", u("pkAuto", { n: p.nm.split(" ")[0], s: depName(p.svc) })); } }); if (ch) routSave(); }
+  function pkOpen(svc) { var R0 = routLoad(), dd = dayId(); return R0.pk.filter(function (p) { return p.svc === svc && !p.got && !p.auto && p.id.indexOf(dd) === 0; }); }
+  function pkOfBed(k) { var R0 = routLoad(), dk = L.dep(), dd = dayId(); return R0.pk.filter(function (p) { return p.k === k && p.dk === dk && p.id.indexOf(dd) === 0; }); }
+  function pkGet(id) {
+    var R0 = routLoad(), p = R0.pk.filter(function (z) { return z.id === id; })[0]; if (!p || p.got || p.auto) return;
+    if (Date.now() < p.rd) return say("neutral", u("pkWait", { s: Math.ceil((p.rd - Date.now()) / 1000) }), u("pkWaitW"));
+    p.got = Date.now(); routSave(); sheetPaint();
+    bz(p.k, "pk", p.dk, function (r) { say("good", u("pkGot", { n: p.nm.split(" ")[0] }) + (r.k === "ok" ? bzPay(r) : ""), u("pkGotW")); });
+  }
+  function pkLine(p) {
+    var x0 = null; try { var S0 = L.stateOf(p.dk); x0 = S0 && S0.P[p.k === "b" ? 1 : 0]; } catch (e) {} var pp = x0 && x0.p, A = D.A[p.a];
+    var res = p.svc === "lab" ? ((pp && pp.lab) || []).map(function (s) { return T(s); }).join(" · ") : p.svc === "rad" ? (pp && pp.img ? T(pp.img) : u("radDone")) : p.svc === "bb" ? u("bbDone") : u("phDone");
+    return { t: (A ? A.ic + " " + T(A).replace(/\s*[(—].*$/, "") : p.a), r: res || "—" };
+  }
+  function svcHtml(dk) {
+    var base = dk.replace(/\d$/, ""), I = w.LiveDept.INFO[dk], h = head(I.ic + " " + esc(T(I.t)), esc(u("svcSub_" + base) || ""));
+    if (base === "lab" || base === "rad" || base === "bb" || base === "ph") {
+      var L0 = pkOpen(dk), now = Date.now();
+      h += L0.length ? '<div class="lcr-acts lcr-wl">' + L0.map(function (p) { var ln = pkLine(p), rdy = now >= p.rd;
+        return '<button type="button" class="lcr-act' + (rdy ? " lcr-hit" : "") + '" data-lcpk="' + esc(p.id) + '">' + (rdy ? "📥 " : "⏳ ") + esc(ln.t) + " · " + esc(p.nm.split(" ")[0]) + "<small>" + esc(rdy ? u("pkTake") : u("pkWait", { s: Math.ceil((p.rd - now) / 1000) })) + "</small></button>"; }).join("") + "</div>"
+        : '<p class="small">' + esc(u("pkNone_" + base)) + "</p>";
+      return h + '<p class="small">' + esc(u("pkRule")) + "</p>";
+    }
+    if (base === "adm") return h + admHtml();
+    if (base === "ns") return h + hoHtml(dk);
+    return h + '<p class="small">' + esc(u("svcSub_" + base) || "") + "</p>";
+  }
+  // 🛎️ the admissions desk: who came in today, where they are now (🪑 waiting · 🛏️ in a bed · ✅ · 💔 · 🚪 home)
+  function admHtml() {
+    var H0 = hNow(), rows = []; if (!H0) return "";
+    w.LiveDept.WARDS.forEach(function (dk) { var S = H0[dk]; if (!S || !S.P) return; S.P.forEach(function (x) { if (x.ghost) return;
+      var inn = L.admOf(dk, x.k, 0), home = false; try { home = !!w.LiveDept.routines(rawNow(), dk, x.k, 0, "").dc; } catch (e) {}
+      var stt = home ? "🚪 " + u("dcHome") : x.over ? (x.over.w === "ok" ? "✅" : "💔") : inn ? "🛏️ " + L.stLabel(x.st, x.p.sex).split(" ")[0] : "🪑 " + u("admWait");
+      rows.push("<li><b>" + esc(T(x.p.nm)) + "</b> · " + x.p.age + " <small>" + esc(depName(dk)) + " · " + esc(stt) + "</small></li>"); }); });
+    return rows.length ? '<ul class="lcr-adm">' + rows.join("") + "</ul>" : '<p class="small">' + esc(u("admNone")) + "</p>";
+  }
+  // 🔄 the shift handover at the floor's nurse station: 3 questions about the patients in the beds of this floor (once per shift)
+  var hoQ = null;
+  function shiftId(now) { var hh = +new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "2-digit", hourCycle: "h23" }).format(new Date(now)); return dayId() + (hh < 7 ? "n" : hh < 15 ? "m" : hh < 23 ? "e" : "n2"); }
+  function hoPatients(f) { var H0 = hNow(), out = []; if (!H0) return out; w.LiveDept.WARDS.forEach(function (dk) { if (FLR(dk) !== f) return; var S = H0[dk]; if (!S || !S.P) return;
+      S.P.forEach(function (x) { if (x.ghost || (x.over && x.over.w !== "ok") || !L.admOf(dk, x.k, 0)) return; var hm = false; try { hm = !!w.LiveDept.routines(rawNow(), dk, x.k, 0, "").dc; } catch (e) {} if (!hm) out.push({ dk: dk, x: x, S: S }); }); });
+    if (f === 0 && H0.x && H0.x.P && H0.x.P[0] && !H0.x.P[0].over && H0.amb && H0.amb.cur && L.admOf("x", "a", H0.amb.cur.i)) out.push({ dk: "x", x: H0.x.P[0], S: H0.x });
+    return out; }
+  function hoBuild(f) {
+    var Ps = hoPatients(f); if (!Ps.length) return null; var r = C.rng(C.hash(shiftId(Date.now()) + "-ho-" + f)), Q = [];
+    for (var i = 0; i < 3; i++) { var o = Ps[Math.floor(r() * Ps.length)], kind = ["motif", "surv", "st"][i], q0;
+      if (kind === "st") { var right = o.x.st === "lost" ? "crit" : o.x.st; var opts = ["ok", "impr", "unst", "crit"]; q0 = { o: o, kind: kind, opts: opts.map(function (k0) { return { k: k0, t: L.stLabel(k0, o.x.p.sex) }; }), a: opts.indexOf(right === "ok" ? "ok" : right) }; }
+      else { var qd = C.opts(o.S.DK || D, o.S.cs, o.x.p, kind); q0 = { o: o, kind: kind, opts: qd.o.map(function (z) { return { t: T(z) }; }), a: qd.a }; }
+      Q.push(q0); }
+    return { f: f, Q: Q, ans: [], sid: shiftId(Date.now()) };
+  }
+  function hoHtml(dk) {
+    var f = FLR(dk), R0 = routLoad(), sid = shiftId(Date.now()), done = R0.ho[sid + f];
+    var h = '<p class="small">' + esc(u("hoWhat")) + "</p>";
+    if (done) return h + '<div class="lcr-pover ok"><b>' + esc(u("hoDone", { n: done.n })) + "</b><small>" + esc(u("hoNext")) + "</small></div>" + '<div class="lcr-acts"><button type="button" class="lcr-btn" data-lcfu="1">⏰ ' + esc(u("myFu")) + "</button></div>";
+    if (!hoQ || hoQ.f !== f || hoQ.sid !== sid) hoQ = hoBuild(f);
+    if (!hoQ) return h + '<p class="small">' + esc(u("hoNone")) + '</p><div class="lcr-acts"><button type="button" class="lcr-btn" data-lcfu="1">⏰ ' + esc(u("myFu")) + "</button></div>";
+    hoQ.Q.forEach(function (q0, i) { var nmx = T(q0.o.x.p.nm).split(" ")[0], an = hoQ.ans[i];
+      h += '<div class="lcr-fld' + (an != null ? " done" : "") + '"><div class="lcr-fl"><b>' + (i + 1) + ". " + esc(u("hoQ_" + q0.kind, { n: nmx, d: depName(q0.o.dk) })) + "</b></div><div class=\"lcr-acts\">" +
+        q0.opts.map(function (op, j) { var cls = an == null ? "" : j === q0.a ? " done" : j === an ? " bad" : " off"; return '<button type="button" class="lcr-act' + cls + '" data-lcho="' + i + "." + j + '"' + (an != null ? " disabled" : "") + ">" + esc(op.t) + "</button>"; }).join("") + "</div></div>"; });
+    if (hoQ.ans.filter(function (z) { return z != null; }).length === 3) { var n = hoQ.Q.filter(function (q0, i) { return hoQ.ans[i] === q0.a; }).length;
+      h += '<div class="lcr-acts"><button type="button" class="lcr-btn on lcr-hit" data-lchogo="1">' + esc(u("hoSend", { n: n })) + "</button></div>"; }
+    return h;
+  }
+  function hoAns(v) { if (!hoQ) return; var p = v.split("."), i = +p[0], j = +p[1]; if (hoQ.ans[i] != null) return; hoQ.ans[i] = j; sheetPaint(); }
+  function hoGo() {
+    if (!hoQ) return; var n = hoQ.Q.filter(function (q0, i) { return hoQ.ans[i] === q0.a; }).length, d = n === 3 ? 5 : n + 1, o = hoQ.Q[0].o, R0 = routLoad(), key = hoQ.sid + hoQ.f;
+    R0.ho[key] = { n: n, t: Date.now() }; routSave();
+    bz(o.x.k, "ho" + d, o.dk, function (r) { say(n >= 2 ? "good" : "neutral", u("hoOk", { n: n }) + (r.k === "ok" ? bzPay(r) : ""), u("hoWhy")); sheetPaint(); });
+  }
+
+  // 🚪 discharge with education: a stabilised patient goes home once a nurse tells him the right things (from his lesson) — frees his bed
+  var dcSel = {};
+  function eduOf(x) { var p = x.p, e = p.edu || (D.edu && D.edu[p.rid]) || null, g = D.eduGen || { ok: [], no: [] };
+    if (!e || !e.ok || !e.ok.length) { var r0 = C.rng(C.hash(T(p.nm) + "edu")); e = { ok: [g.ok[Math.floor(r0() * g.ok.length)], g.ok[Math.floor(r0() * g.ok.length)], { ar: "انتبه لـ: " + T(p.file.surv), fr: "Surveiller : " + T(p.file.surv) }].filter(Boolean), no: g.no.slice(0, 2), gen: 1 }; }
+    var L0 = e.ok.slice(0, 3).map(function (z) { return { z: z, ok: 1 }; }).concat((e.no || []).slice(0, 3).map(function (z) { return { z: z, ok: 0 }; })), r = C.rng(C.hash(T(p.nm) + "dc"));
+    for (var i = L0.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t0 = L0[i]; L0[i] = L0[j]; L0[j] = t0; } return { L: L0, gen: e.gen }; }
+  function dcHtml(k) {
+    var x = X(k); if (!x) return ""; if (!x.p.rid && st.cs && st.cs.id) x.p.rid = st.cs.id + k; var E0 = eduOf(x), s = dcSel[k] || (dcSel[k] = {});
+    var h = head("🚪 " + esc(u("dcT", { n: nm(x) })), esc(depName(L.dep()))) + '<p class="small">' + esc(u("dcHow")) + "</p>";
+    if (rOf(x).dc) return h + '<div class="lcr-pover ok"><b>' + esc(u("dcDone", { n: nm(x).split(" ")[0] })) + "</b></div>";
+    h += '<div class="lcr-acts lcr-wl">' + E0.L.map(function (it, i) { return '<button type="button" class="lcr-act' + (s[i] ? " lcr-hit" : "") + '" data-lcdcpick="' + k + "." + i + '">' + (s[i] ? "☑️ " : "⬜ ") + esc(T(it.z)) + "</button>"; }).join("") + "</div>";
+    if (E0.gen) h += '<p class="small">🌐 ' + esc(u("genInfo")) + "</p>";
+    return h + '<div class="lcr-acts"><button type="button" class="lcr-btn on" data-lcdcgo="' + k + '">' + esc(u("dcGo")) + "</button></div>";
+  }
+  function dcGo(k) {
+    var x = X(k); if (!x) return; if (!x.p.rid && st.cs && st.cs.id) x.p.rid = st.cs.id + k; var E0 = eduOf(x), s = dcSel[k] || {}, ok = 0, bad = 0, miss = [];
+    E0.L.forEach(function (it, i) { if (s[i] && it.ok) ok++; else if (s[i] && !it.ok) bad++; else if (!s[i] && it.ok) miss.push(T(it.z)); });
+    if (!ok) return say("ord", u("dcNone"));
+    var d = Math.max(1, Math.min(4, ok + (ok === 3 && !bad ? 1 : 0) - bad));
+    bz(k, "dc" + d, null, function (r) { if (r.k === "ok") { say("good", u("dcOk", { n: nm(x).split(" ")[0] }) + bzPay(r), bad || miss.length ? u("dcMiss", { m: miss.join(" · ") || "—", b: bad }) : u("dcAll")); sheetClose(); bg = null; }
+      else if (r.k === "bzmax") say("neutral", u("dcDone", { n: nm(x).split(" ")[0] })); else say("ord", u("retry")); });
+  }
+
+  // 👨‍👩‍👦 family visits: a relative comes to the bed of an admitted patient and asks a question (from his lessons) — answer it right: +20
+  function famOf(x, dk) { var B = D.fam || []; if (!B.length || !x || x.ghost || isHome(x) || (x.over && x.over.w !== "ok")) return null;
+    var inn = L.admOf(dk, x.k, curAi(dk)); if (!inn || Date.now() - inn.t < 6 * 6e4 * Math.max(ACTX, 0.05)) return null;
+    var L0 = B.filter(function (q0) { return (q0.dk || []).indexOf(dk === "x" ? "er" : dk) > -1; }); if (!L0.length) L0 = B;
+    var q0 = L0[C.hash(dayId() + dk + x.k + T(x.p.nm)) % L0.length]; return q0; }
+  function famDue(x, dk) { var q0 = famOf(x, dk); if (!q0) return null; var R0 = routLoad(), key = dayId() + dk + x.k; if (R0.fa[key] || rOf(x, dk).fa) return null; return q0; }
+  function famHtml(k) {
+    var x = X(k), dk = L.dep(), q0 = famOf(x, dk); if (!q0) return head("👨‍👩‍👦"); var R0 = routLoad(), key = dayId() + dk + k, an = R0.fa[key];
+    var h = head("👨‍👩‍👦 " + esc(T(q0.who) + " " + u("famOf", { n: nm(x).split(" ")[0] })), esc(depName(dk))) + '<p class="lcr-say">💬 «' + esc(T(q0.q)) + '»</p><div class="lcr-acts lcr-wl">';
+    h += q0.o.map(function (op, j) { var cls = an == null ? "" : j === q0.a ? " done" : j === an.j ? " bad" : " off"; return '<button type="button" class="lcr-act' + cls + '" data-lcfam="' + k + "." + j + '"' + (an != null ? " disabled" : "") + ">" + esc(T(op)) + "</button>"; }).join("") + "</div>";
+    if (an != null) h += '<p class="small">' + (an.j === q0.a ? "✅ " : "💡 ") + esc(T(q0.why)) + "</p>";
+    return h + '<p class="small lcr-src">' + (q0.gen ? "🌐 " : "📘 ") + esc(T(q0.src)) + (q0.href ? ' · <a href="' + esc(q0.href) + '">' + (FR() ? "📖 la leçon" : "📖 الدرس") + "</a>" : "") + "</p>";
+  }
+  function famAns(v) { var p = v.split("."), k = p[0], j = +p[1], x = X(k), dk = L.dep(), q0 = famOf(x, dk); if (!q0) return; var R0 = routLoad(), key = dayId() + dk + k; if (R0.fa[key]) return;
+    R0.fa[key] = { j: j, t: Date.now() }; routSave(); sheetPaint();
+    if (j === q0.a) bz(k, "fa", dk, function (r) { say("good", u("famOk") + (r.k === "ok" ? bzPay(r) : ""), T(q0.why)); }); else say("neutral", u("famNo"), T(q0.why)); }
+
+  // ⚠️ the incident report (fiche d'événement indésirable) after HIS harmful act on a patient — from the quality + law lessons: +30 when filled right
+  var incSel = {};
+  function incDue(x, dk) { if (!x) return false; var raw = rawNow(), me = L.me().uid; if (!raw) return false;
+    var evs = w.LiveDept.evOf(raw, dk, curAi(dk), x.k); if (!evs.some(function (e) { return e.u === me && (e.k === "bad" || e.k === "no") && !w.LiveDept.BZ_RE.test(e.a); })) return false;
+    return !rOf(x, dk).inc; }
+  function incQs(k) { var B = D.inc || []; if (!B.length) return []; var r = C.rng(C.hash(dayId() + "inc" + k + L.dep())), ids = B.map(function (z, i) { return i; });
+    for (var i = ids.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t0 = ids[i]; ids[i] = ids[j]; ids[j] = t0; } return ids.slice(0, 3).map(function (i) { return B[i]; }); }
+  function incHtml(k) {
+    var x = X(k), dk = L.dep(); if (!x) return ""; var raw = rawNow(), me = L.me().uid, ev = raw ? w.LiveDept.evOf(raw, dk, curAi(dk), k).filter(function (e) { return e.u === me && (e.k === "bad" || e.k === "no") && !w.LiveDept.BZ_RE.test(e.a); }) : [];
+    var e0 = ev[ev.length - 1], s = incSel[k] || (incSel[k] = {}), Q = incQs(k);
+    var h = head("⚠️ " + esc(u("incT")), esc(nm(x) + " · " + depName(dk))) + '<p class="small">' + esc(u("incWhat")) + "</p>";
+    if (e0) h += '<div class="lcr-pover lost"><b>' + esc(L.actName(e0.a)) + " · " + fmtT(e0.t) + "</b><small>" + esc(u("incFact")) + "</small></div>";
+    if (rOf(x, dk).inc) return h + '<div class="lcr-pover ok"><b>' + esc(u("incDone")) + "</b></div>";
+    Q.forEach(function (q0, i) { var an = s[i]; h += '<div class="lcr-fld' + (an != null ? " done" : "") + '"><div class="lcr-fl"><b>' + (i + 1) + ". " + esc(T(q0.q)) + '</b></div><div class="lcr-acts">' +
+      q0.o.map(function (op, j) { var cls = an == null ? "" : j === q0.a ? " done" : j === an ? " bad" : " off"; return '<button type="button" class="lcr-act' + cls + '" data-lcinc="' + k + "." + i + "." + j + '"' + (an != null ? " disabled" : "") + ">" + esc(T(op)) + "</button>"; }).join("") + "</div>" +
+      (an != null ? '<p class="small">' + esc(T(q0.why)) + ' <a href="' + esc(q0.href || "quality.html") + '">📖</a></p>' : "") + "</div>"; });
+    if (Q.length && Q.every(function (q0, i) { return s[i] != null; })) { var n = Q.filter(function (q0, i) { return s[i] === q0.a; }).length;
+      h += '<div class="lcr-acts"><button type="button" class="lcr-btn on lcr-hit" data-lcincgo="' + k + '">' + esc(n >= 2 ? u("incSend") : u("incRetry")) + "</button></div>"; }
+    return h + '<p class="small lcr-src">📘 ' + esc(u("incSrc")) + ' · <a href="quality.html">' + (FR() ? "Qualité" : "الجودة") + '</a> · <a href="law.html">' + (FR() ? "Législation" : "القانون") + "</a></p>";
+  }
+  function incAns(v) { var p = v.split("."), k = p[0], s = incSel[k] || (incSel[k] = {}); if (s[+p[1]] != null) return; s[+p[1]] = +p[2]; sheetPaint(); }
+  function incGo(k) { var Q = incQs(k), s = incSel[k] || {}, n = Q.filter(function (q0, i) { return s[i] === q0.a; }).length;
+    if (n < 2) { incSel[k] = {}; sheetPaint(); return say("neutral", u("incAgain")); }
+    bz(k, "in", null, function (r) { if (r.k === "ok") say("good", u("incOk") + bzPay(r), u("incWhy")); else say("ord", u("retry")); sheetPaint(); }); }
+
+  // the small signs on a bed: 👨‍👩‍👦 a visitor waiting with a question, 🧾 a result ready at a service, ⚠️ a report to fill, 🚪 ready to go home
+  function routMarks(P, x, s, t) {
+    var dk = L.dep(), cxp = s.x + s.w / 2, k = x.k, sideX = k === "b" ? s.x + s.w + 16 : s.x - 16;
+    if (famDue(x, dk)) { visitor(cx, sideX, s.y + 150, t, P); label(cx, P, sideX, s.y + 128, "💬", "#7c3aed"); }
+    var marks = [];
+    if (pkOfBed(k).some(function (p) { return !p.got && !p.auto && Date.now() >= p.rd; })) marks.push("🧾");
+    if (incDue(x, dk)) marks.push("⚠️");
+    if (x.over && x.over.w === "ok" && !isHome(x)) marks.push("🚪");
+    if (marks.length) label(cx, P, cxp, s.y - 6, marks.join(" "), marks[0] === "⚠️" ? "#b45309" : "#0f766e");
+  }
+  function visitor(c, x, y, t, P) { var br = Math.sin(t * 2) * 0.6; c.fillStyle = "rgba(0,0,0,.15)"; c.beginPath(); c.ellipse(x + 1, y + 4, 10, 7, 0, 0, 7); c.fill();
+    c.fillStyle = "#a855f7"; c.beginPath(); c.ellipse(x, y + 2 + br, 9, 6, 0, 0, 7); c.fill(); c.fillStyle = "#e3b089"; c.beginPath(); c.arc(x, y - 1 + br, 5, 0, 7); c.fill(); c.fillStyle = "#6b4423"; c.beginPath(); c.arc(x, y - 1.5 + br, 5.2, Math.PI, 2 * Math.PI); c.fill(); }
+  // the routine buttons of a bed sheet (care tab)
+  function routBtns(x) {
+    var dk = L.dep(), b = [], R0 = routLoad();
+    b.push('<button type="button" class="lcr-act' + (washed && !R0.hh.t ? " done" : "") + '" data-lcrub="1">🧴 ' + esc(u("rubBtn")) + "<small>" + esc(washed ? u("rubOn") : u("rubOff")) + "</small></button>");
+    if (famDue(x, dk)) b.push('<button type="button" class="lcr-act lcr-hit" data-lcfamo="' + x.k + '">👨‍👩‍👦 ' + esc(u("famBtn")) + "</button>");
+    if (incDue(x, dk) && (D.inc || []).length) b.push('<button type="button" class="lcr-act lcr-hit" data-lcinco="' + x.k + '">⚠️ ' + esc(u("incBtn")) + "</button>");
+    if (x.over && x.over.w === "ok" && !isHome(x)) b.push('<button type="button" class="lcr-act lcr-hit" data-lcdco="' + x.k + '">🚪 ' + esc(u("dcBtn")) + "</button>");
+    var pks = pkOfBed(x.k); if (pks.length) b.push('<div class="lcr-pks">' + pks.map(function (p) { var ln = pkLine(p), got = p.got || p.auto; return '<p class="small">' + (got ? "🧾 " : "⏳ ") + "<b>" + esc(ln.t) + "</b> · " + esc(got ? ln.r : u("pkAt", { s: depName(p.svc) })) + "</p>"; }).join("") + "</div>");
+    return '<div class="lcr-grp lcr-rout"><h4>' + esc(u("routT")) + '</h4><div class="lcr-acts">' + b.join("") + "</div></div>";
+  }
+
   function onClick(e) {
     sheetTouch = false;                                          // the click ends the gesture: what it changes paints at once
     var t = e.target.closest ? e.target.closest("button,a") : null; if (!t) return;
     var g = function (k) { return t.getAttribute(k); };
     if (g("data-lcx")) return close();
     if (g("data-lcwkx")) return workStop(g("data-lcwkx"));                                   // 29d ⏳ ✖
+    // 29e 🧼 🔄 🚪 👨‍👩‍👦 ⚠️ 🧪 the routines + the services
+    if (g("data-lcrub")) return rub(false);
+    if (g("data-lcpk")) return pkGet(g("data-lcpk"));
+    if (g("data-lcho")) return hoAns(g("data-lcho"));
+    if (g("data-lchogo")) return hoGo();
+    if (g("data-lcdco")) return sheetOpen("dc", g("data-lcdco"));
+    if (g("data-lcdcpick")) { var dp = g("data-lcdcpick").split("."), ds = dcSel[dp[0]] || (dcSel[dp[0]] = {}); ds[+dp[1]] = !ds[+dp[1]]; return sheetPaint(); }
+    if (g("data-lcdcgo")) return dcGo(g("data-lcdcgo"));
+    if (g("data-lcfamo")) return sheetOpen("fam", g("data-lcfamo"));
+    if (g("data-lcfam")) return famAns(g("data-lcfam"));
+    if (g("data-lcinco")) return sheetOpen("inc", g("data-lcinco"));
+    if (g("data-lcinc")) return incAns(g("data-lcinc"));
+    if (g("data-lcincgo")) return incGo(g("data-lcincgo"));
     if (g("data-lcreev")) return reev(g("data-lcreev"));                                     // 29d ⏰
     if (g("data-lcfu")) { sheet = { kind: "fu", k: "", tab: "" }; openQ = null; q(".lcr-sheet").hidden = false; return sheetPaint(); }
     if (g("data-lcsnd")) { snd = !snd; try { localStorage.setItem(SNDK, snd ? "1" : "0"); } catch (x) {} sndPaint(); if (snd) chime(); return; }
@@ -1513,7 +2026,7 @@
     w.addEventListener("popstate", function () { if (location.hash !== "#live") close(); else if (!ov || ov.hidden) open(); });
     w.addEventListener("hashchange", function () { if (location.hash === "#live" && (!ov || ov.hidden)) open(); });
   }
-  w.LiveRoom = { open: open, close: close, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
+  w.LiveRoom = { open: open, close: close, sheet: function (kind, k) { sheetOpen(kind, k); }, rout: function () { return routLoad(); }, pkAdd: function (k, a, s) { pkAdd(k, a, s); }, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
     walkTo: function (dk) { walkTo(dk); }, travel: function () { return trv; }, acc: function (t) { accPanel(t); }, seated: function () { return seated().map(function (o) { return { id: wkey(o.x), at: o.at, spot: o.spot, kind: o.x.kind }; }); },
     tri: function (id) { var o = seated().filter(function (x) { return wkey(x.x) === id; })[0]; if (o) { triSel = id; triPick = { pr: 0, dc: '' }; sheetOpen('tri', id); } }, view: function (f) { vf = f; vfAt = Date.now(); flTabs(); },
     act: function (k, a, opt) { doAct(k, a, opt); }, go: function (k) { goTo(k); }, nurse: function () { return { x: nurse.x, y: nurse.y, moving: nurse.pts.length }; }, work: function () { return Object.keys(work).map(function (id) { var b = work[id]; return { id: id, a: b.a, k: b.k, dk: b.dk, end: b.end, t0: b.t0 }; }); },

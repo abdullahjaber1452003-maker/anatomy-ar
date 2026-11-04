@@ -21,17 +21,24 @@ var LivePres = (function () {
   // 29d 🛗: twelve rooms now (LiveDept.ALL: + 🩺 r · 🔪 s · 👴 g · 🪑 wt · 💰 acc · 🧪 lab · 🩻 rad · 💊 ph). A room past the first four also
   // rides at the END of the first name as an invisible tag (U+2063 + 4 zero-width digits: room, target room) — still ≤ 20 characters, so
   // rules v22 accept it; x keeps the room's 2 low bits; an older phone shows the plain name.
-  var ALLD = ["er", "k", "n", "x", "r", "s", "g", "wt", "acc", "lab", "rad", "ph"], ZW = ["\u200b", "\u200c", "\u200d", "\u2060"], MARK = "\u2063";
+  // 29e: + 15 rooms (🛎️ 🧑‍⚕️×4 🔪 🛏️ 🩸 🧺 🗄️ 🧠 👶 🤰 🧹 ☕) — a code past 15 rides a longer tag (U+2064 + 3 + 3 zero-width base-4 digits); the
+  // name is cut to 13 so it stays ≤ 20 characters (rules v22); the short U+2063 tag of 29d still reads the same.
+  var ALLD = ["er", "k", "n", "x", "r", "s", "g", "wt", "acc", "lab", "rad", "ph", "adm", "ns0", "ns1", "ns2", "ns3", "or", "sspi", "bb", "ster", "arch", "psy", "p", "m", "cln", "stf"], ZW = ["\u200b", "\u200c", "\u200d", "\u2060"], MARK = "\u2063", MARK2 = "\u2064";
   function enc(v, dk) { var c = ALLD.indexOf(dk); v = clampI(v, 0, W - 4); return (v & ~3) | (c < 0 ? 0 : c & 3); }
   function dec(v) { v = Math.round(+v || 0); return { v: v & ~3, dep: DEPS[v & 3] }; }
-  function tag(c, tc) { return MARK + ZW[c >> 2] + ZW[c & 3] + ZW[tc >> 2] + ZW[tc & 3]; }
-  function untag(n) { n = String(n || ""); var i = n.indexOf(MARK); if (i < 0) return { n: n, c: -1, tc: -1 };
+  function tag(c, tc) { if (c > 15 || tc > 15) return MARK2 + ZW[(c >> 4) & 3] + ZW[(c >> 2) & 3] + ZW[c & 3] + ZW[(tc >> 4) & 3] + ZW[(tc >> 2) & 3] + ZW[tc & 3];
+    return MARK + ZW[c >> 2] + ZW[c & 3] + ZW[tc >> 2] + ZW[tc & 3]; }
+  function untag(n) { n = String(n || ""); var j = n.indexOf(MARK2);
+    if (j > -1) { var y = n.slice(j + 1, j + 7).split("").map(function (ch) { return ZW.indexOf(ch); });
+      if (y.length < 6 || y.some(function (k) { return k < 0; })) return { n: n.slice(0, j), c: -1, tc: -1 };
+      return { n: n.slice(0, j), c: y[0] * 16 + y[1] * 4 + y[2], tc: y[3] * 16 + y[4] * 4 + y[5] }; }
+    var i = n.indexOf(MARK); if (i < 0) return { n: n, c: -1, tc: -1 };
     var z = n.slice(i + 1, i + 5).split("").map(function (ch) { return ZW.indexOf(ch); });
     if (z.length < 4 || z.some(function (k) { return k < 0; })) return { n: n.slice(0, i), c: -1, tc: -1 };
     return { n: n.slice(0, i), c: z[0] * 4 + z[1], tc: z[2] * 4 + z[3] }; }
   function doc(me, pos, tgt, bed, dk, tdk) {
     var c = ALLD.indexOf(dk || "er"), tc = ALLD.indexOf(tdk || dk || "er"), nm = first(me && me.name) || "طالب";
-    if (c > 3 || tc > 3) nm = nm.slice(0, 14) + tag(c < 0 ? 0 : c, tc < 0 ? 0 : tc);
+    if (c > 3 || tc > 3) nm = nm.slice(0, (c > 15 || tc > 15) ? 13 : 14) + tag(c < 0 ? 0 : c, tc < 0 ? 0 : tc);
     return { n: nm, av: AVRE.test((me && me.av) || "") ? me.av : "",
       x: enc(pos.x, dk || "er"), y: clampI(pos.y, 0, H), tx: enc(tgt.x, tdk || dk || "er"), ty: clampI(tgt.y, 0, H), b: bed === "a" || bed === "b" ? bed : "" };
   }

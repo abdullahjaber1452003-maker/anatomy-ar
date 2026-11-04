@@ -15,13 +15,16 @@ var LivePay = (function () {
     { k: "nu", min: 1000, ic: "🩺", ar: "ممرّض", fr: "Infirmier", col: "#0284c7" },
     { k: "sr", min: 5000, ic: "⭐", ar: "ممرّض أوّل", fr: "Infirmier principal", col: "#16a34a" }];
   var SUP = { k: "sup", ic: "👔", ar: "مسؤول الطابق", fr: "Chef d'étage", col: "#7c3aed" };
-  var LINES = ["steps", "tri", "amb", "stab", "sup", "reas", "harm", "err", "trineg", "hint", "late"], EARN = { steps: 1, tri: 1, amb: 1, stab: 1, sup: 1, reas: 1 };   // reas/late = ⏰ his own follow-ups (assets/livecare.js, on his phone)
+  // 29e: reas/late now ride the shared doc too (z fu / z fx events) + rout (🧼 🔄 🚪 👨‍👩‍👦 ⚠️ the nurse's routines), svc (🧪 🩻 💊 🩸 fetched from
+  // the service), hyg (🧼 care with unwashed hands) — so they count in the class ranking; an older ⏰ kept only on the phone still adds to HIS lines
+  var LINES = ["steps", "tri", "amb", "stab", "sup", "reas", "rout", "svc", "harm", "err", "trineg", "hint", "late", "hyg"], EARN = { steps: 1, tri: 1, amb: 1, stab: 1, sup: 1, reas: 1, rout: 1, svc: 1 },
+    BZL = { fu: "reas", fx: "late", hh: "rout", ho: "rout", dc: "rout", fa: "rout", "in": "rout", pk: "svc", hx: "hyg" };   // reas/late = ⏰ his own follow-ups (assets/livecare.js, on his phone)
   function zero() { var o = {}; LINES.forEach(function (k) { o[k] = 0; }); return o; }
   function tot(o) { var e = 0, x = 0; LINES.forEach(function (k) { if (EARN[k]) e += o.L[k] | 0; else x += o.L[k] | 0; }); o.earn = e; o.ded = x; o.net = e + x; return o; }
   // the bed groups of a day that existed by «now»: the departments with a case + each ambulance that had arrived
   function groups(LD, D, key, now) {
     var out = [];
-    ["er", "k", "n", "r", "s", "g"].forEach(function (dk) { if (dk === "er" || LD.cases(D, dk).length) out.push({ dk: dk, ai: 0 }); });
+    ["er", "k", "n", "r", "s", "g", "p", "m"].forEach(function (dk) { if (dk === "er" || LD.cases(D, dk).length) out.push({ dk: dk, ai: 0 }); });
     LD.ambTimes(key).forEach(function (t, i) { if (t <= now) out.push({ dk: "x", ai: i + 1 }); });
     return out;
   }
@@ -31,7 +34,8 @@ var LivePay = (function () {
     var end = LC.dayStart(LC.nextKey(key)); if (now > end) now = end;
     function U(u, n) { var o = out[u] || (out[u] = { n: "", L: zero(), ok: 0 }); if (n) o.n = String(n); return o; }
     function add(e, amb) {
-      if (!e || !e.u) return; var o = U(e.u, e.n), dd = e.d | 0, L = o.L;
+      if (!e || !e.u) return; if (LD.BZ_RE && LD.BZ_RE.test(String(e.a || ""))) return;              // 29e: the routines are read from the raw doc below
+      var o = U(e.u, e.n), dd = e.d | 0, L = o.L;
       if (LD.TRI_RE.test(e.a)) { if (e.k === "ok") { L.tri += dd * TRI; o.ok++; } else L.trineg += dd * TRI; return; }
       if (e.a === "hint") { L.hint += dd * RATE; return; }
       if (e.k === "ok") { L.steps += dd * RATE; if (amb) L.amb += Math.round(dd * RATE * AMB_X); o.ok++; return; }
@@ -48,6 +52,9 @@ var LivePay = (function () {
       });
     });
     LD.walkIns(D, key).forEach(function (wk) { if (wk.t <= now) LD.evOf(raw, wk.dk, 0, "a").forEach(function (e) { add(e, false); }); });
+    // 29e 💵 every routine / follow-up event of the day (on any patient, even one already home): its line, ×10
+    if (LD.BZ_RE) for (var q in (raw.ev || {})) { var e = raw.ev[q]; if (!e || !e.u || (+e.t || 0) > now) continue; var a0 = String(e.a || ""), ns0 = LD.ns(a0), a1 = ns0 ? a0.slice(a0.indexOf("_") + 1) : a0, m0 = LD.BZ_RE.exec(a1); if (!m0) continue;
+      var o0 = U(e.u, e.n); o0.L[BZL[m0[1]]] += (e.d | 0) * RATE; if (e.k === "ok") o0.ok++; }
     if (supUid && out[supUid] && out[supUid].ok > 0) out[supUid].L.sup = SUP_DAY;
     for (var u in out) tot(out[u]);
     return out;
@@ -72,12 +79,12 @@ var LivePay = (function () {
   function packMine(days) { return Object.keys(days || {}).sort().reverse().slice(0, 120).map(function (k) { return k + "," + (days[k] | 0); }).join(";"); }
   function unpackMine(s) { var o = {}; String(s || "").split(";").forEach(function (x) { var m = /^(\d{8}),(-?\d+)$/.exec(x); if (m) o[m[1]] = +m[2]; }); return o; }
   return { RATE: RATE, TRI: TRI, STAB: STAB, AMB_STAB: AMB_STAB, AMB_X: AMB_X, SUP_DAY: SUP_DAY, EPOCH: EPOCH, RANKS: RANKS, SUP: SUP, LINES: LINES, EARN: EARN,
-    groups: groups, day: day, pack: pack, monday: monday, addDays: addDays, weekDays: weekDays, week: week, supOf: supOf, rank: rank, nextRank: nextRank, packMine: packMine, unpackMine: unpackMine };
+    BZL: BZL, groups: groups, day: day, pack: pack, monday: monday, addDays: addDays, weekDays: weekDays, week: week, supOf: supOf, rank: rank, nextRank: nextRank, packMine: packMine, unpackMine: unpackMine };
 })();
 /* ==/pay-core== */
 if (typeof window !== "undefined") window.LivePay = LivePay;
 if (!d || !d.addEventListener) return;
-var V = "20261029d", CK = "nursin_pay_v1", P = LivePay;
+var V = "20261029e", CK = "nursin_pay_v1", P = LivePay;
 function L() { return w.LiveCase; }
 function LC() { return w.LiveCore; }
 function LD() { return w.LiveDept; }
@@ -188,7 +195,9 @@ function supNow() { return supFor(P.monday(todayKey()), db()); }
 /* ---- 💰 المحاسبة: كشف راتب (today / this week) + 🏆 the class ranking of the week ---- */
 var LN = { steps: ["✅", "خطوات صح", "Gestes justes"], tri: ["🏷️", "فرز صح", "Tri juste"], amb: ["🚑", "بدل إسعاف (+50%)", "Prime ambulance (+50 %)"], stab: ["🏅", "مكافأة استقرار مريض", "Prime patient stabilisé"],
   sup: ["👔", "بدل مسؤول الطابق", "Prime chef d'étage"], harm: ["⚠️", "أذى للمريض", "Acte dangereux"], err: ["❌", "غلط أو بغير وقت", "Erreur ou trop tôt"], trineg: ["🏷️", "فرز غلط", "Tri erroné"], hint: ["💡", "تلميحات مدفوعة", "Indices payés"],
-  reas: ["⏰", "إعادة تقييم بوقتها", "Réévaluation à l'heure"], late: ["⏰", "موعد تقييم فات", "Réévaluation manquée"] };
+  reas: ["⏰", "إعادة تقييم بوقتها", "Réévaluation à l'heure"], late: ["⏰", "موعد تقييم فات", "Réévaluation manquée"],
+  rout: ["🧼", "روتين التمريض (غسل إيدين، تسليم، خروج، عيلة، تقرير)", "Routines (mains, relève, sortie, famille, déclaration)"], svc: ["🧪", "جبت النتيجة / الدوا بإيدك", "Résultat / médicament récupéré"],
+  hyg: ["🧼", "شغل بلا غسل إيدين", "Soin sans hygiène des mains"] };
 // 29d ⏰ his reassessments (on time +30 / missed −20) of a day, read from the phone (assets/livecare.js) → added to HIS payslip lines
 function careDays() { var C0 = w.LiveCare, x = LC(); if (!C0 || !x) return {}; var S = null; try { S = C0.load(localStorage.getItem(C0.KEY)); } catch (e) { return {}; }
   return C0.extras(S.fu, function (t) { return x.docId(x.dayKey(t)); }); }
