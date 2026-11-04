@@ -264,7 +264,7 @@
     if (location.hash !== "#live") try { history.pushState({ lc: 1 }, "", "#live"); } catch (e) { location.hash = "live"; }
     q(".lcr-tt").textContent = depTitle();
     nurse = nurse || { x: 180, y: 560, dir: -Math.PI / 2, pts: [], goal: null, walkT: 0 };
-    L.start(onState).then(function (X) { D = X; if (!X) return; grpAdd(); G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); flTabs();
+    L.start(onState).then(function (X) { D = X; if (!X) return; grpAdd(); G = screenGrid(G || (R && R.grid ? R.grid() : null)); stWatch(); size(); slots(); go(); flTabs();
       if (w.NursinPay) setTimeout(function () { w.NursinPay.sync(); }, 1500); });   // 29d 💵 the past days of the payroll (once each)
     if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 1200); }   // 29d ⏰
   }
@@ -373,10 +373,25 @@
   function size() {
     fsize();
     if (!cv || !E) return; var stg = q(".lcr-stage"), wv = stg.clientWidth, hv = stg.clientHeight; if (!wv || !hv) return;
-    scale = Math.min(wv / E.W, hv / E.H); dpr = Math.min(2, w.devicePixelRatio || 1);
-    cv.style.width = Math.round(E.W * scale) + "px"; cv.style.height = Math.round(E.H * scale) + "px";
+    // 29g 🛏️ (Abdullah, Nov 4 2:57 PM «الشخصيات من فوق، ما في شي مبيّن»): the stage shrinks when the banner/patient cards appear, so the room is
+    // re-fitted whenever the stage changes size (a ResizeObserver, not only window resize), and on a short phone stage it never goes below
+    // CAM_MIN scale — the room is then taller than the stage and a camera follows the nurse (the canvas slides inside the stage)
+    var fit = Math.min(wv / E.W, hv / E.H); scale = Math.max(fit, Math.min(wv / E.W, CAM_MIN)); dpr = Math.min(2, w.devicePixelRatio || 1);
+    var cw = Math.round(E.W * scale), ch = Math.round(E.H * scale);
+    cv.style.width = cw + "px"; cv.style.height = ch + "px";
     cv.width = Math.round(E.W * scale * dpr); cv.height = Math.round(E.H * scale * dpr); bg = null;
+    cam.h = ch; cam.vh = hv; cam.y = camWant(); camApply(true);
   }
+  var CAM_MIN = 0.62, cam = { y: 0, h: 0, vh: 0, px: null }, stRO = null;
+  function camWant() { if (!(cam.h > cam.vh + 1)) return 0; var fy = nurse ? nurse.y : E.H / 2; return Math.max(0, Math.min(cam.h - cam.vh, fy * scale - cam.vh * 0.5)); }
+  function camApply(force) {
+    if (!cv) return; var off = cam.h > cam.vh + 1 ? Math.round((cam.h - cam.vh) / 2 - cam.y) : 0;
+    if (!force && off === cam.px) return; cam.px = off; cv.style.transform = off ? "translateY(" + off + "px)" : "";
+  }
+  function camTick(dt) { if (!(cam.h > cam.vh + 1)) { if (cam.px) camApply(true); return; } var tg = camWant(); cam.y += (tg - cam.y) * Math.min(1, dt * 5 || 1); camApply(false); }
+  function stWatch() { if (stRO || !w.ResizeObserver) return; var stg = q(".lcr-stage"); if (!stg) return; var lw = 0, lh = 0;
+    stRO = new w.ResizeObserver(function () { var a = stg.clientWidth, b = stg.clientHeight; if (a === lw && b === lh) return; lw = a; lh = b; if (ov && !ov.hidden) size(); }); stRO.observe(stg); }
+  w.LiveRoomCam = function () { return { scale: scale, h: cam.h, vh: cam.vh, off: cam.px || 0 }; };
   function go() { stop(); last = 0; raf = w.requestAnimationFrame(loop); }
   function stop() { if (raf) w.cancelAnimationFrame(raf); raf = 0; }
   function loop(ts) {
@@ -391,6 +406,7 @@
     presFrame(dt);
     draw(ts / 1000);
     floorDraw(ts / 1000, dt);
+    camTick(dt);
   }
   function night() { return d.documentElement.getAttribute("data-theme") === "night"; }
   function pal() {
@@ -547,11 +563,21 @@
     cx.fillStyle = blc; rr(cx, cxp - 18 - br / 2, s.y + 48, 36 + br, 86, 16); cx.fill();
     cx.fillStyle = "rgba(255,255,255,.28)"; rr(cx, cxp - 13 - br / 2, s.y + 52, 14 + br / 2, 74, 8); cx.fill();
     cx.fillStyle = "rgba(255,255,255,.5)"; rr(cx, cxp - 20 - br / 2, s.y + 46, 40 + br, 8, 4); cx.fill();
-    var sk0 = x.st === "lost" ? "#b8c2c8" : P.skin; cx.fillStyle = sk0; rr(cx, cxp - 22 - br / 2, s.y + 56, 6, 26, 3); cx.fill(); rr(cx, cxp + 16 + br / 2, s.y + 56, 6, 26, 3); cx.fill();
-    var sk = P.skin; if (x.st === "lost") sk = "#b8c2c8"; else if (v.spo2 < 88) sk = "#c4d2d8"; else if (v.sys < 85) sk = "#ead8c8"; else if (v.t >= 38.5) sk = "#f0a98f";
-    var hx = cxp, hy = s.y + 22; cx.fillStyle = sk; cx.beginPath(); cx.arc(hx, hy, 11, 0, 7); cx.fill();
-    cx.fillStyle = x.p.sex === "f" ? "#5b3a26" : P.hair; cx.beginPath(); cx.arc(hx, hy - 4, x.p.sex === "f" ? 12.5 : 11, Math.PI * 1.02, Math.PI * 1.98); cx.fill();
-    if (x.p.sex === "f") { cx.fillRect(hx - 12, hy - 4, 4, 13); cx.fillRect(hx + 8, hy - 4, 4, 13); }
+    var lk = look(x.p), sk0 = x.st === "lost" ? "#b8c2c8" : lk.skin; cx.fillStyle = sk0; rr(cx, cxp - 22 - br / 2, s.y + 56, 6, 26, 3); cx.fill(); rr(cx, cxp + 16 + br / 2, s.y + 56, 6, 26, 3); cx.fill();
+    // 29g 👕 his own clothes (hospital gown in his colour) between the pillow and the blanket — the same look() as in the waiting room
+    cx.fillStyle = "rgba(0,0,0,.12)"; rr(cx, cxp - 17, s.y + 31, 34, 20, 8); cx.fill();
+    cx.fillStyle = lk.clo; rr(cx, cxp - 16, s.y + 30, 32, 20, 8); cx.fill();
+    cx.fillStyle = "rgba(255,255,255,.55)"; cx.beginPath(); cx.moveTo(cxp - 6, s.y + 30); cx.lineTo(cxp, s.y + 37); cx.lineTo(cxp + 6, s.y + 30); cx.closePath(); cx.fill();   // the collar
+    var sk = lk.skin; if (x.st === "lost") sk = "#b8c2c8"; else if (v.spo2 < 88) sk = "#c4d2d8"; else if (v.sys < 85) sk = "#ead8c8"; else if (v.t >= 38.5) sk = "#f0a98f";
+    var hx = cxp, hy = s.y + 23;
+    if (lk.hij) { cx.fillStyle = lk.clo; cx.beginPath(); cx.arc(hx, hy, 14.5, 0, 7); cx.fill(); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.lineWidth = 1; cx.stroke(); }
+    else if (x.p.sex === "f") { cx.fillStyle = lk.hair; cx.beginPath(); cx.ellipse(hx, hy - 1, 15, 14, 0, 0, 7); cx.fill(); }   // her hair spread on the pillow
+    cx.fillStyle = sk; cx.beginPath(); cx.arc(hx, hy, 11.5, 0, 7); cx.fill(); cx.strokeStyle = "rgba(60,35,20,.45)"; cx.lineWidth = 1; cx.stroke();
+    if (!lk.hij) { cx.fillStyle = lk.hair; cx.beginPath(); cx.arc(hx, hy - 3.5, 12, Math.PI * 1.02, Math.PI * 1.98); cx.fill(); }
+    if (lk.old && !lk.hij) { cx.strokeStyle = "rgba(90,58,42,.45)"; cx.lineWidth = 0.7; cx.beginPath(); cx.moveTo(hx - 5, hy - 4.5); cx.lineTo(hx - 2, hy - 4.5); cx.moveTo(hx + 2, hy - 4.5); cx.lineTo(hx + 5, hy - 4.5); cx.stroke(); }   // the old man's lined forehead
+    var pn = painOf(x.p); cx.strokeStyle = "#7a3b2a"; cx.lineWidth = 1; cx.beginPath();          // his mouth: a frown when it hurts
+    if (pn >= 6 && x.st !== "lost") { cx.arc(hx, hy + 8.5, 3, Math.PI * 1.15, Math.PI * 1.85); } else { cx.moveTo(hx - 2.5, hy + 6); cx.quadraticCurveTo(hx, hy + 7.5, hx + 2.5, hy + 6); } cx.stroke();
+    if (pn >= 6 && x.st !== "lost" && v.gcs > 9) { cx.strokeStyle = "#5a3a2a"; cx.beginPath(); cx.moveTo(hx - 6, hy - 3); cx.lineTo(hx - 2.5, hy - 1.8); cx.moveTo(hx + 6, hy - 3); cx.lineTo(hx + 2.5, hy - 1.8); cx.stroke(); }
     cx.strokeStyle = "#5a3a2a"; cx.lineWidth = 1.1; cx.beginPath(); if (v.gcs <= 9 || x.st === "lost") { cx.moveTo(hx - 6, hy + 1); cx.lineTo(hx - 2, hy + 1); cx.moveTo(hx + 2, hy + 1); cx.lineTo(hx + 6, hy + 1); } else { cx.arc(hx - 4, hy + 1, 1.2, 0, 7); cx.moveTo(hx + 5.2, hy + 1); cx.arc(hx + 4, hy + 1, 1.2, 0, 7); } cx.stroke();
     if (done.o2) { cx.fillStyle = "rgba(52,211,153,.55)"; cx.beginPath(); cx.ellipse(hx, hy + 5, 6, 4.5, 0, 0, 7); cx.fill(); }
     if (done.mon) { cx.strokeStyle = "rgba(37,99,235,.55)"; cx.lineWidth = 0.9; cx.beginPath(); cx.moveTo(cxp, s.y + 70); cx.quadraticCurveTo((cxp + E.stations.mon.x) / 2, s.y + 20, E.stations.mon.x + 19, E.stations.mon.y + E.stations.mon.h); cx.stroke(); }
