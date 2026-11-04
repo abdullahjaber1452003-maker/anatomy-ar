@@ -160,3 +160,7 @@ html[data-theme=night] .hzsug{background:linear-gradient(135deg,color-mix(in srg
 html[data-theme=night] .hzrevbx .hzrevnx{color:#5eead4}
 .hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-color:transparent;font-weight:800}
 html[data-theme=night] .hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
+
+/* 29d 📋 «المهام اليومية» above «🧭 مسار اليوم» */
+.hzdaily{margin:0 0 12px}
+.hzdaily .hzdh h2{font-size:1.05rem}

@@ -5,7 +5,7 @@
 (function (w, d) {
   var L = w.LiveCase, C = w.LiveCore; if (!L || !C || !d || !d.addEventListener) return;
   var E = w.ERROOM, R = w.ERRoom;
-  var ov = null, D = null, st = null, mode = "loading", cv, cx, dpr = 1, scale = 1, G = null, bg = null, raf = 0, last = 0, nurse = null, mark = null;
+  var lastRank = "", ov = null, D = null, st = null, mode = "loading", cv, cx, dpr = 1, scale = 1, G = null, bg = null, raf = 0, last = 0, nurse = null, mark = null;
   var hands = [], washed = false, sheet = null, panel = null, fbT = 0, endSeen = false, openQ = null, prevSt = {};
   // 28y: 💡 open hint box (bed k) · the step a paid hint pointed at · the 📤 checklist · each bed has its own IV set (soluté + cathéter + tubulure) at the bed
   var hintOpen = null, hl = null, handOpen = null, BEDSIDE = { kit: 1 };
@@ -133,8 +133,52 @@
     docNew: { ar: "«ميرسي عالجديد ({w}).»", fr: "« Merci pour la nouvelle ({w}). »" }, docCrit: { ar: "«🚨 جايي هلّق — ضلّو حدّو.»", fr: "« 🚨 J'arrive — restez près de lui. »" },
     docNeed: { ar: "«قبل ما قلّك شو تعطو، بدّي: {m}»", fr: "« Avant de prescrire, il me faut : {m} »" },
     docAgain: { ar: "📞 اتصل كمان", fr: "📞 Rappeler" }, called: { ar: "📞 {c}×", fr: "📞 {c}×" },
-    calls0: { ar: "كل مرّة في شي جديد (أرقام، فحص، تغيير) اتصل كمان — بلا جديد: −1", fr: "Rappelle à chaque nouveauté (constantes, examen, changement) — sans nouveauté : −1" }
+    calls0: { ar: "كل مرّة في شي جديد (أرقام، فحص، تغيير) اتصل كمان — بلا جديد: −1", fr: "Rappelle à chaque nouveauté (constantes, examen, changement) — sans nouveauté : −1" },
+    // 29d 🛗 floors + 🪑 the waiting room / 🏷️ triage + 💵 salary (Abdullah, Nov 4 7:01–7:20 AM)
+    elev: { ar: "🛗 المصعد", fr: "🛗 Ascenseur" }, elevW: { ar: "كبّس عغرفة بهالطابق لتروح عليها — الممرّض بيطلع بالمصعد", fr: "Touche une salle de cet étage pour y aller — l'infirmier prend l'ascenseur" },
+    ride: { ar: "🛗 بالمصعد لـ {f}…", fr: "🛗 Ascenseur vers {f}…" },
+    soonT: { ar: "🚧 قريباً", fr: "🚧 Bientôt" }, soonD: { ar: "🚧 {d} عم يتجهّز", fr: "🚧 {d} : en préparation" },
+    soonW: { ar: "حالاتو جايين بالتحديث الجاي — هلّق في: 🚑 الطوارئ · 🫀 القلب · 🧠 الأعصاب · 🪑 الانتظار · 💰 المحاسبة", fr: "Ses cas arrivent à la prochaine mise à jour — ouverts : 🚑 urgences · 🫀 cardio · 🧠 neuro · 🪑 accueil · 💰 comptabilité" },
+    waitN: { ar: "🪑 {n} ناطرين بالانتظار", fr: "🪑 {n} en salle d'attente" }, waitBed: { ar: "🪑 بالانتظار", fr: "🪑 En attente" },
+    waitBedT: { ar: "🪑 {n} لسّا بغرفة الانتظار", fr: "🪑 {n} est encore en salle d'attente" },
+    waitBedW: { ar: "التخت فاضي: المرضى ما بيفوتو لحالهن. روح عـ 🪑 الانتظار والفرز (الطابق الأرضي)، قيّمو وفوّتو عالقسم الصح — وهوّي ناطر حالتو عم تتراجع.", fr: "Lit vide : les patients n'entrent pas seuls. Va en 🪑 accueil et tri (rez-de-chaussée), évalue-le et fais-le entrer dans le bon service — en attendant, son état se dégrade." },
+    goWait: { ar: "🚶 روح عالانتظار", fr: "🚶 Aller à l'accueil" },
+    triT: { ar: "🏷️ فرز (Triage)", fr: "🏷️ Tri (triage)" }, triQ1: { ar: "1️⃣ شو الأولوية؟", fr: "1️⃣ Quelle priorité ?" }, triQ2: { ar: "2️⃣ لأي قسم؟", fr: "2️⃣ Quel service ?" },
+    triGo: { ar: "✅ فرز وفوّتو", fr: "✅ Trier et faire entrer" }, triPick: { ar: "اختار الأولوية والقسم أوّل", fr: "Choisis d'abord la priorité et le service" },
+    triVit: { ar: "📋 علامات سريعة", fr: "📋 Constantes rapides" }, pain: { ar: "وجع", fr: "Douleur" },
+    triOk: { ar: "✅ فرز صح!", fr: "✅ Tri juste !" }, triOkP: { ar: "✅ القسم صح · ⚠️ الأولوية مش هيك", fr: "✅ Bon service · ⚠️ priorité inexacte" }, triNo: { ar: "❌ مش هالقسم — بعدو ناطر", fr: "❌ Pas ce service — il attend encore" },
+    triIn: { ar: "🛏️ {n} صار بـ {d}", fr: "🛏️ {n} est en {d}" }, triInW: { ar: "الحالة بلّشت هون: أوّل شي 🤝 الاستقبال (Accueil) عند تختو", fr: "Le cas commence ici : d'abord 🤝 l'accueil à son lit" },
+    triWalk: { ar: "🛏️ {n} راح عـ {d}", fr: "🛏️ {n} part en {d}" }, triBy: { ar: "⚡ {n} سبقك وفوّتو", fr: "⚡ {n} l'a déjà fait entrer" },
+    triMax: { ar: "جرّبت 3 مرّات لهالمريض — خلّي رفيقك يجرّب", fr: "3 essais pour ce patient — laisse un camarade essayer" }, triGone: { ar: "🚶 راح — ما حدا فرزو بالوقت", fr: "🚶 Parti — personne ne l'a trié à temps" },
+    triWant: { ar: "الأولوية الصح: {p}", fr: "La bonne priorité : {p}" }, triOver: { ar: "(درجة أعلى من اللازم مقبولة — الحذر أحسن)", fr: "(un cran plus urgent est accepté — prudence)" },
+    triDep: { ar: "مكانو: {d}", fr: "Sa place : {d}" }, triSig: { ar: "العلامات: {s}", fr: "Signes : {s}" },
+    triRule: { ar: "🌐 سلّم الفرز (4 درجات) معلومات عامة؛ العلامات الخطرة من دروسك", fr: "🌐 L'échelle de tri à 4 niveaux = notion générale ; les signes d'alerte viennent de tes cours" },
+    amb: { ar: "🚑 عالنقّالة حدّ الباب", fr: "🚑 Sur le brancard à l'entrée" }, walkin: { ar: "🚶 إجا لحالو", fr: "🚶 Venu seul" },
+    waitHint: { ar: "🪑 في مرضى ناطرين — كبّس على حدا لتقيّمو وتفوّتو", fr: "🪑 Des patients attendent — touche-en un pour l'évaluer et le faire entrer" },
+    waitNone: { ar: "🪑 ما حدا ناطر هلّق — المرضى الجداد بيقعدو هون أوّل ما يوصلو", fr: "🪑 Personne n'attend — les nouveaux patients s'assoient ici en arrivant" },
+    desk: { ar: "🏷️ مكتب الفرز", fr: "🏷️ Bureau de tri" }, entr2: { ar: "🚪 من الإسعاف", fr: "🚪 Côté ambulances" }, exitC: { ar: "🚪 عالممرّ", fr: "🚪 Couloir" },
+    accW: { ar: "💰 كبّس عالشبّاك لتشوف كشف راتبك", fr: "💰 Touche le guichet pour voir ton bulletin" }, accDesk: { ar: "💰 شبّاك المحاسبة", fr: "💰 Guichet de la comptabilité" },
+    accBoard: { ar: "📋 رواتب الأسبوع", fr: "📋 Salaires de la semaine" }, accSafe: { ar: "🔐 الخزنة", fr: "🔐 Coffre" },
+    supFree: { ar: "👔 ببلاش — ميزة مسؤول الطابق", fr: "👔 gratuit — avantage du chef d'étage" }, rankUp: { ar: "⬆️ ترقية! صرت {r}", fr: "⬆️ Promotion ! Tu es {r}" }
   };
+  // 29d ⏳ every act takes its time + ⏰ reassessment follow-ups (assets/livecare.js)
+  Object.assign(U, {
+    wkDo: { ar: "⏳ عم تعمل: {a}", fr: "⏳ En cours : {a}" }, wkFor: { ar: "لـ {n}", fr: "pour {n}" }, wkX: { ar: "✖ إلغاء", fr: "✖ Annuler" },
+    wkBusy: { ar: "⏳ لسّا عم تعمل «{a}» لهالمريض — باقي {s} ث", fr: "⏳ Tu fais encore « {a} » pour ce patient — encore {s} s" },
+    wkBusyW: { ar: "بالحقيقة ما فيك تعمل شغلتين بنفس الوقت عنفس المريض. استنّى يخلص أو كبّس ✖ إلغاء. (رفقاتك فيهن يشتغلو بنفس الوقت)", fr: "En vrai, pas deux gestes à la fois sur le même patient. Attends la fin ou touche ✖ Annuler. (Tes collègues peuvent travailler en même temps)" },
+    wkCancel: { ar: "✖ لغيت «{a}»", fr: "✖ « {a} » annulé" }, wkGone: { ar: "✖ وقّفت «{a}» — تركت المريض", fr: "✖ « {a} » arrêté — tu as quitté le patient" },
+    fuSet: { ar: "⏰ ارجع قيّم {n} الساعة {h} (بعد {m} دقيقة)", fr: "⏰ Reviens réévaluer {n} à {h} (dans {m} min)" },
+    fuSetW: { ar: "انكتب بالملف «✅ أُعطي {a} الساعة {g}». لما يجي الوقت: الضغط والنبض والـ SpO₂ + مفعول الدوا + الأعراض الجانبية.", fr: "Noté au dossier « ✅ {a} donné à {g} ». À l'heure : TA, pouls, SpO₂ + effet du traitement + effets indésirables." },
+    fuGiven: { ar: "✅ أُعطي {a} الساعة {h}", fr: "✅ {a} donné à {h}" }, fuAt: { ar: "⏰ تقييم الساعة {h}", fr: "⏰ Réévaluation à {h}" },
+    fuLeft: { ar: "باقي", fr: "dans" }, fuNow: { ar: "🔔 هلّق!", fr: "🔔 Maintenant !" }, fuOkL: { ar: "✅ قيّمتو بوقتو", fr: "✅ Réévalué à l'heure" }, fuMissL: { ar: "⚠️ فات الموعد", fr: "⚠️ Manqué" },
+    reev: { ar: "⏰ أعد التقييم (Réévaluation)", fr: "⏰ Réévaluer (constantes + effet)" },
+    fuDue: { ar: "🔔 حان وقت تقييم المريض {n}", fr: "🔔 C'est l'heure de réévaluer {n}" }, fuDueW: { ar: "{a} من {m} دقيقة — روح شوف الضغط والنبض ومفعول الدوا", fr: "{a} il y a {m} min — va voir TA, pouls et effet du traitement" },
+    fuOk: { ar: "✅ رجعت قيّمت {n} بوقتو · +{p} ل.ن", fr: "✅ {n} réévalué à l'heure · +{p} NS" }, fuEarly: { ar: "⏳ لسّا بكير — موعد {n} الساعة {h}", fr: "⏳ Trop tôt — réévaluation de {n} à {h}" },
+    fuNone: { ar: "ما في موعد تقييم لهالمريض هلّق", fr: "Pas de réévaluation prévue pour ce patient" },
+    fuMiss: { ar: "⚠️ فات موعد تقييم {n} · {p} ل.ن", fr: "⚠️ Réévaluation de {n} manquée · {p} NS" }, fuMissW: { ar: "ما رجعت تشوفو بعد الدوا — ممكن حالتو تسوء وما حدا انتبه. الممرّض بيرجع دايماً يقيّم بعد كل دوا.", fr: "Personne n'a vérifié après le traitement — il peut s'aggraver sans qu'on le voie. On réévalue toujours après un traitement." },
+    fuVit: { ar: "هلّق: ", fr: "Maintenant : " }, myFu: { ar: "⏰ مواعيدي", fr: "⏰ Mes rappels" }, fuEmpty: { ar: "ما عندك مواعيد هلّق. بس تعطي دوا لمريض، بينحطّ هون موعد ترجع تقيّمو.", fr: "Aucun rappel. Quand tu donnes un traitement, la réévaluation s'affiche ici." },
+    fuGo: { ar: "🚶 روح عندو", fr: "🚶 Y aller" }, fuHow: { ar: "⏰ بوقتها (من 5 د قبل لـ 15 د بعد) = +30 ل.ن · فات = −20 ل.ن", fr: "⏰ À l'heure (5 min avant → 15 min après) = +30 NS · manquée = −20 NS" }
+  });
   function ug(k, x, r) { return u(x && x.p && x.p.sex === "f" && U[k + "F"] ? k + "F" : k, r); }   // 28x: the patient's gender (ليا استقرّت, بعدا…)
   function u(k, r) { var s = T(U[k]); for (var x in (r || {})) s = s.split("{" + x + "}").join(r[x]); return s; }
   var GY = [null, { ar: "ما بيفتح عيونو أبداً", fr: "N'ouvre pas les yeux" }, { ar: "بيفتح عيونو بس عالوجع", fr: "Ouvre les yeux à la douleur" }, { ar: "بيفتح عيونو لمّا تحكيه", fr: "Ouvre les yeux à la demande" }, { ar: "عيونو مفتوحة لحالو", fr: "Yeux ouverts spontanément" }];
@@ -156,10 +200,10 @@
     ov = d.createElement("div"); ov.className = "lcr"; ov.hidden = true; ov.setAttribute("data-nofr", ""); ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true");
     ov.innerHTML = '<div class="lcr-top"><button type="button" class="lcr-x" data-lcx="1" aria-label="' + esc(u("close")) + '">✕</button>' +
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
-      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
+      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib lcr-fub" data-lcfu="1" aria-label="' + esc(u("myFu")) + '">⏰<i hidden></i></button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
-      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div></div>' +
-      '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas></div>' +
+      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div><div class="lcr-work" hidden></div></div>' +
+      '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas><div class="lcr-flt" role="tablist" aria-label="' + esc(u("elev")) + '"></div></div>' +
       '<div class="lcr-bar"><span class="lcr-hl">' + esc(u("hands")) + '</span><button type="button" class="lcr-slot" data-lcslot="0"></button><button type="button" class="lcr-slot" data-lcslot="1"></button>' +
       '<button type="button" class="lcr-feedb" data-lcfeed="1"></button></div>' +
       '<div class="lcr-sheet" hidden><div class="lcr-shin"></div></div><div class="lcr-panel" hidden></div>';
@@ -178,22 +222,26 @@
     if (location.hash !== "#live") try { history.pushState({ lc: 1 }, "", "#live"); } catch (e) { location.hash = "live"; }
     q(".lcr-tt").textContent = depTitle();
     nurse = nurse || { x: 180, y: 560, dir: -Math.PI / 2, pts: [], goal: null, walkT: 0 };
-    L.start(onState).then(function (X) { D = X; if (!X) return; G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); });
+    L.start(onState).then(function (X) { D = X; if (!X) return; G = screenGrid(G || (R && R.grid ? R.grid() : null)); size(); slots(); go(); flTabs();
+      if (w.NursinPay) setTimeout(function () { w.NursinPay.sync(); }, 1500); });   // 29d 💵 the past days of the payroll (once each)
+    if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 1200); }   // 29d ⏰
   }
   function close() {
     if (!ov || ov.hidden) return; ov.hidden = true; d.documentElement.classList.remove("lcr-open"); stop(); L.off(onState); sheetClose(); panelClose();
     if (w.LivePresRoom) w.LivePresRoom.stop(); peers = {}; pList = []; pPrev = null;
+    if (careIv) { clearInterval(careIv); careIv = 0; } if (Object.keys(work).length) workAll("wkGone");   // 29d
     if (location.hash === "#live") try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
   function onState(s, m) {
-    st = s; mode = m; if (!ov || ov.hidden || !s) return;
+    st = s; mode = m; admAt = 0; hCache = null; if (!ov || ov.hidden || !s) return;   // 29d: who is in / waiting changes with every step
     if ((s.dep || "er") !== lastDep) { lastDep = s.dep || "er"; bg = null; prevSt = {}; endSeen = !!s.end; q(".lcr-tt").textContent = depTitle(); }
     ambCheck();
     // 28v: an ended case is shown as ended everywhere in the room (dimmed room + «🏁 انتهت الحالة» card + countdown to the next one)
     ov.classList.toggle("ended", !!s.end); if (!s.end) endSeen = false;
     var tm = q(".lcr-tm"); tm.textContent = s.end ? "⏭️ " + L.left(s.t1 - Date.now()) : "⏳ " + L.left(s.t1 - Date.now());
     overPaint();
-    var M = L.me(), mine = (s.pts[M.uid] || {}).p | 0; q(".lcr-sc").textContent = "🏅 " + (mine > 0 ? "+" : "") + mine;
+    var M = L.me(), mine = (s.pts[M.uid] || {}).p | 0; q(".lcr-sc").textContent = "🏅 " + (mine > 0 ? "+" : "") + mine + (w.NursinPay ? " · 💵 " + w.NursinPay.money(w.NursinPay.mine()) : "");
+    if (w.NursinPay) { w.NursinPay.reset(); var rk0 = w.NursinPay.tagOf(M.uid), rkk = rk0.sup ? "sup" : rk0.r.k; if (lastRank && lastRank !== rkk && rkk !== "tr") say("good", u("rankUp", { r: (rk0.sup ? w.NursinPay.core.SUP : rk0.r).ic + " " + T(rk0.sup ? w.NursinPay.core.SUP : rk0.r) })); lastRank = rkk; }
     var ban = q(".lcr-ban"), why = L.why();
     ban.className = "lcr-ban " + (m === "shared" ? "sh" : "pv");
     ban.innerHTML = '<span>' + esc(m === "shared" ? u("shared") : m === "loading" ? "…" : why === "rules" ? u("soon") : why === "net" ? u("net") : u("preview")) + "</span>" +
@@ -229,6 +277,7 @@
     }
     el.innerHTML = st.P.map(function (x, i) {
       if (x.ghost) return '<div class="lcr-pc lcr-ghost"><b>🛏️2</b><small>' + esc(u("bayEmpty")) + "</small></div>";
+      if (!svcRoom() && !inBed(x)) return '<button type="button" class="lcr-pc lcr-wtc" data-lcgo="wt"><b>🛏️' + (i + 1) + " " + esc(nm(x)) + "</b><small>" + esc(u("waitBed")) + " · " + esc(u("goWait")) + "</small></button>";   // 29d: still outside
       var v = x.v, mon = !!x.done.mon, pct = Math.round(x.n / x.tot * 100);
       var vit = mon ? '<span dir="ltr" class="lcr-v"><i class="' + lv("ta", v.sys) + '">' + Math.round(v.sys) + "/" + Math.round(v.dia) + '</i> <i class="' + lv("fc", v.fc) + '">♥' + Math.round(v.fc) + '</i> <i class="' + lv("spo2", v.spo2) + '">' + Math.round(v.spo2) + "%</i></span>" : '<span class="lcr-v off">📟 --</span>';
       var fin = x.over ? '<small class="lcr-pp lcr-pfin">' + esc(ug("pDone", x)) + " · " + esc(u("seeSteps")) + "</small>" : "";   // 28x: a finished bed stays, greyed
@@ -381,28 +430,41 @@
       label(cx, P, cxp, s.y + s.h / 2 + 4, x.over.w === "ok" ? "✅ " + (FR() ? "Stabilisé" : x.p.sex === "f" ? "استقرّت" : "استقرّ") : "💔 " + (FR() ? "Décédé" : "خسرناه"), col);
     }
   }
+  // 29d: is this bed's patient inside (brought in by a nurse)? — read from the shared doc, cached a second
+  var admC = {}, admAt = 0;
+  function inBed(x) { if (!x || x.ghost) return false; if (x.over) return true; var dk = L.dep(), now = Date.now(); if (now - admAt > 1000) { admC = {}; admAt = now; }
+    var key = dk + x.k; if (!(key in admC)) admC[key] = !!L.admOf(dk, x.k, st && st.amb && st.amb.i); return admC[key]; }
   function draw(t) {
     if (!cv || !cx || !cv.width || !E) return;
-    if (!bg) bg = room();
+    var svc = svcRoom();
+    if (!bg) bg = svc ? svcBg(L.dep()) : room();
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.drawImage(bg, 0, 0); cx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
     var P = pal(), S = E.stations, dk0 = L.dep();
+    if (svc) { svcDraw(P, dk0, t); }
+    else {
     if (dk0 !== "er") { cx.fillStyle = DCOL[dk0]; cx.globalAlpha = 0.07; cx.fillRect(0, 0, E.W, E.H); cx.globalAlpha = 1; label(cx, P, E.W / 2, 7, depName(dk0), DCOL[dk0]); }
     if (st) {
-      var m = S.mon, on = st.P.filter(function (x) { return x.done.mon; });
+      var m = S.mon, on = st.P.filter(function (x) { return x.done.mon && inBed(x); });
       on.forEach(function (x, j) { cx.strokeStyle = j ? "#7dd3fc" : "#3df59a"; cx.lineWidth = 1; cx.beginPath(); for (var i = 0; i <= 30; i++) { var ph = (i / 30 * 2 + t * (x.v.fc || 0) / 60) % 1, yv = ph < 0.16 ? 0 : ph < 0.18 ? -1 : ph < 0.21 ? 6 : ph < 0.24 ? -2 : 0; cx[i ? "lineTo" : "moveTo"](m.x + 4 + i, m.y + 10 + j * 10 - yv); } cx.stroke(); });
-      st.P.forEach(function (x, i) { if (x.ghost) return; var s = i ? S.bed2 : S.bed1; s.k = pk(i); patient(P, x, s, t); });
+      st.P.forEach(function (x, i) { if (x.ghost) return; var s = i ? S.bed2 : S.bed1; s.k = pk(i);
+        if (inBed(x)) { patient(P, x, s, t); if (LCa) fuBadge(P, x, s, t); }
+        else { cx.fillStyle = night() ? "rgba(15,23,42,.35)" : "rgba(255,255,255,.55)"; rr(cx, s.x + 5, s.y + 40, s.w - 10, s.h - 46, 7); cx.fill();
+          label(cx, P, s.x + s.w / 2, s.y + s.h / 2 + 6, u("waitBed"), "#0d9488"); label(cx, P, s.x + s.w / 2, s.y + s.h + 12, "🛏️ " + T(x.p.nm).split(" ")[0] + " · 🪑", "#64748b"); }
+      });
+    }
     }
     if (mark) { mark.t += 1 / 60; var r2 = 4 + (mark.t * 20) % 10; cx.strokeStyle = "rgba(15,118,110,.7)"; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(mark.x, mark.y, r2, 0, 7); cx.stroke(); }
     peersDraw(P, t);
     nurseDraw(P, t);
-    if (pList.length) meTag();
+    meTag();
   }
   function nurseDraw(P) {
-    var x = nurse.x, y = nurse.y, a = nurse.dir, sw = nurse.pts.length ? Math.sin(nurse.walkT * 12) : 0;
+    var x = nurse.x, y = nurse.y, a = nurse.dir, sw = nurse.pts.length ? Math.sin(nurse.walkT * 12) : LCa && workMine().length ? Math.sin(Date.now() / 90) * 0.8 : 0;   // 29d: his hands work
     cx.fillStyle = "rgba(0,0,0,.18)"; cx.beginPath(); cx.ellipse(x + 2, y + 4, 14, 10, 0, 0, 7); cx.fill();
     cx.save(); cx.translate(x, y); cx.scale(1.3, 1.3); cx.rotate(a + Math.PI / 2);
-    cx.fillStyle = "#b91c1c"; [[-8, sw * 4], [8, -sw * 4]].forEach(function (p) { cx.beginPath(); cx.arc(p[0], p[1] - 1, 3, 0, 7); cx.fill(); });
-    cx.fillStyle = "#dc2626"; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill();
+    var sc = rankCol(L.me().uid, "#dc2626");                                                 // 29d: the scrubs take the colour of his rank (👔 purple)
+    cx.fillStyle = sc; [[-8, sw * 4], [8, -sw * 4]].forEach(function (p) { cx.beginPath(); cx.arc(p[0], p[1] - 1, 3, 0, 7); cx.fill(); });
+    cx.fillStyle = sc; cx.beginPath(); cx.ellipse(0, 1, 9.5, 6.5, 0, 0, 7); cx.fill(); cx.strokeStyle = "#dc2626"; cx.lineWidth = 1.4; cx.stroke();
     cx.fillStyle = P.skin; cx.beginPath(); cx.arc(0, -1, 5.6, 0, 7); cx.fill(); cx.fillStyle = P.hair; cx.beginPath(); cx.arc(0, 0.5, 5.6, 0, Math.PI); cx.fill();
     cx.restore();
     if (hands.length) { cx.font = "9px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; hands.forEach(function (it, i) { var bx = x + (i ? 9 : -9) * (hands.length > 1 ? 1 : 0), by = y - 21; cx.fillStyle = "rgba(255,255,255,.92)"; cx.beginPath(); cx.arc(bx, by, 6.5, 0, 7); cx.fill(); cx.fillStyle = "#000"; cx.fillText((D.I[it] || {}).ic || "•", bx, by + 0.5); }); }
@@ -461,6 +523,15 @@
     });
     for (var k in peers) if (!seen[k]) delete peers[k];
   }
+  // 29d 👔 the supervisor's free 🎯 (one per patient a day, kept on this phone)
+  function supFree(k) {
+    if (!w.NursinPay || !w.NursinPay.isSup()) return false;
+    var key = C.dayKey(Date.now()) + "." + L.dep() + "." + k, m; try { m = JSON.parse(localStorage.getItem("nursin_sup_free_v1") || "{}"); } catch (e) { m = {}; }
+    if (m[key]) return false; for (var x in m) if (x.indexOf(C.dayKey(Date.now())) !== 0) delete m[x]; m[key] = 1; try { localStorage.setItem("nursin_sup_free_v1", JSON.stringify(m)); } catch (e) {} return true;
+  }
+  function tagOf(uid) { return w.NursinPay ? w.NursinPay.tagOf(uid) : null; }
+  function rankIc(uid) { var t = tagOf(uid); return t ? (t.sup ? w.NursinPay.core.SUP.ic : t.r.ic) : ""; }
+  function rankCol(uid, dflt) { var t = tagOf(uid); return t ? (t.sup ? w.NursinPay.core.SUP.col : t.r.col) : dflt; }
   function avI(k) {
     if (!k || !w.LivePres.AVRE.test(k)) return null; var im = avImg[k];
     if (!im) { im = avImg[k] = new Image(); im.onload = function () { im.ok = 1; }; im.src = "assets/avatars/" + k + ".webp"; }
@@ -468,7 +539,8 @@
   }
   // the avatar disc + the first name above it, drawn once into a small canvas (redrawn when the zoom, theme or picture changes)
   function sprite(p, e) {
-    var img = avI(p.av), key = (p.av || "") + "|" + p.n + "|" + night() + "|" + scale + "|" + (img ? 1 : 0);
+    var img = avI(p.av), rk = rankIc(p.uid), key = (p.av || "") + "|" + p.n + "|" + rk + "|" + night() + "|" + scale + "|" + (img ? 1 : 0);
+    if (rk) p = { uid: p.uid, av: p.av, n: p.n + " · " + rk };                                    // 29d ⬆️ the rank on the name tag (👔 the floor supervisor)
     if (e.key === key && e.spr) return e.spr;
     var k = scale * dpr, c = d.createElement("canvas"), g = c.getContext("2d"), P = pal();
     g.font = "700 8px " + EMO; var tw = Math.ceil(g.measureText(p.n).width) + 10, wd = Math.max(26, tw), ht = 38;
@@ -495,12 +567,17 @@
   function peersDraw(P) {
     if (!pList.length) return;
     var LP = w.LivePres, now = Date.now() + (w.LivePresRoom ? w.LivePresRoom.skew() : 0), on = { a: [], b: [] };
+    // 29d (Abdullah 7:20 AM «الشخصيات يكونوا فوق بعض»): everybody standing at the same spot gets his own slot around it and no name tag covers another
+    var items = [], M0 = L.me();
+    pList.forEach(function (p) { var e = peers[p.uid]; if (!e || LP.alpha(now - p.at) <= 0) return; var s0 = sprite(p, e); items.push({ id: p.uid, x: e.x, y: e.y, w: s0.w, h: s0.h, mv: e.mv }); });
+    if (items.length) items.push({ id: "__me", x: nurse.x, y: nurse.y, w: 44, h: 38, fix: 1, mv: nurse.pts.length > 0 });
+    var at = LP.spread ? LP.spread(items) : {};
     pList.forEach(function (p) {
       var e = peers[p.uid]; if (!e) return; var a = LP.alpha(now - p.at); if (a <= 0) return;
-      cx.globalAlpha = a;
-      peerBody(e.x, e.y, e.dir, e.mv ? Math.sin(e.walkT * 12) : 0, LP.color(p.uid), P);
-      var s = sprite(p, e); cx.drawImage(s.c, e.x - s.w / 2, e.y - 5 - s.h, s.w, s.h);
-      if (p.b && a > 0.6) { on[p.b].push(p.n); handIc(e.x + 12, e.y - 17); }
+      var ps = at[p.uid] || e; cx.globalAlpha = a;
+      peerBody(ps.x, ps.y, e.dir, e.mv ? Math.sin(e.walkT * 12) : 0, rankCol(p.uid, LP.color(p.uid)), P);
+      var s = sprite(p, e); cx.drawImage(s.c, ps.x - s.w / 2, ps.y - 5 - s.h, s.w, s.h);
+      if (p.b && a > 0.6) { on[p.b].push(p.n); handIc(ps.x + 12, ps.y - 17); }
       cx.globalAlpha = 1;
     });
     ["a", "b"].forEach(function (k) { if (!on[k].length) return; var s = E.stations[k === "a" ? "bed1" : "bed2"]; label(cx, P, s.x + s.w / 2, s.y - 7, "✋ " + LP.names(on[k], FR()), "#7c3aed"); });
@@ -511,11 +588,13 @@
     var M = L.me(), s = sprite({ uid: M.uid, n: u("pme"), av: w.LivePresRoom ? w.LivePresRoom.myAv() : "" }, mySpr);
     cx.drawImage(s.c, nurse.x - s.w / 2, nurse.y - 7 - s.h, s.w, s.h);
     if (sheet && sheet.kind === "bed") handIc(nurse.x + 12, nurse.y - 19);
+    if (LCa) workRing(nurse.x, nurse.y - 7 - s.h - 12);           // 29d ⏳ the ring above his name tag
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
   function onTap(e) {
     if (trv) { e.preventDefault(); return; }
     if (st && st.end) { e.preventDefault(); return say("neutral", u("over"), L.nextWords(st.t1 - Date.now())); }   // 28v: never a dead tap
+    if (svcRoom()) { if (sheet || panel) return; e.preventDefault(); return svcTap(toL(e)); }
     if (sheet || panel || !G) return; e.preventDefault();
     var p = toL(e), k = R.hitStation(p.x, p.y, 6);
     if (k) return goTo(k);
@@ -529,7 +608,9 @@
     if (!nurse.pts.length) { nurse.goal = null; arrive(k); }
   }
   function arrive(k) {
+    if (typeof k === "object" && k) return svcArrive(k);                 // 29d: a spot of a service room (a chair, the desk, the counter)
     var S = E.stations[k]; nurse.dir = Math.atan2((S.y + S.h / 2) - nurse.y, (S.x + S.w / 2) - nurse.x);
+    if ((k === "bed1" || k === "bed2") && st && !st.end) { var xw = X(k === "bed1" ? "a" : "b"); if (xw && !xw.ghost && !inBed(xw)) return waitSheet(xw); }
     if (k === "bed2" && X("b") && X("b").ghost) return say("neutral", u("bed2Empty"));
     if (k === "bed1" || k === "bed2") return bedSheet(k === "bed1" ? "a" : "b", "care");
     if (k === "sink") { washed = true; return say("good", u("washed")); }
@@ -538,25 +619,239 @@
   }
 
 
+
+  /* ---------------- 29d 🪑 the waiting room + 🏷️ triage · 💰 المحاسبة ----------------
+     Every bed starts empty (Abdullah, Nov 4 7:17 AM «الممرّض هو يلّي بفوّتن لجوّا»): the patients sit in the waiting room on the ground
+     floor (the ambulance patient on his stretcher by the ER door), each a little drawn character with his own face, clothes, age and
+     what he says; a student walks to one, reads his quick signs and chooses 1️⃣ the priority and 2️⃣ the ward — the right ward brings him
+     in (his case starts there and the student wheels him over), a wrong ward leaves him waiting. 💰 المحاسبة = the payslip (assets/livepay.js). */
+  var SEATS = [], SEAT_X = [52, 127, 202], SEAT_Y = [200, 305, 410, 515], STRET = { x: 298, y: 330 }, PS = 1.4, DESK = { x: 110, y: 40, w: 140, h: 50 };
+  SEAT_Y.forEach(function (y) { SEAT_X.forEach(function (x) { SEATS.push({ x: x, y: y }); }); });
+  var SKIN = ["#f1c7a5", "#e3b089", "#c98f66", "#8d5a3b"], CLO = ["#2563eb", "#db2777", "#059669", "#d97706", "#7c3aed", "#0891b2", "#be123c", "#4b5563"], HAIR = ["#3b2a1e", "#1f1a17", "#6b4423", "#a16207"];
+  function wkey(x) { return x.dk + "." + (x.ai | 0) + "." + x.pk; }
+  function seated() {                         // the waiting list on its chairs (the stretcher for the ambulance patient)
+    var L0 = waitList().slice().sort(function (a, b) { return a.since - b.since || (wkey(a) < wkey(b) ? -1 : 1); }), out = [], si = 0;
+    L0.forEach(function (x) { if (x.kind === "amb") out.push({ x: x, at: { x: STRET.x, y: STRET.y, str: 1 }, spot: { x: STRET.x - 52, y: STRET.y } }); else if (si < SEATS.length) { var s = SEATS[si++]; out.push({ x: x, at: s, spot: { x: s.x + 34, y: s.y + 30 } }); } });
+    return out;
+  }
+  function look(p) { var h = C.hash(T(p.nm) + p.age), old = (p.age | 0) >= 65; return { skin: SKIN[h % 4], clo: CLO[(h >> 3) % 8], hair: old ? (h % 2 ? "#d1d5db" : "#e5e7eb") : HAIR[(h >> 5) % 4], hij: p.sex === "f" && (h >> 7) % 3 === 0, old: old }; }
+  function painOf(p) { if (p.eva != null) return p.eva | 0; var t = (p.who && (p.who.ar + " " + p.who.fr)) || ""; return /وجع|douleur/i.test(t) ? 7 : /نزيف|hémorragie|saign/i.test(t) ? 6 : 2; }
+  function sayOf(p) { return T(p.say || p.who) || ""; }
+  // one seated character (front view): chair, legs, body, arms, head with face (pain → frown + sweat; drowsy → closed eyes), hair / hijab
+  function person(c, x, y, p, t, sel) {
+    var lk = look(p), v = p.vit || {}, pain = painOf(p), drowsy = (v.gcs | 0) && v.gcs <= 12, br = Math.sin(t * 2 + x) * 0.6;
+    c.fillStyle = "rgba(0,0,0,.12)"; c.beginPath(); c.ellipse(x, y + 30, 22, 6, 0, 0, 7); c.fill();
+    c.fillStyle = night() ? "#475569" : "#94a3b8"; rr(c, x - 19, y - 18, 38, 26, 6); c.fill();               // chair back
+    c.fillStyle = night() ? "#64748b" : "#cbd5e1"; rr(c, x - 21, y + 6, 42, 12, 5); c.fill();                 // seat
+    c.fillStyle = "#334155"; c.fillRect(x - 18, y + 17, 3, 12); c.fillRect(x + 15, y + 17, 3, 12);
+    c.fillStyle = "#1e293b"; rr(c, x - 10, y + 12, 8, 17, 3); c.fill(); rr(c, x + 2, y + 12, 8, 17, 3); c.fill();  // legs
+    c.fillStyle = "#111827"; rr(c, x - 11, y + 27, 10, 4, 2); c.fill(); rr(c, x + 1, y + 27, 10, 4, 2); c.fill();
+    c.fillStyle = lk.clo; rr(c, x - 12, y - 12 + br, 24, 26, 8); c.fill();                                     // body
+    c.fillStyle = "rgba(255,255,255,.18)"; rr(c, x - 12, y - 12 + br, 24, 9, 8); c.fill();
+    c.fillStyle = lk.clo; rr(c, x - 17, y - 8 + br, 6, 18, 3); c.fill(); rr(c, x + 11, y - 8 + br, 6, 18, 3); c.fill();   // arms
+    c.fillStyle = lk.skin; c.beginPath(); c.arc(x - 14, y + 11 + br, 3, 0, 7); c.arc(x + 14, y + 11 + br, 3, 0, 7); c.fill();
+    var hy = y - 22 + br;
+    if (lk.hij) { c.fillStyle = lk.clo === "#4b5563" ? "#7c3aed" : "#475569"; c.beginPath(); c.arc(x, hy, 12.5, 0, 7); c.fill(); rr(c, x - 11, hy, 22, 14, 6); c.fill(); }
+    c.fillStyle = lk.skin; c.beginPath(); c.arc(x, hy, 9.5, 0, 7); c.fill();
+    if (!lk.hij) { c.fillStyle = lk.hair; c.beginPath(); c.arc(x, hy - 2, 10, Math.PI * 1.05, Math.PI * 1.95); c.fill(); if (p.sex === "f") { c.fillRect(x - 10, hy - 3, 3.5, 12); c.fillRect(x + 6.5, hy - 3, 3.5, 12); } if (lk.old && p.sex !== "f") { c.fillStyle = night() ? "#94a3b8" : "#9ca3af"; c.fillRect(x - 5, hy + 5, 10, 1.4); } }
+    c.strokeStyle = "#3f2a1d"; c.fillStyle = "#3f2a1d"; c.lineWidth = 1.1;
+    if (drowsy) { c.beginPath(); c.moveTo(x - 5, hy - 1); c.lineTo(x - 2, hy - 1); c.moveTo(x + 2, hy - 1); c.lineTo(x + 5, hy - 1); c.stroke(); }
+    else { c.beginPath(); c.arc(x - 3.4, hy - 1, 1.2, 0, 7); c.arc(x + 3.4, hy - 1, 1.2, 0, 7); c.fill(); if (pain >= 6) { c.beginPath(); c.moveTo(x - 5.5, hy - 4.5); c.lineTo(x - 2, hy - 3.4); c.moveTo(x + 5.5, hy - 4.5); c.lineTo(x + 2, hy - 3.4); c.stroke(); } }
+    c.beginPath(); if (pain >= 6) c.arc(x, hy + 6, 3, Math.PI * 1.15, Math.PI * 1.85); else if (pain >= 3) { c.moveTo(x - 2.5, hy + 4.5); c.lineTo(x + 2.5, hy + 4.5); } else c.arc(x, hy + 3, 2.6, Math.PI * 0.15, Math.PI * 0.85); c.stroke();
+    if (pain >= 6) { c.fillStyle = "#60a5fa"; c.beginPath(); c.moveTo(x + 9, hy - 6); c.quadraticCurveTo(x + 12, hy - 1, x + 9, hy); c.quadraticCurveTo(x + 6, hy - 1, x + 9, hy - 6); c.fill(); }
+    // name · age and a small pain bar (EVA) under the chair
+    c.font = "700 7.5px " + EMO; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.fillStyle = night() ? "#e2e8f0" : "#1e293b";
+    c.fillText(T(p.nm).split(" ")[0] + "، " + p.age, x, y + 40);
+    c.fillStyle = night() ? "#334155" : "#e2e8f0"; rr(c, x - 16, y + 46, 32, 4, 2); c.fill(); c.fillStyle = pain >= 7 ? "#dc2626" : pain >= 4 ? "#f59e0b" : "#16a34a"; rr(c, x - 16, y + 46, 32 * Math.min(10, pain) / 10, 4, 2); c.fill();
+    if (sel) { c.strokeStyle = "#0d9488"; c.lineWidth = 2; c.setLineDash([4, 3]); c.beginPath(); c.ellipse(x, y + 4, 28, 40, 0, 0, 7); c.stroke(); c.setLineDash([]); }
+  }
+  function stretcher(c, x, y, p, t) {           // the ambulance patient lying on his stretcher by the door
+    var lk = look(p);
+    c.fillStyle = "rgba(0,0,0,.14)"; rr(c, x - 22, y - 44, 48, 96, 10); c.fill();
+    c.fillStyle = "#94a3b8"; rr(c, x - 24, y - 46, 48, 94, 9); c.fill(); c.fillStyle = "#f8fafc"; rr(c, x - 20, y - 42, 40, 86, 7); c.fill();
+    c.fillStyle = "#fb923c"; rr(c, x - 19, y - 6, 38, 46, 6); c.fill(); c.fillStyle = "rgba(255,255,255,.25)"; c.fillRect(x - 19, y + 4, 38, 3);
+    c.fillStyle = lk.skin; c.beginPath(); c.arc(x, y - 26, 9.5, 0, 7); c.fill(); c.fillStyle = lk.hair; c.beginPath(); c.arc(x, y - 29, 10, Math.PI * 1.05, Math.PI * 1.95); c.fill();
+    c.strokeStyle = "#3f2a1d"; c.lineWidth = 1.1; c.beginPath(); c.moveTo(x - 5, y - 26); c.lineTo(x - 2, y - 26); c.moveTo(x + 2, y - 26); c.lineTo(x + 5, y - 26); c.stroke();
+    c.fillStyle = "rgba(52,211,153,.5)"; c.beginPath(); c.ellipse(x, y - 21, 5, 3.6, 0, 0, 7); c.fill();
+    c.fillStyle = "#1f2937"; [[-18, -40], [18, -40], [-18, 42], [18, 42]].forEach(function (q2) { c.beginPath(); c.arc(x + q2[0], y + q2[1] + 6, 3, 0, 7); c.fill(); });
+    c.font = "700 7.5px " + EMO; c.textAlign = "center"; c.fillStyle = night() ? "#fed7aa" : "#9a3412"; c.fillText("🚑 " + T(p.nm).split(" ")[0] + "، " + p.age, x, y + 60);
+    if (Math.sin(t * 5) > 0) { c.fillStyle = "#ef4444"; c.beginPath(); c.arc(x + 22, y - 50, 3, 0, 7); c.fill(); }
+  }
+  function bubble(c, P, x, y, txt) {
+    txt = String(txt || ""); if (Array.from(txt).length > 30) txt = Array.from(txt).slice(0, 29).join("") + "…";
+    c.font = "600 8.5px " + EMO; var tw = Math.min(200, c.measureText(txt).width + 14), bx = Math.max(16, Math.min(E.W - 16 - tw, x - tw / 2)), by = y - 22;
+    c.fillStyle = night() ? "rgba(30,41,59,.95)" : "rgba(255,255,255,.97)"; rr(c, bx, by, tw, 18, 9); c.fill(); c.strokeStyle = night() ? "#475569" : "#cbd5e1"; c.lineWidth = 1; c.stroke();
+    c.beginPath(); c.moveTo(x - 4, by + 18); c.lineTo(x, by + 24); c.lineTo(x + 4, by + 18); c.fill();
+    c.fillStyle = P.ink; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.fillText(txt, bx + tw / 2, by + 9.5);
+  }
+  // the room behind (drawn once): the floor, the walls, the doors, the furniture
+  function svcBg(dk) {
+    var P = pal(), nt = night(), o = d.createElement("canvas"); o.width = cv.width; o.height = cv.height; var c = o.getContext("2d"); c.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    var fl = dk === "acc" ? (nt ? "#2a2118" : "#f3e8d6") : (nt ? "#14262a" : "#e6f2ef"), tl = dk === "acc" ? (nt ? "#33291e" : "#e8d8bf") : (nt ? "#1b3036" : "#d3e6e1");
+    c.fillStyle = fl; c.fillRect(0, 0, E.W, E.H);
+    if (dk === "acc") { c.strokeStyle = tl; c.lineWidth = 1; for (var py = 18; py < E.H; py += 22) { c.beginPath(); c.moveTo(12, py); c.lineTo(E.W - 12, py); c.stroke(); for (var px = (py / 22 % 2) * 40 + 12; px < E.W; px += 80) { c.beginPath(); c.moveTo(px, py); c.lineTo(px, py + 22); c.stroke(); } } }
+    else for (var gx = 12; gx < E.W; gx += 24) for (var gy = 12; gy < E.H; gy += 24) { if (((gx + gy) / 24) % 2) { c.fillStyle = tl; c.fillRect(gx, gy, 24, 24); } }
+    c.fillStyle = P.wall; c.fillRect(0, 0, E.W, 12); c.fillRect(0, E.H - 12, E.W, 12); c.fillRect(0, 0, 12, E.H); c.fillRect(E.W - 12, 0, 12, E.H);
+    c.fillStyle = fl; c.fillRect(146, E.H - 12, 68, 12);
+    if (dk === "wt") {
+      c.fillStyle = fl; c.fillRect(E.W - 12, 282, 12, 96);                                  // the ER door (ambulances), by the stretcher
+      c.fillStyle = nt ? "#6b5338" : "#c89f6b"; rr(c, DESK.x, DESK.y, DESK.w, DESK.h, 8); c.fill(); c.fillStyle = nt ? "#8a6b48" : "#dcb98a"; rr(c, DESK.x + 4, DESK.y + 4, DESK.w - 8, 16, 5); c.fill();
+      c.fillStyle = "#1f2a30"; rr(c, DESK.x + 20, DESK.y + 24, 30, 18, 3); c.fill(); c.fillStyle = "#5fd6c6"; c.fillRect(DESK.x + 23, DESK.y + 27, 24, 12);
+      c.fillStyle = "#f8fafc"; rr(c, DESK.x + 92, DESK.y + 26, 26, 16, 2); c.fill();
+      c.fillStyle = nt ? "#14532d" : "#16a34a"; c.beginPath(); c.arc(30, 40, 12, 0, 7); c.arc(330, 40, 12, 0, 7); c.fill(); c.fillStyle = "#92400e"; rr(c, 24, 46, 12, 10, 2); c.fill(); rr(c, 324, 46, 12, 10, 2); c.fill();
+      c.fillStyle = nt ? "#0f172a" : "#ffffff"; rr(c, 22, 92, 70, 40, 6); c.fill(); c.strokeStyle = "#94a3b8"; c.lineWidth = 1; c.stroke();
+      c.font = "700 7px " + EMO; c.fillStyle = P.ink; c.textAlign = "center"; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl";
+      [["🔴", 1], ["🟠", 2], ["🟡", 3], ["🟢", 4]].forEach(function (r, i) { c.fillText(r[0] + " " + T(L.PRN[r[1]]), 57, 100 + i * 9); });
+      label(c, P, DESK.x + DESK.w / 2, DESK.y - 1, u("desk")); label(c, P, 57, 86, "🏷️ " + (FR() ? "Priorités" : "الأولويات"));
+      label(c, P, E.W - 46, 252, u("entr2")); label(c, P, 180, E.H - 22, u("exitC"));
+      label(c, P, 180, 150, depName("wt"), "#0d9488");
+    } else {
+      // 💰 the accountant's counter, the notice board, the safe, a plant
+      c.fillStyle = nt ? "#57412a" : "#b78a54"; rr(c, 70, 60, 220, 56, 8); c.fill(); c.fillStyle = nt ? "#6d5333" : "#d2a774"; rr(c, 74, 64, 212, 14, 5); c.fill();
+      c.fillStyle = "#1f2a30"; rr(c, 104, 82, 34, 22, 3); c.fill(); c.fillStyle = "#86efac"; c.fillRect(107, 85, 28, 16);
+      c.fillStyle = "#e5e7eb"; rr(c, 222, 84, 40, 20, 3); c.fill(); c.fillStyle = "#9ca3af"; for (var bi = 0; bi < 8; bi++) c.fillRect(226 + (bi % 4) * 9, 87 + Math.floor(bi / 4) * 8, 6, 5);
+      c.fillStyle = "#f1c7a5"; c.beginPath(); c.arc(180, 44, 11, 0, 7); c.fill(); c.fillStyle = "#3b2a1e"; c.beginPath(); c.arc(180, 41, 11.5, Math.PI * 1.05, Math.PI * 1.95); c.fill();
+      c.fillStyle = "#0f766e"; rr(c, 166, 52, 28, 14, 6); c.fill(); c.strokeStyle = "#3f2a1d"; c.lineWidth = 1; c.beginPath(); c.arc(176, 42, 1.1, 0, 7); c.arc(184, 42, 1.1, 0, 7); c.stroke(); c.beginPath(); c.arc(180, 46, 3, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
+      c.fillStyle = nt ? "#3b2f22" : "#a47148"; rr(c, 24, 180, 130, 170, 6); c.fill(); c.fillStyle = nt ? "#2a2118" : "#e9d5b5"; rr(c, 30, 186, 118, 158, 4); c.fill();
+      c.fillStyle = "#475569"; rr(c, 262, 200, 70, 80, 6); c.fill(); c.fillStyle = "#334155"; c.beginPath(); c.arc(297, 240, 14, 0, 7); c.fill(); c.strokeStyle = "#cbd5e1"; c.lineWidth = 2; c.beginPath(); c.moveTo(297, 228); c.lineTo(297, 252); c.moveTo(285, 240); c.lineTo(309, 240); c.stroke();
+      c.fillStyle = nt ? "#14532d" : "#16a34a"; c.beginPath(); c.arc(320, 500, 16, 0, 7); c.fill(); c.fillStyle = "#92400e"; rr(c, 312, 508, 16, 14, 3); c.fill();
+      label(c, P, 180, 128, u("accDesk")); label(c, P, 89, 172, u("accBoard")); label(c, P, 297, 290, u("accSafe")); label(c, P, 180, E.H - 22, u("exitC"));
+    }
+    return o;
+  }
+  var triSel = null, svcSay = 0;
+  function svcDraw(P, dk, t) {
+    if (dk === "wt") {
+      var L0 = seated(); if (!L0.length) label(cx, P, 180, 300, u("waitNone"));
+      L0.forEach(function (o) { var sel = triSel && triSel === wkey(o.x); cx.save(); cx.translate(o.at.x, o.at.y); cx.scale(PS, PS); if (o.at.str) stretcher(cx, 0, 0, o.x.p, t); else person(cx, 0, 0, o.x.p, t, sel); cx.restore(); });
+      var sp = L0.filter(function (o) { return !o.at.str; }); if (sp.length) { var k = Math.floor(t / 4) % sp.length, o2 = sp[k];
+        var sel2 = triSel && L0.filter(function (o) { return wkey(o.x) === triSel; })[0]; if (sel2) o2 = sel2; bubble(cx, P, o2.at.x, o2.at.y - (o2.at.str ? 72 : 52), sayOf(o2.x.p)); }
+      var WL = waitList(); if (WL.length) label(cx, P, 180, 166, u("waitN", { n: WL.length }), "#0d9488");
+    } else if (dk === "acc") {
+      var pay = w.NursinPay; if (!pay) return;
+      var B = pay.weekBoard(pay.core.monday(C.dayKey(Date.now()))).slice(0, 5);
+      cx.font = "700 8px " + EMO; cx.textBaseline = "middle"; cx.direction = FR() ? "ltr" : "rtl"; cx.fillStyle = night() ? "#fde68a" : "#422006";
+      if (!B.length) { cx.textAlign = "center"; cx.fillText("—", 89, 260); }
+      B.forEach(function (r, i) { cx.textAlign = FR() ? "left" : "right"; cx.fillText((["🥇", "🥈", "🥉", "4.", "5."][i]) + " " + String(r.n || "?").split(" ")[0], FR() ? 36 : 142, 200 + i * 26); cx.textAlign = FR() ? "right" : "left"; cx.fillText(pay.money(r.net), FR() ? 142 : 36, 212 + i * 26); });
+      label(cx, P, 180, 150, "💵 " + (FR() ? "Aujourd'hui : " : "اليوم: ") + pay.money(pay.mine()), "#ca8a04");
+    }
+  }
+  function svcTap(p) {
+    var dk = L.dep();
+    if (dk === "wt") {
+      var L0 = seated();
+      for (var i = 0; i < L0.length; i++) { var o = L0[i]; if (Math.abs(p.x - o.at.x) < 34 && p.y > o.at.y - (o.at.str ? 70 : 52) && p.y < o.at.y + (o.at.str ? 90 : 74)) { triSel = wkey(o.x); return svcGo(o.spot, { k: "tri", id: wkey(o.x) }); } }
+      if (p.x > DESK.x - 6 && p.x < DESK.x + DESK.w + 6 && p.y > DESK.y - 6 && p.y < DESK.y + DESK.h + 30) return svcGo({ x: 180, y: DESK.y + DESK.h + 28 }, { k: "desk" });
+    } else if (dk === "acc") {
+      if (p.y < 150 || (p.x < 160 && p.y > 170 && p.y < 360)) return svcGo(p.y < 150 ? { x: 180, y: 140 } : { x: 90, y: 370 }, { k: "acc" });
+    }
+    nurse.goal = null; nurse.pts = [{ x: Math.max(24, Math.min(E.W - 24, p.x)), y: Math.max(24, Math.min(E.H - 24, p.y)) }]; mark = { x: p.x, y: p.y, t: 0 };
+  }
+  function svcGo(spot, goal) { nurse.goal = goal; nurse.pts = [spot]; mark = { x: spot.x, y: spot.y, t: 0 }; }
+  function svcArrive(g) {
+    if (g.k === "acc") return accPanel();
+    if (g.k === "desk") return waitListSheet();
+    if (g.k === "tri") { var o = waitList().filter(function (x) { return wkey(x) === g.id; })[0]; if (!o) { triSel = null; return say("neutral", u("triBy", { n: "…" })); } triPick = { pr: 0, dc: "" }; return sheetOpen("tri", g.id); }
+  }
+  function waitListSheet() { sheetOpen("wait", "list"); }
+  function waitSheet(x) { sheetOpen("wait", x.k); }
+  function waitHtml(k) {
+    if (k === "list") {
+      var L0 = waitList();
+      return head(depName("wt"), u("waitN", { n: L0.length })) + (L0.length ? '<div class="lcr-acts lcr-wl">' + L0.map(function (o) {
+        var pr = w.LiveDept.prio(o.p).pr; return '<button type="button" class="lcr-act" data-lcseat="' + esc(wkey(o)) + '">' + (o.kind === "amb" ? "🚑 " : pr === 1 ? "❗ " : "🪑 ") + esc(T(o.p.nm).split(" ")[0] + "، " + o.p.age) + " <small>" + esc(sayOf(o.p).slice(0, 34)) + "</small></button>"; }).join("") + "</div>"
+        : '<p class="small">' + esc(u("waitNone")) + "</p>") + '<p class="small">' + esc(u("triRule")) + "</p>";
+    }
+    var x = X(k); if (!x) return "";
+    return head("🛏️ " + esc(nm(x)), esc(depName(L.dep()))) + '<div class="lcr-wait"><p><b>' + esc(ug("waitBedT", x, { n: nm(x).split(" ")[0] })) + "</b></p><p class=\"small\">" + esc(u("waitBedW")) + "</p>" +
+      '<div class="lcr-acts"><button type="button" class="lcr-act lcr-hit" data-lcgo="wt">' + esc(u("goWait")) + "</button></div></div>";
+  }
+  var triPick = { pr: 0, dc: "" };
+  function vitRow(p) {
+    var v = p.vit || {}, e = painOf(p), a = function (lbl, val, bad) { return '<span class="lcr-tv' + (bad ? " bad" : "") + '"><small>' + lbl + "</small><b dir=\"ltr\">" + val + "</b></span>"; };
+    return '<div class="lcr-tvs">' + a("TA", v.sys + "/" + v.dia, v.sys < 90 || v.sys >= 180) + a("FC", v.fc, v.fc >= 110 || v.fc < 55) + a("FR", v.fr, v.fr >= 24 || v.fr < 10) + a("SpO₂", v.spo2 + "%", v.spo2 < 94) +
+      a("T°", v.t, v.t >= 38) + a("Glasgow", v.gcs, v.gcs <= 13) + a(esc(u("pain")) + " (EVA)", e + "/10", e >= 7) + "</div>";
+  }
+  function triHtml(id) {
+    var o = waitList().filter(function (x) { return wkey(x) === id; })[0];
+    if (!o) return head(u("triT")) + '<p class="small">' + esc(u("waitNone")) + "</p>";
+    var p = o.p, who = o.kind === "amb" ? u("amb") : o.kind === "walk" ? u("walkin") : "🪑 " + depName("wt");
+    var h = head(u("triT") + " · " + esc(T(p.nm)), esc(p.age + (FR() ? " ans · " : " سنة · ") + (p.sex === "f" ? "♀" : "♂") + " · " + who));
+    h += '<div class="lcr-tri"><p class="lcr-say">💬 «' + esc(sayOf(p)) + '»</p>';
+    if (o.kind === "walk" && p.lab) h += '<p class="small">🧪 ' + p.lab.map(function (s) { return esc(T(s)); }).join(" · ") + "</p>";
+    h += "<h4>" + esc(u("triVit")) + "</h4>" + vitRow(p);
+    h += "<h4>" + esc(u("triQ1")) + '</h4><div class="lcr-acts lcr-pr">' + [1, 2, 3, 4].map(function (n) { var P0 = L.PRN[n]; return '<button type="button" class="lcr-act' + (triPick.pr === n ? " lcr-hit" : "") + '" data-lctripr="' + n + '">' + P0.ic + " " + esc(T(P0)) + "</button>"; }).join("") + "</div>";
+    h += "<h4>" + esc(u("triQ2")) + '</h4><div class="lcr-acts lcr-dc">' + w.LiveDept.TRIK.map(function (c) { var I = w.LiveDept.INFO[w.LiveDept.wardOf(c)]; return '<button type="button" class="lcr-act' + (triPick.dc === c ? " lcr-hit" : "") + '" data-lctridc="' + c + '">' + I.ic + " " + esc(T(I.t)) + "</button>"; }).join("") + "</div>";
+    h += '<div class="lcr-acts"><button type="button" class="lcr-btn on lcr-trigo" data-lctrigo="' + esc(id) + '"' + (triPick.pr && triPick.dc ? "" : ' aria-disabled="true"') + ">" + esc(u("triGo")) + "</button></div>";
+    return h + '<p class="small lcr-src">' + esc(u("triRule")) + (o.kind === "walk" ? " · " + esc(T(p.src)) : o.cs ? " · " + esc(T(o.cs.src)) : "") + "</p></div>";
+  }
+  function triGo(id) {
+    if (!triPick.pr || !triPick.dc) return say("ord", u("triPick"));
+    var o = waitList().filter(function (x) { return wkey(x) === id; })[0]; if (!o) { sheetClose(); return say("neutral", u("triBy", { n: "…" })); }
+    var a = "tg" + triPick.pr + triPick.dc, dk = o.dk;
+    if (LCa && LCa.dur(a) && LCa.canStart(work, pidOf(o.pk, dk), Date.now()).ok) sheetClose();   // 29d: he is seen working (ring + bar) in the waiting room
+    workRun(o.pk, a, dk, function () {                           // 29d ⏳ the triage takes a few seconds too (vitals, a look, the decision)
+      var tw = setTimeout(function () { say("neutral", u("saving")); }, 600);
+      actQ = actQ.then(function () { return L.act(o.pk, a, undefined, undefined, dk); }).then(function (r) { clearTimeout(tw); triResult(o, r); }, function () { clearTimeout(tw); say("bad", u("err"), u("errWhy")); });
+    });
+  }
+  function triWhy(o, t) {
+    var P0 = L.PRN[t.want], v = o.p.vit || {}, S = { gcs: "Glasgow " + v.gcs, sys: "TA " + v.sys + "/" + v.dia, spo2: "SpO₂ " + v.spo2 + "%", fr: "FR " + v.fr, fc: "FC " + v.fc, t: "T° " + v.t, rate: u("sStory") + ": " + T(o.p.who || o.p.say) };
+    var bits = [];
+    if (o.kind === "walk") bits.push(T(o.p.why));
+    else { bits.push(u("triWant", { p: P0.ic + " " + T(P0) }) + (t.sig.length ? " — " + u("triSig", { s: t.sig.map(function (k) { return S[k]; }).join(" · ") }) : "")); bits.push(u("triDep", { d: depName(w.LiveDept.wardOf(t.right)) }) + " (" + T(o.cs && o.cs.t) + ")"); }
+    return bits.join(" · ");
+  }
+  function triResult(o, r) {
+    var pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d + " · " + payTxt(r.d * 10) : "";
+    if (r.k === "adm") { sheetClose(); triSel = null; return say("neutral", u("triBy", { n: String((r.by && r.by.n) || "").split(" ")[0] })); }
+    if (r.k === "trimax") return say("neutral", u("triMax"));
+    if (r.k === "gone") { sheetClose(); return say("neutral", u("triGone")); }
+    if (r.k !== "ok" && r.k !== "neu") return result(o.pk, "tg", r);
+    var t = r.tri || {}, nmx = T(o.p.nm).split(" ")[0], ward = w.LiveDept.wardOf(t.right);
+    if (!t.okD) { triPick.dc = ""; say("bad", u("triNo") + pts, triWhy(o, t)); if (sheet) sheetPaint(); return srsWrong(o); }
+    sheetClose(); triSel = null; hCache = null;
+    say(t.okP ? "good" : "ord", (t.okP ? u("triOk") : u("triOkP")) + pts, (t.over ? u("triOver") + " " : "") + triWhy(o, t));
+    if (!t.okP) srsWrong(o);
+    if (o.kind === "walk" || !w.LiveDept.isOpen(ward)) { setTimeout(function () { say("good", u("triWalk", { n: nmx, d: depName(ward) })); }, 2600); return; }
+    var target = o.dk === "x" ? "x" : o.dk;
+    setTimeout(function () { walkTo(target, nmx); }, 1400);                      // I wheel him to his bed (the case starts there)
+  }
+  // a wrong triage: two questions of his topic join the 🔁 spaced repetition (the same pool as «📒 سجل حالاتي»)
+  function srsWrong(o) {
+    try { var S = w.NursinSRS, LC0 = w.NursinLogCore; if (!S || !S.add || !LC0 || !w.QUIZ) return;
+      var cs = o.cs || { src: o.p.src, href: "" }, items = S.items ? S.items() : {}, r = LC0.keyQs(C, w.QUIZ, cs, o.p, "tri" + wkey(o), function (k) { return !!(items[k] && !items[k].n); }, 2); if (r.ids.length) S.add(r.ids); } catch (e) {}
+  }
+  function payTxt(m) { return w.NursinPay ? "💵 " + w.NursinPay.money(m, true) : ""; }
+  function accPanel(tab) { if (!w.NursinPay) return; accTab = tab || accTab || "day"; panelOpen("acc", w.NursinPay.panelHtml(accTab)); w.NursinPay.sync().then(function () { if (panel === "acc") panelOpen("acc", w.NursinPay.panelHtml(accTab)); }); }
+  var accTab = "day";
+  function chimeEl() { var a = ac(); if (!a) return; tone(a, 660, 0, 0.25, 0.08); tone(a, 880, 0.18, 0.35, 0.07); }
+
   /* ---------------- 28z 🏥 the hospital floor ----------------
      ONE continuous floor: the department the nurse stands in is the big room above (everything as before); below, the whole floor small —
      🧠 الأعصاب · 🫀 القلب · 🚑 الطوارئ along one corridor, the ER entrance with «🛏️ سرير الإسعاف» where the ambulances stop. Each small
      room shows its two beds (status colours), the students in it (👥 N) and me (📍). A tap on another room → my nurse walks to the door of
      the big room, the big room shrinks into the floor, the nurse walks along the corridor, and the new department grows into the big room. */
-  var FW = 360, FH = 128, ROOMS = { n: { x: 6, y: 4, w: 108, h: 60 }, k: { x: 126, y: 4, w: 108, h: 60 }, er: { x: 246, y: 4, w: 108, h: 60 }, x: { x: 246, y: 96, w: 108, h: 28 } };
-  var DCOL = { er: "#dc2626", k: "#e11d48", n: "#7c3aed", x: "#ea580c" }, SCOL = { ok: "#16a34a", impr: "#eab308", unst: "#f97316", crit: "#dc2626", lost: "#64748b" };
-  var CORR_Y = 80;
+  var FW = 360, FH = 156, ROOMS = { n: { x: 6, y: 4, w: 108, h: 60, f: 1 }, k: { x: 126, y: 4, w: 108, h: 60, f: 1 }, er: { x: 246, y: 4, w: 108, h: 60, f: 0 }, x: { x: 246, y: 96, w: 108, h: 28, f: 0 },
+    r: { x: 246, y: 4, w: 108, h: 60, f: 1 }, s: { x: 6, y: 4, w: 170, h: 60, f: 2 }, g: { x: 184, y: 4, w: 170, h: 60, f: 2 },
+    acc: { x: 6, y: 4, w: 64, h: 60, f: 0 }, lab: { x: 74, y: 4, w: 54, h: 60, f: 0 }, rad: { x: 132, y: 4, w: 54, h: 60, f: 0 }, ph: { x: 190, y: 4, w: 52, h: 60, f: 0 },
+    wt: { x: 46, y: 96, w: 194, h: 30, f: 0 }, el: { x: 6, y: 96, w: 34, h: 30, f: -1 } };
+  var DCOL = { er: "#dc2626", k: "#e11d48", n: "#7c3aed", x: "#ea580c", r: "#0891b2", s: "#475569", g: "#a16207", wt: "#0d9488", acc: "#ca8a04", lab: "#2563eb", rad: "#64748b", ph: "#16a34a" },
+    SCOL = { ok: "#16a34a", impr: "#eab308", unst: "#f97316", crit: "#dc2626", lost: "#64748b" };
+  var CORR_Y = 80, vf = 0, vfAt = 0, elT = 0;                      // 29d 🛗: vf = the floor drawn on the strip (mine, or one I peek at with the tabs)
+  function FLR(dk) { return w.LiveDept.floorOf(dk); }
   function depName(dk) { var I = w.LiveDept.INFO[dk || L.dep()]; return I.ic + " " + T(I.t); }
   function depTitle() { var dk = L.dep(); return dk === "er" ? u("title") + " · " + depName("er") : depName(dk); }
+  function svcRoom() { return w.LiveDept.isSvc(L.dep()); }
   function fsize() {
     if (!fcv) return; var box = fcv.parentNode, wv = box.clientWidth - 12; if (wv <= 0) return;
     fsc = Math.min(wv / FW, 1.9); fdpr = Math.min(2, w.devicePixelRatio || 1);
     fcv.style.width = Math.round(FW * fsc) + "px"; fcv.style.height = Math.round(FH * fsc) + "px";
     fcv.width = Math.round(FW * fsc * fdpr); fcv.height = Math.round(FH * fsc * fdpr);
   }
-  function door(dk) { var r = ROOMS[dk]; return dk === "x" ? { x: r.x + 26, y: r.y } : { x: r.x + r.w / 2, y: r.y + r.h }; }
+  function door(dk) { var r = ROOMS[dk]; return dk === "x" ? { x: r.x + 26, y: r.y } : r.y >= 90 ? { x: r.x + r.w / 2, y: r.y } : { x: r.x + r.w / 2, y: r.y + r.h }; }
   // where a student (room coordinates 360×600) stands on the small room
-  function mini(dk, x, y) { var r = ROOMS[dk]; return dk === "x" ? { x: r.x + 6 + (x / 360) * (r.w - 12), y: r.y + 6 + (y / 600) * (r.h - 10) } : { x: r.x + 5 + (x / 360) * (r.w - 10), y: r.y + 16 + (y / 600) * (r.h - 20) }; }
+  function mini(dk, x, y) { var r = ROOMS[dk] || ROOMS.er; return r.h < 40 ? { x: r.x + 6 + (x / 360) * (r.w - 12), y: r.y + 6 + (y / 600) * (r.h - 10) } : { x: r.x + 5 + (x / 360) * (r.w - 10), y: r.y + 16 + (y / 600) * (r.h - 20) }; }
   // the corridor walk from one door to another: down to the corridor, along it, up into the other room (t 0…1)
   function cwalk(a, b, t) {
     var A = door(a), B = door(b), P = [A, { x: A.x, y: CORR_Y }, { x: B.x, y: CORR_Y }, B], L2 = [], tot = 0, i;
@@ -565,66 +860,111 @@
     for (i = 1; i < P.length; i++) { if (dd <= L2[i - 1] || i === P.length - 1) { var k = L2[i - 1] ? Math.min(1, dd / L2[i - 1]) : 1; return { x: P[i - 1].x + (P[i].x - P[i - 1].x) * k, y: P[i - 1].y + (P[i].y - P[i - 1].y) * k, dir: Math.atan2(P[i].y - P[i - 1].y, P[i].x - P[i - 1].x) }; } dd -= L2[i - 1]; }
     return B;
   }
+  // 29d: the legs of a walk — the same floor = one corridor walk; another floor = to the 🛗, the ride, from the 🛗
+  function legs(a, b) { var fa = FLR(a), fb = FLR(b); return fa === fb ? [{ a: a, b: b, f: fa, d: 1.6 }] : [{ a: a, b: "el", f: fa, d: 1.1 }, { ride: 1, f0: fa, f1: fb, d: 1.6 }, { a: "el", b: b, f: fb, d: 1.1 }]; }
+  // where a walker is on floor f at phase t (0…1 over all his legs) — or null when he is on another floor / in the 🛗
+  function legPos(a, b, t, f) {
+    var Ls = legs(a, b), tot = 0, i; Ls.forEach(function (x) { tot += x.d; }); var dd = Math.max(0, Math.min(1, t)) * tot;
+    for (i = 0; i < Ls.length; i++) { var x = Ls[i]; if (dd <= x.d || i === Ls.length - 1) { var k = Math.min(1, dd / x.d); if (x.ride) return null; return x.f === f ? (Ls.length === 1 ? cwalk(p0(x), p1(x), k) : cwalk(x.a, x.b, k)) : null; } dd -= x.d; }
+    return null;
+    function p0(x) { return x.a; } function p1(x) { return x.b; }
+  }
   function hosp() { return L.hospital ? L.hospital() : null; }
   var hCache = null, hAt = 0;
   function hNow() { var n = Date.now(); if (!hCache || n - hAt > 1500) { hCache = hosp(); hAt = n; } return hCache; }
+  function waitList() { var H0 = hNow(); return (H0 && H0.wait) || []; }
+  function myFloor() { return trv ? (trv.leg && trv.leg.f != null ? trv.leg.f : FLR(trv.from)) : FLR(L.dep()); }
+  function viewF() { if (trv) return trv.leg && trv.leg.ride ? (trv.lt < 0.5 ? trv.leg.f0 : trv.leg.f1) : myFloor(); return vfAt && Date.now() - vfAt < 45000 ? vf : FLR(L.dep()); }
+  function flTabs() {
+    var el = q(".lcr-flt"); if (!el) return; var f0 = viewF(), mf = myFloor(), W0 = waitList().length;
+    el.innerHTML = '<span class="lcr-fll">🛗</span>' + [2, 1, 0].map(function (f) {
+      var cnt = pAll.filter(function (p) { return FLR(p.dep) === f; }).length + (mf === f ? 1 : 0);
+      return '<button type="button" role="tab" class="lcr-flb' + (f === f0 ? " on" : "") + (f === mf ? " me" : "") + '" data-lcfl="' + f + '" aria-selected="' + (f === f0) + '">' + esc(T(w.LiveDept.FLN[f])) +
+        (cnt && w.LivePresRoom && w.LivePresRoom.active() ? " <small>👥" + cnt + "</small>" : "") + (f === 0 && W0 ? ' <small class="w">🪑' + W0 + "</small>" : "") + "</button>";
+    }).join("");
+  }
+  function roomBox(c, k, r, on, col, nt) {
+    c.fillStyle = "rgba(0,0,0,.10)"; rr(c, r.x + 2, r.y + 3, r.w, r.h, 9); c.fill();
+    c.fillStyle = nt ? "#17232a" : "#ffffff"; rr(c, r.x, r.y, r.w, r.h, 9); c.fill();
+    c.fillStyle = col; c.globalAlpha = on ? 0.18 : 0.08; rr(c, r.x, r.y, r.w, r.h, 9); c.fill(); c.globalAlpha = 1;
+    c.lineWidth = on ? 2.4 : 1; c.strokeStyle = on ? col : (nt ? "#33474f" : "#b8cbc7"); rr(c, r.x, r.y, r.w, r.h, 9); c.stroke();
+    var dr = door(k); c.fillStyle = nt ? "#1c2b32" : "#f6faf9"; c.fillRect(dr.x - 8, dr.y - 2, 16, 4);
+  }
   function floorDraw(t, dt) {
-    if (!fcx || !fcv.width) return; var c = fcx, P = pal(), H0 = hNow(), dk = L.dep(), nt = night();
+    if (!fcx || !fcv.width) return; var c = fcx, P = pal(), H0 = hNow(), dk = L.dep(), nt = night(), f = viewF(), WL = (H0 && H0.wait) || [];
     c.setTransform(fsc * fdpr, 0, 0, fsc * fdpr, 0, 0); c.clearRect(0, 0, FW, FH);
-    // corridor + road
     c.fillStyle = nt ? "#0f1a1f" : "#dfe9e7"; c.fillRect(0, 0, FW, FH);
     c.fillStyle = nt ? "#1c2b32" : "#f6faf9"; rr(c, 2, CORR_Y - 10, FW - 4, 20, 8); c.fill();
-    c.strokeStyle = nt ? "#2b3f47" : "#c9d9d6"; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(8, CORR_Y); c.lineTo(FW - 8, CORR_Y); c.stroke(); c.setLineDash([]);
-    c.fillStyle = nt ? "#232f35" : "#9aa7ad"; rr(c, 0, 99, 240, 22, 4); c.fill(); c.strokeStyle = "rgba(255,255,255,.55)"; c.setLineDash([8, 7]); c.beginPath(); c.moveTo(4, 110); c.lineTo(236, 110); c.stroke(); c.setLineDash([]);
-    label(c, P, 46, CORR_Y, "🚶 " + u("corr"));
-    // the rooms
-    ["n", "k", "er", "x"].forEach(function (k) {
-      var r = ROOMS[k], S = H0 && H0[k], on = k === dk, col = DCOL[k];
-      c.fillStyle = "rgba(0,0,0,.10)"; rr(c, r.x + 2, r.y + 3, r.w, r.h, 9); c.fill();
-      c.fillStyle = nt ? "#17232a" : "#ffffff"; rr(c, r.x, r.y, r.w, r.h, 9); c.fill();
-      c.fillStyle = col; c.globalAlpha = on ? 0.18 : 0.08; rr(c, r.x, r.y, r.w, r.h, 9); c.fill(); c.globalAlpha = 1;
-      c.lineWidth = on ? 2.4 : 1; c.strokeStyle = on ? col : (nt ? "#33474f" : "#b8cbc7"); rr(c, r.x, r.y, r.w, r.h, 9); c.stroke();
-      // door gap
-      var dr = door(k); c.fillStyle = nt ? "#1c2b32" : "#f6faf9"; c.fillRect(dr.x - 9, dr.y - 2, 18, 4);
-      c.font = "700 8.5px " + EMO; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.textAlign = "center"; c.fillStyle = nt ? "#dff3ee" : "#17323a";
-      if (k !== "x") c.fillText(depName(k), r.x + r.w / 2, r.y + 9);
-      // beds
-      var beds = k === "x" ? [{ x: r.x + r.w - 40, y: r.y + 5, w: 34, h: 18 }] : [{ x: r.x + 8, y: r.y + 18, w: 40, h: 26 }, { x: r.x + r.w - 48, y: r.y + 18, w: 40, h: 26 }];
-      beds.forEach(function (b, i) {
-        var x = S && S.P[i], gone = !x || x.ghost;
-        c.fillStyle = nt ? "#5d6f79" : "#7d8c96"; rr(c, b.x, b.y, b.w, b.h, 5); c.fill(); c.fillStyle = nt ? "#cdd7dc" : "#fff"; rr(c, b.x + 2, b.y + 2, b.w - 4, b.h - 4, 4); c.fill();
-        if (!gone) {
-          var sc = x.over ? "#94a3b8" : SCOL[x.st] || "#f97316"; c.fillStyle = sc; rr(c, b.x + 3, b.y + b.h * 0.45, b.w - 6, b.h * 0.5, 3); c.fill();
-          if (!x.over && (x.st === "crit")) { c.globalAlpha = 0.35 + 0.35 * Math.sin(t * 6); c.strokeStyle = "#dc2626"; c.lineWidth = 2; rr(c, b.x - 1.5, b.y - 1.5, b.w + 3, b.h + 3, 6); c.stroke(); c.globalAlpha = 1; }
-          c.font = "7px " + EMO; c.fillStyle = "#0f172a"; c.textAlign = "center"; c.fillText(x.over ? (x.over.w === "ok" ? "✅" : "💔") : "🛌", b.x + b.w / 2, b.y + 7);
-        }
-      });
-      if (k === "x") { c.font = "700 8px " + EMO; c.fillStyle = nt ? "#fed7aa" : "#9a3412"; c.textAlign = "center"; var tx2 = S && S.P[0] && !S.end ? "🛏️ " + T(w.LiveDept.INFO.x.t) : u("entr"); c.fillText(tx2, r.x + 34, r.y + 15); }
+    c.strokeStyle = nt ? "#2b3f47" : "#c9d9d6"; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(44, CORR_Y); c.lineTo(FW - 8, CORR_Y); c.stroke(); c.setLineDash([]);
+    if (f === 0) { c.fillStyle = nt ? "#232f35" : "#9aa7ad"; rr(c, 0, 132, 240, 20, 4); c.fill(); c.strokeStyle = "rgba(255,255,255,.55)"; c.setLineDash([8, 7]); c.beginPath(); c.moveTo(4, 142); c.lineTo(236, 142); c.stroke(); c.setLineDash([]); }
+    label(c, P, 200, CORR_Y, "🚶 " + u("corr") + " · " + T(w.LiveDept.FLN[f]));
+    // 🛗 the elevator (same place on every floor): doors close, the number changes, doors open
+    var E0 = ROOMS.el, ride = trv && trv.leg && trv.leg.ride, gap = ride ? Math.abs(Math.sin(Math.min(1, trv.lt) * Math.PI)) : 0;
+    c.fillStyle = nt ? "#334155" : "#94a3b8"; rr(c, E0.x, E0.y, E0.w, E0.h, 5); c.fill();
+    c.fillStyle = nt ? "#cbd5e1" : "#e2e8f0"; var hw = (E0.w - 6) / 2 * (0.35 + 0.65 * gap); c.fillRect(E0.x + 3, E0.y + 8, hw, E0.h - 11); c.fillRect(E0.x + E0.w - 3 - hw, E0.y + 8, hw, E0.h - 11);
+    c.fillStyle = "#0f172a"; c.fillRect(E0.x + 9, E0.y + 1, 16, 7); c.fillStyle = "#fbbf24"; c.font = "700 6.5px " + EMO; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(String(ride ? (trv.lt < 0.5 ? trv.leg.f0 : trv.leg.f1) : f), E0.x + 17, E0.y + 4.8);
+    c.font = "9px " + EMO; c.fillText("🛗", E0.x + 17, E0.y + E0.h - 7);
+    // the rooms of this floor
+    Object.keys(ROOMS).forEach(function (k) {
+      var r = ROOMS[k]; if (r.f !== f) return; var S = H0 && H0[k], on = k === dk && !trv, col = DCOL[k], soon = !!w.LiveDept.SOON[k];
+      roomBox(c, k, r, on, col, nt);
+      c.font = "700 " + (r.w < 70 ? 7 : 8.5) + "px " + EMO; c.textBaseline = "middle"; c.direction = FR() ? "ltr" : "rtl"; c.textAlign = "center"; c.fillStyle = nt ? "#dff3ee" : "#17323a";
+      var I = w.LiveDept.INFO[k];
+      if (k !== "x" && k !== "wt") { if (r.w < 70) { c.font = "11px " + EMO; c.fillText(I.ic, r.x + r.w / 2, r.y + 13); c.font = "700 6.6px " + EMO; c.fillText(T(I.t), r.x + r.w / 2, r.y + 26); } else c.fillText(depName(k), r.x + r.w / 2, r.y + 9); }
+      if (soon) { c.save(); c.globalAlpha = 0.5; c.strokeStyle = nt ? "#475569" : "#cbd5e1"; c.lineWidth = 1; for (var hx = r.x - r.h; hx < r.x + r.w; hx += 8) { c.beginPath(); c.moveTo(Math.max(r.x, hx), r.y + Math.max(0, r.x - hx)); c.lineTo(Math.min(r.x + r.w, hx + r.h), r.y + Math.min(r.h, r.x + r.w - hx)); c.stroke(); } c.restore();
+        c.font = "700 " + (r.w < 70 ? 6.4 : 8) + "px " + EMO; c.fillStyle = nt ? "#fde68a" : "#92400e"; c.fillText(u("soonT"), r.x + r.w / 2, r.y + r.h - (r.w < 70 ? 14 : 18)); }
+      if (k === "acc") { var pay = w.NursinPay; c.font = "700 6.4px " + EMO; c.fillStyle = nt ? "#fde68a" : "#854d0e"; c.fillText(pay ? pay.money(pay.mine()) : "💵", r.x + r.w / 2, r.y + 42); }
+      if (k === "wt") {                                          // 🪑 the chairs; each waiting patient a small seated dot (red pulse = 🔴 by his signs)
+        c.font = "700 7.5px " + EMO; c.fillStyle = nt ? "#99f6e4" : "#115e59"; c.textAlign = FR() ? "left" : "right"; c.fillText(depName("wt"), FR() ? r.x + 6 : r.x + r.w - 6, r.y + 8); c.textAlign = "center";
+        var seats = WL.filter(function (x) { return x.kind !== "amb"; });
+        for (var si = 0; si < 10; si++) { var sx = r.x + 10 + si * 18, sy = r.y + 20; c.fillStyle = nt ? "#334155" : "#cbd5e1"; rr(c, sx - 5, sy - 3, 10, 8, 2); c.fill();
+          var wv = seats[si]; if (wv) { var pr = w.LiveDept.prio(wv.p).pr; c.fillStyle = pr === 1 ? "#dc2626" : "#0f766e"; if (pr === 1) c.globalAlpha = 0.55 + 0.45 * Math.sin(t * 6); c.beginPath(); c.arc(sx, sy - 2, 3.4, 0, 7); c.fill(); c.globalAlpha = 1; } }
+        if (seats.length > 10) label(c, P, r.x + r.w - 14, r.y + 8, "+" + (seats.length - 10));
+      }
+      if (S && S.P && k !== "wt") {                              // the beds (empty while the patient waits outside)
+        var beds = k === "x" ? [{ x: r.x + r.w - 40, y: r.y + 5, w: 34, h: 18 }] : [{ x: r.x + 8, y: r.y + 18, w: 40, h: 26 }, { x: r.x + r.w - 48, y: r.y + 18, w: 40, h: 26 }];
+        beds.forEach(function (b, i) {
+          var x = S.P[i], gone = !x || x.ghost, inn = x && !gone && L.admOf(k, x.k, S.amb && S.amb.i);
+          c.fillStyle = nt ? "#5d6f79" : "#7d8c96"; rr(c, b.x, b.y, b.w, b.h, 5); c.fill(); c.fillStyle = nt ? "#cdd7dc" : "#fff"; rr(c, b.x + 2, b.y + 2, b.w - 4, b.h - 4, 4); c.fill();
+          if (!gone && (inn || x.over)) {
+            var sc = x.over ? "#94a3b8" : SCOL[x.st] || "#f97316"; c.fillStyle = sc; rr(c, b.x + 3, b.y + b.h * 0.45, b.w - 6, b.h * 0.5, 3); c.fill();
+            if (!x.over && (x.st === "crit")) { c.globalAlpha = 0.35 + 0.35 * Math.sin(t * 6); c.strokeStyle = "#dc2626"; c.lineWidth = 2; rr(c, b.x - 1.5, b.y - 1.5, b.w + 3, b.h + 3, 6); c.stroke(); c.globalAlpha = 1; }
+            c.font = "7px " + EMO; c.fillStyle = "#0f172a"; c.textAlign = "center"; c.fillText(x.over ? (x.over.w === "ok" ? "✅" : "💔") : "🛌", b.x + b.w / 2, b.y + 7);
+          } else if (!gone) { c.font = "8px " + EMO; c.textAlign = "center"; c.fillText("🪑", b.x + b.w / 2, b.y + b.h / 2 + 1); }
+        });
+      }
+      if (k === "x") { c.font = "700 8px " + EMO; c.fillStyle = nt ? "#fed7aa" : "#9a3412"; c.textAlign = "center"; var tx2 = S && S.P && S.P[0] && !S.end ? "🛏️ " + T(w.LiveDept.INFO.x.t) : u("entr"); c.fillText(tx2, r.x + 34, r.y + 15); }
       // 👥 how many in it
-      var cnt = pAll.filter(function (p) { return p.dep === k && (p.tdep || p.dep) === k; }).length + (on && !trv ? 1 : 0);
+      var cnt = pAll.filter(function (p) { return p.dep === k && (p.tdep || p.dep) === k; }).length + (on ? 1 : 0);
       if (cnt > 0 && w.LivePresRoom && w.LivePresRoom.active()) { label(c, P, k === "x" ? r.x + 12 : r.x + r.w - 14, k === "x" ? r.y + 24 : r.y + r.h - 7, "👥 " + cnt, col); }
-      if (on && !trv) label(c, P, k === "x" ? r.x + 30 : r.x + 22, k === "x" ? r.y - 6 : r.y + r.h - 7, u("here"), "#0f766e");
+      if (on) label(c, P, k === "x" ? r.x + 30 : r.x + Math.min(22, r.w / 2), k === "x" ? r.y - 6 : r.y + r.h - 7, r.w < 70 ? "📍" : u("here"), "#0f766e");
     });
-    // the others: in their room, or walking along the corridor
+    // the others: in their room on this floor, or walking (the corridor, the 🛗)
     var LP = w.LivePres, now = Date.now() + (w.LivePresRoom ? w.LivePresRoom.skew() : 0);
     pAll.forEach(function (p, i) {
-      var a = LP ? LP.alpha(now - p.at) : 1; if (a <= 0) return; var pos;
-      if (p.dep !== p.tdep) { var ph = ((t * 0.25 + (LP.color(p.uid).length % 7) / 7) % 1); pos = cwalk(p.dep, p.tdep, ph); }
-      else pos = mini(p.dep, p.x, p.y);
+      var a = LP ? LP.alpha(now - p.at) : 1; if (a <= 0) return; var pos = null;
+      if (p.dep !== p.tdep) { var ph = ((t * 0.25 + (LP.color(p.uid).length % 7) / 7) % 1); pos = FLR(p.dep) === FLR(p.tdep) ? (FLR(p.dep) === f ? cwalk(p.dep, p.tdep, ph) : null) : legPos(p.dep, p.tdep, ph, f); }
+      else if (FLR(p.dep) === f && ROOMS[p.dep]) pos = mini(p.dep, p.x, p.y);
+      if (!pos) return;
       c.globalAlpha = a; c.fillStyle = LP ? LP.color(p.uid) : "#2563eb"; c.beginPath(); c.arc(pos.x, pos.y, 3.6, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1; c.stroke(); c.globalAlpha = 1;
     });
-    // me
-    var me = trv && trv.ph === 2 ? cwalk(trv.from, trv.to, trv.t) : nurse ? mini(trv ? trv.from : dk, nurse.x, nurse.y) : null;
-    if (me) { var bob = trv && trv.ph === 2 ? Math.sin(t * 18) * 0.8 : 0; c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(me.x + 1, me.y + 2.5, 5, 3, 0, 0, 7); c.fill(); c.fillStyle = "#dc2626"; c.beginPath(); c.arc(me.x, me.y + bob, 4.6, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.4; c.stroke(); c.fillStyle = P.skin; c.beginPath(); c.arc(me.x, me.y + bob - 0.5, 2, 0, 7); c.fill(); }
-    // 🚑 the ambulance: drives up the road to the ER entrance, lights flashing, then waits there a few minutes
+    // me (+ the patient I am bringing in, in his wheelchair)
+    var me = null;
+    if (trv && trv.ph === 2) { var lg = trv.leg; if (lg && !lg.ride && lg.f === f) me = cwalk(lg.a, lg.b, trv.lt); }
+    else if (!trv && FLR(dk) === f) me = nurse ? mini(dk, nurse.x, nurse.y) : null;
+    else if (trv && trv.ph !== 2 && FLR(trv.from) === f) me = nurse ? mini(trv.from, nurse.x, nurse.y) : null;
+    if (me) { var bob = trv && trv.ph === 2 ? Math.sin(t * 18) * 0.8 : 0; c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(me.x + 1, me.y + 2.5, 5, 3, 0, 0, 7); c.fill(); c.fillStyle = "#dc2626"; c.beginPath(); c.arc(me.x, me.y + bob, 4.6, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.4; c.stroke(); c.fillStyle = P.skin; c.beginPath(); c.arc(me.x, me.y + bob - 0.5, 2, 0, 7); c.fill();
+      if (trv && trv.esc && trv.ph === 2) { c.font = "8px " + EMO; c.textAlign = "center"; c.fillText("🧑‍🦽", me.x - 9, me.y + 1); } }
+    // 🚑 the ambulance (ground floor): drives up the road to the ER entrance, lights flashing, then waits there a few minutes
     var A = H0 && H0.amb, cur = A && A.cur, since = cur ? Date.now() - cur.t : 1e12;
-    if (cur && since < 12 * 6e4) {
+    if (f === 0 && cur && since < 12 * 6e4) {
       if (!ambAnim || ambAnim.i !== cur.i) ambAnim = { i: cur.i, t0: since < 30000 ? t : t - 9 };
       var k2 = Math.min(1, (t - ambAnim.t0) / 3.2), e2 = 1 - Math.pow(1 - k2, 3), ax = -50 + e2 * 236;
-      ambDraw(c, ax, 102, t, k2 < 1 || since < 5 * 6e4);
-      if (k2 >= 1 && since < 4 * 6e4) { var sx = 228 + Math.min(1, (t - ambAnim.t0 - 3.2) / 2) * 32; c.font = "11px " + EMO; c.textAlign = "center"; c.fillText("🛏️", sx, 110); }
+      ambDraw(c, ax, 134, t, k2 < 1 || since < 5 * 6e4);
+      if (k2 >= 1 && WL.some(function (x) { return x.kind === "amb"; })) { c.font = "11px " + EMO; c.textAlign = "center"; c.fillText("🛏️", 232, 128); }
     }
-    if (trv && trv.ph === 2) label(c, P, FW / 2, FH - 4, u("walk", { d: depName(trv.to) }), "#0f766e");
+    if (trv && trv.ph === 2) label(c, P, 200, FH - 4, trv.leg && trv.leg.ride ? u("ride", { f: T(w.LiveDept.FLN[trv.leg.f1]) }) : u("walk", { d: depName(trv.to) }), "#0f766e");
+    if (Math.floor(t * 2) !== elT) { elT = Math.floor(t * 2); flTabs(); }
   }
   function ambDraw(c, x, y, t, lights) {
     c.fillStyle = "rgba(0,0,0,.18)"; rr(c, x + 2, y + 3, 46, 16, 4); c.fill();
@@ -636,36 +976,45 @@
   }
   function onFloorTap(e) {
     e.preventDefault(); if (trv) return;
-    var r = fcv.getBoundingClientRect(), x = (e.clientX - r.left) / fsc, y = (e.clientY - r.top) / fsc;
-    for (var k in ROOMS) { var o = ROOMS[k]; if (x >= o.x - 4 && x <= o.x + o.w + 4 && y >= o.y - 4 && y <= o.y + o.h + 4) return walkTo(k); }
-    if (y > 92 && x < 244) { var H0 = hNow(); if (H0 && H0.amb && H0.amb.cur) return walkTo("x"); return say("neutral", u("noAmb"), u("noAmb2")); }
+    var r = fcv.getBoundingClientRect(), x = (e.clientX - r.left) / fsc, y = (e.clientY - r.top) / fsc, f = viewF();
+    var o0 = ROOMS.el; if (x >= o0.x - 4 && x <= o0.x + o0.w + 4 && y >= o0.y - 4 && y <= o0.y + o0.h + 4) { vf = (f + 1) % 3; vfAt = Date.now(); flTabs(); return say("neutral", u("elev") + " · " + T(w.LiveDept.FLN[vf]), u("elevW")); }
+    for (var k in ROOMS) { var o = ROOMS[k]; if (o.f !== f) continue; if (x >= o.x - 4 && x <= o.x + o.w + 4 && y >= o.y - 4 && y <= o.y + o.h + 4) return walkTo(k); }
+    if (f === 0 && y > 128 && x < 244) { var H0 = hNow(); if (H0 && H0.amb && H0.amb.cur) return walkTo(L.admOf("x", "a", H0.amb.cur.i) ? "x" : "wt"); return say("neutral", u("noAmb"), u("noAmb2")); }
   }
-  // the walk: ① to the door of the big room ② the big room shrinks, the nurse walks the corridor ③ the new department grows, he walks in
+  // the walk: ① to the door of the big room ② the big room shrinks, the nurse walks the corridor (+ the 🛗 to another floor) ③ the new room grows, he walks in
   function walkTo(dk) {
+    var esc0 = arguments[1];                                    // 29d: the patient I wheel in (his first name), if any
     if (trv) return; var cur = L.dep();
     if (dk === cur) return say("neutral", u("inDep", { d: depName(dk) }));
+    if (w.LiveDept.SOON[dk]) return say("neutral", u("soonD", { d: depName(dk) }), u("soonW"));
+    if (Object.keys(work).length) workAll("wkGone");             // 29d ⏳ leaving the room stops what his hands were doing
     if (dk === "x") { var H0 = hosp(); if (!H0 || !H0.amb || !H0.amb.cur) return say("neutral", u("noAmb"), u("noAmb2")); }
     sheetClose(); panelClose(); hintOpen = null; handOpen = null;
     var dr = { x: 180, y: E.H - 16 };
-    trv = { from: cur, to: dk, ph: 1, t: 0 };
-    nurse.goal = null; nurse.pts = G ? R.path(G, nurse, dr) : []; mark = null;
+    trv = { from: cur, to: dk, ph: 1, t: 0, esc: esc0 || null };
+    nurse.goal = null; nurse.pts = G && !svcRoom() ? R.path(G, nurse, dr) : [dr]; mark = null;
     if (!nurse.pts.length) travelNext();
   }
   function travelNext() {
     if (!trv) return;
-    if (trv.ph === 1) { trv.ph = 2; trv.t = 0; cv.classList.remove("zin"); cv.classList.add("zout"); return; }
+    if (trv.ph === 1) { trv.ph = 2; trv.t = 0; trv.Ls = legs(trv.from, trv.to); trv.li = 0; trv.leg = trv.Ls[0]; trv.lt = 0; cv.classList.remove("zin"); cv.classList.add("zout"); return; }
     if (trv.ph === 2) {
-      trv.ph = 3; var to = trv.to; L.setDep(to); st = L.state() || st; bg = null;
-      nurse.x = 180; nurse.y = E.H - 18; nurse.dir = -Math.PI / 2; nurse.pts = G ? R.path(G, nurse, { x: 180, y: E.H - 92 }) : [];
+      trv.ph = 3; var to = trv.to, esc0 = trv.esc; L.setDep(to); st = L.state() || st; bg = null;
+      nurse.x = 180; nurse.y = E.H - 18; nurse.dir = -Math.PI / 2; nurse.pts = G && !svcRoom() ? R.path(G, nurse, { x: 180, y: E.H - 92 }) : [{ x: 180, y: E.H - 92 }];
       cv.classList.remove("zout"); cv.classList.add("zin0"); void cv.offsetWidth; cv.classList.remove("zin0"); cv.classList.add("zin");
-      trv = null; chime(); announce(to); pList = mine(pAll); peers = {};
-      say("good", depName(to), st && st.cs ? st.cs.ic + " " + T(st.cs.t) : "");
+      trv = null; vfAt = 0; chime(); announce(to); pList = mine(pAll); peers = {}; flTabs();
+      if (esc0) say("good", u("triIn", { n: esc0, d: depName(to) }), u("triInW"));
+      else say("good", depName(to), to === "wt" ? (waitList().length ? u("waitHint") : u("waitNone")) : to === "acc" ? u("accW") : st && st.cs ? st.cs.ic + " " + T(st.cs.t) : "");
+      if (to === "acc") setTimeout(function () { if (L.dep() === "acc" && !panel) accPanel(); }, 900);
     }
   }
   function travelTick(dt) {
     if (!trv) return;
     if (trv.ph === 1 && !nurse.pts.length) return travelNext();
-    if (trv.ph === 2) { trv.t += dt / 1.6; if (trv.t >= 1) travelNext(); }
+    if (trv.ph === 2) {
+      if (trv.Ls.length === 1) { trv.t += dt / 1.6; trv.lt = trv.t; if (trv.t >= 1) travelNext(); return; }
+      trv.lt += dt / trv.leg.d; if (trv.lt >= 1) { trv.li++; if (trv.li >= trv.Ls.length) return travelNext(); trv.leg = trv.Ls[trv.li]; trv.lt = 0; if (trv.leg.ride) chimeEl(); }
+    }
   }
   // 🔊 «صوت القسم»: a soft two-note chime + the department's name said out loud when you walk in; 🚨 a siren when an ambulance arrives.
   // Off until the student turns it on (🔇 → 🔊 in the top bar; phones block sound before a tap anyway)
@@ -694,10 +1043,10 @@
 
   /* ---------------- sheets ---------------- */
   function sheetOpen(kind, k, tab) { sheet = { kind: kind, k: k, tab: tab || "care" }; openQ = null; q(".lcr-sheet").hidden = false; sheetPaint(); }
-  function sheetClose() { sheet = null; openQ = null; var s = q(".lcr-sheet"); if (s) s.hidden = true; }
+  function sheetClose() { sheet = null; openQ = null; var s = q(".lcr-sheet"); if (s) s.hidden = true; if (Object.keys(work).length) workPaint(); }
   function sheetPaint() {
     if (!sheet || !st) return; var el = q(".lcr-shin"), h = "";
-    if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else h = stationHtml(sheet.k);
+    if (sheet.kind === "bed") h = bedHtml(sheet.k, sheet.tab); else if (sheet.kind === "desk") h = deskHtml(); else if (sheet.kind === "tri") h = triHtml(sheet.k); else if (sheet.kind === "wait") h = waitHtml(sheet.k); else if (sheet.kind === "fu") h = fuListHtml(); else h = stationHtml(sheet.k);
     // 28w: a repaint never lands under a finger (a snapshot arriving between touchstart and touchend swallowed the tap on iPhone) and an unchanged sheet is not rebuilt
     if (sheetTouch) { sheetLate = true; return; }
     if (h !== el.__h) { var sc = el.scrollTop; el.innerHTML = h; el.__h = h; el.scrollTop = sc; }
@@ -711,6 +1060,7 @@
     var x = X(k), p = x.p, i = k === "b" ? 2 : 1;
     var h = head("🛏️" + i + " " + esc(nm(x)) + " · " + p.age + " " + esc(u("ageY")) + " · " + (p.sex === "m" ? "♂" : "♀"), esc(L.stLabel(x.st, x.p.sex)) + " · " + esc(x.over ? ug("pDone", x) : T(U["ph" + x.ph])) + " · ✅ " + x.n + "/" + x.tot);
     h += '<p class="lcr-pbed" hidden></p>';
+    if (LCa) { var wb = work[pidOf(k)]; if (wb) h += '<div class="lcr-wkin">' + workHtml(wb, Date.now()).replace(/<b dir="ltr">\d+s<\/b>/, "") + "</div>"; h += fuHtml(k); }   // 29d ⏳ + ⏰
     h += '<div class="lcr-tabs" role="tablist">' + ["care", "file", "story"].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (t === tab) + '" class="lcr-tab' + (t === tab ? " on" : "") + '" data-lctab="' + t + '">' + esc(u(t)) + "</button>"; }).join("") + "</div>";
     if (!x.over && !st.end) h += hintHtml(x);
     if (x.over && !st.end) {                                     // 28x: his case is finished — his steps stay, the other bed is one tap away
@@ -874,8 +1224,110 @@
     if (A && A.needDone && !x.done[A.needDone]) return say("ord", u("must") + " " + u("mVvp"));
     if (A && A.need && D.I[A.need].rx && !x.done.call) return say("ord", u("must") + " " + u("mCall"));
     // 28w: steps queue one after the other (a quick 2nd answer used to bounce off the 2 s spacing); a step that takes a moment shows «⏳»
-    var tw = setTimeout(function () { say("neutral", u("saving")); }, 600);
-    actQ = actQ.then(function () { return L.act(k, a, opt); }).then(function (r) { clearTimeout(tw); result(k, a, r); }, function (e) { clearTimeout(tw); console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
+    // 29d ⏳ the act takes its time first (ring over the nurse, ✖ to cancel); the step is saved — and paid — when it is done
+    workRun(k, a, null, function () {
+      var tw = setTimeout(function () { say("neutral", u("saving")); }, 600);
+      actQ = actQ.then(function () { return L.act(k, a, opt); }).then(function (r) { clearTimeout(tw); result(k, a, r); }, function (e) { clearTimeout(tw); console.warn("nursin live", e); say("bad", u("err"), u("errWhy")); });
+    });
+  }
+  /* ---- 29d ⏳ «كل شي ياخد وقتو» (Abdullah 7:21/7:25 AM: ~10 s) + ⏰ «ارجع قيّم المريض» (7:37 AM) — the pure rules are assets/livecare.js ---- */
+  var LCa = w.LiveCare, work = {}, workIv = 0, careS = null, careIv = 0, ACTX = 1;
+  try { ACTX = LCa ? LCa.mult(location.search, localStorage.getItem("nursin_actx")) : 1; } catch (e) { ACTX = 1; }
+  function dayId() { return C.docId(C.dayKey(Date.now())); }
+  function curAi(dk) { if (dk !== "x") return 0; var h = hNow(); return h && h.amb && h.amb.cur ? h.amb.cur.i : 0; }
+  function pidOf(k, dk) { dk = dk || L.dep(); return LCa.pid(dayId(), dk, curAi(dk), k); }
+  function workName(a) { var A = D && D.A[a]; return A ? A.ic + " " + T(A).replace(/\s*[(—].*$/, "") : L.actName(a); }
+  function workRun(k, a, dk, run) {
+    var ms = LCa && D ? LCa.dur(a, D.A[a], ACTX) : 0; if (!ms) return run();
+    var id = pidOf(k, dk), now = Date.now(), c = LCa.canStart(work, id, now);
+    if (!c.ok) return say("ord", u("wkBusy", { a: workName(c.a), s: Math.ceil(c.left / 1000) }), u("wkBusyW"));
+    LCa.start(work, id, a, now, ms); var b = work[id], x = X(k); b.k = k; b.dk = dk || L.dep(); b.nm = x && x.p ? nm(x).split(" ")[0] : "";
+    b.tm = setTimeout(function () { if (work[id] !== b) return; delete work[id]; workPaint(); run(); }, ms);
+    workPaint(); if (sheet && sheet.kind === "bed") sheetPaint();
+  }
+  function workStop(id, why) { var b = work[id]; if (!b) return; clearTimeout(b.tm); delete work[id]; workPaint(); say("neutral", u(why || "wkCancel", { a: workName(b.a) })); if (sheet && sheet.kind === "bed") sheetPaint(); }
+  function workAll(why) { Object.keys(work).forEach(function (id) { workStop(id, why); }); }
+  function workMine() { var dk = L.dep(), now = Date.now(); return Object.keys(work).map(function (id) { return work[id]; }).filter(function (b) { return b && b.dk === dk && b.end > now - 50; }); }
+  function workHtml(b, now) {
+    var pr = LCa.prog(b, now), id = LCa.pid(dayId(), b.dk, curAi(b.dk), b.k);
+    return '<div class="lcr-wk"><span class="lcr-wkr" style="--p:' + Math.round(pr * 100) + '"></span><span class="lcr-wkt">' + esc(u("wkDo", { a: workName(b.a) })) + (b.nm ? " " + esc(u("wkFor", { n: b.nm })) : "") +
+      ' <b dir="ltr">' + Math.max(0, Math.ceil((b.end - now) / 1000)) + 's</b></span><button type="button" class="lcr-wkx" data-lcwkx="' + esc(id) + '">' + esc(u("wkX")) + "</button></div>";
+  }
+  function workPaint() {
+    var el = q(".lcr-work"); if (!el) return; var L0 = Object.keys(work).map(function (id) { return work[id]; }), now = Date.now();
+    el.hidden = !L0.length || !!sheet; el.innerHTML = L0.map(function (b) { return workHtml(b, now); }).join("");   // an open sheet shows its own line
+    var wi = q(".lcr-wkin .lcr-wkr"), wb = sheet && sheet.kind === "bed" ? work[pidOf(sheet.k)] : null; if (wi && wb) wi.style.setProperty("--p", Math.round(LCa.prog(wb, now) * 100));
+    if (L0.length && !workIv) workIv = setInterval(function () { if (!Object.keys(work).length || !ov || ov.hidden) { clearInterval(workIv); workIv = 0; } workPaint(); }, 250);
+  }
+  // the ring over his avatar while he works (+ the act's icon); his hands move
+  function workRing(x, y) {
+    var B = workMine(); if (!B.length) return; var b = B[0], pr = LCa.prog(b, Date.now()), A = D.A[b.a] || {};
+    var bob = Math.sin(Date.now() / 160) * 1.2;
+    cx.save(); cx.fillStyle = "rgba(255,255,255,.96)"; cx.beginPath(); cx.arc(x, y, 11.5, 0, 7); cx.fill();
+    cx.lineWidth = 3.2; cx.strokeStyle = "rgba(15,23,42,.18)"; cx.beginPath(); cx.arc(x, y, 10, 0, 7); cx.stroke();
+    cx.strokeStyle = "#0ea5e9"; cx.lineCap = "round"; cx.beginPath(); cx.arc(x, y, 10, -Math.PI / 2, -Math.PI / 2 + Math.max(0.02, pr) * Math.PI * 2); cx.stroke();
+    cx.font = "10px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = "#000"; cx.fillText(A.ic || "⏳", x, y + 0.5 + bob); cx.restore();
+  }
+  function careLoad() { if (!careS) { var s0 = null; try { s0 = localStorage.getItem(LCa.KEY); } catch (e) {} careS = LCa.load(s0); careS.rung = careS.rung || {}; careS.fu = LCa.prune(careS.fu, Date.now()); } return careS; }
+  function careSave() { try { localStorage.setItem(LCa.KEY, JSON.stringify(careS)); } catch (e) {} if (w.NursinPay && w.NursinPay.reset) w.NursinPay.reset(); try { d.dispatchEvent(new CustomEvent("nursin:care")); } catch (e) {} }
+  function fuName(f) { var A = D && D.A[f.a]; return A ? A.ic + " " + T(A).replace(/^عطي\s+|^Donner\s*:?\s*/, "").replace(/\s*[(—].*$/, "") : f.a; }
+  function fuOf(k) { if (!LCa) return []; var id = pidOf(k); return careLoad().fu.filter(function (f) { return f.pid === id; }); }
+  function fuOpen(k) { var now = Date.now(); return fuOf(k).filter(function (f) { var s0 = LCa.status(f, now); return s0 !== "ok" && s0 !== "miss"; }); }
+  // after the step was saved: a drug → ✅ given at HH:MM + ⏰ the follow-up; a check of his signs → the follow-up is done (on time = +30)
+  function careAfter(k, a, r) {
+    if (!LCa || !r || !D) return; var now = Date.now(), S = careLoad(), x = X(k), id = pidOf(k), ch = false;
+    if (r.k === "ok" && LCa.follow(a)) { var f = LCa.give(S.fu, { pid: id, dk: L.dep(), ai: curAi(L.dep()), pk: k, nm: x ? nm(x) : "", a: a }, now);
+      if (f) { ch = true; setTimeout(function () { say("good", u("fuSet", { n: f.nm.split(" ")[0], h: fmtT(f.due), m: f.m }), u("fuSetW", { a: fuName(f), g: fmtT(f.at) })); }, 2600); } }
+    if (r.k !== "bad" && LCa.REV[LCa.base(a)]) { var rs = LCa.reassess(S.fu, id, a, now); if (rs.ok.length) { ch = true; reevSay(rs.ok, x); } }
+    if (ch) { careSave(); if (sheet) sheetPaint(); }
+  }
+  function vitLine(x) { var v = (x && x.v) || {}; var R0 = function (n, k) { n = +n; return isFinite(n) ? (k ? n.toFixed(1) : Math.round(n)) : "?"; };
+    return u("fuVit") + "TA " + R0(v.sys) + "/" + R0(v.dia) + " · FC " + R0(v.fc) + " · SpO₂ " + R0(v.spo2) + "% · T° " + R0(v.t, 1); }
+  function reevSay(ok, x) { setTimeout(function () { say("good", u("fuOk", { n: ok[0].nm.split(" ")[0], p: ok.length * LCa.REAS }), vitLine(x)); }, 1400); }
+  // ⏰ the button «أعد التقييم»: 5 s at the bed, local only (nothing shared changes), settles his follow-ups
+  function reev(k) {
+    var x = X(k); if (!x || !LCa) return; var open0 = fuOpen(k);
+    if (!open0.length) return say("neutral", u("fuNone"), vitLine(x));
+    workRun(k, "reev", null, function () {
+      var now = Date.now(), S = careLoad(), rs = LCa.reassess(S.fu, pidOf(k), "reev", now);
+      if (rs.ok.length) { careSave(); say("good", u("fuOk", { n: nm(x).split(" ")[0], p: rs.ok.length * LCa.REAS }), vitLine(X(k))); }
+      else if (rs.early.length) say("neutral", u("fuEarly", { n: nm(x).split(" ")[0], h: fmtT(rs.early[0].due) }), vitLine(X(k)));
+      else say("neutral", u("fuNone"), vitLine(X(k)));
+      if (sheet) sheetPaint();
+    });
+  }
+  function fuRow(f, now, go) {
+    var s0 = LCa.status(f, now), cls = s0 === "soon" || s0 === "due" ? " due" : s0 === "ok" ? " ok" : s0 === "miss" ? " miss" : "";
+    return '<li class="lcr-fu' + cls + '"><span>' + esc(u("fuGiven", { a: fuName(f), h: fmtT(f.at) })) + (go ? " · <b>" + esc(f.nm.split(" ")[0]) + "</b>" : "") + "</span><small>" +
+      (s0 === "ok" ? esc(u("fuOkL")) : s0 === "miss" ? esc(u("fuMissL")) : esc(u("fuAt", { h: fmtT(f.due) })) + ' · <b class="lcr-fucd" dir="ltr" data-due="' + f.due + '">' + (s0 === "w" ? esc(u("fuLeft")) + " " + LCa.left(f.due - now) : esc(u("fuNow"))) + "</b>") +
+      (go && s0 !== "ok" && s0 !== "miss" ? ' <button type="button" class="lcr-btn" data-lcgo="' + esc(f.dk) + '">' + esc(u("fuGo")) + "</button>" : "") + "</small></li>";
+  }
+  function fuHtml(k) {
+    var L0 = fuOf(k); if (!L0.length) return ""; var now = Date.now(), op = fuOpen(k).length;
+    return '<ul class="lcr-fus">' + L0.map(function (f) { return fuRow(f, now, false); }).join("") + "</ul>" +
+      (op ? '<div class="lcr-acts"><button type="button" class="lcr-btn on lcr-reev" data-lcreev="' + k + '">' + esc(u("reev")) + "</button></div>" : "");
+  }
+  function fuListHtml() {
+    var now = Date.now(), L0 = LCa ? careLoad().fu.filter(function (f) { return f.pid.indexOf(dayId()) === 0 || (LCa.status(f, now) !== "ok" && LCa.status(f, now) !== "miss"); }) : [];
+    L0 = L0.slice().sort(function (a, b) { return a.due - b.due; });
+    return '<div class="lcr-sv">' + head(esc(u("myFu")), esc(u("fuHow"))) + (L0.length ? '<ul class="lcr-fus">' + L0.map(function (f) { return fuRow(f, now, true); }).join("") + "</ul>" : '<p class="small">' + esc(u("fuEmpty")) + "</p>") + "</div>";
+  }
+  function fuBadge(P, x, s, t) {
+    var L0 = fuOpen(x.k); if (!L0.length) return; var f = L0.sort(function (a, b) { return a.due - b.due; })[0], now = Date.now(), s0 = LCa.status(f, now), due = s0 === "soon" || s0 === "due";
+    var txt = "⏰ " + (due ? "🔔" : LCa.left(f.due - now)), bx = s.x + s.w - 2, by = s.y + 6;
+    cx.save(); cx.font = "bold 10px system-ui, sans-serif"; var wd = cx.measureText(txt).width + 12; cx.globalAlpha = due ? 0.65 + 0.35 * Math.sin(t * 6) : 0.95;
+    cx.fillStyle = due ? "#dc2626" : night() ? "#1e293b" : "#fff"; rr(cx, bx - wd, by - 9, wd, 18, 9); cx.fill(); cx.strokeStyle = due ? "#fff" : "#0ea5e9"; cx.lineWidth = 1; cx.stroke();
+    cx.fillStyle = due ? "#fff" : night() ? "#e2e8f0" : "#0f172a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(txt, bx - wd / 2, by + 0.5); cx.restore();
+  }
+  // every second while the room is open: 🔔 a follow-up that became due (once), ⚠️ one that went past (−20), the ⏰ counters
+  function careTick() {
+    if (!LCa || !ov || ov.hidden) return; var S = careLoad(), now = Date.now(), ch = false;
+    LCa.ringing(S.fu, now, S.rung).forEach(function (f) { S.rung[f.id] = 1; ch = true; say("ord", u("fuDue", { n: f.nm.split(" ")[0] }), u("fuDueW", { a: fuName(f), m: Math.round((now - f.at) / 6e4) })); if (snd) chime(); });
+    var miss = LCa.sweep(S.fu, now); if (miss.length) { ch = true; say("bad", u("fuMiss", { n: miss[0].nm.split(" ")[0], p: miss.length * LCa.LATE }), u("fuMissW")); }
+    if (ch) { careSave(); if (sheet) sheetPaint(); }
+    var nb = S.fu.filter(function (f) { var s0 = LCa.status(f, now); return s0 === "soon" || s0 === "due"; }).length, op = S.fu.filter(function (f) { var s0 = LCa.status(f, now); return s0 !== "ok" && s0 !== "miss"; }).length;
+    var bi = q(".lcr-fub i"); if (bi) { bi.hidden = !op; bi.textContent = op; bi.className = nb ? "due" : ""; }
+    Array.prototype.forEach.call(ov.querySelectorAll(".lcr-fucd"), function (el) { var du = +el.getAttribute("data-due"), t0 = du - now > LCa.EARLY ? u("fuLeft") + " " + LCa.left(du - now) : u("fuNow"); if (el.textContent !== t0) el.textContent = t0; });
   }
   var actQ = Promise.resolve();
   // 28y: 📞 and 💡 go through the same queue as every step (2 s rule → «⏳», never a silent nothing)
@@ -901,7 +1353,8 @@
   }
   function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) })); if (sheet) sheetPaint(); }
   function result(k, a, r) {
-    var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d : "";
+    try { careAfter(k, a, r); } catch (e) { console.warn("nursin care", e); }
+    var x = X(k), A = D.A[a], pts = r.d ? " " + (r.d > 0 ? "+" : "") + r.d + (w.NursinPay ? " · " + payTxt(r.d * 10) : "") : "";   // 29d 💵 every point = 10 ل.ن
     // 28w: close only THIS field's question — the answer of the field before (queued, saved a second later) used to close the one being answered
     function shut() { if (openQ === k + String(a).replace(/^f_/, "")) openQ = null; }
     if ((r.k === "ok" || r.k === "bad") && A && A.need && !BEDSIDE[A.need]) { var I = D.I[A.need], j = hands.indexOf(A.need); if (I && !I.keep && j > -1) { hands.splice(j, 1); slots(); } }
@@ -939,8 +1392,18 @@
     var t = e.target.closest ? e.target.closest("button,a") : null; if (!t) return;
     var g = function (k) { return t.getAttribute(k); };
     if (g("data-lcx")) return close();
+    if (g("data-lcwkx")) return workStop(g("data-lcwkx"));                                   // 29d ⏳ ✖
+    if (g("data-lcreev")) return reev(g("data-lcreev"));                                     // 29d ⏰
+    if (g("data-lcfu")) { sheet = { kind: "fu", k: "", tab: "" }; openQ = null; q(".lcr-sheet").hidden = false; return sheetPaint(); }
     if (g("data-lcsnd")) { snd = !snd; try { localStorage.setItem(SNDK, snd ? "1" : "0"); } catch (x) {} sndPaint(); if (snd) chime(); return; }
-    if (g("data-lcamb")) { sirenHide(); return walkTo("x"); }
+    if (g("data-lcamb")) { sirenHide(); var A0 = hNow() && hNow().amb; return A0 && A0.cur && !L.admOf("x", "a", A0.cur.i) ? walkTo("wt") : walkTo("x"); }   // 29d: he waits at the door until a nurse receives him
+    if (g("data-lcfl") != null) { vf = +g("data-lcfl"); vfAt = Date.now(); flTabs(); return; }
+    if (g("data-lcgo")) { sheetClose(); return walkTo(g("data-lcgo")); }
+    if (g("data-lcseat")) { var sid = g("data-lcseat"), so = seated().filter(function (o) { return wkey(o.x) === sid; })[0]; sheetClose(); if (so) { triSel = sid; svcGo(so.spot, { k: "tri", id: sid }); } return; }
+    if (g("data-lctripr")) { triPick.pr = +g("data-lctripr"); return sheetPaint(); }
+    if (g("data-lctridc")) { triPick.dc = g("data-lctridc"); return sheetPaint(); }
+    if (g("data-lctrigo")) return triGo(g("data-lctrigo"));
+    if (g("data-paytab")) return accPanel(g("data-paytab"));
     if (g("data-lcsirx")) return sirenHide();
     if (g("data-lcclose")) return sheetClose();
     if (g("data-lcback")) return panelClose();
@@ -951,7 +1414,9 @@
     if (g("data-lcopt")) return doAct(sheet.k, "f_" + g("data-lcf"), +g("data-lcopt"));
     if (g("data-lccall")) return queue(g("data-lccall"), "call");
     if (g("data-lchint")) { var kh = g("data-lchint"); hintOpen = hintOpen === kh ? null : kh; return sheetPaint(); }
-    if (g("data-lchint2")) { var k2 = g("data-lchint2"), x2 = X(k2); if (x2 && myHints(x2) >= C.HMAX) return say("neutral", u("hintNo", { m: C.HMAX })); return queue(k2, "hint"); }
+    if (g("data-lchint2")) { var k2 = g("data-lchint2"), x2 = X(k2);
+      if (x2 && !x2.over && supFree(k2)) return hintShow(k2, " · " + u("supFree"));                     // 29d 👔 the floor supervisor: one free 🎯 per patient
+      if (x2 && myHints(x2) >= C.HMAX) return say("neutral", u("hintNo", { m: C.HMAX })); return queue(k2, "hint"); }
     if (g("data-lchand")) { var kd = g("data-lchand"), xd = X(kd); if (!xd || xd.done.f_tr) return; if (C.avail(xd, xd.by.f_tr)) { handOpen = null; sheet.tab = "file"; openQ = kd + "tr"; return sheetPaint(); }
       handOpen = handOpen === kd ? null : kd; sheetPaint(); setTimeout(function () { var b = q(".lcr-left"); if (b && b.scrollIntoView) b.scrollIntoView({ block: "nearest" }); }, 60); return; }
     if (g("data-lcgodesk")) { sheetClose(); return goTo("phone"); }
@@ -969,8 +1434,8 @@
   }
 
   /* ---------------- panels: feed, end record, archive, push ---------------- */
-  function panelOpen(name, html) { panel = name; var p = q(".lcr-panel"); p.hidden = false; p.innerHTML = '<div class="lcr-pin"><button type="button" class="lcr-back" data-lcback="1">' + esc(u("back")) + "</button>" + html + "</div>"; p.scrollTop = 0; }
-  function panelClose() { panel = null; var p = q(".lcr-panel"); if (p) { p.hidden = true; p.innerHTML = ""; } }
+  function panelOpen(name, html) { panel = name; var p = q(".lcr-panel"); p.hidden = false; ov.classList.add("lcr-pon"); /* 29d: no room toast over a panel */ p.innerHTML = '<div class="lcr-pin"><button type="button" class="lcr-back" data-lcback="1">' + esc(u("back")) + "</button>" + html + "</div>"; p.scrollTop = 0; }
+  function panelClose() { panel = null; var p = q(".lcr-panel"); if (p) { p.hidden = true; p.innerHTML = ""; } if (ov) ov.classList.remove("lcr-pon"); }
   function boardHtml(pts) {
     var b = []; for (var k in pts) { var r = pts[k] || {}; b.push({ u: k, n: r.n || "", p: r.p | 0, ok: r.ok | 0, no: r.no | 0 }); }
     b.sort(function (a, c) { return c.p - a.p || c.ok - a.ok; }); var M = L.me().uid;
@@ -1038,7 +1503,8 @@
   // 28z: the games card also names the two departments upstairs (each patient's colour) — «🫀 … · 🧠 …»
   function hospLine() {
     var H0 = L.hospital ? L.hospital() : null; if (!H0) return "";
-    return ["k", "n"].map(function (k) { var S = H0[k]; return S ? " · " + w.LiveDept.INFO[k].ic + " " + (S.end ? "🏁" : S.P.map(function (x) { return L.stLabel(x.st).split(" ")[0]; }).join("")) : ""; }).join("") + (H0.amb && H0.amb.cur && H0.x && !H0.x.end ? " · 🚑" + L.stLabel(H0.x.P[0].st).split(" ")[0] : "");
+    return ["k", "n"].map(function (k) { var S = H0[k]; return S ? " · " + w.LiveDept.INFO[k].ic + " " + (S.end ? "🏁" : S.P.map(function (x) { return L.stLabel(x.st).split(" ")[0]; }).join("")) : ""; }).join("") + (H0.amb && H0.amb.cur && H0.x && !H0.x.end ? " · 🚑" + L.stLabel(H0.x.P[0].st).split(" ")[0] : "") +
+      (H0.wait && H0.wait.length ? " · " + u("waitN", { n: H0.wait.length }) : "");          // 29d 🪑 who is waiting to be brought in
   }
   function init() {
     card();
@@ -1047,6 +1513,10 @@
     w.addEventListener("popstate", function () { if (location.hash !== "#live") close(); else if (!ov || ov.hidden) open(); });
     w.addEventListener("hashchange", function () { if (location.hash === "#live" && (!ov || ov.hidden)) open(); });
   }
-  w.LiveRoom = { open: open, close: close, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; } };
+  w.LiveRoom = { open: open, close: close, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
+    walkTo: function (dk) { walkTo(dk); }, travel: function () { return trv; }, acc: function (t) { accPanel(t); }, seated: function () { return seated().map(function (o) { return { id: wkey(o.x), at: o.at, spot: o.spot, kind: o.x.kind }; }); },
+    tri: function (id) { var o = seated().filter(function (x) { return wkey(x.x) === id; })[0]; if (o) { triSel = id; triPick = { pr: 0, dc: '' }; sheetOpen('tri', id); } }, view: function (f) { vf = f; vfAt = Date.now(); flTabs(); },
+    act: function (k, a, opt) { doAct(k, a, opt); }, go: function (k) { goTo(k); }, nurse: function () { return { x: nurse.x, y: nurse.y, moving: nurse.pts.length }; }, work: function () { return Object.keys(work).map(function (id) { var b = work[id]; return { id: id, a: b.a, k: b.k, dk: b.dk, end: b.end, t0: b.t0 }; }); },
+    care: function () { return LCa ? careLoad() : null; }, careTick: function () { careTick(); }, reev: function (k) { reev(k); }, fuList: function () { sheet = { kind: "fu", k: "", tab: "" }; q(".lcr-sheet").hidden = false; sheetPaint(); }, actx: function () { return ACTX; } };   // 29d test hooks
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

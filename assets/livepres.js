@@ -18,14 +18,54 @@ var LivePres = (function () {
   // 28z 🏥: the department he is in (dk) and the one he walks to (tdk) ride in the 2 low bits of x / tx (er 0 · k 1 · n 2 · x 3) —
   // the same 8 fields, the same bounds, so rules v22 accept it; an older phone draws him ≤ 3 px off, nothing else
   var DEPS = ["er", "k", "n", "x"];
-  function enc(v, dk) { var c = DEPS.indexOf(dk); v = clampI(v, 0, W - 4); return (v & ~3) | (c < 0 ? 0 : c); }
+  // 29d 🛗: twelve rooms now (LiveDept.ALL: + 🩺 r · 🔪 s · 👴 g · 🪑 wt · 💰 acc · 🧪 lab · 🩻 rad · 💊 ph). A room past the first four also
+  // rides at the END of the first name as an invisible tag (U+2063 + 4 zero-width digits: room, target room) — still ≤ 20 characters, so
+  // rules v22 accept it; x keeps the room's 2 low bits; an older phone shows the plain name.
+  var ALLD = ["er", "k", "n", "x", "r", "s", "g", "wt", "acc", "lab", "rad", "ph"], ZW = ["\u200b", "\u200c", "\u200d", "\u2060"], MARK = "\u2063";
+  function enc(v, dk) { var c = ALLD.indexOf(dk); v = clampI(v, 0, W - 4); return (v & ~3) | (c < 0 ? 0 : c & 3); }
   function dec(v) { v = Math.round(+v || 0); return { v: v & ~3, dep: DEPS[v & 3] }; }
+  function tag(c, tc) { return MARK + ZW[c >> 2] + ZW[c & 3] + ZW[tc >> 2] + ZW[tc & 3]; }
+  function untag(n) { n = String(n || ""); var i = n.indexOf(MARK); if (i < 0) return { n: n, c: -1, tc: -1 };
+    var z = n.slice(i + 1, i + 5).split("").map(function (ch) { return ZW.indexOf(ch); });
+    if (z.length < 4 || z.some(function (k) { return k < 0; })) return { n: n.slice(0, i), c: -1, tc: -1 };
+    return { n: n.slice(0, i), c: z[0] * 4 + z[1], tc: z[2] * 4 + z[3] }; }
   function doc(me, pos, tgt, bed, dk, tdk) {
-    return { n: first(me && me.name) || "طالب", av: AVRE.test((me && me.av) || "") ? me.av : "",
+    var c = ALLD.indexOf(dk || "er"), tc = ALLD.indexOf(tdk || dk || "er"), nm = first(me && me.name) || "طالب";
+    if (c > 3 || tc > 3) nm = nm.slice(0, 14) + tag(c < 0 ? 0 : c, tc < 0 ? 0 : tc);
+    return { n: nm, av: AVRE.test((me && me.av) || "") ? me.av : "",
       x: enc(pos.x, dk || "er"), y: clampI(pos.y, 0, H), tx: enc(tgt.x, tdk || dk || "er"), ty: clampI(tgt.y, 0, H), b: bed === "a" || bed === "b" ? bed : "" };
   }
   // a read doc → where he is: { dep, tdep, x, tx } (walking between two departments when dep ≠ tdep)
-  function place(p) { var a = dec(p.x), b = dec(p.tx == null ? p.x : p.tx); p.dep = a.dep; p.tdep = b.dep; p.x = a.v; p.tx = b.v; return p; }
+  function place(p) { var a = dec(p.x), b = dec(p.tx == null ? p.x : p.tx), g = untag(p.n); p.dep = a.dep; p.tdep = b.dep; p.x = a.v; p.tx = b.v;
+    if (g.c >= 0) { p.n = g.n; p.dep = ALLD[g.c] || p.dep; p.tdep = ALLD[g.tc] || p.dep; } return p; }
+  // 29d (Abdullah, Nov 4 7:20 AM «بكون عالتخت اليمين بس الشخصيات يكونوا فوق بعض»): people standing at the same spot each get a slot
+  // around it (rows of 3, a row lower when more) and no two name tags overlap — items [{ id, x, y, w, h (the tag box), fix (stays), mv (walking: left alone) }]
+  // → { id: { x, y } }. The tag box of an item is x − w/2 … x + w/2, y − 5 − h … y − 5.
+  function spread(items, R) {
+    R = R || 18; var out = {}, used = {}, L = (items || []).filter(function (it) { return it && !it.mv; });
+    (items || []).forEach(function (it) { if (it) out[it.id] = { x: it.x, y: it.y }; });
+    function box(id, it) { var p = out[id]; return { l: p.x - it.w / 2, r: p.x + it.w / 2, t: p.y - 5 - it.h, b: p.y - 5 }; }
+    for (var i = 0; i < L.length; i++) {
+      if (used[L[i].id]) continue; var cl = [L[i]]; used[L[i].id] = 1;
+      for (var g = 0; g < cl.length; g++) for (var j = 0; j < L.length; j++) { var b = L[j]; if (used[b.id]) continue; if (Math.abs(b.x - cl[g].x) + Math.abs(b.y - cl[g].y) < R) { cl.push(b); used[b.id] = 1; } }
+      if (cl.length < 2) continue;
+      cl.sort(function (a, b) { return (b.fix ? 1 : 0) - (a.fix ? 1 : 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); });
+      var a0 = cl[0], cw = 0, ch = 0; cl.forEach(function (it) { cw = Math.max(cw, it.w + 4); ch = Math.max(ch, it.h + 8); });
+      var SL = [[0, 0], [-1, 0], [1, 0], [-0.5, 1], [0.5, 1], [-1.5, 1], [1.5, 1], [0, 2], [-1, 2], [1, 2], [-2, 2], [2, 2]];
+      cl.forEach(function (it, n) { var s = SL[n] || [((n % 5) - 2), 3 + Math.floor((n - 12) / 5)]; out[it.id] = { x: a0.x + s[0] * cw, y: a0.y + s[1] * ch }; });
+    }
+    // anything still overlapping (two groups side by side, a wall clamp): push the later one down until it is free
+    var all = (items || []).filter(function (it) { return it && !it.mv; });
+    for (var pass = 0; pass < 12; pass++) {
+      var moved = false;
+      for (var x = 0; x < all.length; x++) for (var y = x + 1; y < all.length; y++) {
+        var A = box(all[x].id, all[x]), B = box(all[y].id, all[y]);
+        if (A.l < B.r && B.l < A.r && A.t < B.b && B.t < A.b) { var mv = all[y].fix ? all[x] : all[y], other = mv === all[y] ? A : B, mb = box(mv.id, mv); out[mv.id].y += (other.b - mb.t) + 2; moved = true; }
+      }
+      if (!moved) break;
+    }
+    return out;
+  }
   // should I write now? changed = where I go / my bed changed since the last write; moving = I am walking
   function due(last, now, moving, changed) {
     if (!last) return true;
@@ -66,7 +106,7 @@ var LivePres = (function () {
   }
   function color(uid) { var h = 2166136261; uid = String(uid); for (var i = 0; i < uid.length; i++) { h ^= uid.charCodeAt(i); h = Math.imul(h, 16777619); } return "hsl(" + ((h >>> 0) % 360) + ",62%,46%)"; }
   return { STALE: STALE, FADE: FADE, MOVE_MS: MOVE_MS, IDLE_MS: IDLE_MS, GAP: GAP, SNAP: SNAP, MAXP: MAXP, TOAST_GAP: TOAST_GAP, AVRE: AVRE,
-    DEPS: DEPS, enc: enc, dec: dec, place: place, first: first, doc: doc, due: due, fresh: fresh, alpha: alpha, follow: follow, diff: diff, toastOk: toastOk, names: names, color: color };
+    DEPS: DEPS, ALLD: ALLD, untag: untag, spread: spread, enc: enc, dec: dec, place: place, first: first, doc: doc, due: due, fresh: fresh, alpha: alpha, follow: follow, diff: diff, toastOk: toastOk, names: names, color: color };
 })();
 /* ==/pres-core== */
   if (typeof window !== "undefined") window.LivePres = LivePres;
@@ -115,7 +155,7 @@ var LivePres = (function () {
   }
   function others() { var A = fb(); return on && !dead ? LivePres.fresh(extra.length ? list.concat(extra) : list, Date.now(), A ? A.user.uid : "me", skew) : []; }
   function count() { return on && !dead ? others().length + 1 : 0; }
-  function byDep(myDk) { var o = { er: 0, k: 0, n: 0, x: 0 }; others().forEach(function (p) { o[p.dep] = (o[p.dep] || 0) + 1; }); if (on && !dead && myDk) o[myDk]++; return o; }
+  function byDep(myDk) { var o = { er: 0, k: 0, n: 0, x: 0, r: 0, s: 0, g: 0, wt: 0, acc: 0, lab: 0, rad: 0, ph: 0 }; others().forEach(function (p) { o[p.dep] = (o[p.dep] || 0) + 1; }); if (on && !dead && myDk) o[myDk]++; return o; }
   function skewMs() { return skew; }
   d.addEventListener("visibilitychange", function () {
     if (!on) return; var A = fb();

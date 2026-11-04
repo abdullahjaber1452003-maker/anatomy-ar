@@ -434,19 +434,36 @@
     h += '<div class="hzoa hzoa2"><a class="hzlk" href="tutor.html?q=' + encodeURIComponent(osmPrompt(s)) + '">' + T("💬 اسأل عثمان عن هالدرس", "💬 Demande à Osman sur cette leçon") + "</a></div>";
     return h + "</div>";
   }
-  function pathHtml(p) {
-    var tot = p.steps.length, dn = 0, cur = -1, i, D = p.done || {};
-    for (i = 0; i < tot; i++) { if (D[skey(p.steps[i])]) dn++; else if (cur < 0) cur = i; }
+  // 29d (Abdullah, Nov 4 2026 8:16 AM «بدي هيدي المهام اليومية اللي هو درس اليوم… لازم ينحطّوا قدّام المسار»): the day's TASKS (درس اليوم,
+  // the class lesson, 📌 homework, ⭐ exams, 🎯 the midterm step, ⚔️ the round, 🔁 the reviews, the weekly exam) are drawn as their own block
+  // «📋 المهام اليومية» directly ABOVE «🧭 مسار اليوم» (under the hospital card); the plan itself is unchanged (still 5–7 steps, one done map).
+  var DAILY = { cls: 1, hw: 1, imp: 1, mid: 1, duel: 1, rev: 1, today: 1, cont: 1, "new": 1, wex: 1 };
+  function isDaily(s) { return !!(s && DAILY[s.k]); }
+  function dailyHtml(p) { return pathHtml(p, "daily"); }
+  function pathHtml(p, part) {
+    var daily = part === "daily", idx = [], j;
+    for (j = 0; j < p.steps.length; j++) if (isDaily(p.steps[j]) === daily) idx.push(j);
+    if (daily && !idx.length) return "";
+    var tot = idx.length, dn = 0, cur = -1, i, D = p.done || {};
+    for (i = 0; i < tot; i++) { if (D[skey(p.steps[idx[i]])]) dn++; else if (cur < 0) cur = i; }
     var all = dn === tot, near = !all && dn > 0 && tot - dn <= 2, mn = 0;
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
     var line = all ? T("🎉 خلصت مسار اليوم! برافو عليك، بكرا منكمّل 💪", "🎉 Parcours du jour terminé ! Bravo, on continue demain 💪")
       : T("خلصت " + dn + " من " + tot, dn + " sur " + tot + " terminé(s)") + (near ? T(" • قرّبت تخلص 🔥", " • Presque fini 🔥") : dn === 0 ? T(" • يلا نبلّش 💪", " • On commence 💪") : T(" • كمّل هيك 👏", " • Continue comme ça 👏"));
+    if (daily) return dailyHead(dn, tot, all) + stepsHtml(p, idx, tot, dn, cur, D) + "</ol>";
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
-    h += '<ol class="hztl">';
+    return h + stepsHtml(p, idx, tot, dn, cur, D) + "</ol>";
+  }
+  function dailyHead(dn, tot, all) {
+    return '<div class="hzph hzdh' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
+      '<div class="tx"><h2 id="hzdailyh">' + T("📋 المهام اليومية", "📋 Tâches du jour") + "</h2><small>" + (all ? T("✅ خلصت مهام اليوم كلّا 💪", "✅ Toutes les tâches du jour faites 💪") : T("خلصت " + dn + " من " + tot + " • درس اليوم والمراجعات والوظايف", dn + " sur " + tot + " • leçon du jour, révisions, devoirs")) + "</small></div></div>";
+  }
+  function stepsHtml(p, idx, tot, dn, cur, D) {
+    var h = '<ol class="hztl">', i;
     for (i = 0; i < tot; i++) {
-      var s = p.steps[i], x = texts(s), k = skey(s), st = D[k] ? "done" : i === cur ? "now" : "todo";
+      var s = p.steps[idx[i]], x = texts(s), k = skey(s), st = D[k] ? "done" : i === cur ? "now" : "todo";
       if (s.bonus && st !== "done") st += " bonus";
       h += '<li class="hzst ' + st + (s.k === "osm" ? " hzosmst" : "") + '"><span class="nd" aria-hidden="true"><i>' + (D[k] ? "✓" : s.e) + "</i></span>";
       if (s.k === "osm" && ((st.indexOf("now") === 0) || openK === k || (fbQ && s.qs && s.qs.indexOf(fbQ) > -1))) { h += osmHtml(p, s, st.indexOf("now") === 0 ? "now" : D[k] ? "done" : "todo") + "</li>"; continue; }
@@ -471,7 +488,6 @@
         (st.indexOf("now") === 0 ? "<h3>" + x.t + "</h3>" + (x.sub ? "<p>" + x.sub + "</p>" : "") + '<span class="nowft"><small>' + T("الخطوة ", "Étape ") + (i + 1) + T(" من ", " sur ") + tot + '</small><span class="go">' + (dn ? T("كمّل", "Continuer") : T("ابدأ", "Commencer")) + " " + CHEV + "</span></span>"
           : "<b>" + x.t + "</b>" + (x.sub && s.k !== "osm" && (s.k === "weak" || s.k === "use" || s.k === "cls" || s.k === "imp" || s.k === "mid") ? "<small>" + x.sub + "</small>" : "")) + (duel ? "</button>" : "</a>") + "</li>";
     }
-    h += "</ol>";
     return h;
   }
 
@@ -530,13 +546,14 @@
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath hzdaily" aria-labelledby="hzdailyh" hidden><div class="hzdpin"></div></section><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
         '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
-      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
+      parts = { top: root.querySelector(".hztop"), dsec: root.querySelector(".hzdaily"), dpin: root.querySelector(".hzdpin"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
     parts.top.innerHTML = headHtml() + chipsHtml();
+    var dh = dailyHtml(p); parts.dpin.innerHTML = dh; parts.dsec.hidden = !dh;   // 29d 📋 the day's tasks first
     parts.pin.innerHTML = pathHtml(p);
     parts.foot.innerHTML = footHtml();
     parts.sug.innerHTML = sugHtml();
@@ -602,7 +619,7 @@
     if (location.hash === "#duel") setTimeout(function () { openDuel(); }, 500);
   }
   var UI = U();
-  w.HomePath = { sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { DAILY: DAILY, isDaily: isDaily, dailyHtml: dailyHtml, pathHtml: pathHtml, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
