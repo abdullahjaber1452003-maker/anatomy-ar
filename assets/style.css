@@ -298,7 +298,20 @@ html.jsnav .menu-btn{display:inline-grid;place-items:center;flex:0 0 auto}
 .obbtns .gbtn,.obbtns .btn.pri{justify-content:center;width:100%;font-size:16px;padding:11px 14px}
 .oblater{background:none;border:0;font:inherit;font-size:14px;color:var(--mut);padding:6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .obol{margin:6px 0;padding-inline-start:22px;line-height:1.8}
-.obx .gbtn{border:2px solid var(--pri);font-weight:700}.obmsg:empty{display:none}.obnote{color:var(--mut)}
+.obx /* 🔑 29i «رمز دخول» (assets/codein.js) */
+.cdx-side{display:block;margin:0 auto 10px;font-size:14px}
+.cdx{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.cdx-box{position:relative;background:var(--card,#fff);color:inherit;border-radius:16px;padding:18px 16px 14px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3);text-align:center}
+.cdx-box h2{margin:.2rem 0 .5rem;font-size:1.15rem}
+.cdx-x{position:absolute;top:8px;left:10px;background:none;border:0;font-size:1.2rem;cursor:pointer;color:inherit}
+.cdx-f{display:flex;gap:8px;justify-content:center;align-items:center;margin:.6rem 0 .3rem}
+.cdx-in{width:9.5rem;font-size:1.6rem;letter-spacing:.3em;text-align:center;padding:.35rem .4rem;border:2px solid #9ab;border-radius:10px;font-family:ui-monospace,Menlo,monospace;background:#fff;color:#123}
+.cdx-msg{min-height:1.3em;margin:.3rem 0 0}
+.cdx-ok{color:#1a7f37;font-weight:700}
+.cdx-code{font:800 2.6rem/1.1 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;margin:.4rem 0 .1rem;color:var(--acc,#c2410c)}
+.cdx-code span{display:inline-block;width:.5em}
+.cdx-left{text-align:center;margin:0 0 .3rem}
+.gbtn{border:2px solid var(--pri);font-weight:700}.obmsg:empty{display:none}.obnote{color:var(--mut)}
 /* 🏠 tidy home */
 .hero.hsm{padding:16px 18px;margin-bottom:12px}.hero.hsm h1{font-size:21px}
 .hcont{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--tint3);border-radius:var(--r);padding:12px 14px;margin:0 0 12px;text-decoration:none;color:var(--ink);box-shadow:var(--sh)}
@@ -1327,3 +1340,4 @@ html[data-theme=night] #caddmsg.err{color:#e5938a}
 /* Oct 30: geri / community / medsurg tables (assets/subject.js) never push the page sideways on a phone */
 .sublessons .lawtbl,.subintro .lawtbl{overflow-x:auto}.sublessons .lawtbl th,.sublessons .lawtbl td,.subintro .lawtbl td{overflow-wrap:anywhere;word-break:normal}
 .mslist{margin:6px 0 10px;padding-inline-start:22px}.mslist li{margin:4px 0}
+

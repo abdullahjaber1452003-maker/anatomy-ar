@@ -220,6 +220,10 @@
   // load Firebase only where it is needed
   var page=(location.pathname.split('/').pop()||'index.html');
   var me=document.currentScript&&document.currentScript.src,v=(me&&me.split('?')[1])||'',fbOn=false;
-  N.loadFB=function(){if(fbOn)return;fbOn=true;var s=document.createElement('script');s.type='module';s.src='assets/fb.js'+(v?'?'+v:'');document.head.appendChild(s);};   // also used by the welcome card (assets/nav.js)
+  // 🔑 29i: old Safari (iOS 12, Abdullah's iPhone 6 Plus) cannot parse Firebase 12 (?.) → assets/fb-old.js, the same file on Firebase 10.14.1
+  N.oldJS=(function(){try{return !Function('var o={};return o?.a??1')();}catch(e){return true;}})();
+  N.loadFB=function(){if(fbOn)return;fbOn=true;var s=document.createElement('script');s.type='module';s.src='assets/'+(N.oldJS?'fb-old.js':'fb.js')+(v?'?'+v:'');document.head.appendChild(s);};   // also used by the welcome card (assets/nav.js)
   if(N.me||page==='friends.html'||page==='live.html'||page==='exams.html'||page==='classes.html'||page==='admin.html'||page==='chat.html'||page==='notes.html'||page==='highlights.html'||page==='midterm.html'||page==='suggest.html'||page==='homework.html')N.loadFB();   // 📒 notes.html: sign-in button + account notes
+  // 🔑 29i «رمز دخول» (assets/codein.js): «📲 افتح على جهاز تاني» on me.html + «🔑 عندي رمز دخول» beside every Google button
+  (function(){var s=document.createElement('script');s.src='assets/codein.js'+(v?'?'+v:'');s.async=true;(document.head||document.documentElement).appendChild(s);})();
 })(typeof window!=='undefined'?window:this);

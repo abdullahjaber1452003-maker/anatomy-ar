@@ -8,7 +8,8 @@
 //   Class quiz: period P = floor(days since 2026-10-29 / 3) on the Beirut date. The first member who opens it freezes the question list in
 //     classes/{cid}/cq/p{P} {p, qids, at} (create-once) so the whole class gets the same quiz; scores classes/{cid}/cq/p{P}_{uid}
 //     {uid, p, s, n, name, t} (create-once, own uid) are visible to the class. Scores are computed in the browser: honest students only.
-import { increment } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+// 🔑 29i: increment comes from assets/fb.js (API.fs) — no own Firebase import, so the same file works beside fb-old.js (old Safari, SDK 10)
+let increment = null;
 
 const EPOCH = "2026-10-29", QN = 8;
 const W = typeof window !== "undefined" ? window : {}, D = typeof document !== "undefined" ? document : null;
@@ -87,7 +88,7 @@ export function cardHtml(rows, b, last) {
   const items = rows.map(r => ({ r, q: b[r.id] })).filter(x => x.q && (x.r.wrong | 0) > 0).slice(0, 5);
   if (!items.length) return "";
   return '<p class="small cmsub">' + (last ? "أكتر الأسئلة يلي غلطو فيها الطلاب الأسبوع الماضي (بلا أسامي)" : "أكتر الأسئلة يلي غلطو فيها الطلاب هالأسبوع (بلا أسامي)") + '</p><ol class="cmlist">' +
-    items.map(({ r, q }) => '<li class="cmi"><p class="cmq">' + q.q + '</p><p class="cma">✅ <b>' + L[q.a] + ") " + q.o[q.a] + '</b></p><p class="cmx">' + String(q.x).split(/(?<=[.!؟?])\s/)[0] +
+    items.map(({ r, q }) => '<li class="cmi"><p class="cmq">' + q.q + '</p><p class="cma">✅ <b>' + L[q.a] + ") " + q.o[q.a] + '</b></p><p class="cmx">' + String(q.x).replace(/([.!؟?])\s[\s\S]*$/, "$1") +
       '</p><p class="cmn small">❌ غلط فيه ' + (r.wrong | 0) + " من " + Math.max(r.wrong | 0, r.total | 0) + "</p></li>").join("") +
     '</ol><p><button class="btn sm" type="button" id="cmrev">🔁 حطّهن بمراجعتي</button></p>';
 }
@@ -141,7 +142,7 @@ function boardHtml(rows, me) {
   return '<h3 class="cqh">🏫 علامات الصف بهالكويز</h3><ol class="cqb">' + rows.map(r => '<li' + (r.uid === me ? ' class="me"' : "") + '><span>' + esc(r.name) + '</span><b dir="ltr">' + (r.s | 0) + "/" + (r.n | 0) + "</b></li>").join("") + "</ol>";
 }
 export async function openCq(api, cid) {
-  API = api; const Q = W.NursinQuiz; if (!Q) return;
+  API = api; if (api && api.fs && api.fs.increment) increment = api.fs.increment; const Q = W.NursinQuiz; if (!Q) return;
   const c = (await classes()).find(x => x.id === cid);
   if (!c) return Q.message('<p class="qq">📝 كويز الصف</p><p>إنت مش بهالصف. <a href="classes.html">فوت على صفّك</a> أوّل.</p>');
   const p = P(), [s0, e0] = periodDays(p), sc = await myScore(cid, p);
@@ -165,7 +166,7 @@ async function saveCq(d) {
 }
 
 export function start(api) {
-  API = api;
+  API = api; if (api && api.fs && api.fs.increment) increment = api.fs.increment;
   D.addEventListener("nursin:answer", e => { const x = e.detail || {}; count(String(x.qid || ""), !!x.ok); });
   D.addEventListener("nursin:srs", srsPush);
   D.addEventListener("nursin:quiz-done", e => saveCq(e.detail || {}));

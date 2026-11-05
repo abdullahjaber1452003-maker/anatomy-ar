@@ -1,8 +1,11 @@
 // nursin friends + levels — Firebase (Google sign-in + Firestore). Loaded as a module by assets/account.js.
+// 🔑 29i (Abdullah, Nov 5 2026 4:43 PM — his old iPhone 6 Plus / iOS 12 cannot sign in with Google): «🔑 رمز دخول» (assets/codein.js) signs in
+//    with a Firebase custom token from worker v14 → API.signInWithToken. assets/fb-old.js is THIS file with the Firebase SDK 10.14.1 URLs
+//    (12.x uses ?. which old Safari cannot parse); assets/account.js loads it on such browsers. A test keeps the two files identical.
 // Live rooms (assets/live.js), weekly exams (assets/exams.js) and classes (assets/classes.js) are loaded from here only where they are needed.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, increment, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyARPvtXJ_STkWrP8dpZcE9BqwMxEOW1WQs",
@@ -546,9 +549,10 @@ function mod(name) {
 const page = location.pathname.split("/").pop() || "index.html";
 const API = {
   db, auth, N, esc, MERGE,
-  fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch },
+  fs: { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, runTransaction, serverTimestamp, increment, writeBatch },
   get user() { return user; }, get profile() { return profile; },
-  signIn, errText, signInCard, profileWrite, setNick, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
+  signIn, errText, signInCard, signInWithToken: tok => signInWithCustomToken(auth, tok),   // 🔑 29i رمز دخول (assets/codein.js)
+  profileWrite, setNick, profileFromPoints, logActivity, loadFriends: async () => (await loadBoard()).filter(p => !p.me), board: () => loadBoard(), mod,
   addFriend: raw => addFriend(raw),         // 🏫 classmates «➕ أضف صديق» (classes.js)
   pdot, scopeIds                            // 🟢 online dots (classes.js, chat.js) + presence scope (presence.js)
 };
