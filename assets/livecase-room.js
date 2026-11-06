@@ -9,6 +9,7 @@
   var hands = [], washed = false, sheet = null, panel = null, fbT = 0, endSeen = false, openQ = null, prevSt = {};
   // 28y: 💡 open hint box (bed k) · the step a paid hint pointed at · the 📤 checklist · each bed has its own IV set (soluté + cathéter + tubulure) at the bed
   var hintOpen = null, hl = null, handOpen = null, BEDSIDE = { kit: 1 };
+  var helpOpen = false, helpAsk = null, helpTxt = "", talkOpen = null;   // 29m 🧑‍⚕️ the helper bubble · the 📞/💡 it asked for · 💬 the question asked at a bed
   // 👥 the other students in the room (assets/livepres.js): their drawn position, path, sprite; the join/leave toast queue
   // 28z 🏥 the floor strip (all departments small, mine big above): its canvas, my walk between departments (trv), the ambulance, the sound
   var fcv = null, fcx = null, fsc = 1, fdpr = 1, trv = null, lastDep = "er", ambSeen = 0, ambAnim = null, snd = false, SNDK = "nursin_live_snd_v1", actx = null, pAll = [];
@@ -173,6 +174,26 @@
     docOk: { ar: "«ميرسي عالمعلومات. كمّلو العناية وراقبوه، وخبّروني إذا تغيّر شي.»", fr: "« Merci. Continuez les soins, surveillez, et rappelez-moi si ça change. »" },
     docNew: { ar: "«ميرسي عالجديد ({w}).»", fr: "« Merci pour la nouvelle ({w}). »" }, docCrit: { ar: "«🚨 جايي هلّق — ضلّو حدّو.»", fr: "« 🚨 J'arrive — restez près de lui. »" },
     docNeed: { ar: "«قبل ما قلّك شو تعطو، بدّي: {m}»", fr: "« Avant de prescrire, il me faut : {m} »" },
+    // 29m 🧑‍⚕️ the helper nurse · 💬 talk to the patient · 📞 an unstable patient's doctor gives an order
+    docGo: { ar: "«🚨 مش وقت ننطر — هلّق: {o}، وخبّرني دغري بالأرقام.»", fr: "« 🚨 On n'attend pas — tout de suite : {o}, et rappelle-moi avec les constantes. »" },
+    hlp: { ar: "🧑‍⚕️ الممرض المساعد", fr: "🧑‍⚕️ L'infirmier aide" }, hlpAsk: { ar: "❓ شو بعمل؟", fr: "❓ Je fais quoi ?" },
+    hlpIntro: { ar: "اسألني «شو بعمل؟» وبقلّك الخطوة الجاية — خطوة وحدة كل مرّة (−1 نقطة، {m} لكل مريض).", fr: "Demande-moi « Je fais quoi ? » : je te dis l'étape suivante, une à la fois (−1 point, {m} par patient)." },
+    hlpCost: { ar: "−1 · باقي {l}/{m} لـ{n}", fr: "−1 · reste {l}/{m} pour {n}" },
+    hlpItem: { ar: "روح جيب {i} من {s}، وبعدين {a} لـ{n}.", fr: "Va chercher {i} ({s}), puis {a} pour {n}." },
+    hlpCall: { ar: "📞 اتصل بالدكتور عن {n} (من {s}) — {w}", fr: "📞 Appelle le médecin pour {n} ({s}) — {w}" },
+    hlpCallW: { ar: "خبّرو بالأرقام وخود الوصفة", fr: "donne les constantes et prends la prescription" },
+    hlpFile: { ar: "📝 عبّي «{f}» بملف {n}.", fr: "📝 Remplis « {f} » au dossier de {n}." },
+    hlpAct: { ar: "👉 {a} لـ{n}.", fr: "👉 {a} pour {n}." },
+    hlpWait: { ar: "🪑 {n} بعدو بالانتظار — روح عـ 🪑 الانتظار والفرز وفوّتو عالتخت.", fr: "🪑 {n} est encore en salle d'attente — va au 🪑 tri et fais-le entrer." },
+    hlpNone: { ar: "✅ كلّو ماشي مع {n} — راقبو وناطر الجديد.", fr: "✅ Tout est fait pour {n} — surveille-le." },
+    hlpMax: { ar: "خلصو مساعداتي لـ{n} ({m}/{m}) — جرّب لحالك 💪 أو «💬 احكي مع المريض».", fr: "Plus d'aide pour {n} ({m}/{m}) — essaie seul 💪 ou « 💬 Parler au patient »." },
+    hlpFree: { ar: "🏥 ما في مريض مفتوح هون هلّق.", fr: "🏥 Aucun patient en cours ici." },
+    hlpSvc: { ar: "هون ما في مرضى. روح لعند مريضك بالقسم واسألني هونيك.", fr: "Pas de patient ici. Va voir ton patient dans le service et redemande-moi là-bas." },
+    talk: { ar: "💬 احكي مع المريض", fr: "💬 Parler au patient" },
+    tq_pain: { ar: "وين الوجع؟", fr: "Où avez-vous mal ?" }, tq_since: { ar: "من إيمتى؟", fr: "Depuis quand ?" }, tq_meds: { ar: "شو أدويتك؟", fr: "Vos médicaments ?" },
+    tq_all: { ar: "عندك حساسية؟", fr: "Des allergies ?" }, tq_ant: { ar: "سوابق مرضية؟", fr: "Des antécédents ?" },
+    tUnk: { ar: "ما بعرف بالزبط… شوف الملف أو اسأل العيلة", fr: "Je ne sais pas trop… voyez le dossier ou la famille" },
+    tFam: { ar: "😶 ما عم يردّ (GCS = مقياس الوعي: {g}) — العيلة بتجاوب:", fr: "😶 Il ne répond pas (GCS {g}) — la famille répond :" },
     docAgain: { ar: "📞 اتصل كمان", fr: "📞 Rappeler" }, called: { ar: "📞 {c}×", fr: "📞 {c}×" },
     calls0: { ar: "كل مرّة في شي جديد (أرقام، فحص، تغيير) اتصل كمان — بلا جديد: −1", fr: "Rappelle à chaque nouveauté (constantes, examen, changement) — sans nouveauté : −1" },
     // 29d 🛗 floors + 🪑 the waiting room / 🏷️ triage + 💵 salary (Abdullah, Nov 4 7:01–7:20 AM)
@@ -243,9 +264,9 @@
     ov = d.createElement("div"); ov.className = "lcr"; ov.hidden = true; ov.setAttribute("data-nofr", ""); ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true");
     ov.innerHTML = '<div class="lcr-top"><button type="button" class="lcr-x" data-lcx="1" aria-label="' + esc(u("close")) + '">✕</button>' +
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
-      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib lcr-fub" data-lcfu="1" aria-label="' + esc(u("myFu")) + '">⏰<i hidden></i></button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
+      '<button type="button" class="lcr-ib lcr-hlpb" data-lchelp="1" aria-label="' + esc(u("hlp")) + '">🧑‍⚕️</button><button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib lcr-fub" data-lcfu="1" aria-label="' + esc(u("myFu")) + '">⏰<i hidden></i></button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
-      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div><div class="lcr-work" hidden></div></div>' +
+      '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-help" hidden aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div><div class="lcr-work" hidden></div></div>' +
       '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas><div class="lcr-flt" role="tablist" aria-label="' + esc(u("elev")) + '"></div></div>' +
       '<div class="lcr-bar"><span class="lcr-hl">' + esc(u("hands")) + '</span><button type="button" class="lcr-slot" data-lcslot="0"></button><button type="button" class="lcr-slot" data-lcslot="1"></button>' +
       '<button type="button" class="lcr-feedb" data-lcfeed="1"></button></div>' +
@@ -1317,7 +1338,7 @@
     if (dk === cur) return say("neutral", u("inDep", { d: depName(dk) }));
     if (Object.keys(work).length) workAll("wkGone");             // 29d ⏳ leaving the room stops what his hands were doing
     if (dk === "x") { var H0 = hosp(); if (!H0 || !H0.amb || !H0.amb.cur) return say("neutral", u("noAmb"), u("noAmb2")); }
-    sheetClose(); panelClose(); hintOpen = null; handOpen = null;
+    sheetClose(); panelClose(); hintOpen = null; handOpen = null; helpOpen = false; helpTxt = ""; helpAsk = null; talkOpen = null; helpPaint();
     var dr = { x: 180, y: E.H - 16 };
     trv = { from: cur, to: dk, ph: 1, t: 0, esc: esc0 || null };
     nurse.goal = null; nurse.pts = G && !svcRoom() ? R.path(G, nurse, dr) : [dr]; mark = null;
@@ -1392,6 +1413,7 @@
     if (LCa) { var wb = work[pidOf(k)]; if (wb) h += '<div class="lcr-wkin">' + workHtml(wb, Date.now()).replace(/<b dir="ltr">\d+s<\/b>/, "") + "</div>"; h += fuHtml(k); }   // 29d ⏳ + ⏰
     h += '<div class="lcr-tabs" role="tablist">' + ["care", "file", "story"].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (t === tab) + '" class="lcr-tab' + (t === tab ? " on" : "") + '" data-lctab="' + t + '">' + esc(u(t)) + "</button>"; }).join("") + "</div>";
     if (!x.over && !st.end) h += hintHtml(x);
+    if (!x.over && !st.end) h += talkHtml(x);                     // 29m 💬
     if (tab === "care" && !st.end && (!x.over || x.over.w === "ok")) h += routBtns(x);           // 29e 🧼 🚪 👨‍👩‍👦 ⚠️ 🧾
     if (x.over && !st.end) {                                     // 28x: his case is finished — his steps stay, the other bed is one tap away
       var o = st.P[k === "b" ? 0 : 1];
@@ -1676,7 +1698,8 @@
   }
   function docSay(k, r, pts) {                                   // 28y: what the doctor answers — his orders still to give, or «carry on and call me if it changes»
     var x = X(k), orders = x.L.filter(function (s) { return s.kind === "act" && s.after.indexOf("call") > -1 && !x.done[s.id]; }).map(function (s) { return L.stepName(s).replace(/^(\S+) (عطي |Donner : )?/, "$1 "); });
-    var t = (x.st === "crit" ? u("docCrit") + " " : "") + (r.doc === 2 ? u("docNew", { w: L.stLabel(x.st, x.p.sex) }) + " " : r.s && r.s.why ? T(r.s.why) + " " : "") + (orders.length ? u("docRx", { r: orders.join(" + ") }) : u("docOk"));
+    var dO = orders.length ? null : C.docOrder(DK(), st, k);       // 29m: unstable/critical and nothing left to prescribe → still a concrete order
+    var t = (x.st === "crit" ? u("docCrit") + " " : "") + (r.doc === 2 ? u("docNew", { w: L.stLabel(x.st, x.p.sex) }) + " " : r.s && r.s.why ? T(r.s.why) + " " : "") + (orders.length ? u("docRx", { r: orders.join(" + ") }) : dO ? docGo(x, dO.s) : u("docOk"));
     say("good", u("ok") + pts + " · 📞 " + nm(x), u("doc") + " " + t);
   }
   function hintShow(k, pts) {                                   // 28y 🎯 the paid hint: the exact step, highlighted where it is
@@ -1687,6 +1710,56 @@
     if (sheet) sheetPaint();
     setTimeout(function () { var b = q(".lcr-sheet .lcr-hit"); if (b && b.scrollIntoView) try { b.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) { b.scrollIntoView(); } }, 80);
   }
+  // 29m 🧑‍⚕️ «الممرض المساعد» (Abdullah's idea, Nov 4 2026): in every room, «شو بعمل؟» = ONE next step as an errand (fetch it from X · 📞 the doctor ·
+  // write it in the file · do it). It IS the paid 💡 (−1, ≤ HMAX per patient per student, the same shared-doc record) — just said like a colleague.
+  // A plain box: no animation, no loop; it paints only when tapped.
+  function helpPaint() {
+    var b = q(".lcr-help"); if (!b) return; b.hidden = !helpOpen; if (!helpOpen) return;
+    b.innerHTML = '<div class="lcr-hlph"><b>' + esc(u("hlp")) + '</b><button type="button" class="lcr-shx" data-lchelp="1" aria-label="' + esc(u("close")) + '">✕</button></div>' +
+      '<p class="lcr-hlpt">' + esc(helpTxt || u("hlpIntro", { m: C.HMAX })) + "</p>" +
+      '<button type="button" class="lcr-btn on lcr-hlpq" data-lchelpq="1">' + esc(u("hlpAsk")) + "</button>";
+  }
+  function helpSet(t) { helpTxt = t; helpOpen = true; helpPaint(); }
+  function helpWords(h) {                                      // the step told as an errand, in the student's language
+    var x = h.x, n = nm(x).split(" ")[0], s = h.s, A, I, Si;
+    if (h.how === "call") { Si = E.stations.phone; return u("hlpCall", { n: n, s: Si ? Si.ic + " " + T(Si) : "📞", w: u("hlpCallW") }); }
+    if (h.how === "file") return u("hlpFile", { f: L.stepName(s), n: n });
+    if (h.how === "item") { A = D.A[s.a]; I = D.I[h.need]; Si = I && E.stations[I.st];
+      return u("hlpItem", { i: I.ic + " " + T(I).replace(/\s*\(.*$/, ""), s: Si ? Si.ic + " " + T(Si) : "🧰", a: L.stepName(s), n: n }); }
+    return u("hlpAct", { a: L.stepName(s), n: n });
+  }
+  function helpGo() {
+    kick();
+    if (!st || st.end) return helpSet(u("hlpFree"));
+    if (st.svc || svcRoom()) return helpSet(u("hlpSvc"));
+    var h = C.helpStep(DK(), st, null, hands);
+    if (!h) return helpSet(u("hlpFree"));
+    var n = nm(h.x).split(" ")[0];
+    if (!inBed(h.x)) return helpSet(u("hlpWait", { n: n }));              // still in the waiting room: free — bringing him in is the step
+    if (h.how === "none") return helpSet(u("hlpNone", { n: n }));
+    if (myHints(h.x) >= C.HMAX) return helpSet(u("hlpMax", { n: n, m: C.HMAX }));
+    var ask = helpAsk = { k: h.x.k, h: h }; helpSet("⏳"); queue(h.x.k, "hint");
+    setTimeout(function () { if (helpAsk === ask) { helpAsk = null; helpSet(u("retry")); } }, 9000);   // a step that never came back (offline, 2 s rule…) never leaves «⏳»
+  }
+  function helpShow(k, pts) {                                  // the paid hint went through → the helper says the step (and the bed highlights it)
+    var a = helpAsk; helpAsk = null; var x = X(k); if (!x) return;
+    var h = C.helpStep(DK(), st, k, hands) || (a && a.h); if (!h || !h.s) return helpSet(u("hlpNone", { n: nm(x).split(" ")[0] }));
+    hl = { k: k, id: h.s.id, s: h.s };
+    helpSet(helpWords(h) + "  (" + u("hlpCost", { l: Math.max(0, C.HMAX - myHints(x)), m: C.HMAX, n: nm(x).split(" ")[0] }) + ")");
+    if (sheet) sheetPaint();
+  }
+  // 29m 💬 «احكي مع المريض»: the nurse's questions at the bed, answered from this case's own story + file (never invented) — free, nothing saved
+  function talkHtml(x) {
+    if (!inBed(x)) return "";
+    var op = talkOpen && talkOpen.k === x.k, h = '<div class="lcr-talk"><button type="button" class="lcr-talkb" data-lctalk="' + x.k + '" aria-expanded="' + !!op + '">' + esc(u("talk")) + "</button>";
+    if (!op) return h + "</div>";
+    h += '<div class="lcr-tq">' + C.TQ.map(function (qq) { return '<button type="button" class="lcr-tqb' + (talkOpen.q === qq ? " on" : "") + '" data-lctq="' + x.k + ":" + qq + '">' + esc(u("tq_" + qq)) + "</button>"; }).join("") + "</div>";
+    if (talkOpen.q) { var a = C.talk(x.p, x.v, talkOpen.q), t = a && T(a);
+      if (a) h += '<p class="lcr-tans">' + (a.who === "fam" ? esc(u("tFam", { g: Math.round(x.v.gcs) })) + " " : "🗣️ ") + "«" + esc(t || u("tUnk")) + "»</p>"; }
+    return h + "</div>";
+  }
+  // 29m 📞 an unstable / critical patient: the doctor never answers «wait» — his concrete order (the case's own next gesture)
+  function docGo(x, s) { var o = s ? L.stepName(s) : L.actName("mon"); return u("docGo", { o: o }); }
   function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) })); if (sheet) sheetPaint(); }
   function result(k, a, r) {
     try { careAfter(k, a, r); } catch (e) { console.warn("nursin care", e); }
@@ -1706,14 +1779,14 @@
       setTimeout(function () { var y = X(k); if (y && y.over && !st.end) finSay(y); }, 1800); }   // 28x: that step finished him → say so after the step's own line
     else if (r.k === "bad") { say("bad", u("bad") + pts + " · " + L.actName(a), T(r.why)); if (w.Osman && w.Osman.wrong) try { w.Osman.wrong(); } catch (e) {} }
     else if (r.k === "ord") { var m = r.miss || []; say("ord", u("ord") + pts + " · " + L.stepName(r.s), u("after1") + " " + m.slice(0, 2).map(L.stepName).join(" + ") + (m.length > 2 ? " …" : "") + " · " + phNow(x)); }
-    else if (r.k === "neu" && a === "hint") { hintShow(k, pts); return; }
-    else if (r.k === "neu" && a === "call") say("ord", "📞 " + nm(x) + pts, T(r.why));
+    else if (r.k === "neu" && a === "hint") { if (helpAsk && helpAsk.k === k) helpShow(k, pts); else hintShow(k, pts); return; }   // 29m 🧑‍⚕️ or 💡
+    else if (r.k === "neu" && a === "call") { var dN = C.docOrder(DK(), st, k); say("ord", "📞 " + nm(x) + pts, dN ? u("doc") + " " + docGo(x, dN.s) : T(r.why)); }   // 29m
     else if (r.k === "neu") say("neutral", u("neu") + pts, T(r.why) + " · " + phNow(x) + ". " + u("hintTip"));   // 28y: names the phase + where help is
     else if (r.k === "safe") say("neutral", u("safe") + " · " + L.actName(a), phNow(x) + ". " + u("hintTip"));
     else if (r.k === "early") say("neutral", u("early") + " · " + L.stepName(r.s), u("after1") + " " + (r.miss || []).slice(0, 2).map(L.stepName).join(" + "));
-    else if (r.k === "doc0") say("ord", "📞 " + nm(x), u("doc") + " " + u("docNeed", { m: (r.miss || []).slice(0, 3).map(L.stepName).join(" + ") }));
-    else if (r.k === "hmax") say("neutral", u("hintNo", { m: C.HMAX }));
-    else if (r.k === "nohint") say("neutral", u("hintNone"));
+    else if (r.k === "doc0") say("ord", "📞 " + nm(x), u("doc") + " " + (C.RANK[x.st] >= 2 && r.miss && r.miss.length ? docGo(x, r.miss[0]) : u("docNeed", { m: (r.miss || []).slice(0, 3).map(L.stepName).join(" + ") })));   // 29m
+    else if (r.k === "hmax") { if (helpAsk) { helpAsk = null; helpSet(u("hlpMax", { n: nm(x).split(" ")[0], m: C.HMAX })); } else say("neutral", u("hintNo", { m: C.HMAX })); }
+    else if (r.k === "nohint") { if (helpAsk) { helpAsk = null; helpSet(u("hlpNone", { n: nm(x).split(" ")[0] })); } else say("neutral", u("hintNone")); }
     else if (r.k === "no") { say("bad", u("no") + pts, T(r.why)); shut(); }
     else if (r.k === "repeat") { var dn = r.s && x.done[r.s.id]; say("neutral", dn && dn.u !== L.me().uid ? u("repeat", { n: dn.n }) : u("repeat0")); shut(); }
     else if (r.k === "wait") say("ord", u("wait", { t: L.left(r.until - Date.now() + 59e3) }));
@@ -1956,6 +2029,8 @@
     if (g("data-lcinc")) return incAns(g("data-lcinc"));
     if (g("data-lcincgo")) return incGo(g("data-lcincgo"));
     if (g("data-lcreev")) return reev(g("data-lcreev"));                                     // 29d ⏰
+    if (g("data-lchelp")) { helpOpen = !helpOpen; if (!helpOpen) helpTxt = ""; helpPaint(); return; }   // 29m 🧑‍⚕️
+    if (g("data-lchelpq")) return helpGo();
     if (g("data-lcfu")) { sheet = { kind: "fu", k: "", tab: "" }; openQ = null; q(".lcr-sheet").hidden = false; return sheetPaint(); }
     if (g("data-lcsnd")) { snd = !snd; try { localStorage.setItem(SNDK, snd ? "1" : "0"); } catch (x) {} sndPaint(); if (snd) chime(); return; }
     if (g("data-lcamb")) { sirenHide(); var A0 = hNow() && hNow().amb; return A0 && A0.cur && !L.admOf("x", "a", A0.cur.i) ? walkTo("wt") : walkTo("x"); }   // 29d: he waits at the door until a nurse receives him
@@ -1975,6 +2050,8 @@
     if (g("data-lcq")) { openQ = sheet.k + g("data-lcq"); return sheetPaint(); }
     if (g("data-lcopt")) return doAct(sheet.k, "f_" + g("data-lcf"), +g("data-lcopt"));
     if (g("data-lccall")) return queue(g("data-lccall"), "call");
+    if (g("data-lctalk")) { var kt = g("data-lctalk"); talkOpen = talkOpen && talkOpen.k === kt ? null : { k: kt, q: null }; return sheetPaint(); }   // 29m 💬
+    if (g("data-lctq")) { var tq = g("data-lctq").split(":"); talkOpen = { k: tq[0], q: tq[1] }; return sheetPaint(); }
     if (g("data-lchint")) { var kh = g("data-lchint"); hintOpen = hintOpen === kh ? null : kh; return sheetPaint(); }
     if (g("data-lchint2")) { var k2 = g("data-lchint2"), x2 = X(k2);
       if (x2 && !x2.over && supFree(k2)) return hintShow(k2, " · " + u("supFree"));                     // 29d 👔 the floor supervisor: one free 🎯 per patient

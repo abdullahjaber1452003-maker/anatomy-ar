@@ -353,3 +353,19 @@ html[dir="rtl"] .lcr-pts>*{direction:rtl}
 .lcr-endn{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:3px 8px;padding:5px 10px}
 .lcr-endt{flex:1 1 100%;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lcr-endt small{opacity:.85}.lcr-endt i{font-style:normal;opacity:.75}
 .lcr .lcr-endgo{flex:none;border:0;border-radius:999px;padding:6px 12px;min-height:32px;background:#0d9488;color:#fff;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+
+/* 29m 🧑‍⚕️ the helper nurse bubble + 💬 talk to the patient — static boxes: no animation, no blur, no shadow loop (keeps 29l's cool room) */
+.lcr-help{position:absolute;left:8px;right:8px;bottom:8px;max-height:46%;overflow:auto;padding:8px 11px;border-radius:14px;background:#fff;border:1px solid rgba(13,148,136,.35);border-inline-start:5px solid #0d9488;box-shadow:0 6px 18px rgba(0,0,0,.16);z-index:8;font-size:13.5px}
+.lcr-help[hidden]{display:none}
+.lcr-hlph{display:flex;align-items:center;gap:6px}.lcr-hlph b{flex:1;color:#0f766e}
+.lcr-hlpt{margin:4px 0 6px;font-weight:600;line-height:1.45}
+.lcr-hlpq{width:100%}
+.lcr-talk{margin:4px 0 8px;padding:6px 8px;border-radius:14px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.3)}
+.lcr-talkb{border:0;background:none;padding:2px 0;font-weight:800;font-size:13.5px!important;color:#0369a1!important;cursor:pointer}
+.lcr-tq{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.lcr-tqb{border:1px solid rgba(14,165,233,.4);background:#fff;border-radius:999px;padding:4px 10px;font-size:12.5px!important;font-weight:700;cursor:pointer}
+.lcr-tqb.on{background:#0ea5e9;color:#fff!important;border-color:#0ea5e9}
+.lcr-tans{margin:6px 0 0;font-weight:600;line-height:1.45}
+html[data-theme="night"] .lcr-help{background:#0f1d22;color:#e2e8f0;border-color:rgba(45,212,191,.35)}html[data-theme="night"] .lcr-hlph b{color:#5eead4}
+html[data-theme="night"] .lcr-talk{background:rgba(14,165,233,.1)}html[data-theme="night"] .lcr-talkb{color:#7dd3fc!important}html[data-theme="night"] .lcr-tqb{background:#0f1d22;color:#e2e8f0!important}
+@media (max-width:420px){.lcr-top{gap:2px;padding-inline:5px}.lcr-x,.lcr-ib{width:27px;height:27px;font-size:12.5px}}   /* 29m: room for the 🧑‍⚕️ button in the top bar */

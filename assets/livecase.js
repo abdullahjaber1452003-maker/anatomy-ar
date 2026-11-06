@@ -292,6 +292,69 @@ var LiveCore = (function () {
     };
   }
 
+  /* ---- 29m (Abdullah's idea, Nov 4 + Nov 6 2026 «مساعد بالمستشفى»): 🧑‍⚕️ the helper nurse · 💬 talk to the patient · 📞 an unstable patient's doctor
+     always gives an ORDER. Pure (node-tested); everything comes from the case data, nothing invented. ---- */
+  // the patient the helper looks after: the one asked (pk) if still open, else the sickest open one (crit → unst → …), bed 1 on a tie
+  function helpPick(st, pk) {
+    if (!st || st.end || !st.P) return null;
+    if (pk) { var y = st.P[pk === "b" ? 1 : 0]; if (y && !y.over && !y.ghost) return y; }
+    var P = st.P.filter(function (x) { return x && !x.over && !x.ghost; });
+    P.sort(function (a, b) { return ((RANK[b.st] | 0) - (RANK[a.st] | 0)) || (a.k < b.k ? -1 : 1); }); return P[0] || null;
+  }
+  // «شو بعمل؟» → ONE next step, already told as an errand: { x, s, how, need }
+  // how: item (go fetch the thing first — need = the item, the room names where it is) · call (📞 the doctor) · file (write it in the file) · act (do it) · none
+  function helpStep(D, st, pk, hands) {
+    var x = helpPick(st, pk); if (!x) return null;
+    var c = clue(D, st, x.k); if (!c) return { x: x, s: null, how: "none" };
+    var s = c.s, A, I, m, i;
+    for (i = 0; i < 3; i++) {
+      if (s.id === "call") return { x: x, s: s, how: "call" };
+      if (s.kind === "file") return { x: x, s: s, how: "file" };
+      A = D.A && D.A[s.a]; I = A && A.need && D.I && D.I[A.need];
+      if (I && I.rx && !x.done.call) {                       // a prescribed drug: the doctor first — or what HE needs before he prescribes
+        m = x.by.call ? gate(x, x.by.call) : []; if (!m.length) return { x: x, s: x.by.call || s, how: "call", need: A.need }; s = m[0]; continue;
+      }
+      if (I && A.need !== "kit" && (hands || []).indexOf(A.need) < 0) return { x: x, s: s, how: "item", need: A.need };
+      return { x: x, s: s, how: "act" };
+    }
+    return { x: x, s: s, how: "act" };
+  }
+  // 💬 the questions a nurse asks at the bed; the answers are the case's own words (story quote, file) — «ما بعرف» when the case does not say
+  var TQ = ["pain", "since", "meds", "all", "ant"];
+  function quote(s) { var m = /«\s*([^»]{4,}?)\s*»/.exec(s || ""); return m ? m[1] : ""; }
+  function since(s, fr, skip) {                             // the first «since when» in s that is not part of his history (skip = the file's antécédents)
+    var re = fr ? /(depuis (?:ce matin|cette nuit|hier|quelques [^\s,.;]+|[^\s,.;]+ [^\s,.;]+)|il y a \d+ ?[^\s,.;]+|brutal[a-z]*|soudain[a-z]*|d'un coup|cette nuit)/gi
+      : /((?:من|صرلو|صرلها|صرلي) (?:(?:[0-9٠-٩]+|نص|ربع) (?:دقيقة|دقايق|ساعات|ساعة|أيام|إيام|يوم|أسابيع|أسبوع|أشهر|شهور|شهر|سنين|سنة)|ساعتين|ساعة|يومين|يوم|أسبوعين|أسبوع|جمعتين|جمعة|شهرين|شهر|سنتين|سنة|مبارح|امبارح|الصبح|المسا|الليل)|فجأة|بالليل|مبارح)/g, m, t;
+    while ((m = re.exec(s || ""))) { t = m[1].replace(/\s+(et|و)\s.*$/, "").replace(/[\s,]+$/, ""); if (/^(brutal|soudain)/i.test(t)) t = "D'un coup"; if (!skip || String(skip).toLowerCase().indexOf(t.toLowerCase()) < 0) return t; }
+    return "";
+  }
+  function talk(p, v, q) {
+    if (!p || TQ.indexOf(q) < 0) return null;
+    var f = p.file || {}, o = { q: q, who: v && v.gcs <= 8 ? "fam" : "pt", unk: false, ar: "", fr: "" };
+    ["ar", "fr"].forEach(function (l) {
+      var g = function (z) { return z && z[l] ? String(z[l]) : ""; }, a = "";
+      if (q === "pain") { a = quote(g(p.story)); if (!/وجع|بوجع|وجعني|douleur|mal /i.test(a)) a = g(p.who) || g(f.motif); }
+      else if (q === "since") a = since(g(p.who), l === "fr", g(f.ant)) || since(g(p.story), l === "fr", g(f.ant));   // his complaint, then the story — never his history
+      else if (q === "meds") a = g(f.tt);
+      else if (q === "all") a = g(f.all);
+      else a = g(f.ant);
+      o[l] = a;
+    });
+    o.unk = !o.ar && !o.fr;                                   // one language silent → the room says «ما بعرف» in that language
+    return o;
+  }
+  // 📞 he is unstable / critical → the doctor never just «waits»: his concrete order now — his own prescription still to give, else the urgent
+  // gesture, else the next gesture, else any gesture left, else «📟 scope» (mon)
+  function docOrder(D, st, pk) {
+    var x = st && st.P && st.P[pk === "b" ? 1 : 0]; if (!x || x.over || (RANK[x.st] | 0) < 2) return null;
+    var open = x.L.filter(function (s) { return !x.done[s.id] && s.id !== "call" && s.kind === "act"; });
+    var rx = open.filter(function (s) { return (s.after || []).indexOf("call") > -1 && x.done.call; }),
+      urg = open.filter(function (s) { return s.urg && !gate(x, s).length; }),
+      nx = x.next.filter(function (s) { return s.id !== "call" && s.kind === "act"; }),
+      s = rx[0] || urg[0] || nx[0] || open[0];
+    return s ? { s: s, a: s.a } : { s: null, a: "mon" };
+  }
+
   /* ---- 🔔 pushes (worker v11 runs these; pure, so the site tests cover them) ---- */
   var RANK = { ok: 0, impr: 1, unst: 2, crit: 3, lost: 4 };
   // the buckets the worker saw last run (prev {a:"unst", b:"crit"}) vs now → [{ p, kind: "down" | "up" | "lost" }] — only real changes
@@ -307,7 +370,8 @@ var LiveCore = (function () {
   return { RANK: RANK, changes: changes, pushOk: pushOk, H: H, DAY: DAY, PTS: PTS, GAIN: GAIN, C0: C0, MAXEV: MAXEV, DRIFT_FROM: DRIFT_FROM, bOff: bOff, dayKey: dayKey, dayStart: dayStart, nextKey: nextKey, docId: docId, keyOf: keyOf,
     hash: hash, rng: rng, order: order, pick: pick, caseById: caseById, steps: steps, opts: opts, vitals: vitals, bucket: bucket, evList: evList,
     state: state, avail: avail, out: function (x) { return !!(x && x.over); }, missing: missing, check: check, summary: summary, WHY: WHY,
-    gate: gate, sig: sig, extra: extra, clue: clue, SAFE: SAFE, INTIM: INTIM, HMAX: HMAX };
+    gate: gate, sig: sig, extra: extra, clue: clue, SAFE: SAFE, INTIM: INTIM, HMAX: HMAX,
+    helpPick: helpPick, helpStep: helpStep, TQ: TQ, talk: talk, docOrder: docOrder };
 })();
 /* ==/live-core== */
 
@@ -638,7 +702,7 @@ var LiveDept = (function (C) {
 
   if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261029l", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261029m", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
