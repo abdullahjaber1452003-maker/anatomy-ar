@@ -270,12 +270,30 @@
     if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 1200); }   // 29d ⏰
   }
   function close() {
-    if (!ov || ov.hidden) return; ov.hidden = true; d.documentElement.classList.remove("lcr-open"); stop(); L.off(onState); sheetClose(); panelClose();
+    if (!ov || ov.hidden) return; ov.hidden = true; paused = false; d.documentElement.classList.remove("lcr-open"); stop(); L.off(onState); sheetClose(); panelClose();
     if (w.LivePresRoom) w.LivePresRoom.stop(); peers = {}; pList = []; pPrev = null;
     if (careIv) { clearInterval(careIv); careIv = 0; } if (Object.keys(work).length) workAll("wkGone");   // 29d
     if (location.hash === "#live") try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
+  // 29l 🔥: hidden page / pagehide → the loop, the ⏰ timer and the live listeners stop; back → they start again
+  var paused = false;
+  function pauseAll() {
+    if (paused || !ov || ov.hidden) return; paused = true; stop();
+    if (careIv) { clearInterval(careIv); careIv = 0; }
+    if (w.LivePresRoom) w.LivePresRoom.stop(); if (L.pause) L.pause();
+  }
+  function resumeAll() {
+    if (!paused) return; paused = false; if (!ov || ov.hidden) return;
+    if (L.resume) L.resume(); if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 300); }
+    if (D) go();
+    if (mode === "shared" && w.LivePresRoom) w.LivePresRoom.start(presChange);
+  }
+  d.addEventListener("visibilitychange", function () { if (d.hidden) pauseAll(); else resumeAll(); });
+  w.addEventListener("pagehide", pauseAll);
+  w.addEventListener("pageshow", function () { if (!d.hidden) resumeAll(); });
+  w.LiveRoomLoop = { busy: function () { return busy(nowMs()); }, idleMs: IDLE_MS, running: function () { return !!raf; }, paused: function () { return paused; } };
   function onState(s, m) {
+    kick();
     st = s; mode = m; admAt = 0; hCache = null; if (!ov || ov.hidden || !s) return;   // 29d: who is in / waiting changes with every step
     if ((s.dep || "er") !== lastDep) { lastDep = s.dep || "er"; bg = null; prevSt = {}; endSeen = !!s.end; q(".lcr-tt").textContent = depTitle(); }
     ambCheck();
@@ -383,10 +401,20 @@
   function stWatch() { if (stRO || !w.ResizeObserver) return; var stg = q(".lcr-stage"); if (!stg) return; var lw = 0, lh = 0;
     stRO = new w.ResizeObserver(function () { var a = stg.clientWidth, b = stg.clientHeight; if (a === lw && b === lh) return; lw = a; lh = b; if (ov && !ov.hidden) w.requestAnimationFrame(function () { if (ov && !ov.hidden) size(); }); }); stRO.observe(stg); }   // 29h: size() on the next frame (it moves the floor map → no ResizeObserver loop)
   w.LiveRoomCam = function () { var stg = q(".lcr-stage"); return { scale: scale, h: Math.round(E.H * scale), vh: stg ? stg.clientHeight : 0, off: 0 }; };
-  function go() { stop(); last = 0; raf = w.requestAnimationFrame(loop); }
+  // 29l 🔥 (Abdullah, Nov 6 «لعبة المستشفى عم تحمّي الجهاز»): full frame rate only while something moves (the nurse walks, a trip,
+  // a peer walks, ~1.5 s after a tap or a state change); otherwise the room is drawn ~12 times a second. Nothing runs while the page is hidden.
+  var IDLE_MS = 80, hotTo = 0, lastDraw = 0;
+  function nowMs() { return w.performance && w.performance.now ? w.performance.now() : Date.now(); }
+  function kick(ms) { var t = nowMs() + (ms || 1500); if (t > hotTo) hotTo = t; }
+  function peersMoving() { for (var k in peers) if (peers[k] && peers[k].pts && peers[k].pts.length) return true; return false; }
+  function busy(ts) { return !!(nurse && nurse.pts && nurse.pts.length) || !!trv || ts < hotTo || peersMoving(); }
+  function go() { stop(); if (d.hidden) return; last = 0; lastDraw = 0; kick(); raf = w.requestAnimationFrame(loop); }
   function stop() { if (raf) w.cancelAnimationFrame(raf); raf = 0; }
   function loop(ts) {
     raf = w.requestAnimationFrame(loop);
+    if (d.hidden) { stop(); return; }
+    if (lastDraw && ts - lastDraw < IDLE_MS && !busy(ts)) return;   // 29l: idle throttle
+    lastDraw = ts;
     var dt = last ? Math.min(0.1, (ts - last) / 1000) : 0; last = ts;
     if (nurse.pts.length && R) {
       var r = R.walk(nurse, nurse.pts, dt); nurse.x = r.x; nurse.y = r.y; nurse.dir = r.dir; nurse.walkT += dt;
@@ -771,7 +799,7 @@
     if (LCa) workRing(nurse.x, nurse.y - 7 - s.h - 12);           // 29d ⏳ the ring above his name tag
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
-  function onTap(e) {
+  function onTap(e) { kick();
     if (trv) { e.preventDefault(); return; }
     // 29h 🏥 (Abdullah, Nov 4 9:38 PM): the hospital never locks — after the daily case the room stays walkable (doors, 🛗, 🪑, beds = their steps)
     if (svcRoom()) { if (sheet || panel) return; e.preventDefault(); return svcTap(toL(e)); }
@@ -1275,7 +1303,7 @@
     if (lights) { var on = Math.sin(t * 14) > 0; c.fillStyle = on ? "#ef4444" : "#3b82f6"; c.beginPath(); c.arc(x + 30, y - 1, 3, 0, 7); c.fill(); c.globalAlpha = 0.25; c.beginPath(); c.arc(x + 30, y - 1, 9, 0, 7); c.fill(); c.globalAlpha = 1; }
     c.fillStyle = "#1f2937"; c.beginPath(); c.arc(x + 9, y + 16, 3, 0, 7); c.arc(x + 37, y + 16, 3, 0, 7); c.fill();
   }
-  function onFloorTap(e) {
+  function onFloorTap(e) { kick();
     e.preventDefault(); if (trv) return;
     var r = fcv.getBoundingClientRect(), x = (e.clientX - r.left) / fsc, y = (e.clientY - r.top) / fsc, f = viewF();
     var o0 = ROOMS.el; if (x >= o0.x - 4 && x <= o0.x + o0.w + 4 && y >= o0.y - 4 && y <= o0.y + o0.h + 4) { vf = (f + 1) % w.LiveDept.FLN.length; vfAt = Date.now(); flTabs(); return say("neutral", u("elev") + " · " + T(w.LiveDept.FLN[vf]), u("elevW")); }
@@ -1561,7 +1589,7 @@
     var el = q(".lcr-work"); if (!el) return; var L0 = Object.keys(work).map(function (id) { return work[id]; }), now = Date.now();
     el.hidden = !L0.length || !!sheet; el.innerHTML = L0.map(function (b) { return workHtml(b, now); }).join("");   // an open sheet shows its own line
     var wi = q(".lcr-wkin .lcr-wkr"), wb = sheet && sheet.kind === "bed" ? work[pidOf(sheet.k)] : null; if (wi && wb) wi.style.setProperty("--p", Math.round(LCa.prog(wb, now) * 100));
-    if (L0.length && !workIv) workIv = setInterval(function () { if (!Object.keys(work).length || !ov || ov.hidden) { clearInterval(workIv); workIv = 0; } workPaint(); }, 250);
+    if (L0.length && !workIv) workIv = setInterval(function () { if (!Object.keys(work).length || !ov || ov.hidden) { clearInterval(workIv); workIv = 0; } if (!d.hidden) workPaint(); }, 250);
   }
   // the ring over his avatar while he works (+ the act's icon); his hands move
   function workRing(x, y) {

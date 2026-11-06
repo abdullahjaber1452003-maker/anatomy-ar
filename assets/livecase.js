@@ -638,7 +638,7 @@ var LiveDept = (function (C) {
 
   if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261029k", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261029l", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -727,18 +727,23 @@ var LiveDept = (function (C) {
     } catch (e) { goPreview("net"); }
   }
   function start(cb) {
-    if (cb) subs.push(cb);
+    if (cb && subs.indexOf(cb) < 0) subs.push(cb);   // 29l: never twice
     return load().then(function (X) {
       if (!X) { setMode("error"); emit(); return null; }
       if (mode === "loading" || mode === "error") connect(); else emit();
-      if (!tick) tick = setInterval(function () {
-        if (doc && doc.day !== LiveCore.docId(today())) { if (mode === "shared") { if (unsub) { unsub(); unsub = null; } api = null; connect(); } else doc = prevDoc(); }
-        emit();
-      }, 30000);
+      tickOn();
       return X;
     });
   }
   function off(cb) { subs = subs.filter(function (f) { return f !== cb; }); }
+  // 29l 🔥: the room asks for a pause while the page is hidden (no live listener, no 30 s timer) and a resume when it is back
+  var paused = false;
+  function tickOn() { if (!tick) tick = setInterval(function () {
+        if (doc && doc.day !== LiveCore.docId(today())) { if (mode === "shared") { if (unsub) { unsub(); unsub = null; } api = null; connect(); } else doc = prevDoc(); }
+        emit();
+      }, 30000); }
+  function pause() { if (tick) { clearInterval(tick); tick = 0; } if (unsub) { try { unsub(); } catch (e) {} unsub = null; paused = true; } }
+  function resume() { if (paused) { paused = false; api = null; connect(); } if (subs.length) tickOn(); }
   d.addEventListener("nursin:auth", function () { if (D && (mode === "preview" || mode === "loading")) { if (fb()) connect(); else if (mode === "loading") goPreview("out"); } });
   /* ---- 🧊 a student who got a field wrong waits 3 min before trying THAT field again (no brute force) ---- */
   function cool(pk, a) { var c = lsGet(CK) || {}, k = today() + pk + a, t = c[k] | 0; return t > Date.now() ? t : 0; }
@@ -872,7 +877,7 @@ var LiveDept = (function (C) {
       if (W.requestIdleCallback) W.requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 600);
     })();
   }
-  W.LiveCase = { dep: function () { return dep; }, setDep: setDep, stateOf: stateOf, hospital: hospital, admOf: admOf, triName: triName, PRN: PRN, load: load, start: start, off: off, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
+  W.LiveCase = { dep: function () { return dep; }, setDep: setDep, stateOf: stateOf, hospital: hospital, admOf: admOf, triName: triName, PRN: PRN, load: load, start: start, off: off, pause: pause, resume: resume, act: actSafe, actRaw: act, nextWords: nextWords, state: state, mode: function () { return mode; }, why: function () { return why; }, me: me, D: function () { return D; },
     archive: archive, pushOn: pushOn, setPush: setPush, stLabel: stLabel, left: left, leftWords: leftWords, stepName: stepName, actName: actName, T: T, esc: esc, FR: FR, homeCard: homeCard,
     cool: cool, PK: PK, HK: HK, preview: goPreview,
     raw: function () { return D ? rawDoc() : null; } };   // 29b 📒 the whole day doc (every department) — assets/caselog.js builds each student's «سجل حالاتي» from it
