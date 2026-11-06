@@ -100,7 +100,7 @@
   function render(){
     var s=state,q=s.qs[s.i];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>'+(s.timed?'<b class="wxclk"></b> · ':'')+'سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
-    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(q._l?midLn(q._l):(QTOP[q.t]||q.t))+'</span>'+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+'<p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
+    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(q._l?midLn(q._l):(QTOP[q.t]||q.t))+'</span>'+(window.NursinAD?NursinAD.badge(q):'')+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+'<p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
     q.o.forEach(function(o,k){h+='<button class="opt" data-k="'+k+'"><span class="l" dir="ltr">'+L[k]+'</span><span>'+o+'</span></button>';});
     h+=p50(s)+'<div id="fb" aria-live="polite"></div><div class="qnav"><span></span><button class="btn pri" id="next" hidden>التالي ←</button></div></div>';
     root.innerHTML=h;
@@ -139,6 +139,7 @@
     var pr=root.querySelector('.p50row');if(pr)pr.remove();
     root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;if(kk===q.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
     if(ok)s.score++;else s.wrong.push(q);(s.picks||(s.picks={}))[q.id]=k;
+    if(window.NursinAD&&!s.exam&&!s.mid&&!s.timed&&!s.challenge&&!s.cq){try{var adT=NursinAD.step(s.ad||(s.ad={}),q,ok);NursinAD.reorder(s.qs,s.i+1,null,null,adT);}catch(e){}}   // 🎚️ 29v adaptive: 2 right → harder next, wrong → easier / same lesson (assets/ready.js)
     if(q.t==='ecg'||q.t==='arythmies'){s.eN=(s.eN|0)+1;if(ok)s.eOk=(s.eOk|0)+1;}   // for the «ملك الـ ECG» badge
     var rec=W?W.record(q,ok):null;if(rec==='graduated')s.grad++;
     var sres=S&&S.answer?S.answer(q,ok):null;   // 🔁 التكرار المتباعد v2 (Nov 3): EVERY answer enters, right or wrong (bank, 🔗, ✍️, 🩺 ids)

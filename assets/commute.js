@@ -113,14 +113,21 @@
       var nq = Math.min(RQ, R.qs.length - qi);
       return h + '<div class="hzoa"><button type="button" class="go" data-busgo="' + (ri + 1) + '">' + T("يلا " + nq + " أسئلة", nq + " questions") + CH + "</button>" + (nA ? stop : "") + "</div></div>";
     }
-    return h + '<div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + " · " + T("الجولة ", "Tour ") + (ri + 1) + "/" + NR + "</small><p>" + esc(q.q) + '</p><div class="hzqo">' +
+    return h + '<div class="hzqq"><small>' + (nA + 1) + "/" + qs.length + " · " + T("الجولة ", "Tour ") + (ri + 1) + "/" + NR + "</small>" + (w.NursinAD ? w.NursinAD.badge(q) : "") + "<p>" + esc(q.q) + '</p><div class="hzqo">' +
       q.o.map(function (o, k) { return '<button type="button" data-busq="' + esc(q.id) + '" data-k="' + k + '"><span>' + (FR() ? "abc" : "أبج").charAt(k) + "</span>" + esc(o) + "</button>"; }).join("") + "</div></div>" + (nA ? '<div class="hzoa">' + stop + "</div>" : "") + "</div>";
   }
   function paint() { if (ov) ov.innerHTML = sheet(); }
+  var adS = {};                                        // 🎚️ 29v: the right-in-a-row count of the ride
   function answer(q, k) {
     var st = state(cur.day); st.ans = st.ans || {}; if (st.ans[q.id] != null) return;
     if (!st.plan) st.plan = cur.r;
     st.ans[q.id] = k; fb = q.id; var ok = k === q.a, was = !!st.done;
+    try {                                                // 🎚️ 29v adaptive: reorder what is left of THIS round (assets/ready.js)
+      var AD = w.NursinAD, P = cur.r; if (AD && P && P.qs) { var qi = P.qs.indexOf(q.id), to = (Math.floor(qi / RQ) + 1) * RQ;
+        if (qi > -1) { var tg = AD.step(adS, q, ok), rest = P.qs.slice(qi + 1, to).filter(function (id) { return st.ans[id] == null; });
+          AD.reorder(rest, 0, null, qById, tg); var j = 0; for (var i = qi + 1; i < Math.min(to, P.qs.length); i++) if (st.ans[P.qs[i]] == null) P.qs[i] = rest[j++];
+          if (st.plan && st.plan !== P && st.plan.qs) st.plan.qs = P.qs.slice(); } }
+    } catch (x) {}
     if (!st.done && isDoneS(st)) st.done = Date.now();
     lsSet(K, st);
     try { if (w.Weak) w.Weak.record(q, ok); } catch (x) {}

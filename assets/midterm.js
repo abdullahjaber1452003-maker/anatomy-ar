@@ -10,7 +10,7 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261029u", K = "nursin_mid_v1";
+  var V = "20261029v", K = "nursin_mid_v1";
   var EXAM = "2026-11-16", START = "2026-11-01", EXAM_TS = Date.parse("2026-11-16T08:00:00+02:00");   // Lebanon = UTC+2 in November
   var MINQ = 20, MAXQ = 30;
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -155,18 +155,18 @@
   function retScore(o, id) { if (o && o.ret) return o.ret(id); var R = w.NursinRet; try { return R && R.score ? R.score(id) : null; } catch (e) { return null; } }
   function opened(id, m) { if (m[id]) return true; for (var k in m) if (k.indexOf(id + "#") === 0) return true; return false; }
   function readiness(s, o) {                               // → {r 0–100, acc|null, cov 0–1, miss, weakL: lesson id to read first}
-    o = o || {}; var x = o.x || load(), L = lessonsOf(s), m = readMap(o), acc = [], op = 0, tp = {}, worst = null, wv = 101, firstNew = null, now = o.now || Date.now();
+    o = o || {}; var x = o.x || load(), L = lessonsOf(s), m = readMap(o), acc = [], op = 0, tp = {}, worst = null, wv = 101, firstNew = null, now = o.now || Date.now(), due = 0;
     L.forEach(function (l) {
       var v = [], r = retScore(o, l.id); if (r != null) v.push(+r); if (x.lw[l.id] != null) v.push(+x.lw[l.id]);
-      if (v.length) { var a = v.reduce(function (p, c) { return p + c; }, 0) / v.length; acc.push(a); if (a < wv) { wv = a; worst = l.id; } }
+      if (v.length) { var a = v.reduce(function (p, c) { return p + c; }, 0) / v.length; acc.push(a); if (a < wv) { wv = a; worst = l.id; } if (r != null && +r < 40) due++; }   // 29v: a studied lesson faded under 40 = its spaced review is overdue
       if (opened(l.id, m)) op++; else if (!firstNew) firstNew = l.id;
       tp[l.t] = 1;
     });
     if (x.best[s] && x.best[s].p != null) acc.push(+x.best[s].p);
     var it = weakItems(o), miss = 0; for (var k in it) { var e = it[k]; if (e && tp[e.t] && (!e.last || now - e.last < 14 * 864e5)) miss++; }
     var a = acc.length ? acc.reduce(function (p, c) { return p + c; }, 0) / acc.length : null, cov = L.length ? op / L.length : 0;
-    var r = Math.round((a == null ? 25 : a) * 0.6 + cov * 40 - Math.min(20, miss * 4));
-    return { r: Math.max(0, Math.min(100, r)), acc: a == null ? null : Math.round(a), cov: cov, miss: miss, weakL: (wv < 70 ? worst : null) || firstNew || worst || (L[0] && L[0].id) || "" };
+    var r = Math.round((a == null ? 25 : a) * 0.6 + cov * 40 - Math.min(20, miss * 4) - Math.min(10, due * 2));
+    return { r: Math.max(0, Math.min(100, r)), acc: a == null ? null : Math.round(a), cov: cov, miss: miss, due: due, weakL: (wv < 70 ? worst : null) || firstNew || worst || (L[0] && L[0].id) || "" };
   }
   function credits(x, d0) {                                // {subject: {day:1}} — the sessions done (quiz / mock finished, ticked, or the day marked)
     var c = {}, ms = msSubs();
@@ -375,8 +375,10 @@
     weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls, LIGHT: LIGHT,
     merge: merge, pull: pull, load: load, loadCases: loadCases, EMO: EMO, KEY: K };
   if (!d || !d.addEventListener) return;
-  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) setTimeout(pull, 1500); });
-  setTimeout(function () { if (fbA()) pull(); }, 3000);
-  d.addEventListener("nursin:quizdone", function (e) { var v = e.detail || {}; if (v.sel && v.sel !== "mid" && subjList().indexOf(v.sel) > -1 && (v.total | 0) >= 5) credit(v.sel, today()); });   // 🎯 29q: a subject quiz ticks its plan task
+  /* 📊 29v: midterm.js also rides the subject pages (only for readiness(), assets/ready.js) — no profile read there: no new Firestore traffic */
+  function pullOK() { var p = ""; try { p = (w.location.pathname || "").split("/").pop() || "index.html"; } catch (e) {} var S = NL().subjects || {}; for (var k in S) if (S[k] && S[k].page === p) return false; return true; }
+  d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn && pullOK()) setTimeout(pull, 1500); });
+  setTimeout(function () { if (pullOK() && fbA()) pull(); }, 3000);
+  d.addEventListener("nursin:quizdone", function (e) { var v = e.detail || {}; if (pullOK() && v.sel && v.sel !== "mid" && subjList().indexOf(v.sel) > -1 && (v.total | 0) >= 5) credit(v.sel, today()); });   // 🎯 29q: a subject quiz ticks its plan task
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", initPage); else initPage();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

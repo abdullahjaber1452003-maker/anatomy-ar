@@ -10,7 +10,7 @@
    Every reason line is clamped to 2 lines (tap = open). Local only: no network, no Firestore. ES5 for iOS 12. No ads here. */
 (function (w, d) {
   "use strict";
-  var V = "20261029u";
+  var V = "20261029v";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -119,6 +119,7 @@
     for (var i = 0; i < tiers.length; i++) {
       var t = tiers[i]; if (!t.length) continue;
       var fresh = t.filter(function (c) { return !inSrs(c.id); }), pool = fresh.length ? fresh : t;
+      var AD = o.ad || w.NursinAD; if (AD && AD.level) { var lq = AD.level(q), ez = pool.filter(function (c) { return AD.level(c) <= lq; }); if (ez.length) pool = ez; }   // 🎚️ 29v: after a wrong one, easier or the same level
       return { q: pool[Math.floor(rnd() * pool.length) % pool.length], tier: names[i] };
     }
     return null;
@@ -130,6 +131,7 @@
     if (!q || !q.o || k == null || k === q.a || !q.o[k]) return "";
     o = o || {}; var href = hrefOf(q, o.lid), y = why(q, k, lessonText(href)), id = "wx" + (++nreg);
     reg[id] = { q: q, k: k, o: o }; seen[q.id] = 1; style(); needPart(id);
+    if (typeof setTimeout === "function") setTimeout(function () { hideOld(d); }, 0);   // 29v: the box replaces the old «❌ الجواب: …» box once it is in the page
     var h = '<div class="wxb" data-wx="' + id + '" data-wxq="' + esc(q.id) + '" data-nofr>';
     h += '<p class="wxl wxw" data-wxl>❌ <b>' + T("ليش غلط؟", "Pourquoi faux ? (ليش غلط؟)") + '</b> <span dir="rtl">(' + L.charAt(k) + ") " +
       (y.w ? esc(y.w) : esc(T("هالخيار مش هوّي الجواب — قارنو بالصح تحت 👇", "Ce choix n'est pas la réponse (مش هوّي الجواب) — compare avec la bonne 👇"))) + "</span></p>";
@@ -140,7 +142,16 @@
   }
   function mount(el, q, k, o) {
     if (!el) return null; var h = html(q, k, o); if (!h) return null;
-    el.insertAdjacentHTML("beforeend", h); return el.lastElementChild;
+    el.insertAdjacentHTML("beforeend", h); hideOld(el); return el.lastElementChild;
+  }
+  /* 29v: after a wrong answer the old orange box («❌ الجواب: …» = .expl.w in quiz / retain / sheets, .hzqf.bad in 🚌 and Osman's question) said
+     the same thing as this box → hidden when this box sits right after it. A right answer (no box) keeps the old one as it was. */
+  function hasC(e, c) { return (" " + (e && e.className || "") + " ").indexOf(" " + c + " ") > -1; }
+  function isOld(e) { return !!e && ((hasC(e, "expl") && hasC(e, "w")) || (hasC(e, "hzqf") && hasC(e, "bad"))); }
+  function hideOld(root) {
+    if (!root || !root.querySelectorAll) return 0; var n = 0, bs = root.querySelectorAll(".wxb");
+    for (var i = 0; i < bs.length; i++) { var p = bs[i].previousElementSibling; if (isOld(p) && !hasC(p, "wxold")) { p.className += " wxold"; n++; } }
+    return n;
   }
   function loadScript(src, have) {
     return new Promise(function (res) {
@@ -212,7 +223,7 @@
   var styled = false;
   function style() {
     if (styled || !d.createElement) return; styled = true;
-    var c = ".wxb{margin-top:8px;padding:8px 10px;border-radius:12px;border:1px dashed #fb923c;background:#fffaf3;font-size:.93em;line-height:1.5;text-align:start}" +
+    var c = ".wxold{display:none!important}.wxb{margin-top:8px;padding:8px 10px;border-radius:12px;border:1px dashed #fb923c;background:#fffaf3;font-size:.93em;line-height:1.5;text-align:start}" +
       ".wxl{margin:0 0 3px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;cursor:pointer}.wxl.open{display:block}" +
       ".wxa{margin:5px 0 0;display:flex;flex-wrap:wrap;gap:6px}.wxa a,.wxa button{font:inherit;font-size:.92em;padding:5px 11px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:inherit;text-decoration:none;cursor:pointer}" +
       ".wxa button[disabled]{opacity:.55}.wxsq{margin-top:6px}.wxsqq{margin:4px 0;font-weight:600}.wxo{display:block;width:100%;text-align:start;margin:4px 0;padding:7px 10px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:inherit;font:inherit}" +
@@ -222,5 +233,5 @@
     var s = d.createElement("style"); s.id = "wxcss"; s.textContent = c; (d.head || d.documentElement).appendChild(s);
   }
   if (d && d.addEventListener) d.addEventListener("nursin:answer", function (e) { var x = e.detail || {}; if (x.qid) seen[x.qid] = 1; });
-  w.NursinWX = { html: html, mount: mount, why: why, sents: sents, toks: toks, similar: similar, lessonOf: lessonOf, hrefOf: hrefOf, partKey: partKey, seen: seen, style: style };
+  w.NursinWX = { html: html, mount: mount, why: why, sents: sents, toks: toks, similar: similar, lessonOf: lessonOf, hrefOf: hrefOf, partKey: partKey, seen: seen, style: style, hideOld: hideOld, isOld: isOld };
 })(window, document);
