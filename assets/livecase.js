@@ -925,6 +925,7 @@ var LiveDept = (function (C) {
     var Hh = hospital() || {}; st = Hh.er || st; var ended = st.end, F = FR(), crit = 0;
     ["er", "k", "n", "r", "s", "g", "p", "m", "x"].forEach(function (k) { var S = k === "er" ? st : Hh[k]; if (!S || !S.P || S.end) return;
       S.P.forEach(function (x) { if (x && !x.ghost && !x.over && x.st === "crit") crit++; }); });
+    if (Hh.wait && !ended) Hh.wait.forEach(function (o) { if (o && o.p && LiveDept.prio(o.p).pr === 1) crit++; });   // + the red ones still waiting for triage
     // 👥 how many students are in the hospital right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
     var PR = W.LivePresRoom, ppl = mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1, wt = Hh.wait && !ended ? Hh.wait.length : 0;
     var bits = [F ? "🏥 L'hôpital maintenant" : "🏥 المستشفى الآن"];

@@ -1149,7 +1149,7 @@
     if (R.pr === 4) return F ? "🟢 Aucun signe d'alerte → peut attendre (Non urgent = مش مستعجل)" : "🟢 ما في علامة خطر → بينطر (Non urgent = مش مستعجل)";
     var cc = String(T(p.who || p.say) || "").split(/ — |،|,/)[0], val = R.val || { air: F ? "obstruction (انسداد)" : "انسداد", bleed: F ? "saignement (نزيف)" : "نزيف" }[R.k] ||
       (cc ? "«" + (cc.length > 30 ? cc.slice(0, 30) + "…" : cc) + "»" : (F ? "histoire (القصّة)" : "القصّة"));   // E without a vital: his own complaint
-    return P0.ic + (F ? (R.pr <= 2 ? " Pourquoi en haut ? " : " Pourquoi ici ? ") : (R.pr <= 2 ? " ليش فوق؟ " : " ليش هون؟ ")) + val + " → " + R.L + " " +
+    return P0.ic + (F ? (R.pr <= 2 ? " Pourquoi en haut ? " : " Pourquoi ici ? ") : (R.pr <= 2 ? " ليش فوق؟ " : " ليش هون؟ ")) + val + (F ? " → " : " يعني مشكلة ") + R.L + " " +
       (F ? N[1] + " (" + ABCAR[R.L] + ")" : N[0] + " (" + N[1] + " = " + ABCAR[R.L] + ")");
   }
   function triHelp() {
