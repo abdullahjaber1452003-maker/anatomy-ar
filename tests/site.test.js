@@ -6628,6 +6628,7 @@ test('📸 Nov 6 2026 class notes → 3 lessons (law l4 OMS + foreign nurse · M
   assert.ok(csh.html.includes('«🌐 معلومات عامة»'), 'anything beyond his notes is labelled');
   assert.ok(csh.n.includes('Transplantation de cellules souches hématopoïétiques') && fdv.n.includes('Soins de fin de vie'), 'French names beside the Arabic');
   assert.ok(l4.cq.length >= 2, 'law «كويز متل الصف»');
+  assert.ok(read('medsurg.html').includes('<a class="chip" href="#csh">🩸 الخلايا الجذعية</a>') && read('medsurg.html').includes('href="#fdv"') && read('assets/fr/p-medsurg.js').includes('🩸 Cellules souches') && read('law.html').includes('42 سؤال من الدروس الأربعة'), 'page chips + counts');
   // pages draw them: law.html / medsurg.html load the data lists
   assert.ok(read('law.html').includes('assets/law-data.js?v=20261029s') && read('medsurg.html').includes('assets/medsurg-data.js?v=20261029s') && read('medsurg.html').includes('data-var="MEDSURG"'));
   // 10 MCQs each: spread a/b/c, right never the longest, plain, no bold, ids in the bank shape
