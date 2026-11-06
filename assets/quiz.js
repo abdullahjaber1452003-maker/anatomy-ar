@@ -90,6 +90,7 @@
     if(qs.length<3&&isLesson(sel,les)&&!(force&&qs.length))return few(sel,les,qs,scroll);
     if(!qs.length){if(sel==='weak')return emptyWeak(scroll);if(sel==='review'||sel==='reviewmore')return emptyReview(scroll);if(sel==='mixed')return mixedIntro(scroll);qs=QUIZ.slice();sel='all';les='';}
     if(sel!=='mixed')qs=shuffle(qs.slice());if(n&&n<qs.length)qs=qs.slice(0,n);
+    if(window.NursinVar)qs=NursinVar.varyAll(qs);   // 🔀 29y: a question seen before comes back in another shape (assets/qvary.js)
     state={sel:sel,les:les||'',qs:qs,i:0,score:0,wrong:[],grad:0};
     if(sel==='mixed'){state.by={};state.timed=force&&force.timed?Date.now()+RT.WMIN*60000:0;}
     chips(les?'':sel);
@@ -190,7 +191,7 @@
     if(!M||(subj!=='weak'&&!M.lessonsOf(subj).length)){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما لقينا هالمادة.','Matière introuvable.')+'</p><p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a></p></div>';return;}
     root.innerHTML='<div class="qcard"><p>⏳ …</p></div>';
     M.loadCases().then(function(){
-      var n=+(params().n)||0,qs=M.build(subj,n?{n:n}:null),b=M.load().best[subj],ls=subj==='weak'?[]:M.lessonsOf(subj),left=M.daysLeft();
+      var n=+(params().n)||0,qs=M.build(subj,n?{n:n}:null);if(window.NursinVar)qs=NursinVar.varyAll(qs);var b=M.load().best[subj],ls=subj==='weak'?[]:M.lessonsOf(subj),left=M.daysLeft();
       if(!qs.length){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما في أسئلة كفاية بعد.','Pas encore assez de questions.')+'</p></div>';return;}
       var h='<div class="qcard midintro"><p class="midk">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+(M.active()?' · '+T2('باقي '+left+' يوم','J-'+left):'')+'</p><h2>'+(M.EMO[subj]||'📘')+' '+esc(M.subjName(subj))+'</h2>'+
         '<p>'+T2(qs.length+' سؤال · '+qs.length+' دقيقة'+(ls.length?' · من كل الـ '+ls.length+(ls.length===1?' درس':' دروس')+' بالتساوي':''),qs.length+' questions · '+qs.length+' minutes'+(ls.length?' · de toutes les '+ls.length+' leçon(s), à parts égales':''))+'</p>'+

@@ -13,7 +13,7 @@
      else the lesson's) into the spaced review (assets/srs.js NursinSRS.add) and marks the lesson weak (NursinRet.apply). No new Firestore
      traffic, no ad while a box is open (html.rton hides the page's ad units). ES2017-safe (iOS 12). */
 (function (w, d) {
-  var V = "20261029x", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+  var V = "20261029y", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var KEY = "nursin_explain_v1", TK = "nursin_teach_day_v1", TMAX = 10, TIMEOUT = 12000, SNIP = 2200, MAXK = 10, LOW = 50;
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -155,6 +155,7 @@
   /* judge(section, answer) → Promise<{ mode: "osman" | "local", osman: text|null, res, rev }> — local grade always, Osman on top when he answers */
   function judge(sec, said) {
     var res = grade(sec.keys, said), rec = save(sec.k, res.score);
+    try { if (d && d.dispatchEvent && sec.lid) d.dispatchEvent(new CustomEvent("nursin:explain", { detail: { lid: sec.lid, score: res.score } })); } catch (e) {}   // 📅 29y: a ✍️ counts as the lesson's review (assets/revsched.js)
     var rev = res.n && res.score < LOW ? toReview(sec) : Promise.resolve(0);
     var ai = canOsman() ? (use(), osman(prompt(sec, said)).then(function (t) { return t; }, function () { return null; })) : Promise.resolve(null);
     return Promise.all([ai, rev]).then(function (a) { return { mode: a[0] ? "osman" : "local", osman: a[0], res: res, rev: a[1], rec: rec }; });

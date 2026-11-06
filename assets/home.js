@@ -69,8 +69,10 @@
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): ONE list — the day's tasks first (📖 درس اليوم, 🏫 the class lesson, 🔁 the
   // pinned reviews, 📌 homework, ⭐ exams, 🎯, ⚔️, 🏁), then the rest of the path (🧑‍🏫 Osman, 💪, 🎮…); more than 7 → «+N كمان» (p.more)
-  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
-  function byOrder(a, b) { return (ORDER[a.k] == null ? 99 : ORDER[a.k]) - (ORDER[b.k] == null ? 99 : ORDER[b.k]); }
+  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, due: 1.2, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
+  // ↩️ 29y: a step carried over from an earlier day (s.cf = the day it was planned) comes first — only the 🚌 morning ride stays above it
+  function rank(s) { return s.cf && s.k !== "bus" ? -0.5 : ORDER[s.k] == null ? 99 : ORDER[s.k]; }
+  function byOrder(a, b) { return rank(a) - rank(b); }
   var FEATS = ["games", "cards", "cases", "quiz", "highlights", "notes"], NEVER = ["games", "cards", "cases", "quiz"];
   function skey(s) { return s.k + ":" + (s.id || s.ik || s.f || ""); }
   function dayOf(ts) { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts)); } catch (e) { return new Date(ts + 2 * 36e5).toISOString().slice(0, 10); } }
@@ -121,6 +123,57 @@
   /* x = { day, hm (Beirut minutes since midnight), due, last:{id,href,name,part}|null, lessons:[{id,s,t,l,n,href,score,read,q,added}],
            today:{id,pk,href,n,more}|null (درس اليوم from the timetable), recent:[lesson ids studied lately], qids:{lessonId:[qid]}, weak:[{id,miss,cnt}], use:{f:ms}, since,
            imp:[{ik,e,n,s,href}], tn:{op}|null, wex:{ready,done}, cases:[ids] } */
+
+  /* ↩️ 29y (Abdullah, Nov 6 2026 10:57 PM «بدي ب مسار اليوم يلي ما بخلص ينضاف على اليوم لبعده لو بدن يصيرو اكتر»): a step of the
+     last path he had that was not ticked carries over to the new day — marked «↩️ من مبارح» / «↩️ من قبل N أيام», placed first,
+     gone once done. Not carried: what re-plans itself or belongs to its own day (🚌, 🔁, 📅, 🎯 midterm plan — 29q re-plans it —,
+     ⭐ exams, ⚔️, 📌 homework, the weekly exam). A step today already has is not doubled (same step / same lesson to read / one
+     Osman a day…): today's step takes the ↩️ mark instead. Several missed days: the oldest day stays on the mark, one copy each.
+     At most 3 carried steps on top, the rest behind «+N كمان» with the day's lighter steps — the top stays compact. Pure (tests). */
+  var CARRYK = { today: 1, cont: 1, "new": 1, cls: 1, weak: 1, fade: 1, quiz: 1, "case": 1, again: 1, osm: 1, game: 1, cards: 1, qall: 1, hl: 1, use: 1 };
+  var ONEK = { osm: 1, game: 1, cards: 1, qall: 1, hl: 1, "case": 1 }, READK = { today: 1, cont: 1, "new": 1, cls: 1, again: 1, weak: 1, fade: 1 }, CVIS = 3;
+  function carryOf(prev, doneFn) {
+    var out = [], seen = {}; if (!prev || !prev.steps) return out;
+    prev.steps.concat((prev.more || []).filter(function (s) { return s && s.cf; })).forEach(function (s) {
+      if (!s || !CARRYK[s.k]) return; var k = skey(s); if (seen[k]) return;
+      if ((prev.done || {})[k]) return; try { if (doneFn && doneFn(s)) return; } catch (e) {}
+      seen[k] = 1; var c = {}, z; for (z in s) if (Object.prototype.hasOwnProperty.call(s, z)) c[z] = s[z];
+      c.cf = s.cf && s.cf < prev.d ? s.cf : prev.d; c.at = s.at || prev.at; out.push(c);
+    });
+    return out;
+  }
+  function sameStep(c, t) { return skey(c) === skey(t) || (ONEK[c.k] && c.k === t.k) || (!!c.id && c.id === t.id && READK[c.k] && READK[t.k]); }
+  function carryMerge(cr, steps, more) {
+    steps = (steps || []).slice(); more = (more || []).slice(); var top = [];
+    (cr || []).forEach(function (c) {
+      var i, hit = -1, inMore = false;
+      for (i = 0; i < steps.length; i++) if (sameStep(c, steps[i])) { hit = i; break; }
+      if (hit < 0) for (i = 0; i < more.length; i++) if (sameStep(c, more[i])) { hit = i; inMore = true; break; }
+      if (hit < 0) { top.push(c); return; }
+      var t0 = inMore ? more[hit] : steps[hit];
+      if (ONEK[c.k] && (c.k === "osm" || skey(c) !== skey(t0))) return;    // one Osman / one game… a day: today's own (new questions) stands
+      var t = inMore ? more.splice(hit, 1)[0] : steps.splice(hit, 1)[0];
+      if (!t.cf || t.cf > c.cf) t.cf = c.cf; top.push(t);                    // merged: today's step wears the ↩️ mark
+    });
+    var fixed = steps.filter(function (t) { return /^(bus|osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k) || t.k === "due"; }).length;
+    var nv = Math.max(1, Math.min(CVIS, MAXS - fixed)), vis = top.slice(0, nv), rest = top.slice(nv);   // ≤ 3 on top, fewer when the day's fixed steps fill it
+    steps = vis.concat(steps); more = rest.concat(more);
+    while (steps.length > MAXS) {                       // the lightest of the day's own steps goes behind «+N كمان» — nothing lost
+      var drop = -1; steps.forEach(function (t, i) { if (t.cf || t.k === "due" || /^(bus|osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k)) return; if (drop < 0 || (t.pr | 0) >= (steps[drop].pr | 0)) drop = i; });
+      if (drop < 0) break; more.push(steps.splice(drop, 1)[0]);
+    }
+    steps.sort(byOrder); more.sort(byOrder);
+    return { steps: steps, more: more };
+  }
+  function carryTag(cf, day) { var n = dayDiff(day, cf); return n <= 1 ? T("↩️ من مبارح", "↩️ D'hier (من مبارح)") : T("↩️ من قبل " + (n === 2 ? "يومين" : n <= 10 ? n + " أيام" : n + " يوم"), "↩️ Il y a " + n + " jours (من قبل " + n + ")"); }
+  // a carried step that is done leaves the path; the next carried one behind «+N كمان» comes up (≤ 3 on top)
+  function carryClean(p) {
+    var D = p.done || {}, ch = false, keep = function (s) { if (s && s.cf && D[skey(s)]) { ch = true; return false; } return true; };
+    p.steps = (p.steps || []).filter(keep); p.more = (p.more || []).filter(keep);
+    while (p.steps.filter(function (s) { return s.cf; }).length < CVIS && p.steps.length < MAXS) { var i = -1; p.more.forEach(function (s, j) { if (i < 0 && s.cf) i = j; }); if (i < 0) break; p.steps.push(p.more.splice(i, 1)[0]); ch = true; }
+    if (ch) p.steps.sort(byOrder);
+    return ch;
+  }
   function build(x) { return buildAll(x).steps; }
   // the whole day: { steps: the 5–7 shown, more: what did not fit (behind «+N كمان», nothing lost) } — pure (tests)
   function buildAll(x) {
@@ -231,8 +284,10 @@
   function plan() {
     var p = lsGet(PK), dk = today();
     if (p && p.d === dk && p.v === V && p.steps && p.steps.length) return upgrade(p);
+    var prev = p && p.d && p.d < dk && p.steps ? p : null;
     var all = buildAll(ctxNow()), steps = all.steps, now = Date.now();
     p = { v: V, d: dk, at: now, steps: steps, more: all.more, done: {}, vis: {}, ans: {}, cls: afterClass(dk, hmB()) ? 1 : 0 };
+    if (prev) { try { var cm = carryMerge(carryOf(prev, function (s) { return isDoneS(prev, s); }), p.steps, p.more); p.steps = cm.steps; p.more = cm.more; } catch (e) {} }   // ↩️ 29y
     lsSet(PK, p); push(p); return p;
   }
   // what changed since the morning: back from the institute → «راجع درس اليوم» joins; a new exam / class quiz / tournament round joins
@@ -242,7 +297,8 @@
       s.at = now; p.steps.push(s); p.steps.sort(byOrder); ch = true;
       p.more = (p.more || []).filter(function (t) { return skey(t) !== skey(s); });
       while (p.steps.length > MAXS) {           // the lightest step not done yet goes behind «+N كمان» (never Osman / class / ⭐ / today's lesson) — nothing lost
-        var drop = -1; p.steps.forEach(function (t, i) { if (/^(bus|osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
+        var drop = -1; p.steps.forEach(function (t, i) { if (t.cf || t.k === "due" || /^(bus|osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
+        if (drop < 0 && p.steps.filter(function (t) { return t.cf; }).length > 1) p.steps.forEach(function (t, i) { if (t.cf && !(p.done || {})[skey(t)]) drop = i; });   // ↩️ the last carried one waits behind «+N كمان»
         if (drop < 0) break; p.more.push(p.steps.splice(drop, 1)[0]); p.more.sort(byOrder);
       }
     }
@@ -265,6 +321,10 @@
       p.more = (p.more || []).filter(function (t) { return t.k !== "bus"; });
     }
     if (!p.steps.some(function (t) { return t.k === "rev"; })) ins({ k: "rev", e: "🔁", base: 0, href: "quiz.html?t=review", pr: 0.5 });   // 🔁 pinned, even on a path made before
+    // 📅 29y: the lessons due for review today = ONE step «📅 راجع N دروس قبل ما تنساهم» → the list (hifzi.html#due, assets/revsched.js)
+    var RV = w.NursinRev, nd = 0; try { nd = RV && RV.dueCount ? RV.dueCount() : 0; } catch (e) {}
+    if (nd > 0 && !p.steps.concat(p.more || []).some(function (t) { return t.k === "due"; })) ins({ k: "due", e: "📅", id: p.d, n: nd, href: "hifzi.html#due", pr: 1 });
+    if (carryClean(p)) ch = true;
     if (ch) { lsSet(PK, p); push(p); }
     return p;
   }
@@ -283,7 +343,8 @@
     switch (s.k) {
       case "osm": var A = p.ans || {}; return s.qs && s.qs.length ? s.qs.every(function (q) { return A[q] != null; }) : vis > 0 && back(vis);
       case "bus": var B = w.NursinBus; return !!(B && B.isDone && B.isDone(p.d));   // 🚌 every question of the morning review answered
-      case "rev": var S = w.NursinSRS; return !!(S && S.count) && S.count() === 0;   // 🔁 today's list (≤ 20 + new ones) all answered
+      case "rev": var S = w.NursinSRS; return !!(S && S.count) && S.count() === 0;
+      case "due": var RV = w.NursinRev; try { return !!(RV && RV.dueCount) && RV.dueCount() === 0; } catch (e) { return false; }   // 📅 every due lesson reviewed   // 🔁 today's list (≤ 20 + new ones) all answered
       case "today": if (s.pk) { var m = lsGet("nursin_read_v1") || {}; if (m[s.pk] || (s.pk.indexOf("#") > 0 && m[s.pk.split("#")[0]])) return true; } r = retRec(s.id); return !!(r && (r.rd || 0) > at);
       case "cls": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at) || (!!s.id2 && readAfter(s.id2, at));
       case "cont": case "new": r = s.id ? retRec(s.id) : null; if ((r && (r.rd || 0) > at) || readAfter(s.id, at)) return true; return !s.id && vis > 0 && back(vis);
@@ -309,6 +370,7 @@
   function refreshDone(p) {
     var ch = false; p.done = p.done || {};
     p.steps.concat(p.more || []).forEach(function (s) { var k = skey(s); if (!p.done[k] && isDoneS(p, s)) { p.done[k] = Date.now(); ch = true; } });
+    if (carryClean(p)) ch = true;                       // ↩️ 29y: a carried step that is done disappears
     if (ch) { lsSet(PK, p); push(p); } return p;
   }
   /* ☁️ one path for all his devices: users/{uid}.dayPath {d, at, steps, done, ans} (no new rule: the owner may merge a field on his
@@ -353,10 +415,16 @@
     highlights: ["🖍️ صرلك % ما راجعت تعليماتك", "🖍️ Ça fait % que tu n'as pas revu tes surlignages", "", "", "🔁 راجع تعليماتي، دقيقتين", "🔁 Revois tes surlignages, 2 minutes"],
     notes: ["📒 صرلك % ما فتحت ملاحظاتك", "📒 Ça fait % que tu n'as pas ouvert tes notes", "", "", "مرّ عليهن دقيقة، بيثبّتوا الدرس", "Une minute dessus, ça fixe la leçon"]
   };
-  function texts(s) {
+  function texts(s) {                                 // ↩️ 29y: a carried step wears «↩️ من مبارح» before its own label
+    var x = texts0(s); if (x && s.cf) x.tag = carryTag(s.cf, today()) + " · " + x.tag; return x;
+  }
+  function texts0(s) {
     var nm = esc(curName(s));
     switch (s.k) {
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
+      case "due": var RV = w.NursinRev, dl = [], dn0 = s.n | 0; try { dl = RV && RV.due ? RV.due() : []; if (RV) dn0 = dl.length || dn0; } catch (e) {}
+        return { tag: T("📅 قبل ما تنسى", "📅 Avant d'oublier (قبل ما تنسى)"), t: dn0 === 1 ? T("📅 راجع درس واحد قبل ما تنساه", "📅 Révise 1 leçon avant de l'oublier (قبل ما تنساه)") : T("📅 راجع " + dn0 + " دروس قبل ما تنساهم", "📅 Révise " + dn0 + " leçons avant de les oublier (قبل ما تنساهم)"),
+          sub: dl.slice(0, 2).map(function (l) { return esc(lname(l.n)); }).join(" · ") + (dl.length > 2 ? " +" + (dl.length - 2) : ""), min: Math.min(20, Math.max(3, dn0 * 4)) };
       case "bus": var BS = w.NursinBus, sbn = BS ? BS.subjects(s.id || today()).map(function (k) { var S0 = (w.NLESSONS && w.NLESSONS.subjects || {})[k]; return S0 ? T(S0.ar, S0.fr) : k; }).join(" · ") : "";
         var bp = BS && BS.prog ? BS.prog(s.id || today()) : null;   // 🚌 29o: fills the ~30 min ride; «12/30» once started
         return { tag: T("🚌 بالطريق عالدوام", "🚌 En route vers les cours"), t: T("🚌 مراجعة الطريق", "🚌 Révision du trajet"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn) + (bp && bp.n ? " · " + bp.n + "/" + (bp.of || 30) : ""), min: 30 };
@@ -418,7 +486,9 @@
      quiz bank, answered here: ✅/❌ + the explanation, like a real quiz answer (weak points, reviews and the lesson's memory move). */
   var MK = "nursin_mood_v1", fbQ = "", openK = "", osmSr = null;
   function moodNow() { var m = lsGet(MK); return m && m.d === today() ? m.m : ""; }
-  function qById(id) { var Q = (w.QUIZ || []).concat(w.LINKQ || []); for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
+  function qById0(id) { var Q = (w.QUIZ || []).concat(w.LINKQ || []); for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
+  // 🔀 29y: Osman's path questions come back in another shape when seen before — the same variant all day (answers kept per question)
+  function qById(id) { var q = qById0(id), X = w.NursinVar; return q && X ? X.vary(q, { keep: "path:" + today() }) : q; }
   function osmPrompt(s) { var n = curName(s); return T("اشرحلي بالمختصر أهم نقاط درس «" + n + "»، وبعدين اسألني سؤال واحد عليه", "Explique-moi en bref les points clés de la leçon « " + n + " », puis pose-moi une question dessus"); }
   /* 🙋 «اسأل عثمان» (Nov 1 2026, assets/ask.js) under Osman's path question: free practice, so a hint before answering, the why after */
   function askS(q, k) { var X = w.NursinAsk; return X && q ? X.slot(X.fromQ(q, { answered: k != null, pick: k != null ? k : undefined, surface: "path" })) : ""; }
@@ -648,7 +718,7 @@
     d.addEventListener("nursin:bus", redraw); w.addEventListener("hashchange", busH); if (location.hash === "#bus") setTimeout(busH, 600);
   }
   var UI = U();
-  w.HomePath = { busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

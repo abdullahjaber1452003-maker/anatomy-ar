@@ -10,12 +10,12 @@
    Every reason line is clamped to 2 lines (tap = open). Local only: no network, no Firestore. ES5 for iOS 12. No ads here. */
 (function (w, d) {
   "use strict";
-  var V = "20261029x";
+  var V = "20261029y";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function page() { try { return (w.location.pathname || "").split("/").pop() || "index.html"; } catch (e) { return "index.html"; } }
-  var L = "abc";
+  var L = "abc", simv = {};
 
   /* ---------------- text tools (pure; the tests run them in node) ---------------- */
   var STOP = {};
@@ -189,14 +189,14 @@
     Promise.all([bankReady(), partP || (partP = loadScript("assets/partq-data.js", function () { return !!w.PARTQ; }))]).then(function () {
       var m = similar(r.q, r.o);
       if (!m) { box.innerHTML = '<p class="small">' + esc(T("ما في سؤال شبيه جديد هلّق 👌", "Pas d'autre question similaire pour l'instant (ما في سؤال شبيه) 👌")) + "</p>"; return; }
-      var s = m.q; seen[s.id] = 1; b.setAttribute("data-wxs", s.id);
+      var s = m.q; if (w.NursinVar) s = w.NursinVar.vary(s); simv[s.id] = s; seen[s.id] = 1; b.setAttribute("data-wxs", s.id);   // 🔀 29y: in another shape when seen before
       box.innerHTML = '<div class="wxsq" data-qid="' + esc(s.id) + '"><p class="wxsqq">🔁 ' + esc(s.q) + "</p>" + s.o.map(function (o, j) {
         return '<button type="button" class="wxo" data-wxo="' + j + '"><span class="l" dir="ltr">' + L.charAt(j) + "</span> " + esc(o) + "</button>"; }).join("") + '<p class="wxsr"></p></div>';
     });
   }
   function pick(btn) {
     var b = btn.closest(".wxb"), r = b && reg[b.getAttribute("data-wx")], sid = b && b.getAttribute("data-wxs"), s = null, i;
-    if (!r || !sid) return; var bank = w.QUIZ || []; for (i = 0; i < bank.length; i++) if (bank[i].id === sid) { s = bank[i]; break; }
+    if (!r || !sid) return; var bank = w.QUIZ || []; s = simv[sid] || null; for (i = 0; !s && i < bank.length; i++) if (bank[i].id === sid) { s = bank[i]; break; }
     if (!s) return;
     var j = +btn.getAttribute("data-wxo"), ok = j === s.a, all = b.querySelectorAll(".wxo");
     if (all[0] && all[0].disabled) return;

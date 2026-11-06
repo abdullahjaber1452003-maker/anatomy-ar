@@ -72,7 +72,9 @@
   // ✓ on the path after a meaningful chunk (TICK answered, or the whole session when the bank is smaller)
   function isDone(day) { var s = state(day); if (s.done) return true; var P = s.plan, n = nAns(s); return n >= TICK || !!(P && P.qs && P.qs.length && n >= P.qs.length); }
   function prog(day) { var s = state(day), P = s.plan; return { n: nAns(s), of: P && P.qs ? P.qs.length : 0, tick: TICK }; }
-  function qById(id) { var Q = w.QUIZ || []; for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
+  function qById0(id) { var Q = w.QUIZ || []; for (var i = 0; i < Q.length; i++) if (Q[i].id === id) return Q[i]; return null; }
+  // 🔀 29y: the same variant all day (answers are kept by question across reloads) — assets/qvary.js
+  function qById(id) { var q = qById0(id), X = w.NursinVar; return q && X ? X.vary(q, { keep: "bus:" + ((cur && cur.day) || today()) }) : q; }
   function lessonsNow() { var U = w.NursinUI; try { if (U && U.lessonsNow) return U.lessonsNow() || []; } catch (e) {} var src = (w.NLESSONS && w.NLESSONS.list) || []; return src.map(function (l) { return { id: l.s + ":" + (l.l || l.t), s: l.s, t: l.t, l: l.l || "", n: l.n, href: l.href, read: false, score: null, added: l.added || "" }; }); }
   function subName(s) { var S = (w.NLESSONS && w.NLESSONS.subjects) || {}, x = S[s]; return x ? T(x.ar, x.fr) : s; }
   function lname(n) { return String(n || ""); }
