@@ -567,9 +567,9 @@
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      // 🏥 29r (Abdullah, Nov 6 2026 5:14 PM «هون بدي اتصير أقصر»): the path ALWAYS comes first under the greeting (📌 card inside it), the compact 2-line 🏥 card under it
-      root.innerHTML = '<div class="hztop"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
-        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzlivew"></div><div class="hzsugw"></div><div class="hzsubw"></div>';
+      // 🏥 29t (Abdullah, Nov 6 2026 8:50 PM «بدي المستشفى تكون فوق المسار»): the compact 🏥 strip right under the greeting, then «🧭 مسار اليوم» (📌 card inside it)
+      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
       parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
