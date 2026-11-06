@@ -6589,8 +6589,9 @@ test('#277 29r 🔤 triage reason from the patient\'s own vitals, ABCDE order (A
   r = X.triReason(P({ fc: 118 })); assert.strictEqual(r.L, 'C'); assert.strictEqual(r.pr, 2);
   r = X.triReason(P({ t: 38.4 })); assert.strictEqual(r.L, 'E'); assert.strictEqual(r.pr, 3);
   r = X.triReason(P({})); assert.strictEqual(r.pr, 4); assert.strictEqual(r.L, 'E');
-  r = X.triReason(P({ spo2: 88 }, { who: { ar: 'اختناق بلقمة', fr: 'Étouffement' } })); assert.strictEqual(r.L, 'A', 'airway first');
+  r = X.triReason(P({ spo2: 88 }, { who: { ar: 'جسم غريب بالزلعوم', fr: 'Corps étranger, stridor' } })); assert.strictEqual(r.L, 'A', 'airway first');
   r = X.triReason(P({ t: 38.5 }, { who: { ar: 'جرح عم ينزف', fr: 'plaie qui saigne' } })); assert.strictEqual(r.L, 'C', 'bleeding = C');
+  r = X.triReason(P({ spo2: 88 }, { who: { ar: 'ضيق نفس، عم إختنق', fr: "j'étouffe" } })); assert.strictEqual(r.L, 'B', '«j\'étouffe» = dyspnée → B, not A');
   const list = [P({}), P({ gcs: 7 }), P({ t: 38.4 }), P({ spo2: 84 }), P({ sys: 80 }), P({ fc: 118 })].map(p => X.triReason(p));
   const sorted = list.slice().sort((a, b) => a.rank - b.rank).map(x => x.pr + x.L).join(',');
   assert.strictEqual(sorted, '1B,1C,1D,2C,3E,4E', 'priority first, then ABCDE');
