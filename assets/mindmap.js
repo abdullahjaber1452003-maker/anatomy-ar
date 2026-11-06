@@ -69,12 +69,12 @@
     var m = map(id); if (!m) return step1();
     var h = head("🗺️ " + T("خريطة الدرس", "Carte de la leçon (خريطة الدرس)"), ["#s=" + m.s, sname(m.s)]), pg = m.h.split("#")[0];
     var first = (NL().list || []).filter(function (l) { return l.href.split("#")[0] === pg; })[0];
-    h += '<div class="mmap"' + (first && lid(first) !== id ? ' data-mmlock="1"' : "") + '><a class="mmc" href="' + esc(m.h) + '" data-mmn="c">' + esc(m.n) + "</a>";
+    h += '<div class="mmap" data-mmid="' + esc(id) + '"' + (first && lid(first) !== id ? ' data-mmlock="1"' : "") + '><a class="mmc" href="' + esc(m.h) + '" data-mmn="c">' + esc(m.n) + "</a>";
     if (!m.b.length) h += '<ul class="mmtree"><li class="mmbr" style="--mmh:' + HUE[0] + '"><a class="mmbt mmone" href="' + esc(m.h) + '" data-mmn="o">📖 ' + T("افتح الدرس", "Ouvrir la leçon (افتح الدرس)") + "</a></li></ul>";
     else h += '<ul class="mmtree">' + m.b.map(function (b, i) {
       return '<li class="mmbr" style="--mmh:' + HUE[i % HUE.length] + '"><button type="button" class="mmbt" data-mmb="' + i + '" aria-expanded="false">' + esc(b.t) + "</button>" +
         (b.l.length ? '<div class="mmlv">' + b.l.map(function (y) { return '<a class="mmlf" href="' + esc(y[1]) + '" data-mmn="l">' + esc(y[0]) + "</a>"; }).join("") + "</div>" : "") +
-        '<div class="mmpv" hidden><p>' + esc(b.x) + '</p><a class="mmgo" href="' + esc(b.h) + '" data-mmn="b">' + T("افتح بالدرس ←", "Ouvrir dans la leçon (افتح بالدرس) ←") + "</a></div></li>";
+        '<div class="mmpv" hidden><p>' + esc(b.x) + '</p><a class="mmgo" href="' + esc(b.h) + '" data-mmn="b">' + T("افتح بالدرس ←", "Ouvrir dans la leçon (افتح بالدرس) ←") + '</a> <button type="button" class="btn sm exbtn" data-exm="' + i + '">' + T("✍️ اشرحلي بكلامك", "✍️ Explique avec tes mots (اشرحلي بكلامك)") + "</button></div></li>";
     }).join("") + "</ul>";
     return h + "</div>";
   }
@@ -100,7 +100,7 @@
       ".mmbr{position:relative;margin:10px 0 0;padding-right:16px}.mmbr:before{content:'';position:absolute;right:0;top:20px;width:13px;border-top:3px solid var(--mmh)}" +
       ".mmbt{display:block;width:100%;text-align:start;font:inherit;font-weight:800;font-size:15px;line-height:1.4;padding:9px 12px;border-radius:12px;border:2px solid var(--mmh);background:var(--card,#fff);color:var(--mmh);cursor:pointer;text-decoration:none}" +
       ".mmbt[aria-expanded=true]{background:var(--mmh);color:#fff}.mmone{text-align:center}" +
-      ".mmlv{display:flex;flex-wrap:wrap;gap:6px;margin:6px 10px 0 0}.mmlf{font-size:13px;line-height:1.35;padding:5px 10px;border-radius:99px;border:1px solid var(--mmh);color:inherit;text-decoration:none;background:rgba(127,127,127,.06)}" +
+      ".mmlv{display:flex;flex-wrap:wrap;gap:6px;margin:6px 10px 0 0}.mmlf{font-size:13px;line-height:1.35;padding:5px 10px;border-radius:14px;max-width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:break-word;border:1px solid var(--mmh);color:inherit;text-decoration:none;background:rgba(127,127,127,.06)}" +
       ".mmpv{margin:6px 10px 0 0;padding:9px 11px;border-radius:12px;background:rgba(127,127,127,.08);font-size:14px;line-height:1.6}.mmpv p{margin:0 0 6px}.mmgo{font-weight:800;color:var(--mmh)}" +
       "@media(min-width:760px){.mmtree{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;border:0;margin:0}.mmbr:before{display:none}.mmbr{padding:0}}";
     var s = d.createElement("style"); s.id = "mmcss"; s.textContent = c; (d.head || d.documentElement).appendChild(s);

@@ -125,7 +125,7 @@ var LogCore = (function () {
   if (typeof window !== "undefined") window.NursinLogCore = LogCore;
   if (!d || !d.addEventListener) return;
 
-  var V = "20261029w", SK = "nursin_caselog_v1", W = w;
+  var V = "20261029x", SK = "nursin_caselog_v1", W = w;
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
   function TT(ar, fr) { return FR() ? fr : ar; }
