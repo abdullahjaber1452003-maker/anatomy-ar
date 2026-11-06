@@ -131,9 +131,9 @@
     o = o || {}; var href = hrefOf(q, o.lid), y = why(q, k, lessonText(href)), id = "wx" + (++nreg);
     reg[id] = { q: q, k: k, o: o }; seen[q.id] = 1; style(); needPart(id);
     var h = '<div class="wxb" data-wx="' + id + '" data-wxq="' + esc(q.id) + '" data-nofr>';
-    h += '<p class="wxl wxw" data-wxl>❌ <b>' + T("ليش غلط؟", "Pourquoi faux ? (ليش غلط؟)") + '</b> <span dir="auto">(' + L.charAt(k) + ") " +
+    h += '<p class="wxl wxw" data-wxl>❌ <b>' + T("ليش غلط؟", "Pourquoi faux ? (ليش غلط؟)") + '</b> <span dir="rtl">(' + L.charAt(k) + ") " +
       (y.w ? esc(y.w) : esc(T("هالخيار مش هوّي الجواب — قارنو بالصح تحت 👇", "Ce choix n'est pas la réponse (مش هوّي الجواب) — compare avec la bonne 👇"))) + "</span></p>";
-    h += '<p class="wxl wxr" data-wxl>✅ <b>' + T("الصح:", "La bonne (الصح) :") + '</b> <span dir="auto">(' + L.charAt(q.a) + ") " + esc(clip(q.o[q.a], 60)) + (y.r ? " — " + esc(y.r) : "") + "</span></p>";
+    h += '<p class="wxl wxr" data-wxl>✅ <b>' + T("الصح:", "La bonne (الصح) :") + '</b> <span dir="rtl">(' + L.charAt(q.a) + ") " + esc(clip(q.o[q.a], 60)) + (y.r ? " — " + esc(y.r) : "") + "</span></p>";
     h += '<p class="wxa">' + (href ? '<a class="wxlk" href="' + esc(href) + '">📖 ' + T("ارجع للدرس", "Revoir la leçon (ارجع للدرس)") + "</a>" : "") +
       '<button type="button" class="wxsim" data-wxsim>🔁 ' + T("سؤال شبيه", "Question similaire (سؤال شبيه)") + "</button></p>";
     return h + '<div class="wxs" aria-live="polite"></div></div>';
