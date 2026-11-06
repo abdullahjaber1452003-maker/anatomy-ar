@@ -4,7 +4,8 @@
    the end record («📋 الخطوات الصح», mistakes, who helped) and «📚 الحالات السابقة». No help button, no ads. Engine: assets/livecase.js. */
 (function (w, d) {
   var L = w.LiveCase, C = w.LiveCore; if (!L || !C || !d || !d.addEventListener) return;
-  var E = w.ERROOM, R = w.ERRoom;
+  var E = w.ERROOM, R = w.ERRoom, AS = w.LiveAsst;
+  var asst = null, offer = null, asBtn = null;   // 29p 🧑‍⚕️🚶 my own assistant (local only) · his «بدّك ساعدك؟» clock · the bubble's ايه / لأ
   var lastRank = "", ov = null, D = null, st = null, mode = "loading", cv, cx, dpr = 1, scale = 1, G = null, bg = null, raf = 0, last = 0, nurse = null, mark = null;
   var hands = [], washed = false, sheet = null, panel = null, fbT = 0, endSeen = false, openQ = null, prevSt = {};
   // 28y: 💡 open hint box (bed k) · the step a paid hint pointed at · the 📤 checklist · each bed has its own IV set (soluté + cathéter + tubulure) at the bed
@@ -176,6 +177,7 @@
     docNeed: { ar: "«قبل ما قلّك شو تعطو، بدّي: {m}»", fr: "« Avant de prescrire, il me faut : {m} »" },
     // 29m 🧑‍⚕️ the helper nurse · 💬 talk to the patient · 📞 an unstable patient's doctor gives an order
     docGo: { ar: "«🚨 مش وقت ننطر — هلّق: {o}، وخبّرني دغري بالأرقام.»", fr: "« 🚨 On n'attend pas — tout de suite : {o}, et rappelle-moi avec les constantes. »" },
+    asNm: { ar: "مساعد", fr: "Aide" }, asQ: { ar: "بدّك ساعدك؟", fr: "Je t'aide ?" }, asY: { ar: "ايه", fr: "Oui" }, asN: { ar: "لأ", fr: "Non" },   // 29p
     hlp: { ar: "🧑‍⚕️ الممرض المساعد", fr: "🧑‍⚕️ L'infirmier aide" }, hlpAsk: { ar: "❓ شو بعمل؟", fr: "❓ Je fais quoi ?" },
     hlpIntro: { ar: "اسألني «شو بعمل؟» وبقلّك الخطوة الجاية — خطوة وحدة كل مرّة (−1 نقطة، {m} لكل مريض).", fr: "Demande-moi « Je fais quoi ? » : je te dis l'étape suivante, une à la fois (−1 point, {m} par patient)." },
     hlpCost: { ar: "−1 · باقي {l}/{m} لـ{n}", fr: "−1 · reste {l}/{m} pour {n}" },
@@ -286,6 +288,7 @@
     if (location.hash !== "#live") try { history.pushState({ lc: 1 }, "", "#live"); } catch (e) { location.hash = "live"; }
     q(".lcr-tt").textContent = depTitle();
     nurse = nurse || { x: 180, y: 560, dir: -Math.PI / 2, pts: [], goal: null, walkT: 0 };
+    if (AS && E) { asst = asst || AS.make(nurse, E.W, E.H); offer = offer || AS.offerNew(nowMs()); }   // 29p 🧑‍⚕️🚶
     L.start(onState).then(function (X) { D = X; if (!X) return; grpAdd(); G = screenGrid(G || (R && R.grid ? R.grid() : null)); stWatch(); size(); slots(); go(); flTabs();
       if (w.NursinPay) setTimeout(function () { w.NursinPay.sync(); }, 1500); });   // 29d 💵 the past days of the payroll (once each)
     if (LCa && !careIv) { careIv = setInterval(careTick, 1000); setTimeout(careTick, 1200); }   // 29d ⏰
@@ -428,8 +431,8 @@
   function nowMs() { return w.performance && w.performance.now ? w.performance.now() : Date.now(); }
   function kick(ms) { var t = nowMs() + (ms || 1500); if (t > hotTo) hotTo = t; }
   function peersMoving() { for (var k in peers) if (peers[k] && peers[k].pts && peers[k].pts.length) return true; return false; }
-  function busy(ts) { return !!(nurse && nurse.pts && nurse.pts.length) || !!trv || ts < hotTo || peersMoving(); }
-  function go() { stop(); if (d.hidden) return; last = 0; lastDraw = 0; kick(); raf = w.requestAnimationFrame(loop); }
+  function busy(ts) { return !!(nurse && nurse.pts && nurse.pts.length) || !!trv || ts < hotTo || peersMoving() || !!(asst && asst.mv); }   // 29p: + my assistant catching up
+  function go() { stop(); if (d.hidden) return; last = 0; lastDraw = 0; kick(); if (offer) AS.seen(offer, nowMs()); raf = w.requestAnimationFrame(loop); }
   function stop() { if (raf) w.cancelAnimationFrame(raf); raf = 0; }
   function loop(ts) {
     raf = w.requestAnimationFrame(loop);
@@ -443,6 +446,7 @@
     }
     if (st && st.end && ts - overT > 500) { overT = ts; overTick(); }
     travelTick(dt);
+    asstTick(ts, dt);                                             // 29p 🧑‍⚕️🚶 (no loop of his own)
     presFrame(dt);
     draw(ts / 1000);
     floorDraw(ts / 1000, dt);
@@ -671,9 +675,55 @@
     }
     }
     if (mark) { mark.t += 1 / 60; var r2 = 4 + (mark.t * 20) % 10; cx.strokeStyle = "rgba(15,118,110,.7)"; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(mark.x, mark.y, r2, 0, 7); cx.stroke(); }
+    asstDraw(P);                                                  // 29p 🧑‍⚕️ under the nurses
     peersDraw(P, t);
     nurseDraw(P, t);
     meTag();
+    asstBubble(P);
+  }
+  /* 29p 🧑‍⚕️🚶 my own assistant nurse, drawn in the room beside me (assets/liveasst.js = his follow + «بدّك ساعدك؟» logic). Local only:
+     not in presence, not in the shared doc. He moves inside the existing loop; standing still he costs nothing extra (idle 12 fps). */
+  function asstTick(ts, dt) {
+    if (!asst || !AS || !E) return;
+    if (!(trv && trv.ph === 2)) AS.follow(asst, nurse, dt, E.W, E.H);
+    if (!offer) return; var now = nowMs(), walking = !!(nurse.pts.length || trv || asst.mv);
+    if (walking) AS.seen(offer, now);                            // moving = activity
+    if (offer.shown) { if (AS.expired(offer, now) || helpOpen) AS.hide(offer, now); return; }
+    if (sheet || panel || helpOpen || !st) return;
+    if (AS.should(offer, now, walking)) { AS.show(offer, now); kick(); }
+  }
+  function asstDraw(P) {
+    if (!asst || (trv && trv.ph === 2)) return;
+    var sw = asst.mv ? Math.sin(asst.walkT * 12) : 0;
+    cx.fillStyle = "rgba(0,0,0,.15)"; cx.beginPath(); cx.ellipse(asst.x + 1.5, asst.y + 3.5, 11, 8, 0, 0, 7); cx.fill();
+    scrubs(asst.x, asst.y, asst.dir, sw, null, 1.15, P, "#16a34a", "#f8fafc", "#22c55e");      // green scrubs + a white cap = the assistant
+    if (!(offer && offer.shown)) label(cx, P, asst.x, asst.y - 15, "🧑‍⚕️ " + u("asNm"), "#16a34a");
+  }
+  function asstBubble(P) {
+    asBtn = null; if (!asst || !offer || !offer.shown || (trv && trv.ph === 2)) return;
+    var bw = 112, bh = 42, bx = Math.max(4, Math.min(E.W - bw - 4, asst.x - bw / 2)), by = Math.max(4, asst.y - 20 - bh);
+    cx.fillStyle = "rgba(0,0,0,.12)"; rr(cx, bx + 1, by + 2, bw, bh, 9); cx.fill();
+    cx.fillStyle = "#ffffff"; rr(cx, bx, by, bw, bh, 9); cx.fill(); cx.strokeStyle = "#16a34a"; cx.lineWidth = 1.3; cx.stroke();
+    cx.beginPath(); cx.moveTo(asst.x - 5, by + bh); cx.lineTo(asst.x, by + bh + 6); cx.lineTo(asst.x + 5, by + bh); cx.closePath(); cx.fillStyle = "#ffffff"; cx.fill();
+    cx.font = "700 9px " + EMO; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.direction = FR() ? "ltr" : "rtl"; cx.fillStyle = "#14532d";
+    cx.fillText("🧑‍⚕️ " + u("asQ"), bx + bw / 2, by + 11);
+    var y0 = by + 21, Y = { x: bx + 8, y: y0, w: 46, h: 16 }, N = { x: bx + bw - 54, y: y0, w: 46, h: 16 };
+    if (!FR()) { var tmp = Y; Y = N; N = tmp; }                 // RTL: «ايه» on the right
+    cx.fillStyle = "#16a34a"; rr(cx, Y.x, Y.y, Y.w, Y.h, 8); cx.fill(); cx.fillStyle = "#e2e8f0"; rr(cx, N.x, N.y, N.w, N.h, 8); cx.fill();
+    cx.font = "700 9px " + EMO; cx.fillStyle = "#fff"; cx.fillText(u("asY"), Y.x + Y.w / 2, Y.y + Y.h / 2 + 0.5); cx.fillStyle = "#334155"; cx.fillText(u("asN"), N.x + N.w / 2, N.y + N.h / 2 + 0.5);
+    asBtn = { y: Y, n: N, box: { x: bx, y: by, w: bw, h: bh } };
+  }
+  function inR(p, b, pad) { pad = pad || 3; return p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad; }
+  function asstHelp() { helpOpen = true; helpTxt = ""; helpPaint(); }   // the same box as the top-bar 🧑‍⚕️ (−1 · 3 per patient on «شو بعمل؟»)
+  function asstTap(p) {
+    if (!asst || !AS) return false; var now = nowMs();
+    if (offer && offer.shown && asBtn) {
+      if (inR(p, asBtn.y)) { AS.hide(offer, now); asstHelp(); return true; }
+      if (inR(p, asBtn.n)) { AS.hide(offer, now); return true; }
+      if (inR(p, asBtn.box, 0)) return true;
+    }
+    if (AS.hit(asst, p)) { if (offer && offer.shown) AS.hide(offer, now); if (helpOpen) { helpOpen = false; helpTxt = ""; helpPaint(); } else asstHelp(); return true; }
+    return false;
   }
   function nurseDraw(P) {
     var x = nurse.x, y = nurse.y, a = nurse.dir, sw = nurse.pts.length ? Math.sin(nurse.walkT * 12) : LCa && workMine().length ? Math.sin(Date.now() / 90) * 0.8 : 0;   // 29d: his hands work
@@ -775,8 +825,8 @@
   // a scrub cap (his own colour), a stethoscope from 🩺 ممرّض up, the 👔 supervisor's white collar
   var SCRUB = { tr: "#5aa9d6", nu: "#14b8a6", sr: "#1e3a8a", sup: "#7c3aed" };
   function scrubsCol(uid) { var t = tagOf(uid); return !t ? SCRUB.tr : t.sup ? SCRUB.sup : SCRUB[t.r.k] || SCRUB.tr; }
-  function scrubs(x, y, a, sw, uid, k, P, ring, cap) {
-    var col = scrubsCol(uid), t = tagOf(uid) || {}, rk = t.sup ? "sup" : (t.r && t.r.k) || "tr";
+  function scrubs(x, y, a, sw, uid, k, P, ring, cap, colX) {
+    var col = colX || scrubsCol(uid), t = (uid && tagOf(uid)) || {}, rk = t.sup ? "sup" : (t.r && t.r.k) || "tr";
     cx.save(); cx.translate(x, y); cx.scale(k, k); cx.rotate(a + Math.PI / 2);
     cx.fillStyle = P.skin; [[-9, sw * 4], [9, -sw * 4]].forEach(function (p) { cx.beginPath(); cx.arc(p[0], p[1] + 1.5, 2.3, 0, 7); cx.fill(); });            // hands
     cx.fillStyle = col; [[-8.5, sw * 4], [8.5, -sw * 4]].forEach(function (p) { rr(cx, p[0] - 2.6, p[1] - 4, 5.2, 6, 2.2); cx.fill(); });                 // sleeves
@@ -820,8 +870,9 @@
     if (LCa) workRing(nurse.x, nurse.y - 7 - s.h - 12);           // 29d ⏳ the ring above his name tag
   }
   function toL(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
-  function onTap(e) { kick();
+  function onTap(e) { kick(); if (offer) AS.seen(offer, nowMs());
     if (trv) { e.preventDefault(); return; }
+    if (!sheet && !panel && asstTap(toL(e))) { e.preventDefault(); return; }   // 29p 🧑‍⚕️ tap him / his ايه · لأ
     // 29h 🏥 (Abdullah, Nov 4 9:38 PM): the hospital never locks — after the daily case the room stays walkable (doors, 🛗, 🪑, beds = their steps)
     if (svcRoom()) { if (sheet || panel) return; e.preventDefault(); return svcTap(toL(e)); }
     if (sheet || panel || !G) return; e.preventDefault();
@@ -1339,6 +1390,7 @@
     if (Object.keys(work).length) workAll("wkGone");             // 29d ⏳ leaving the room stops what his hands were doing
     if (dk === "x") { var H0 = hosp(); if (!H0 || !H0.amb || !H0.amb.cur) return say("neutral", u("noAmb"), u("noAmb2")); }
     sheetClose(); panelClose(); hintOpen = null; handOpen = null; helpOpen = false; helpTxt = ""; helpAsk = null; talkOpen = null; helpPaint();
+    if (offer && offer.shown) AS.hide(offer, nowMs());
     var dr = { x: 180, y: E.H - 16 };
     trv = { from: cur, to: dk, ph: 1, t: 0, esc: esc0 || null };
     nurse.goal = null; nurse.pts = G && !svcRoom() ? R.path(G, nurse, dr) : [dr]; mark = null;
@@ -1350,6 +1402,7 @@
     if (trv.ph === 2) {
       trv.ph = 3; var to = trv.to, esc0 = trv.esc; L.setDep(to); st = L.state() || st; bg = null;
       nurse.x = 180; nurse.y = E.H - 18; nurse.dir = -Math.PI / 2; nurse.pts = G && !svcRoom() ? R.path(G, nurse, { x: 180, y: E.H - 92 }) : [{ x: 180, y: E.H - 92 }];
+      if (asst) AS.snap(asst, nurse, E.W, E.H);                   // 29p: he comes in with me
       cv.classList.remove("zout"); cv.classList.add("zin0"); void cv.offsetWidth; cv.classList.remove("zin0"); cv.classList.add("zin");
       trv = null; vfAt = 0; chime(); announce(to); pList = mine(pAll); peers = {}; flTabs();
       if (esc0) say("good", u("triIn", { n: esc0, d: depName(to) }), u("triInW"));
@@ -1556,6 +1609,7 @@
 
   /* ---------------- doing things ---------------- */
   function say(kind, title, why) {
+    if (kind === "bad" && offer) AS.missed(offer, nowMs());     // 29p: a wrong action → he may offer help
     var f = q(".lcr-fb"); if (!f) return;
     f.className = "lcr-fb on " + kind; f.innerHTML = "<p><b>" + esc(title) + "</b></p>" + (why ? '<p class="small">' + esc(why) + "</p>" : "");
     clearTimeout(fbT); fbT = setTimeout(function () { f.classList.remove("on"); }, kind === "bad" || kind === "ord" ? 6000 : 3800);
@@ -2155,6 +2209,7 @@
   w.LiveRoom = { open: open, close: close, sheet: function (kind, k) { sheetOpen(kind, k); }, rout: function () { return routLoad(); }, pkAdd: function (k, a, s) { pkAdd(k, a, s); }, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
     walkTo: function (dk) { walkTo(dk); }, travel: function () { return trv; }, acc: function (t) { accPanel(t); }, seated: function () { return seated().map(function (o) { return { id: wkey(o.x), at: o.at, spot: o.spot, kind: o.x.kind }; }); },
     tri: function (id) { var o = seated().filter(function (x) { return wkey(x.x) === id; })[0]; if (o) { triSel = id; triPick = { pr: 0, dc: '' }; sheetOpen('tri', id); } }, view: function (f) { vf = f; vfAt = Date.now(); flTabs(); },
+    asst: function () { return asst ? { x: asst.x, y: asst.y, mv: asst.mv, offer: offer ? { shown: offer.shown, last: offer.last, act: offer.act } : null, gate: { sheet: !!sheet, panel: !!panel, help: helpOpen, st: !!st, trv: !!trv } } : null; }, asstOffer: function () { if (offer) { offer.last = -1e12; offer.act = -1e12; } },   // 29p
     act: function (k, a, opt) { doAct(k, a, opt); }, go: function (k) { goTo(k); }, nurse: function () { return { x: nurse.x, y: nurse.y, moving: nurse.pts.length }; }, work: function () { return Object.keys(work).map(function (id) { var b = work[id]; return { id: id, a: b.a, k: b.k, dk: b.dk, end: b.end, t0: b.t0 }; }); },
     care: function () { return LCa ? careLoad() : null; }, careTick: function () { careTick(); }, reev: function (k) { reev(k); }, fuList: function () { sheet = { kind: "fu", k: "", tab: "" }; q(".lcr-sheet").hidden = false; sheetPaint(); }, actx: function () { return ACTX; } };   // 29d test hooks
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init); else init();
