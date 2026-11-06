@@ -10,7 +10,7 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261029p", K = "nursin_mid_v1";
+  var V = "20261029q", K = "nursin_mid_v1";
   var EXAM = "2026-11-16", START = "2026-11-01", EXAM_TS = Date.parse("2026-11-16T08:00:00+02:00");   // Lebanon = UTC+2 in November
   var MINQ = 20, MAXQ = 30;
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -18,7 +18,12 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function today(now) { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(now || new Date()); } catch (e) { return new Date((now ? +now : Date.now()) + 2 * 36e5).toISOString().slice(0, 10); } }
+  function today(now) {                                   // YYYY-MM-DD in Beirut (29q: formatToParts — WebKit/iOS en-CA format() gives «11/07/2026»)
+    var t = now || new Date();
+    try { var o = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(t).forEach(function (x) { o[x.type] = x.value; }); if (o.year && o.month && o.day) return o.year + "-" + o.month + "-" + o.day; } catch (e) {}
+    try { var f = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(t); if (/^\d{4}-\d\d-\d\d$/.test(f)) return f; } catch (e) {}
+    return new Date(+t + 2 * 36e5).toISOString().slice(0, 10);
+  }
   function addDays(day, n) { return new Date(Date.parse(day + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10); }
   function dayDiff(a, b) { return Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5); }
   function daysLeft(day) { return Math.max(0, dayDiff(day || today(), EXAM)); }
@@ -111,10 +116,11 @@
   function load() { var x = lsGet(K); if (!x || typeof x !== "object") x = {}; x.v = 1; x.best = x.best || {}; x.last = x.last || {}; x.lw = x.lw || {}; x.plan = x.plan || {}; return x; }
   function save(x) { lsSet(K, x); push(); try { d.dispatchEvent(new CustomEvent("nursin:mid")); } catch (e) {} }
   function result(s, score, total, byL, now) {             // → {pct, best (bool new best), weak:[{id,p}]}
-    var x = load(), at = now || Date.now(), pct = total ? Math.round(100 * score / total) : 0, b = x.best[s], nb = !b || pct > (b.p | 0);
+    var x = load(), at = now || Date.now(), pct = total ? Math.round(100 * score / total) : 0, b = x.best[s], nb = (!b || pct > (b.p | 0)) && (s === "weak" || total >= sizeOf(s));   // 29q: a 10-question plan quiz never becomes the «أحسن علامة»
     if (nb) x.best[s] = { p: pct, sc: score, n: total, at: at };
     var bl = {}; Object.keys(byL || {}).forEach(function (id) { var v = byL[id]; if (v && v[1]) { bl[id] = [v[0] | 0, v[1] | 0]; x.lw[id] = Math.round(100 * v[0] / v[1]); } });
     x.last[s] = { p: pct, at: at, d: today(new Date(at)), byL: bl };
+    if (total >= 5) { x.h = x.h || {}; var hd = x.h[s] = x.h[s] || [], dy = today(new Date(at)); if (hd.indexOf(dy) < 0) { hd.push(dy); if (hd.length > 40) hd.shift(); } }   // 🎯 29q: the plan's task ticks ✓
     save(x);
     return { pct: pct, best: nb, prev: b ? b.p | 0 : null, weak: weakOf(bl) };
   }
@@ -134,41 +140,133 @@
   function lessonInfo(id) { var L = NL().list || []; for (var i = 0; i < L.length; i++) if (lid(L[i]) === id) return L[i]; return null; }
 
   /* ---------------- «خطة المراجعة»: Nov 1 → Nov 13 every subject twice (a big one with a small one), Nov 14–15 light review ---------------- */
-  function plan() {
-    var subs = subjList().slice().sort(function (a, b) { return lessonsOf(b).length - lessonsOf(a).length || (a < b ? -1 : 1); });
-    var days = [], half = Math.ceil(subs.length / 2), pairs = [], i;
-    for (i = 0; i < half; i++) { var p = [subs[i]], j = subs.length - 1 - i; if (j > i) p.push(subs[j]); pairs.push(p); }
-    var last = dayDiff(START, EXAM) - 3, di = 0;           // pairs twice over the days up to Nov 13
-    for (var pass = 0; pass < 2; pass++) for (i = 0; i < pairs.length; i++) { days.push({ d: addDays(START, di), subs: pass ? pairs[(i + 1) % pairs.length] : pairs[i], k: "subj", pass: pass + 1 }); di++; }
-    while (di <= last) { days.push({ d: addDays(START, di), subs: ["msall"], k: "mix" }); di++; }   // spare days: the whole Med-Surg (the biggest group)
-    days.push({ d: addDays(EXAM, -2), subs: ["weak"], k: "light" }, { d: addDays(EXAM, -1), subs: ["weak"], k: "light" });
-    return days;
+  /* ---------------- 🎯 «خطة امتحان 16» (29q, Abdullah Nov 6 2:20 PM: «خطة لامتحان 16: بيعرف شو ضعيف عندك وبيقسم المواد عالأيام الباقية»)
+     All local. readiness(s) per subject from what the site already keeps: accuracy = his 🧠 حفظ score per lesson (assets/hifz.js
+     NursinRet.score), his mock results per lesson (lw) and best mock score; coverage = lessons opened (nursin_read_v1); recent mistakes
+     (nursin_weak_v1, last 14 days). plan(day) = from `day` to Nov 15: every subject twice before Nov 14 (weakest first, a 1st pass
+     = 10 questions + its weakest lesson, a 2nd pass = the full mock), class days (Thu/Fri/Sat) lighter, Nov 14–15 light review of
+     weak points only. Today's tasks are fixed once shown (x.fix[day]); a task ticks ✓ by itself when that subject's quiz / mock is
+     finished that day (x.h), or by hand (x.tk). Re-plans by itself: what was not done comes back from today on. */
+  var LIGHT = addDays(EXAM, -2);                           // Nov 14
+  function msSubs() { return ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"]; }
+  function isCls(day) { var g = new Date(day + "T12:00:00Z").getUTCDay(); return g === 4 || g === 5 || g === 6; }
+  function readMap(o) { return (o && o.read) || lsGet("nursin_read_v1") || {}; }
+  function weakItems(o) { if (o && o.weak) return o.weak; var x = lsGet("nursin_weak_v1"); return x && x.items || {}; }
+  function retScore(o, id) { if (o && o.ret) return o.ret(id); var R = w.NursinRet; try { return R && R.score ? R.score(id) : null; } catch (e) { return null; } }
+  function opened(id, m) { if (m[id]) return true; for (var k in m) if (k.indexOf(id + "#") === 0) return true; return false; }
+  function readiness(s, o) {                               // → {r 0–100, acc|null, cov 0–1, miss, weakL: lesson id to read first}
+    o = o || {}; var x = o.x || load(), L = lessonsOf(s), m = readMap(o), acc = [], op = 0, tp = {}, worst = null, wv = 101, firstNew = null, now = o.now || Date.now();
+    L.forEach(function (l) {
+      var v = [], r = retScore(o, l.id); if (r != null) v.push(+r); if (x.lw[l.id] != null) v.push(+x.lw[l.id]);
+      if (v.length) { var a = v.reduce(function (p, c) { return p + c; }, 0) / v.length; acc.push(a); if (a < wv) { wv = a; worst = l.id; } }
+      if (opened(l.id, m)) op++; else if (!firstNew) firstNew = l.id;
+      tp[l.t] = 1;
+    });
+    if (x.best[s] && x.best[s].p != null) acc.push(+x.best[s].p);
+    var it = weakItems(o), miss = 0; for (var k in it) { var e = it[k]; if (e && tp[e.t] && (!e.last || now - e.last < 14 * 864e5)) miss++; }
+    var a = acc.length ? acc.reduce(function (p, c) { return p + c; }, 0) / acc.length : null, cov = L.length ? op / L.length : 0;
+    var r = Math.round((a == null ? 25 : a) * 0.6 + cov * 40 - Math.min(20, miss * 4));
+    return { r: Math.max(0, Math.min(100, r)), acc: a == null ? null : Math.round(a), cov: cov, miss: miss, weakL: (wv < 70 ? worst : null) || firstNew || worst || (L[0] && L[0].id) || "" };
   }
-  function planDay(day) { var P = plan(); for (var i = 0; i < P.length; i++) if (P[i].d === day) return P[i]; return null; }
+  function credits(x, d0) {                                // {subject: {day:1}} — the sessions done (quiz / mock finished, ticked, or the day marked)
+    var c = {}, ms = msSubs();
+    function add(s, day) { if (d0 && day >= d0) return; if (s === "msall") { ms.forEach(function (y) { add(y, day); }); return; } (c[s] = c[s] || {})[day] = 1; }
+    Object.keys(x.h || {}).forEach(function (s) { (x.h[s] || []).forEach(function (day) { add(s, day); }); });
+    Object.keys(x.tk || {}).forEach(function (day) { Object.keys(x.tk[day] || {}).forEach(function (s) { add(s, day); }); });
+    Object.keys(x.plan || {}).forEach(function (day) { ((x.fix || {})[day] || []).forEach(function (t) { add(t.s, day); }); });
+    return c;
+  }
+  function nDone(c, s) { return Object.keys(c[s] || {}).length; }
+  function taskHref(t) { return t.s === "weak" ? "quiz.html?t=mid&s=weak&n=10" : "quiz.html?t=mid&s=" + t.s + (t.k === "quiz" ? "&n=10" : ""); }
+  function mkTask(u, k, R) { var rd = R[u.s] || {}; return { s: u.s, k: k, les: u.s === "weak" ? "" : (rd.weakL || "") }; }
+  function smart(day, o) {                                 // pure when o.x is given → [{d, k: main|light, cls, tasks:[{s,k,les}], subs, fixed}]
+    o = o || {}; day = day || today(); if (day >= EXAM) return [];
+    var x = o.x || load(), subs = subjList(), ms = msSubs(), R = {}, out = [], c = credits(x, day), fx = (x.fix || {})[day] && !o.fresh ? x.fix[day] : null;
+    subs.forEach(function (s) { R[s] = readiness(s, o); });
+    var inFx = {}; (fx || []).forEach(function (t) { if (t.s === "msall") ms.forEach(function (y) { inFx[y] = 1; }); else inFx[t.s] = 1; });
+    var need = {}; subs.forEach(function (s) { need[s] = Math.max(0, 2 - nDone(c, s) - (inFx[s] ? 1 : 0)); });
+    var d0 = fx ? addDays(day, 1) : day, main = [], dd;
+    for (dd = d0; dd < LIGHT; dd = addDays(dd, 1)) main.push(dd);
+    function capOf(dy, hard) { return isCls(dy) ? (hard ? 3 : 2) : 3; }
+    var capT = 0, capH = 0; main.forEach(function (dy) { capT += capOf(dy); capH += capOf(dy, 1); });
+    var reqSep = 0; subs.forEach(function (s) { reqSep += need[s]; });
+    var merge = reqSep > capT, units = [];                 // not enough room: the 4 Med-Surg subjects go as ONE «Med-Surg كلّو» mock
+    subs.forEach(function (s) { if (!(merge && ms.indexOf(s) > -1)) units.push({ s: s, r: R[s].r, need: need[s], n: lessonsOf(s).length }); });
+    if (merge) { var mn = 0, mr = 0, k = 0; ms.forEach(function (s) { if (R[s]) { mn = Math.max(mn, need[s]); mr += R[s].r; k++; } }); if (k) { R.msall = { r: Math.round(mr / k), weakL: R[ms[0]].weakL }; units.push({ s: "msall", r: R.msall.r, need: mn, n: 99 }); } }
+    units.sort(function (a, b) { return a.r - b.r || b.n - a.n || (a.s < b.s ? -1 : 1); });   // weakest first
+    var Lq = [];
+    units.forEach(function (u) { if (u.need >= 1) Lq.push({ u: u, k: u.need >= 2 && u.r < 60 ? "quiz" : "mock" }); });
+    units.forEach(function (u) { if (u.need >= 2) Lq.push({ u: u, k: "mock" }); });
+    var hard = Lq.length > capT; if (hard && Lq.length > capH) Lq = Lq.slice(0, capH);
+    if (fx) out.push({ d: day, k: day >= LIGHT ? "light" : "main", cls: isCls(day), tasks: fx, fixed: true });
+    var wRem = 0; main.forEach(function (dy) { wRem += isCls(dy) ? 2 : 3; });
+    main.forEach(function (dy) {
+      var w0 = isCls(dy) ? 2 : 3, cap = capOf(dy, hard), want = Lq.length ? Math.min(cap, Math.max(1, Math.ceil(Lq.length * w0 / wRem))) : 0, ts = [], seen = {};
+      wRem -= w0;
+      for (var i = 0; i < Lq.length && ts.length < want;) { var q = Lq[i]; if (seen[q.u.s]) { i++; continue; } seen[q.u.s] = 1; ts.push(mkTask(q.u, q.k, R)); Lq.splice(i, 1); }
+      if (!ts.length && units.length) ts.push(mkTask(units[0], "quiz", R));   // everything covered: a short quiz on the weakest subject
+      out.push({ d: dy, k: "main", cls: isCls(dy), tasks: ts });
+    });
+    for (dd = fx && day >= LIGHT ? addDays(day, 1) : (d0 > LIGHT ? d0 : LIGHT); dd < EXAM; dd = addDays(dd, 1)) {   // Nov 14–15: weak points only
+      var lt = [{ s: "weak", k: "weak", les: "" }];
+      if (!isCls(dd) && units.length) lt.push({ s: units[0].s, k: "les", les: R[units[0].s].weakL || "" });
+      out.push({ d: dd, k: "light", cls: isCls(dd), tasks: lt });
+    }
+    out.forEach(function (p) { p.subs = p.tasks.map(function (t) { return t.s; }); });
+    return out;
+  }
+  function plan(day) {                                     // the plan from `day` (default today); today's tasks fixed once shown
+    day = day || today(); var x = load(), P = smart(day, { x: x });
+    if (day === today() && P[0] && P[0].d === day && !P[0].fixed) { x.fix = x.fix || {}; x.fix[day] = P[0].tasks; Object.keys(x.fix).forEach(function (k) { if (k < addDays(day, -20)) delete x.fix[k]; }); lsSet(K, x); P[0].fixed = true; }
+    return P;
+  }
+  function planDay(day) {
+    day = day || today(); var td = today(), x = load();
+    if (day < td) { var f = (x.fix || {})[day]; return f ? { d: day, k: day >= LIGHT ? "light" : "main", cls: isCls(day), tasks: f, subs: f.map(function (t) { return t.s; }), past: true } : null; }
+    var P = smart(td, { x: x }); for (var i = 0; i < P.length; i++) if (P[i].d === day) return P[i];
+    P = day < EXAM ? smart(day, { x: x }) : []; return P[0] && P[0].d === day ? P[0] : null;
+  }
+  function taskDone(day, t, x) {
+    x = x || load(); if (x.plan[day]) return true; if ((x.tk || {})[day] && x.tk[day][t.s]) return true;
+    var h = x.h || {}; if ((h[t.s] || []).indexOf(day) > -1) return true;
+    if (t.s !== "weak" && t.s !== "msall" && msSubs().indexOf(t.s) > -1 && (h.msall || []).indexOf(day) > -1) return true;
+    if (t.k === "les" && t.les) { var m = readMap(); for (var k in m) if ((k === t.les || k.indexOf(t.les + "#") === 0) && today(new Date(+m[k] || 0)) === day) return true; }
+    return false;
+  }
+  function tick(day, s, on) { var x = load(); x.tk = x.tk || {}; var t = x.tk[day] = x.tk[day] || {}; if (on) t[s] = Date.now(); else delete t[s]; if (!Object.keys(t).length) delete x.tk[day]; save(x); }
+  function credit(s, day) { var x = load(); x.h = x.h || {}; var a = x.h[s] = x.h[s] || []; if (a.indexOf(day) < 0) { a.push(day); if (a.length > 40) a.shift(); save(x); } }
   function planMark(day, on) { var x = load(); if (on) x.plan[day] = Date.now(); else delete x.plan[day]; save(x); }
-  function planDone(day) { var x = load(); if (x.plan[day]) return true; var p = planDay(day); if (!p) return false;
-    return p.subs.every(function (s) { var l = x.last[s]; return !!(l && l.d === day); }); }
+  function planDone(day) { var p = planDay(day); if (!p) return !!load().plan[day]; var x = load(); return p.tasks.every(function (t) { return taskDone(day, t, x); }); }
+  function missed(day) {                                   // yesterday's plan left undone → the plan was re-made from today
+    day = day || today(); var y = addDays(day, -1), f = (load().fix || {})[y], x = load(); if (!f || x.plan[y]) return 0;
+    return f.filter(function (t) { return !taskDone(y, t, x); }).length;
+  }
 
   /* ---------------- the path step (assets/home.js) ---------------- */
   function step(day) {
     day = day || today(); if (!active(day) || day < addDays(START, -7)) return null;
-    var p = planDay(day), s = p ? p.subs[0] : "weak", left = daysLeft(day);
-    return { k: "mid", e: "🎯", id: day, s: s, s2: p && p.subs[1] ? p.subs[1] : "", light: p && p.k === "light" ? 1 : 0, left: left, href: "quiz.html?t=mid&s=" + s + (s === "weak" ? "&n=10" : "") };
+    var p = day === today() ? plan(day)[0] : planDay(day), left = daysLeft(day), x = load();
+    var ts = p && p.d === day ? p.tasks : [{ s: "weak", k: "weak", les: "" }], dn = ts.filter(function (t) { return taskDone(day, t, x); }).length;
+    var t = ts.filter(function (t) { return !taskDone(day, t, x); })[0] || ts[0], s2 = ts.filter(function (y) { return y !== t; }).map(function (y) { return y.s; })[0] || "";
+    return { k: "mid", e: "🎯", id: day, s: t.s, s2: s2, light: p && p.k === "light" ? 1 : 0, left: left, n: ts.length, dn: dn, tk: t.k, href: t.k === "les" && t.les && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t) };
   }
-  function stepDone(day, at) { var x = load(); if (x.plan[day]) return true; var t = 0; Object.keys(x.last).forEach(function (s) { var l = x.last[s]; if (l && l.d === day && (+l.at || 0) > t) t = +l.at; }); return t > (at || 0); }
+  function stepDone(day) { return planDone(day); }
 
   /* ---------------- ☁️ sync: users/{uid}.midterm {best, lw, plan} (owner merge, no new rule) ---------------- */
   function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db ? A : null; }
   var pt = 0;
   function push() {
     clearTimeout(pt); pt = setTimeout(function () { var A = fbA(); if (!A) return; var x = load();
-      try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { midterm: { v: 1, best: x.best, lw: x.lw, plan: x.plan, at: Date.now() } }, { merge: true }).catch(function () {}); } catch (e) {} }, 2500);
+      try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { midterm: { v: 1, best: x.best, lw: x.lw, plan: x.plan, h: x.h || {}, tk: x.tk || {}, at: Date.now() } }, { merge: true }).catch(function () {}); } catch (e) {} }, 2500);
   }
   function merge(x, r) {                                   // pure: best = the higher score, plan = union, lw = local first
     var ch = false, k; if (!r || typeof r !== "object") return { x: x, ch: false };
     for (k in r.best || {}) { var b = r.best[k]; if (b && typeof b.p === "number" && (!x.best[k] || b.p > (x.best[k].p | 0))) { x.best[k] = { p: b.p | 0, sc: b.sc | 0, n: b.n | 0, at: +b.at || 0 }; ch = true; } }
     for (k in r.plan || {}) if (/^\d{4}-\d\d-\d\d$/.test(k) && !x.plan[k]) { x.plan[k] = +r.plan[k] || 1; ch = true; }
     for (k in r.lw || {}) if (x.lw[k] == null && typeof r.lw[k] === "number") { x.lw[k] = r.lw[k]; ch = true; }
+    var D = /^\d{4}-\d\d-\d\d$/;                         // 🎯 29q: the plan's done sessions + ticks, union
+    for (k in r.h || {}) if (Array.isArray(r.h[k])) r.h[k].forEach(function (dy) { if (!D.test(dy)) return; x.h = x.h || {}; var a = x.h[k] = x.h[k] || []; if (a.indexOf(dy) < 0) { a.push(dy); ch = true; } });
+    for (k in r.tk || {}) if (D.test(k) && r.tk[k] && typeof r.tk[k] === "object") Object.keys(r.tk[k]).forEach(function (s) { x.tk = x.tk || {}; var t = x.tk[k] = x.tk[k] || {}; if (!t[s]) { t[s] = +r.tk[k][s] || 1; ch = true; } });
     return { x: x, ch: ch };
   }
   function pull() {
@@ -197,19 +295,43 @@
       (b ? '<span class="midbest ' + pctCls(b.p) + '" title="' + T("أحسن علامة", "Meilleur score") + '">🏅 ' + b.p + "%</span>" : '<span class="midbest none">' + T("ما جرّبت", "Pas encore") + "</span>") + "</small></span>" +
       '<a class="btn pri sm" href="quiz.html?t=mid&amp;s=' + s + '">' + T("امتحان كامل ⏱️", "Examen complet ⏱️") + "</a></li>";
   }
+  function kindName(t) {
+    return t.k === "weak" ? T("١٠ أسئلة من نقاط ضعفك", "10 questions sur tes points faibles") : t.k === "les" ? T("📖 راجع أضعف درس", "📖 Relis ta leçon la plus faible")
+      : t.k === "quiz" ? T("١٠ أسئلة + الدرس الأضعف", "10 questions + la leçon la plus faible") : T("امتحان كامل ⏱️", "Examen complet ⏱️");
+  }
+  function taskName(t) { return t.s === "weak" ? T("💪 نقاط ضعفك", "💪 Tes points faibles") : (EMO[t.s] || "📘") + " " + esc(subjName(t.s)); }
+  function lesLink(t) { var l = t.les ? lessonInfo(t.les) : null; return l ? '<a class="midles" href="' + esc(l.href) + '">📖 ' + esc(l.n) + "</a>" : ""; }
+  function taskRow(day, t, x, live) {
+    var dn = taskDone(day, t, x), go = t.k === "les" && t.les && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t);
+    return '<li class="midtask' + (dn ? " dn" : "") + '">' + (live ? '<label class="tkb"><input type="checkbox" data-midtk="' + day + "|" + t.s + '"' + (dn ? " checked" : "") + ' aria-label="✓"></label>' : '<span class="tkb">' + (dn ? "✅" : "⬜") + "</span>") +
+      '<span class="tx"><b>' + taskName(t) + "</b><small>" + kindName(t) + "</small>" + (t.k !== "les" ? lesLink(t) : "") + "</span>" +
+      '<a class="btn ' + (dn ? "" : "pri ") + 'sm" href="' + esc(go) + '">' + (dn ? T("✓ تمام", "✓ Fait") : T("يلا", "Go")) + "</a></li>";
+  }
   function planHtml() {
-    var P = plan(), td = today(), top = "", rest = "";
-    P.forEach(function (p) {
-      var dn = planDone(p.d), cur = p.d === td, past = p.d < td, soon = p.d >= td && dayDiff(td, p.d) <= 2;
-      var row = '<li class="midday' + (cur ? " cur" : "") + (dn ? " dn" : "") + (past && !dn ? " miss" : "") + '"><label><input type="checkbox" data-midday="' + p.d + '"' + (dn ? " checked" : "") + '> <span class="dl">' + dayLabel(p.d) + (cur ? " · " + T("اليوم", "aujourd'hui") : "") + "</span>" +
-        (p.k === "subj" && p.pass === 2 ? ' <small class="dp">' + T("مرّة تانية", "2e passage") + "</small>" : p.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : p.k === "mix" ? ' <small class="dp">' + T("كل Med-Surg", "tout Med-Surg") + "</small>" : "") + "</label>" +
-        '<span class="dgo">' + p.subs.map(function (s) { return '<a class="btn sm" href="quiz.html?t=mid&amp;s=' + s + (s === "weak" ? "&amp;n=10" : "") + '">' + (EMO[s] || "⏱️") + " " + esc(s === "weak" ? T("١٠ أسئلة من أضعف دروسك", "10 questions sur tes leçons faibles") : subjName(s)) + "</a>"; }).join("") + "</span></li>";
-      if (soon) top += row; else rest += row;
-    });
-    var nd = P.filter(function (p) { return planDone(p.d); }).length;
-    return '<section class="qcard midplan" id="plan"><h2>📅 ' + T("خطة المراجعة", "Plan de révision") + ' <small>' + nd + "/" + P.length + "</small></h2><p class=\"small\">" +
-      T("كل مادة بتمرق عليها مرّتين لحدّ ١٣/١١، و١٤–١٥ مراجعة خفيفة لأضعف دروسك. بيتعلّم ✅ لحالو لما تعمل امتحان اليوم، أو علّمو إنت.", "Chaque matière passe deux fois jusqu'au 13/11, et les 14–15 : révision légère de tes leçons faibles. Coché ✅ tout seul quand tu fais l'examen du jour, ou coche-le toi-même.") +
-      "</p>" + (top ? '<ol class="middays">' + top + "</ol>" : "") + (rest ? '<details class="midall"><summary>' + T("📅 كل الأيام", "📅 Tous les jours") + " (" + P.length + ")</summary><ol class=\"middays\">" + rest + "</ol></details>" : "") + "</section>";
+    var td = today(); if (!active(td)) return "";
+    var P = plan(td), x = load(), left = daysLeft(td), mi = missed(td), p0 = P[0], rest = P.slice(1);
+    var h = '<section class="qcard midplan" id="plan"><h2>🎯 ' + T("خطة امتحان 16", "Plan examen du 16") + ' <small>⏳ ' + T("باقي " + left + " يوم", "J-" + left) + "</small></h2>" +
+      '<p class="small">' + T("مبنية على علاماتك ودروسك اللي فتحتها وغلطاتك: الأضعف أول، كل مادة مرّتين قبل ١٤/١١، أيام الدوام (خميس/جمعة/سبت) أخف، و١٤–١٥ نقاط ضعفك بس. بيتعلّم ✓ لحالو لما تخلص الامتحان أو الأسئلة.",
+        "Basé sur tes scores, les leçons ouvertes et tes erreurs : la plus faible d'abord, chaque matière deux fois avant le 14/11, jours de cours (jeu./ven./sam.) plus légers, et les 14–15 seulement tes points faibles. Coché ✓ tout seul quand tu finis.") + "</p>" +
+      (mi ? '<p class="midre">🔄 ' + T("فاتك شي مبارح؟ ولا يهمّك، رتّبتلك الخطة من جديد.", "Raté hier ? Pas grave, le plan est refait.") + "</p>" : "");
+    if (p0 && p0.d === td) {
+      var nd = p0.tasks.filter(function (t) { return taskDone(td, t, x); }).length;
+      h += '<h3 class="midgh">📌 ' + T("اليوم", "Aujourd'hui") + " · " + dayLabel(td) + (p0.cls && p0.k === "main" ? ' <small class="dp">🏫 ' + T("يوم دوام: خفيف", "jour de cours : léger") + "</small>" : p0.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") +
+        " <small>" + nd + "/" + p0.tasks.length + "</small></h3><ol class=\"midtasks\">" + p0.tasks.map(function (t) { return taskRow(td, t, x, true); }).join("") + "</ol>" +
+        (nd === p0.tasks.length ? '<p class="midok">✅ ' + T("خلصت خطة اليوم. برافو!", "Plan du jour terminé. Bravo !") + "</p>" : "");
+    }
+    if (rest.length) h += '<details class="midall"' + (rest.length <= 3 ? " open" : "") + "><summary>📅 " + T("الأيام الجاية", "Les jours suivants") + " (" + rest.length + ")</summary><ol class=\"middays\">" + rest.map(function (p) {
+      return '<li class="midday"><span class="dl">' + dayLabel(p.d) + (p.cls && p.k === "main" ? ' <small class="dp">🏫 ' + T("دوام", "cours") + "</small>" : p.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") + '</span><span class="dgo">' +
+        p.tasks.map(function (t) { return '<a class="btn sm" href="' + esc(t.k === "les" && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t)) + '">' + taskName(t) + " · " + kindName(t) + "</a>"; }).join("") + "</span></li>";
+    }).join("") + "</ol></details>";
+    var subs = subjList().map(function (s) { return { s: s, r: readiness(s) }; }).sort(function (a, b) { return a.r.r - b.r.r; });
+    h += '<details class="midrd"><summary>📊 ' + T("جاهزيتك بكل مادة", "Ta préparation par matière") + "</summary><ul>" + subs.map(function (y) {
+      var c = load(), cr = credits(c)[y.s];
+      return '<li><span>' + (EMO[y.s] || "📘") + " " + esc(subjName(y.s)) + '</span><span class="midbar"><i class="' + pctCls(y.r.r) + '" style="width:' + y.r.r + '%"></i></span><b>' + y.r.r + "%</b><small>" +
+        T("📖 " + Math.round(y.r.cov * 100) + "% دروس · " + (y.r.acc == null ? "ما في علامات" : "صح " + y.r.acc + "%") + (y.r.miss ? " · ❌ " + y.r.miss : "") + " · " + Object.keys(cr || {}).length + "/2",
+          "📖 " + Math.round(y.r.cov * 100) + "% leçons · " + (y.r.acc == null ? "pas de score" : "juste " + y.r.acc + "%") + (y.r.miss ? " · ❌ " + y.r.miss : "") + " · " + Object.keys(cr || {}).length + "/2") + "</small></li>";
+    }).join("") + "</ul></details></section>";
+    return h;
   }
   function weakHtml() {
     var W = weakLessons(5); if (!W.length) return "";
@@ -220,17 +342,17 @@
   }
   function hub() {
     var subs = subjList(), ms = ((NL().groups || {}).medsurg || {}).subs || [], tried = subs.filter(function (s) { return load().best[s]; }).length;
-    var td = today(), p = planDay(td);
+    var td = today(), p = active(td) ? plan(td)[0] : null;
     var h = '<section class="qcard midhero"><p class="midk">🎯 ' + T("امتحان الفصل", "Examen de mi-semestre") + '</p><h1>' + T("الإثنين ١٦ تشرين الثاني ٢٠٢٦", "Lundi 16 novembre 2026") + "</h1>" + cdHtml() +
       '<p class="small">' + T("كل الدروس من كل المواد. جرّبت " + tried + " من " + subs.length + " مواد.", "Toutes les leçons de toutes les matières. Tu as essayé " + tried + " matière(s) sur " + subs.length + ".") + "</p>" +
-      (p && active(td) ? '<p class="midtoday">📌 ' + T("خطة اليوم: ", "Plan du jour : ") + (p.k === "light" ? T("مراجعة خفيفة + ١٠ أسئلة", "révision légère + 10 questions") : p.subs.map(function (s) { return esc(subjName(s)); }).join(" + ")) + ' <a href="#plan">' + T("الخطة كلّها", "Tout le plan") + "</a></p>" : "") + "</section>";
+      (active(td) ? '<p class="midtoday">⏳ ' + T("باقي " + daysLeft(td) + " يوم", "J-" + daysLeft(td)) + (p && p.tasks ? " · 📌 " + T("خطة اليوم: ", "Plan du jour : ") + p.tasks.map(function (t) { return t.s === "weak" ? T("نقاط ضعفك", "points faibles") : esc(subjName(t.s)); }).join(" + ") : "") + ' <a href="#plan">' + T("🎯 الخطة", "🎯 Le plan") + "</a></p>" : "") + "</section>" + planHtml();
     h += '<section class="qcard midsubs"><h2>📚 ' + T("امتحان كامل لكل مادة", "Un examen complet par matière") + '</h2><p class="small">' +
       T("أسئلة من كل دروس المادة بالتساوي، دقيقة لكل سؤال. بالآخر: علامتك، نتيجتك بكل درس وأضعف دروسك. الغلط بيرجعلك بمراجعة بكرا.", "Des questions de toutes les leçons de la matière, à parts égales, une minute par question. À la fin : ton score, ton résultat par leçon et tes leçons faibles. Les erreurs reviennent demain en révision.") + "</p>";
     var g = (NL().groups || {}).medsurg;
     if (g && ms.length) h += '<h3 class="midgh">' + esc(g.e || "🏥") + " " + esc(T(g.ar, g.fr)) + '</h3><ul class="midlist">' + subjBtn("msall") + ms.filter(function (s) { return subs.indexOf(s) > -1; }).map(subjBtn).join("") + "</ul>" +
       '<h3 class="midgh">📘 ' + T("باقي المواد", "Les autres matières") + "</h3>";
     h += '<ul class="midlist">' + subs.filter(function (s) { return ms.indexOf(s) < 0; }).map(subjBtn).join("") + "</ul>";
-    h += "</section>" + weakHtml() + planHtml();
+    h += "</section>" + weakHtml();
     return h;
   }
   function draw() { if (!root) return; root.innerHTML = hub(); }
@@ -239,7 +361,7 @@
     d.documentElement.classList.add("rton");             // no ads on this page at all
     draw();
     clearInterval(tk); tk = setInterval(function () { var c = root.querySelector(".midcd"); if (!c) return; var t = d.createElement("div"); t.innerHTML = cdHtml(); c.parentNode.replaceChild(t.firstChild, c); }, 1000);
-    root.addEventListener("change", function (e) { var b = e.target.closest && e.target.closest("[data-midday]"); if (!b) return; planMark(b.getAttribute("data-midday"), b.checked); draw(); });
+    root.addEventListener("change", function (e) { var b = e.target.closest && e.target.closest("[data-midtk]"); if (!b) return; var v = b.getAttribute("data-midtk").split("|"); tick(v[0], v[1], b.checked); draw(); });
     if (location.hash === "#plan") setTimeout(function () { var p = d.getElementById("plan"); if (p) p.scrollIntoView({ block: "start" }); }, 200);
   }
   /* cases are loaded only for the exam itself (quiz.html?t=mid) */
@@ -250,10 +372,11 @@
 
   w.NursinMid = { V: V, EXAM: EXAM, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
     subjects: subjList, lessonsOf: lessonsOf, subjName: subjName, size: size, sizeOf: sizeOf, pools: pools, build: build, seeded: seeded, result: result, weakOf: weakOf,
-    weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone,
+    weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls, LIGHT: LIGHT,
     merge: merge, pull: pull, load: load, loadCases: loadCases, EMO: EMO, KEY: K };
   if (!d || !d.addEventListener) return;
   d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) setTimeout(pull, 1500); });
   setTimeout(function () { if (fbA()) pull(); }, 3000);
+  d.addEventListener("nursin:quizdone", function (e) { var v = e.detail || {}; if (v.sel && v.sel !== "mid" && subjList().indexOf(v.sel) > -1 && (v.total | 0) >= 5) credit(v.sel, today()); });   // 🎯 29q: a subject quiz ticks its plan task
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", initPage); else initPage();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

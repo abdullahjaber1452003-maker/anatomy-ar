@@ -432,6 +432,13 @@ html[data-theme=night] .midbest{color:#5eead4}html[data-theme=night] .midbest.g{
 .midday.dn{opacity:.72}
 .midday.miss .dl{color:#b91c1c}html[data-theme=night] .midday.miss .dl{color:#fca5a5}
 .midplan h2 small{font-size:13px;color:var(--hzmut)}
+.midtasks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.midtask{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px;background:var(--hzbox);border:1px solid var(--hzedge)}
+.midtask .tkb input{width:22px;height:22px;accent-color:#0f766e}.midtask .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.midtask .tx small{font-size:12px;color:var(--hzmut)}.midtask .midles{font-size:12.5px;font-weight:700}.midtask.dn{opacity:.7}.midtask.dn b{text-decoration:line-through}
+.midre,.midok{font-weight:800;font-size:13px;padding:6px 10px;border-radius:12px;background:var(--hztrack)}
+.midrd ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}.midrd li{display:grid;grid-template-columns:1fr 70px 40px;gap:2px 8px;align-items:center;font-size:13px}
+.midrd li small{grid-column:1/-1;font-size:11.5px;color:var(--hzmut)}.midbar{height:8px;border-radius:99px;background:var(--hztrack);overflow:hidden}.midbar i{display:block;height:100%;background:#dc2626}.midbar i.y{background:#d97706}.midbar i.g{background:#16a34a}
 .midwl{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .midwl li{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .midls ul{margin:6px 0;padding-inline-start:18px;font-size:13px}
