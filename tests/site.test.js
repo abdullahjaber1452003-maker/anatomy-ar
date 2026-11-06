@@ -6696,11 +6696,12 @@ test('#281 29u ❌ a wrong answer shows ❌ ليش غلط؟ + ✅ الصح from 
   for (const q of Q) for (let k = 0; k < q.o.length; k++) { if (k === q.a) continue; pairs++; const z = X.why(q, k, []);
     assert.ok(z.src === 'x', q.id); if (z.w) { found++; assert.ok(X.sents(q.x).includes(z.w), q.id + ' ❌ is a sentence of x'); }
     if (z.r) assert.ok(X.sents(q.x).includes(z.r), q.id + ' ✅ is a sentence of x'); }
-  assert.ok(found / pairs > 0.3, 'a real reason for a good share of wrong options (' + found + '/' + pairs + ')');
+  assert.ok(found / pairs > 0.2, 'a real reason for a good share of wrong options (' + found + '/' + pairs + ')');
   // no explanation: built from the lesson text only, else just the right answer + the link
   const nx = { id: 'zz1', t: 'infarctus', q: 'test?', o: ['Troponine', 'Myoglobine', 'LDH'], a: 0 };
   const les = ['La Troponine est le marqueur le plus spécifique de la nécrose.', 'La Myoglobine monte tôt mais elle est peu spécifique.'];
-  const z = X.why(nx, 1, les); assert.ok(/Myoglobine/.test(z.w) && /Troponine/.test(z.r) && z.src === 'lesson', 'from lesson text');
+  const z = X.why(nx, 1, les); assert.ok(z.w === null && /Troponine/.test(z.r) && z.src === 'lesson', '✅ from the lesson sentence carrying the right answer; ❌ never from a lesson sentence that merely names his option');
+  const q637 = Q.find(q => q.id === 'q637'), y637 = X.why(q637, 2, []); assert.ok(y637.w === null && /استبدال/.test(y637.r), 'q637 (c): the right answer\'s sentence is never shown as «ليش غلط؟»');
   const z0 = X.why(nx, 2, []); assert.ok(z0.w === null && z0.r === null && z0.src === 'none', 'nothing found → nothing invented');
   const h0 = X.html(nx, 2, {}); assert.ok(h0.includes('الصح:') && h0.includes('Troponine') && h0.includes('cardio.html#infarctus'), 'right answer + lesson link only');
 });
