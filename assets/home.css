@@ -66,6 +66,7 @@ html[dir=ltr] .hzst .go svg{transform:scaleX(-1)}
 /* «موادي» */
 .hzsh{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 8px}
 .hzsh h2{background:none;margin:0;font-size:18px;font-weight:900;color:var(--hzink);border:0;padding:0}
+.hzsh .hzmmb{font-weight:800;font-size:13px;color:var(--hzacc);text-decoration:none;padding:4px 10px;border-radius:99px;border:1px solid var(--hzedge);background:var(--hzbox)}
 .hzsh button{background:none;border:0;color:var(--hzacc);font-weight:800;font-size:14px}
 .hzsubs{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:0 -16px 18px;padding:2px 16px 8px;scroll-snap-type:x proximity}
 .hzsubs::-webkit-scrollbar{display:none}

@@ -535,11 +535,13 @@
   }
   function chipsHtml() {
     return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="all">✨ ' + T("الكل", "Tout") + "</button>" +
+      '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +   // 🗺️ mind maps next to the subjects (Nov 6 2026)
+
       SUBJ.map(function (s) { return '<a href="' + s.p + '">' + s.e + " " + esc(T(s.ar, s.fr)) + "</a>"; }).join("") + "</nav>";
   }
   function subsHtml() {
     var L = []; try { L = (w.NursinRet && w.NursinRet.list) ? w.NursinRet.list() : []; } catch (e) {}
-    return '<div class="hzsh"><h2>' + T("📚 موادي", "📚 Mes matières") + '</h2><button type="button" data-hz="learn">' + T("الكل", "Tout") + " (" + (SUBJ.length - 1) + ")</button></div><div class=\"hzsubs\">" +
+    return '<div class="hzsh"><h2>' + T("📚 موادي", "📚 Mes matières") + '</h2><a class="hzmmb" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + '</a><button type="button" data-hz="learn">' + T("الكل", "Tout") + " (" + (SUBJ.length - 1) + ")</button></div><div class=\"hzsubs\">" +
       SUBJ.map(function (s) {
         var xs = L.filter(function (l) { return s.s.indexOf(l.s) > -1 && l.score != null; }), pc = xs.length ? Math.round(xs.reduce(function (a, l) { return a + l.score; }, 0) / xs.length) : null;
         return '<a class="hzsc" href="' + s.p + '" style="background:' + s.g + '"><span class="art" aria-hidden="true"><i></i><i></i><span>' + s.e + "</span></span><b>" + esc(T(s.ar, s.fr)) + "</b><small>" +

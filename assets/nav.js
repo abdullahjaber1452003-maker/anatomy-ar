@@ -20,7 +20,7 @@
      with a 5th value need an account: signed out they show 🔒 (as the home tiles did). */
   var G = [
     { k: "home", e: "🏠", n: "الرئيسية", href: "index.html", pages: ["index.html"] },
-    { k: "learn", e: "📚", n: "المواد", pages: ["medsurg.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "3d.html", "hifzi.html", "notes.html", "highlights.html", "tutor.html"], items: [
+    { k: "learn", e: "📚", n: "المواد", pages: ["medsurg.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "mindmap.html", "3d.html", "hifzi.html", "notes.html", "highlights.html", "tutor.html"], items: [
       ["#search", "🔎", "دوّر على درس", "اكتب أي كلمة بالعربي أو بالفرنسي"],
       ["medsurg.html", "🏥", "Med-Surg (طبّي-جراحي)", "القلب · الأعصاب · Henderson · 💉 التسريب الوريدي"],
       ["cardio.html", "❤️", "القلب", "↳ Med-Surg · 12 درس: الجلطة، ECG، القصور، الصدمة"],
@@ -33,6 +33,7 @@
       ["rea.html", "🚑", "الإنعاش", "غازات الدم، المحاليل الوريدية، الصدمات"],
       ["geri.html", "👴", "الشيخوخة (Gériatrie)", "10 دروس: تقييم المسن، السقوط، السلس، قرحة الفراش، الأدوية"],
       ["community.html", "🏘️", "صحة المجتمع", "8 دروس: الرعاية الأولية، الوقاية، الأوبئة، السرطان، اللقاحات"],
+      ["mindmap.html", "🗺️", "الخرائط الذهنية", "خريطة لكل درس: المادة ← الدرس ← فروعو"],
       ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"],
       ["hifzi.html", "🗺️", "حفظي", "الحفظ، نقاط ضعفك والأخطاء الشائعة"],
       ["notes.html", "📒", "ملاحظاتي", "كل ملاحظاتك مرتّبة حسب المادة والدرس"],

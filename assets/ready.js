@@ -12,7 +12,7 @@
    Local only: no network, no Firestore. ES5 for iOS 12. No ads here. */
 (function (w, d) {
   "use strict";
-  var V = "20261029v";
+  var V = "20261029w";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -86,6 +86,7 @@
       ".rdc{padding:3px 9px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:inherit;text-decoration:none;font-size:.86em;white-space:nowrap}" +
       ".rdc.rdy-red{border-color:#fca5a5}.rdc.rdy-amb{border-color:#fcd34d}.rdc.rdy-grn{border-color:#86efac}" +
       ".adl{display:inline-block;margin-inline-start:6px;padding:0 7px;border-radius:999px;font-size:.78em;font-weight:600;background:#f1f5f9;vertical-align:middle}" +
+      ".mmlk{display:inline-block;margin:2px 0 8px;padding:6px 13px;border-radius:999px;border:1px solid #99f6e4;background:#f0fdfa;color:#0f766e;font-weight:700;text-decoration:none;font-size:.92em}html[data-theme=night] .mmlk{background:#13302c;border-color:#1f5f56;color:#5eead4}" +
       "html[data-theme=night] .rdy,html[data-theme=night] .rdc{background:#1b232b;border-color:#3a4a58}html[data-theme=night] .adl{background:#26313b}html[data-theme=night] .rdyb{background:#33404c}";
     var s = d.createElement("style"); s.id = "rdycss"; s.textContent = c; (d.head || d.documentElement).appendChild(s);
   }
@@ -93,6 +94,8 @@
     if (!d || !d.querySelector) return;
     var s = subjOfPage(), h1 = d.querySelector("main h1");
     if (s && h1 && !d.querySelector(".rdy")) { var h = headHtml(s); if (h) { style(); h1.insertAdjacentHTML("afterend", h); } }
+    // 🗺️ «الخرائط الذهنية» entry in the subject header (Nov 6 2026, assets/mindmap.js) — Med-Surg's page opens the whole list
+    if (s && h1 && !d.querySelector(".mmlk")) { style(); h1.insertAdjacentHTML("afterend", '<a class="mmlk" href="mindmap.html' + (s === "medsurg" ? "" : "#s=" + esc(s)) + '">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + " ←</a>"); }
     var app = d.getElementById("mid-app");
     if (app && !d.querySelector(".rdcs")) { var c = chipsHtml(); if (c) { style(); app.insertAdjacentHTML("beforebegin", c); } }
   }
