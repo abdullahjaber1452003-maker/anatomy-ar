@@ -1147,7 +1147,8 @@
   function triLine(p) {
     var R = w.LiveDept.triReason(p), P0 = L.PRN[R.pr] || L.PRN[4], F = FR(), N = ABCN[R.L];
     if (R.pr === 4) return F ? "🟢 Aucun signe d'alerte → peut attendre (Non urgent = مش مستعجل)" : "🟢 ما في علامة خطر → بينطر (Non urgent = مش مستعجل)";
-    var val = R.val || { air: F ? "voies aériennes menacées (مجرى الهوا بخطر)" : "مجرى الهوا بخطر", bleed: F ? "saignement (نزيف)" : "نزيف", rate: F ? "histoire inquiétante (قصّة خطرة)" : "قصّتو خطرة" }[R.k] || "";
+    var cc = String(T(p.who || p.say) || "").split(/ — |،|,/)[0], val = R.val || { air: F ? "obstruction (انسداد)" : "انسداد", bleed: F ? "saignement (نزيف)" : "نزيف" }[R.k] ||
+      (cc ? "«" + (cc.length > 30 ? cc.slice(0, 30) + "…" : cc) + "»" : (F ? "histoire (القصّة)" : "القصّة"));   // E without a vital: his own complaint
     return P0.ic + (F ? (R.pr <= 2 ? " Pourquoi en haut ? " : " Pourquoi ici ? ") : (R.pr <= 2 ? " ليش فوق؟ " : " ليش هون؟ ")) + val + " → " + R.L + " " +
       (F ? N[1] + " (" + ABCAR[R.L] + ")" : N[0] + " (" + N[1] + " = " + ABCAR[R.L] + ")");
   }

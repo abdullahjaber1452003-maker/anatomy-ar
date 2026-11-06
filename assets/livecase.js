@@ -615,7 +615,7 @@ var LiveDept = (function (C) {
   // 🔤 29r (Abdullah, Nov 6 2026 5:15 PM «على اي اساس بدي افوت كل مريض»): WHY a patient sits where he does in the waiting list — the
   // ABCDE order (🌐 notion générale): A airway → B breathing (SpO₂ low, FR high) → C circulation (TA, FC, bleeding) → D disability (Glasgow)
   // → E the rest (T°, pain, story). Built from HIS own vitals + the very signs prio() used, so the line, the sort and the right answer agree.
-  var ABC = "ABCDE", AIR_RE = /stridor|étouff|obstruction des voies|corps étranger|اختنا|انسداد/i, BLEED_RE = /saign|hémorr|نزيف|ينزف/i;
+  var ABC = "ABCDE", AIR_RE = /stridor|corps étranger|obstruction des voies aériennes|اختناق بلقمة|جسم غريب/i, BLEED_RE = /saign|hémorr|نزيف|ينزف/i;
   function triReason(p) {
     var P = prio(p), v = (p && p.vit) || {}, sig = P.sig.slice(), txt = p ? [p.who, p.say, p.story].map(function (o) { return o ? (o.ar || "") + " " + (o.fr || "") : ""; }).join(" ") : "";
     if (!sig.length && P.pr < 4) {                         // a preset priority (walk-ins): read the same signs at the loosest level
