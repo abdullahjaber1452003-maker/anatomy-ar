@@ -612,6 +612,24 @@ var LiveDept = (function (C) {
     if (a3 || r >= 4) return { pr: 3, sig: sig.length ? sig : ["rate"] };
     return { pr: 4, sig: [] };
   }
+  // 🔤 29r (Abdullah, Nov 6 2026 5:15 PM «على اي اساس بدي افوت كل مريض»): WHY a patient sits where he does in the waiting list — the
+  // ABCDE order (🌐 notion générale): A airway → B breathing (SpO₂ low, FR high) → C circulation (TA, FC, bleeding) → D disability (Glasgow)
+  // → E the rest (T°, pain, story). Built from HIS own vitals + the very signs prio() used, so the line, the sort and the right answer agree.
+  var ABC = "ABCDE", AIR_RE = /stridor|étouff|obstruction des voies|corps étranger|اختنا|انسداد/i, BLEED_RE = /saign|hémorr|نزيف|ينزف/i;
+  function triReason(p) {
+    var P = prio(p), v = (p && p.vit) || {}, sig = P.sig.slice(), txt = p ? [p.who, p.say, p.story].map(function (o) { return o ? (o.ar || "") + " " + (o.fr || "") : ""; }).join(" ") : "";
+    if (!sig.length && P.pr < 4) {                         // a preset priority (walk-ins): read the same signs at the loosest level
+      [[v.spo2 < 95, "spo2"], [v.fr >= 24 || v.fr < 10, "fr"], [v.sys < 90 || v.sys >= 160, "sys"], [v.fc > 100 || v.fc < 55, "fc"], [v.gcs <= 13, "gcs"], [v.t >= 38, "t"]].forEach(function (c) { if (c[0]) sig.push(c[1]); });
+    }
+    var L = { spo2: "B", fr: "B", sys: "C", fc: "C", gcs: "D", t: "E", rate: "E" }, best = "", bl = "E";
+    sig.forEach(function (k) { var x = L[k] || "E"; if (!best || ABC.indexOf(x) < ABC.indexOf(bl)) { best = k; bl = x; } });
+    if (P.pr < 4 && AIR_RE.test(txt)) { best = "air"; bl = "A"; }
+    else if (P.pr < 4 && BLEED_RE.test(txt) && ABC.indexOf(bl) > 2) { best = "bleed"; bl = "C"; }
+    if (P.pr === 4) { best = ""; bl = "E"; } else if (!best) { best = "rate"; bl = "E"; }
+    var val = { spo2: "SpO₂ " + v.spo2 + "%", fr: "FR " + v.fr, sys: "TA " + v.sys + "/" + v.dia, fc: "FC " + v.fc, gcs: "Glasgow " + v.gcs, t: "T° " + v.t,
+      rate: p && p.eva != null ? "EVA " + p.eva + "/10" : "", air: "", bleed: "" }[best] || "";
+    return { pr: P.pr, L: bl, k: best, val: val, rank: P.pr * 10 + ABC.indexOf(bl) };
+  }
   // the events of ONE patient of one bed group, without the department prefix, oldest first
   function evOf(raw, dk, ai, pk) {
     var p = pre(dk, ai), out = [], ev = (raw && raw.ev) || {};
@@ -694,7 +712,7 @@ var LiveDept = (function (C) {
   return { KEYS: KEYS, CODE: CODE, INFO: INFO, PRE_RE: PRE_RE, AMB_FROM: AMB_FROM, AMB_TO: AMB_TO, AMB_GAP: AMB_GAP,
     ref: ref, cases: cases, pick: pick, deptCase: deptCase, ambTimes: ambTimes, ambNow: ambNow, ambCase: ambCase, pre: pre, ns: ns, enc: enc,
     bankFor: bankFor, view: view, state: state, check: check, penc: penc, pdec: pdec,
-    ALL: ALL, FLOORS: FLOORS, FLN: FLN, SOON: SOON, SVC: SVC, TRI_RE: TRI_RE, WK_RE: WK_RE, TRIK: TRIK, WSTAY: WSTAY, TMAX: TMAX, triDk: triDk, wardOf: wardOf, prio: prio,
+    ALL: ALL, FLOORS: FLOORS, FLN: FLN, SOON: SOON, SVC: SVC, TRI_RE: TRI_RE, WK_RE: WK_RE, TRIK: TRIK, WSTAY: WSTAY, TMAX: TMAX, triDk: triDk, wardOf: wardOf, prio: prio, triReason: triReason, ABC: ABC,
     evOf: evOf, admitted: admitted, adm: adm, triage: triage, walkIns: walkIns, walkCheck: walkCheck, waiting: waiting, floorOf: floorOf, isSvc: isSvc, isOpen: isOpen,
     WARDS: WARDS, ARR: ARR, prep: prep, arrival: arrival, BZ_RE: BZ_RE, BZ: BZ, BZMAX: BZMAX, bonus: bonus, routines: routines };
 })(LiveCore);
@@ -702,7 +720,7 @@ var LiveDept = (function (C) {
 
   if (typeof window !== "undefined") { window.LiveCore = LiveCore; window.LiveDept = LiveDept; }
   if (!d || !d.addEventListener) return;
-  var V = "20261029q", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
+  var V = "20261029r", PK = "nursin_live_prev_v1", HK = "nursin_live_hist_v1", CK = "nursin_live_cool_v1", W = w;
   var D = null, loading = null, doc = null, mode = "loading", unsub = null, subs = [], api = null, tick = 0, why = "";
   function FR() { return !!(W.Lang && W.Lang.fr); }
   function T(o) { return o == null ? "" : typeof o === "string" ? o : (FR() ? (o.fr || o.ar || "") : (o.ar || o.fr || "")); }
@@ -899,36 +917,25 @@ var LiveDept = (function (C) {
   var BZN = { fu: ["⏰ إعادة تقييم بوقتها", "⏰ Réévaluation à l'heure"], fx: ["⏰ إعادة تقييم فاتت", "⏰ Réévaluation manquée"], hh: ["🧼 نظافة الإيدين", "🧼 Hygiène des mains"], hx: ["🧼 نسي نظافة الإيدين", "🧼 Hygiène oubliée"],
     ho: ["🔄 تسليم الشفت", "🔄 Relève"], dc: ["🚪 خروج + تثقيف", "🚪 Sortie + éducation"], fa: ["👨‍👩‍👦 جاوب العيلة", "👨‍👩‍👦 Réponse à la famille"], "in": ["⚠️ تقرير حادث", "⚠️ Fiche d'événement"], pk: ["🧾 جاب الطلب من الخدمة", "🧾 Demande récupérée"] };
   function actName(a) { if (a === "hint") return FR() ? "💡 Indice" : "💡 طرف خيط"; var zb = LiveDept.BZ_RE.exec(String(a)); if (zb) return BZN[zb[1]][FR() ? 1 : 0]; if (LiveDept.TRI_RE.test(String(a))) return triName(a); if (String(a).indexOf("f_") === 0) { var F = D.fields[a.slice(2)]; return F ? F.ic + " " + T(F) : a; } var A = D.A[a]; return A ? A.ic + " " + T(A) : a; }
-  /* ---- 🏠 the home card «🔴 حالة لايف · باقي X ساعات», right ABOVE «🧭 مسار اليوم» (Abdullah's wish) ---- */
+  /* ---- 🏠 the home card — 29r (Abdullah, Nov 6 2026 5:14 PM «هون بدي اتصير أقصر»): a COMPACT card of 2 short lines under «🧭 مسار اليوم»:
+     «🏥 المستشفى الآن · 🔴 N حالات حرجة · 🪑 N ناطرين · 👥 N طلاب» + «🏥 فوت ساعد ←». No department rows, no ambulance line, no drawing:
+     the whole hospital is one tap away (games.html#live). ---- */
   function homeCard(st) {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;
-    var Hh = hospital() || {}; st = Hh.er || st; var E0 = st, cs = st.cs, ended = st.end, nm = function (x) { return T(x.p.nm).split(" ")[0]; };
-    function pills(S) { var ended = S && S.end; return S ? S.P.map(function (x) { if (x.ghost) return "";
-      if (!x.over && !ended && !LiveDept.adm(rawDoc(), S.dep || "er", x.k, S.amb && S.amb.i)) return '<span class="hzlvp wait"><b>🛏️ ' + esc(nm(x)) + "</b> " + (FR() ? "🪑 attend" : "🪑 ناطر") + "</span>";   // 29d: still in the waiting room
-      return '<span class="hzlvp ' + x.st + (x.over && !ended ? " fin" : "") + '"><b>🛏️ ' + esc(nm(x)) + "</b> " + esc(stLabel(x.st, x.p.sex)) + "</span>"; }).join("") : ""; }
-    // 28v: an ended case says so plainly — «🏁 انتهت الحالة» + when the next one starts (never a card that still looks running)
-    var top = ended ? (FR() ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()) : leftWords(st.t1 - Date.now());
+    var Hh = hospital() || {}; st = Hh.er || st; var ended = st.end, F = FR(), crit = 0;
+    ["er", "k", "n", "r", "s", "g", "p", "m", "x"].forEach(function (k) { var S = k === "er" ? st : Hh[k]; if (!S || !S.P || S.end) return;
+      S.P.forEach(function (x) { if (x && !x.ghost && !x.over && x.st === "crit") crit++; }); });
     // 👥 how many students are in the hospital right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
-    var PR = W.LivePresRoom, ppl = mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1;
-    if (ppl > 0) top += " · 👥 " + ppl;
-    var soon = mode === "preview" && why === "rules" ? '<small class="hzlvs">' + (FR() ? "🔴 Le cas partagé arrive bientôt — essaie-le maintenant" : "🔴 الحالة اللايف رح تشتغل قريباً — جرّبها هلّق") + "</small>" : "";
-    // 28z 🏥 every department in one line each (its case + its two patients), then the ambulances (the last one; never the exact next time)
-    var I = LiveDept.INFO, rows = ["er", "k", "n"].map(function (k) { var S = k === "er" ? E0 : Hh[k]; if (!S) return "";
-      return '<span class="hzlvd"><b>' + I[k].ic + " " + esc(T(I[k].t)) + '</b><span class="hzlvc">' + esc(S.cs.ic + " " + T(S.cs.t)) + '</span><span class="hzlvps">' + (S.end ? '<span class="hzlvp ok fin">🏁 ' + (FR() ? "Terminé" : "خلصت") + "</span>" : pills(S)) + "</span></span>"; }).join("");
-    // 29e: the new wards in ONE line (only the ones whose patients have arrived today): «🩺 2 · 🔪 1 · 👴 ✅»
-    var nw = ["r", "s", "g", "p", "m"].map(function (k) { var S = Hh[k]; if (!S || !S.P || Date.now() < LiveDept.arrival(today(), k)) return ""; var left = S.P.filter(function (x) { return !x.ghost && !x.over; }).length;
-      return I[k].ic + " " + (S.end || !left ? "✅" : left); }).filter(Boolean);
-    if (nw.length) rows += '<span class="hzlvd"><b>' + (FR() ? "🏥 Autres services" : "🏥 باقي الأقسام") + '</b><span class="hzlvc">' + esc(nw.join(" · ")) + "</span></span>";
-    var A = Hh.amb, amb = "";
-    if (A) {
-      var X = Hh.x, last = A.cur ? (FR() ? "🚑 Dernière ambulance : " : "🚑 آخر إسعاف: ") + fmtHM(A.cur.t) + (X && X.P[0] ? " · " + nm(X.P[0]) + " " + stLabel(X.P[0].st, X.P[0].p.sex) : "") : "";
-      var nx = A.next ? (A.next - Date.now() < 45 * 6e4 ? (FR() ? "🚨 Une ambulance arrive bientôt !" : "🚨 في إسعاف جاية قريباً!") : (FR() ? "🚨 D'autres ambulances arrivent aujourd'hui, à l'improviste" : "🚨 في إسعافات جاية اليوم بوقت مش معروف")) : "";
-      amb = '<span class="hzlva">' + esc([last, nx].filter(Boolean).join(" · ") || (FR() ? "🚑 Pas d'ambulance pour l'instant" : "🚑 ما إجت إسعاف بعد")) + "</span>";
-    }
-    var h = '<a class="hzlive hzhosp' + (ended ? " end" : "") + '" href="games.html#live" data-nofr>' +
-      '<span class="hzlvh"><b>' + (FR() ? "🏥 L'hôpital · 🔴 Cas en direct" : "🏥 المستشفى · 🔴 حالة لايف") + "</b><span class=\"hzlvt\"> · " + esc(top) + "</span></span>" +
-      rows + amb + soon + (Hh.wait && Hh.wait.length && !ended ? '<span class="hzlvw">' + esc(FR() ? "🪑 " + Hh.wait.length + " patient(s) attendent en salle d'attente — entre les faire entrer" : "🪑 في " + Hh.wait.length + (Hh.wait.length === 1 ? " مريض ناطر" : Hh.wait.length === 2 ? " مريضين ناطرين" : " مرضى ناطرين") + " بالانتظار — فوت فوّتن") + "</span>" : "") +
-      '<span class="hzlvgo">' + (ended ? (FR() ? "📋 Voir les bonnes étapes ←" : "📋 شوف الخطوات الصح ←") : (FR() ? "🏥 Entre et soigne ←" : "🏥 فوت ساعد ←")) + "</span></a>";
+    var PR = W.LivePresRoom, ppl = mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1, wt = Hh.wait && !ended ? Hh.wait.length : 0;
+    var bits = [F ? "🏥 L'hôpital maintenant" : "🏥 المستشفى الآن"];
+    if (ended) bits.push((F ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()));
+    else bits.push(crit ? "🔴 " + crit + (F ? " critique(s)" : crit === 1 ? " حالة حرجة" : " حالات حرجة") : (F ? "🟢 Aucun cas critique" : "🟢 ما في حالة حرجة"));
+    if (wt) bits.push("🪑 " + wt + (F ? " en attente" : " ناطرين"));
+    if (ppl > 0) bits.push("👥 " + ppl + (F ? " étudiant(s)" : ppl === 1 ? " طالب" : " طلاب"));
+    var soon = mode === "preview" && why === "rules" ? ' title="' + esc(F ? "🔴 Le cas partagé arrive bientôt — essaie-le maintenant" : "🔴 الحالة اللايف رح تشتغل قريباً — جرّبها هلّق") + '"' : "";
+    var h = '<a class="hzlive hzhosp hzmini' + (ended ? " end" : "") + '" href="games.html#live" data-nofr' + soon + '>' +
+      '<span class="hzlvh"><b>' + esc(bits.join(" · ")) + "</b></span>" +
+      '<span class="hzlvgo">' + (ended ? (F ? "📋 Voir les bonnes étapes ←" : "📋 شوف الخطوات الصح ←") : (F ? "🏥 Entre et soigne ←" : "🏥 فوت ساعد ←")) + "</span></a>";
     if (box.innerHTML !== h) box.innerHTML = h;
   }
   function fmtHM(t) { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(t)); } catch (e) { return ""; } }

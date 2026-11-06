@@ -567,16 +567,13 @@
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
-        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
+      // 🏥 29r (Abdullah, Nov 6 2026 5:14 PM «هون بدي اتصير أقصر»): the path ALWAYS comes first under the greeting (📌 card inside it), the compact 2-line 🏥 card under it
+      root.innerHTML = '<div class="hztop"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzlivew"></div><div class="hzsugw"></div><div class="hzsubw"></div>';
       parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
-    // 🚌 29n: while the morning review waits (class day, before 2:30 PM, not done yet) the path comes right under the greeting and the 🏥 card
-    // goes under the path (it is 380 px tall on a phone) — so «🧭 مسار اليوم» + 🚌 are on the first screen on the way to the institute
-    try { var lv = root.querySelector(".hzlivew"), pa = root.querySelector(".hzpath"), bs = null; p.steps.forEach(function (s) { if (s.k === "bus") bs = s; });
-      var busUp = !!(bs && !isDoneS(p, bs)); if (lv && pa && (lv.nextElementSibling === pa) === busUp) { if (busUp) pa.parentNode.insertBefore(lv, pa.nextSibling); else pa.parentNode.insertBefore(lv, pa); } } catch (e) {}
     parts.top.innerHTML = headHtml() + chipsHtml();
     parts.pin.innerHTML = pathHtml(p) + remHtml();   // 🧭 29k: the path comes first again (Abdullah 7:42 AM Nov 6: the 📌 card had pushed it off the screen); 📌 compact card right under it
     parts.foot.innerHTML = footHtml();

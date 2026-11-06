@@ -1136,13 +1136,46 @@
     if (g.k === "desk") return waitListSheet();
     if (g.k === "tri") { var o = waitList().filter(function (x) { return wkey(x) === g.id; })[0]; if (!o) { triSel = null; return say("neutral", u("triBy", { n: "…" })); } triPick = { pr: 0, dc: "" }; return sheetOpen("tri", g.id); }
   }
+  /* 🔤 29r (Abdullah, Nov 6 2026 5:15 PM «على اي اساس بدي افوت كل مريض»): one reason line per waiting patient, from HIS vitals, in ABCDE
+     order (🌐 notion générale), + «❓ كيف بفرز؟» (a <details>, no script, no animation). The list is sorted the way the lines read. */
+  var ABCN = { A: ["مجرى الهوا", "Voies aériennes"], B: ["تنفّس", "Respiration"], C: ["دوران الدم", "Circulation"], D: ["وعي", "Conscience"], E: ["الباقي", "Autres signes"] };
+  var ABCAR = { A: "مجرى الهوا", B: "التنفّس", C: "الدورة الدموية", D: "الوعي", E: "حرارة، وجع…" };
+  function triSort(list) {
+    return list.map(function (o, i) { return { o: o, i: i, r: w.LiveDept.triReason(o.p).rank }; })
+      .sort(function (a, b) { return a.r - b.r || a.i - b.i; }).map(function (x) { return x.o; });
+  }
+  function triLine(p) {
+    var R = w.LiveDept.triReason(p), P0 = L.PRN[R.pr] || L.PRN[4], F = FR(), N = ABCN[R.L];
+    if (R.pr === 4) return F ? "🟢 Aucun signe d'alerte → peut attendre (Non urgent = مش مستعجل)" : "🟢 ما في علامة خطر → بينطر (Non urgent = مش مستعجل)";
+    var val = R.val || { air: F ? "voies aériennes menacées (مجرى الهوا بخطر)" : "مجرى الهوا بخطر", bleed: F ? "saignement (نزيف)" : "نزيف", rate: F ? "histoire inquiétante (قصّة خطرة)" : "قصّتو خطرة" }[R.k] || "";
+    return P0.ic + (F ? (R.pr <= 2 ? " Pourquoi en haut ? " : " Pourquoi ici ? ") : (R.pr <= 2 ? " ليش فوق؟ " : " ليش هون؟ ")) + val + " → " + R.L + " " +
+      (F ? N[1] + " (" + ABCAR[R.L] + ")" : N[0] + " (" + N[1] + " = " + ABCAR[R.L] + ")");
+  }
+  function triHelp() {
+    var F = FR(), rows = F ? [
+      "A — Airway / Voies aériennes (مجرى الهوا) : obstruée, étouffement = en premier",
+      "B — Respiration (التنفّس) : SpO₂ (أكسجين الدم) < 94 % ou FR (عدد الأنفاس) élevée",
+      "C — Circulation (الدورة الدموية) : TA (الضغط) basse, FC (النبض) rapide, saignement (نزيف)",
+      "D — Conscience (الوعي) : Glasgow (مقياس الوعي) ≤ 13",
+      "E — Le reste : T° (الحرارة), EVA (الوجع). Rien ? Il peut attendre 🟢"
+    ] : [
+      "A — Airway (مجرى الهوا): مسدود أو اختناق = أوّل واحد",
+      "B — Respiration (التنفّس): SpO₂ (أكسجين الدم) أقل من 94% أو FR (عدد الأنفاس) عالي",
+      "C — Circulation (الدورة الدموية): TA (الضغط) واطي، FC (النبض) سريع، نزيف",
+      "D — Conscience (الوعي): Glasgow (مقياس الوعي) 13 أو أقل",
+      "E — الباقي: T° (الحرارة)، EVA (مقياس الوجع). ما في شي؟ بينطر 🟢"
+    ];
+    return '<details class="lcr-how"><summary>' + esc(F ? "❓ Comment je trie ? (كيف بفرز؟) · le plus grave d'abord, ordre ABCDE" : "❓ كيف بفرز؟ · الأخطر أوّل بالترتيب ABCDE") + "</summary><ol>" +
+      rows.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol></details>";
+  }
   function waitListSheet() { sheetOpen("wait", "list"); }
   function waitSheet(x) { sheetOpen("wait", x.k); }
   function waitHtml(k) {
     if (k === "list") {
-      var L0 = waitList();
-      return head(depName("wt"), u("waitN", { n: L0.length })) + (L0.length ? '<div class="lcr-acts lcr-wl">' + L0.map(function (o) {
-        var pr = w.LiveDept.prio(o.p).pr; return '<button type="button" class="lcr-act" data-lcseat="' + esc(wkey(o)) + '">' + (o.kind === "amb" ? "🚑 " : pr === 1 ? "❗ " : "🪑 ") + esc(T(o.p.nm).split(" ")[0] + "، " + o.p.age) + " <small>" + esc(sayOf(o.p).slice(0, 34)) + "</small></button>"; }).join("") + "</div>"
+      var L0 = triSort(waitList());                         // 🔤 29r: sorted by priority, then ABCDE — the order the reason lines say
+      return head(depName("wt"), u("waitN", { n: L0.length })) + (L0.length ? triHelp() + '<div class="lcr-acts lcr-wl">' + L0.map(function (o) {
+        var pr = w.LiveDept.prio(o.p).pr; return '<button type="button" class="lcr-act" data-lcseat="' + esc(wkey(o)) + '">' + (o.kind === "amb" ? "🚑 " : pr === 1 ? "❗ " : "🪑 ") + esc(T(o.p.nm).split(" ")[0] + "، " + o.p.age) + " <small>" + esc(sayOf(o.p).slice(0, 34)) + "</small>" +
+          '<small class="lcr-why" data-lcabc="' + w.LiveDept.triReason(o.p).L + '">' + esc(triLine(o.p)) + "</small></button>"; }).join("") + "</div>"
         : '<p class="small">' + esc(u("waitNone")) + "</p>") + '<p class="small">' + esc(u("triRule")) + "</p>";
     }
     var x = X(k); if (!x) return "";
@@ -1163,6 +1196,7 @@
     h += '<div class="lcr-tri"><p class="lcr-say">💬 «' + esc(sayOf(p)) + '»</p>';
     if (o.kind === "walk" && p.lab) h += '<p class="small">🧪 ' + p.lab.map(function (s) { return esc(T(s)); }).join(" · ") + "</p>";
     h += "<h4>" + esc(u("triVit")) + "</h4>" + vitRow(p);
+    h += triHelp();                                       // 🔤 29r: how to decide, without giving his answer away
     h += "<h4>" + esc(u("triQ1")) + '</h4><div class="lcr-acts lcr-pr">' + [1, 2, 3, 4].map(function (n) { var P0 = L.PRN[n]; return '<button type="button" class="lcr-act' + (triPick.pr === n ? " lcr-hit" : "") + '" data-lctripr="' + n + '">' + P0.ic + " " + esc(T(P0)) + "</button>"; }).join("") + "</div>";
     h += "<h4>" + esc(u("triQ2")) + '</h4><div class="lcr-acts lcr-dc">' + w.LiveDept.TRIK.map(function (c) { var I = w.LiveDept.INFO[w.LiveDept.wardOf(c)]; return '<button type="button" class="lcr-act' + (triPick.dc === c ? " lcr-hit" : "") + '" data-lctridc="' + c + '">' + I.ic + " " + esc(T(I.t)) + "</button>"; }).join("") + "</div>";
     h += '<div class="lcr-acts"><button type="button" class="lcr-btn on lcr-trigo" data-lctrigo="' + esc(id) + '"' + (triPick.pr && triPick.dc ? "" : ' aria-disabled="true"') + ">" + esc(u("triGo")) + "</button></div>";

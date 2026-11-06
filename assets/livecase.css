@@ -369,3 +369,13 @@ html[dir="rtl"] .lcr-pts>*{direction:rtl}
 html[data-theme="night"] .lcr-help{background:#0f1d22;color:#e2e8f0;border-color:rgba(45,212,191,.35)}html[data-theme="night"] .lcr-hlph b{color:#5eead4}
 html[data-theme="night"] .lcr-talk{background:rgba(14,165,233,.1)}html[data-theme="night"] .lcr-talkb{color:#7dd3fc!important}html[data-theme="night"] .lcr-tqb{background:#0f1d22;color:#e2e8f0!important}
 @media (max-width:420px){.lcr-top{gap:2px;padding-inline:5px}.lcr-x,.lcr-ib{width:27px;height:27px;font-size:12.5px}}   /* 29m: room for the 🧑‍⚕️ button in the top bar */
+
+/* 29r 🏥 the compact home card (2 short lines max, under «🧭 مسار اليوم») */
+.hzlive.hzmini{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;padding:8px 12px;border-radius:16px}
+.hzmini .hzlvh{font-size:13.5px;line-height:1.35;flex:1 1 12em;min-width:0}
+.hzmini .hzlvgo{align-self:center;font-size:12.5px;padding:4px 11px;white-space:nowrap}
+/* 29r 🔤 triage: one reason line per waiting patient (ABCDE) + «❓ كيف بفرز؟» */
+.lcr-wl .lcr-why{opacity:1;font-size:11.5px;font-weight:700;color:#9a3412;margin-top:2px}
+.lcr-how{margin:4px 0 8px;font-size:12.5px;line-height:1.45}.lcr-how summary{cursor:pointer;font-weight:800;color:#0f766e}
+.lcr-how ol{margin:4px 0 0;padding-inline-start:18px}.lcr-how li{margin:1px 0}
+html[data-theme="night"] .lcr-wl .lcr-why{color:#fdba74}html[data-theme="night"] .lcr-how summary{color:#5eead4}
