@@ -14,7 +14,7 @@
    Plain ES5 (iOS 12). */
 (function (w, d) {
   "use strict";
-  var K = "nursin_rem_v1", DAY = 864e5, BACK = 14 * 60 + 30, MAXL = 4, KEEP = 21;
+  var K = "nursin_rem_v1", DAY = 864e5, BACK = 14 * 60 + 30, MAXL = 2, KEEP = 21;
   var KINDS = ["st", "hw", "cls", "ph"];               // the switches: st = 📖+🔁 (8 PM push), hw = 📌+🎯 (push 2 days before), cls = 🏫 (7 AM push), ph = 📸
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -84,12 +84,12 @@
     }
     return out;
   }
-  function html(items, open) {
+  function html(items, open) {                  // 29k: compact — collapsed = 2 one-line rows + «+N», the title a small label on the first row (Abdullah 7:42 AM Nov 6: the card had pushed «🧭 مسار اليوم» off the screen)
     if (!items || !items.length) return "";
     var shown = open ? items : items.slice(0, MAXL), more = items.length - shown.length;
     return '<section class="hzrem" aria-label="' + esc(T("تذكيرات اليوم", "Rappels du jour")) + '"><div class="hzremh"><b>📌 ' + esc(T("تذكيرات اليوم", "Rappels du jour")) + "</b>" +
       (more > 0 ? '<button type="button" class="hzremx" data-remmore="1">+' + more + "</button>" : open && items.length > MAXL ? '<button type="button" class="hzremx" data-remmore="0">−</button>' : "") + "</div><ul>" +
-      shown.map(function (it) { return '<li class="hzremi" data-k="' + it.k + '"><a href="' + esc(it.href) + '" data-rem="' + esc(it.key) + '"><span aria-hidden="true">' + it.e + "</span> <bdi>" + esc(it.t) + '</bdi></a><button type="button" class="hzremok" data-remok="' + esc(it.key) + '">' + esc(T("✅ تمّ", "✅ Fait")) + "</button></li>"; }).join("") +
+      shown.map(function (it) { return '<li class="hzremi" data-k="' + it.k + '"><a href="' + esc(it.href) + '" data-rem="' + esc(it.key) + '"><span aria-hidden="true">' + it.e + "</span> <bdi>" + esc(it.t) + '</bdi></a><button type="button" class="hzremok" data-remok="' + esc(it.key) + '" aria-label="' + esc(T("تمّ", "Fait")) + '">✅</button></li>'; }).join("") +
       "</ul></section>";
   }
 
@@ -114,7 +114,7 @@
     return x;
   }
   var open = false;
-  function homeHtml() { return html(build(ctx(), state()), open); }
+  function homeHtml() { try { return html(build(ctx(), state()), open); } catch (e) { return ""; } }   // 29k: never breaks the home
   function photoDraft() {                       // 📸 → suggest.html with a ready «➕ إضافة» draft (only if he has no draft of his own)
     var k = "nursin_sug_draft_v1", dr = lsGet(k);
     if (!dr || !dr.text) lsSet(k, { type: "add", text: T("📸 دروس اليوم (" + today() + "): ", "📸 Cours du jour (" + today() + ") : ") });

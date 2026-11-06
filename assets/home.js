@@ -559,8 +559,8 @@
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
-    parts.top.innerHTML = headHtml() + remHtml() + chipsHtml();      // 📌 29j: «تذكيرات اليوم» = the first thing under the greeting (assets/remind.js)
-    parts.pin.innerHTML = pathHtml(p);
+    parts.top.innerHTML = headHtml() + chipsHtml();
+    parts.pin.innerHTML = pathHtml(p) + remHtml();   // 🧭 29k: the path comes first again (Abdullah 7:42 AM Nov 6: the 📌 card had pushed it off the screen); 📌 compact card right under it
     parts.foot.innerHTML = footHtml();
     parts.sug.innerHTML = sugHtml();
     parts.subs.innerHTML = subsHtml();
