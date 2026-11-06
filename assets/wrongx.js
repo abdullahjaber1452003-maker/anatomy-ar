@@ -1,8 +1,8 @@
 /* ❌ «ليش غلط؟» — the wrong-answer box (Abdullah approved, Nov 6 2026, 29u). ONE shared piece for every quiz surface: 📝 quiz.html (every
    مادة, 🔁 مراجعة اليوم / spaced review, 🎯 امتحان الفصل plan quizzes, ⚠️ أخطائك), 📝 «كويز هالجزء» + 🩺 حالة مريض (retain.js), 🔗/🌅 sheets
    (extra.js) and the 🚌 ride review (commute.js). After a WRONG answer only (a right answer shows nothing new), under the options:
-     ❌ ليش غلط؟  the sentence of the question's own explanation (x) that speaks about HIS option (its key words); no x → the sentence of the
-                  lesson text on this page that carries them; nothing found → no reason is made up, the line just points to the right one
+     ❌ ليش غلط؟  the sentence of the question's own explanation (x) that speaks about HIS option (its key words) at least as much as about
+                  the right one; nothing found → no reason is made up, the line just points to the right one
      ✅ الصح:     the sentence of x that carries the right option's key words (x's first sentence when none does); no x → from the lesson text
      📖 ارجع للدرس  the exact lesson / part anchor (assets/lessons.js parts + assets/partq-data.js), same page (closes the sheet, opens it) or cross-page
      🔁 سؤال شبيه   one other question he hasn't met, same part → same lesson → same مادة, answered right here; it counts like any answer
@@ -55,17 +55,19 @@
   function clip(s, n) { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
 
   // why(q, k, lessonSentences) → { w: why HIS option is wrong (or null), r: why the right one is right (or null), src: "x" | "lesson" | "none" }
+  // ❌ only ever comes from the question's own explanation, from a sentence that speaks of HIS option at least as much as of the right one
+  // (a lesson sentence that merely names his option is not a reason, so the lesson text only feeds ✅ when there is no x)
   function why(q, k, les) {
     var right = toks(q.o[q.a]), mine = toks(q.o[k]), stem = toks(q.q), dm = only(only(mine, right), stem), dr = only(only(right, mine), stem);
     var xs = sents(q.x), ls = les || [], wl = null, rl = null, src = "none";
     if (xs.length) {
       src = "x";
       rl = best(xs, dr) || best(xs, right) || xs[0];
-      wl = best(xs, dm, rl);
+      wl = best(xs.filter(function (s) { return score(s, dm) >= score(s, dr); }), dm, rl);
+      if (wl && wl === rl) rl = best(xs.filter(function (s) { return s !== wl; }), dr);   // one sentence speaks of both: it is the ❌ line, ✅ keeps the option
+    } else if (ls.length) {
+      var lr = best(ls, dr); if (lr && score(lr, dr) >= Math.min(2, dr.length)) { rl = lr; src = "lesson"; }
     }
-    if (!wl && ls.length) { var lw = best(ls, dm); if (lw && score(lw, dm) >= Math.min(2, dm.length)) { wl = lw; if (src === "none") src = "lesson"; } }
-    if (!rl && ls.length) { var lr = best(ls, dr); if (lr && score(lr, dr) >= Math.min(2, dr.length)) { rl = lr; src = "lesson"; } }
-    if (wl && wl === rl) rl = best(xs.filter(function (s) { return s !== wl; }), dr);   // one sentence speaks of both: it is the ❌ line, ✅ keeps the option
     return { w: wl, r: rl, src: src };
   }
 
