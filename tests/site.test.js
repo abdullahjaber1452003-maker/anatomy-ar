@@ -6568,6 +6568,7 @@ test('#270 29p 🧑‍⚕️ standing, he keeps the 29l idle rate (~12 fps); ful
   assert.ok(/var IDLE_MS = 80\b/.test(read('assets/livecase-room.js')), 'idle budget unchanged');
 });
 
+// 29r (Nov 6 2026): compact 🏥 home card under the path + triage ABCDE reason lines
 test('#276 29r 🏥 home: «🧭 مسار اليوم» first under the greeting, then the COMPACT hospital card (1 line + «فوت ساعد ←», no rows, no drawing)', () => {
   const hj = read('assets/home.js'), i0 = hj.indexOf('root.innerHTML = \'<div class="hztop">'), sh = hj.slice(i0, hj.indexOf(';', i0));
   assert.ok(sh.indexOf('class="hzpath"') > -1 && sh.indexOf('class="hzpath"') < sh.indexOf('class="hzlivew"'), 'path before the card');
