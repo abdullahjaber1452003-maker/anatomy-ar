@@ -23,7 +23,7 @@
       inline sheet, score + «🔁 عيد» + «➡️ الجزء الجاي», «كنت متأكد / حزرت», every answer → SRS v2; ✓ done marks (nursin_partq_v1).
    Everything works offline: localStorage only (no account sync for these — the reviews they feed already sync through srs.js). */
 (function (w, d) {
-  var V = "20261029t", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+  var V = "20261029u", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var TK = "nursin_teach_day_v1", TMAX = 10, BK = "nursin_blank_v1", WK = "nursin_wexam_v1", BLANK_SEC = 120, WN = 20, WMIN = 25;
   var CASE_IDS = ["cardio:infarctus", "cardio:angor", "cardio:pericarde", "cardio:endomyo", "cardio:pacemaker", "cardio:embolie", "cardio:choc", "cardio:ic", "cardio:arythmies", "cardio:chirurgie", "neuro:evaluation", "neuro:examens", "neuro:laminectomie", "neuro:craniotomie", "neuro:avc", "neuro:htic", "neuro:glasgow", "henderson:h1", "henderson:h2", "pharma:cardio", "pharma:coag", "pharma:atb", "pharma:pain", "pharma:resp", "pharma:dig", "pharma:cort", "pharma:diab", "pharma:other", "rea:r1", "geri:g1", "geri:g2", "geri:g3", "geri:g4", "geri:g5", "geri:g6", "geri:g7", "geri:g8", "geri:g9", "geri:g10", "comm:c3", "comm:c4", "comm:c5", "comm:c7", "comm:c8", "medsurg:iv", "rea:r2", "rea:r3", "rea:r4"];
   function FR() { return !!(w.Lang && w.Lang.fr); }
@@ -315,7 +315,8 @@
           var b = e.target.closest && e.target.closest(".opt"); if (!b || b.disabled) return;
           var k = +b.getAttribute("data-k"), good = k === q.a; if (good) ok++; done++;
           [].forEach.call(el.querySelectorAll(".opt"), function (o) { var kk = +o.getAttribute("data-k"); o.disabled = true; if (kk === q.a) o.classList.add("ok"); else if (kk === k) o.classList.add("bad"); });
-          el.querySelector(".rcx").innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>";
+          el.querySelector(".rcx").innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>" +
+            (!good && w.NursinWX ? w.NursinWX.html(q, k, { lid: id }) : "");   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
           ret(id, good ? "ok" : "bad"); askUp(k);
           try {                                                // 🔁 التكرار المتباعد v2: every case answer enters (same id as the midterm mock), + «كنت متأكد / حزرت» after a right one
             var SR = w.NursinSRS, sq = { id: "cs-" + String(id).replace(":", "-") + "-" + i }, sr = SR && SR.answer ? SR.answer(sq, good) : null, rx = el.querySelector(".rcx");
@@ -410,7 +411,8 @@
           var kk = +b.getAttribute("data-k"), good = kk === q.a; if (good) ok++; else miss.push(q);
           [].forEach.call(el.querySelectorAll(".opt"), function (o) { var k2 = +o.getAttribute("data-k"); o.disabled = true; if (k2 === q.a) o.classList.add("ok"); else if (k2 === kk) o.classList.add("bad"); });
           var rx = el.querySelector(".rcx");
-          rx.innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>";
+          rx.innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>" +
+            (!good && w.NursinWX ? w.NursinWX.html(q, kk, { skip: qs.map(function (z) { return z.id; }) }) : "");   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
           ret(id, good ? "ok" : "bad");
           try { var W = w.Weak; if (W && W.record) W.record(q, good); } catch (e1) {}
           try {                                              // 🔁 every answer enters the spaced repetition (same q### id as everywhere)

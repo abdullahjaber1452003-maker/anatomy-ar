@@ -150,6 +150,7 @@
     var O=window.Osman,om=O?(ok?O.right():O.wrong()):'';   // 👨‍🏫 الأستاذ عثمان (assets/osman.js)
     $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
       (S&&sres&&S.tagHtml?S.tagHtml(sres):'');
+    if(!ok&&window.NursinWX){var ex0=$('#fb .expl');if(ex0)ex0.insertAdjacentHTML('afterend',NursinWX.html(q,k,{skip:s.qs.map(function(z){return z.id;})}));}   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
     var whyOn=false;
     // ❓ «ليش؟» — only after a right answer, never in timed/scored modes; nothing at all when the question has no why-question
     function showWhy(guessed){

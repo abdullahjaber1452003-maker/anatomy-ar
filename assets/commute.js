@@ -99,6 +99,7 @@
     if (fq && A[fq.id] != null) {
       var ok = A[fq.id] === fq.a;
       h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح!", "✅ Correct !") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + esc(fq.x) + "</p>" : "") + "</div>";
+      if (!ok && w.NursinWX) h += w.NursinWX.html(fq, A[fq.id], {});   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
       if (nA === Math.min(TICK, qs.length) && nA < qs.length) h += '<p class="busnote">' + T("✓ انحسبت بمسار اليوم! كمّل إذا بعدك بالطريق", "✓ Validé dans ton parcours du jour ! Continue si tu es encore en route") + "</p>";
       if (nA < qs.length) return h + '<div class="hzoa"><button type="button" class="go" data-busnext>' + T("السؤال الجاي", "Question suivante") + CH + "</button>" + stop + "</div></div>";
     }

@@ -439,6 +439,7 @@
     if (fq && A[fq.id] != null) {                       // the answer just given: ✅/❌ + why
       var ok = A[fq.id] === fq.a;
       h += '<div class="hzqf ' + (ok ? "ok" : "bad") + '"><b>' + (ok ? T("✅ صح! برافو", "✅ Correct ! Bravo") : T("❌ الجواب: ", "❌ La réponse : ") + esc(fq.o[fq.a])) + "</b>" + (fq.x ? "<p>" + (fq.ls ? T("🔗 الرابط: ", "🔗 Le lien : ") : "") + esc(fq.x) + "</p>" : "") + "</div>";
+      if (!ok && w.NursinWX) h += w.NursinWX.html(fq, A[fq.id], {});   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
       var SRo = w.NursinSRS;
       if (SRo && osmSr && osmSr.id === fq.id && SRo.tagHtml) {
         if (osmSr.p) h += '<p class="small wtag srcfok">' + esc(osmSr.p === "sure" ? T("✅ تمام، ما رح يرجع قبل ", "✅ Parfait, elle ne revient pas avant ") + SRo.daysTxt(osmSr.r.days) : T("🤔 ولا يهمّك، بيرجعلك ", "🤔 Pas grave, elle revient ") + SRo.inTxt(osmSr.r.days)) + "</p>";
