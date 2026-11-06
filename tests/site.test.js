@@ -6575,6 +6575,7 @@ test('#276 29r 🏥 home: «🧭 مسار اليوم» first under the greeting,
   const lj = read('assets/livecase.js'), hc = lj.slice(lj.indexOf('function homeCard(st)'), lj.indexOf('function homeInit()'));
   assert.strictEqual((hc.match(/<span class="hzlv/g) || []).length, 2, 'two spans: the line + the button');
   assert.ok(hc.includes('hzmini') && !/canvas|hzlvd|hzlva|hzlvw|pills\(/.test(hc), 'no rows, ambulance, waiting line or drawing');
+  assert.ok(hc.includes('LiveDept.prio(o.p).pr === 1) crit++'), '🔴 counts the red ones still waiting too');
   assert.ok(hc.includes('"🪑 "') && hc.includes('"👥 "') && hc.includes('" طلاب"') && hc.includes('" étudiant(s)"'), 'waiting + students, AR+FR');
   const css = read('assets/livecase.css'); assert.ok(css.includes('.hzlive.hzmini{') && css.includes('.hzmini .hzlvgo{'), 'compact style');
   assert.ok(!/\?\.|\?\?|=>/.test(hc), 'ES2017-safe');
