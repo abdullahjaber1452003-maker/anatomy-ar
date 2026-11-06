@@ -65,6 +65,7 @@
     { s: "law", t: "law", l: "l1", n: "القانون التطبيقي: تصنيفات التمريض", href: "law.html#l1" },
     { s: "law", t: "law", l: "l2", n: "أنواع الشهادات التمريضية المهنية في لبنان", href: "law.html#l2", added: "2026-10-26" },
     { s: "law", t: "law", l: "l3", n: "وزارة الصحة العامة ومهامها", href: "law.html#l3", added: "2026-10-29" },
+    { s: "law", t: "law", l: "l4", n: "منظمة الصحة العالمية (OMS) + الممرض الأجنبي في لبنان", href: "law.html#l4", added: "2026-11-06" },   // Nov 6 2026: his class notes (photos)
     { s: "mgmt", t: "mgmt", l: "m1", n: "الدوافع وهرم Maslow", href: "mgmt.html#m1", added: "2026-10-26" },
     { s: "mgmt", t: "mgmt", l: "m2", n: "الهيكل التنظيمي للمستشفى", href: "mgmt.html#m2", added: "2026-10-26" },
     { s: "mgmt", t: "mgmt", l: "m3", n: "التوجيه والقيادة", href: "mgmt.html#m3", added: "2026-10-29" },
@@ -109,7 +110,9 @@
     { s: "comm", t: "comm", l: "c6", n: "التعاون بين القطاعات والتحديات المستقبلية", href: "community.html#c6", added: "2026-10-30" },
     { s: "comm", t: "comm", l: "c7", n: "الصحة الوقائية ٢: السرطان، أمراض القلب، التدخين والإدمان", href: "community.html#c7", added: "2026-10-31" },
     { s: "comm", t: "comm", l: "c8", n: "الصحة الوقائية ٣: علم المناعة واللقاحات والفحوصات", href: "community.html#c8", added: "2026-10-31" },
-    { s: "medsurg", t: "medsurg", l: "iv", n: "💉 التسريب الوريدي (Perfusion)", href: "medsurg.html#iv", added: "2026-10-30" }
+    { s: "medsurg", t: "medsurg", l: "iv", n: "💉 التسريب الوريدي (Perfusion)", href: "medsurg.html#iv", added: "2026-10-30" },
+    { s: "medsurg", t: "medsurg", l: "csh", n: "🩸 زراعة الخلايا الجذعية المكوّنة للدم (Transplantation de cellules souches hématopoïétiques)", href: "medsurg.html#csh", added: "2026-11-06" },
+    { s: "medsurg", t: "medsurg", l: "fdv", n: "🕊️ رعاية نهاية الحياة (Soins de fin de vie)", href: "medsurg.html#fdv", added: "2026-11-06" }
     ]
   };
   /* ✂️ smaller lessons (Abdullah, Oct 27 2:39 PM: "long lessons with many sections put too much pressure on the student — split them,
