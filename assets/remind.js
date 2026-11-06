@@ -71,7 +71,7 @@
         add({ k: "hw", key: "hw:" + h.id, e: "📌", t: T("وظيفة: ", "Devoir : ") + cut(h.title, 44) + " · " + T("التسليم ", "à rendre ") + left(n), href: "homework.html?id=" + encodeURIComponent(h.id) }); });
       if (x.exam) { var n = diff(x.exam, day); if (n >= 0 && n <= 2) add({ k: "hw", key: "ex:" + x.exam, e: "🎯", t: T("امتحان الفصل ", "Examen de mi-semestre ") + left(n) + T(" — راجع موادك", " — révise tes matières"), href: "midterm.html" }); }
     }
-    if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK && x.bus) { if (!x.busDone) add({ k: "cls", key: "cl:" + day, e: "🏫", t: T("اليوم دوام: 🚌 مراجعة سريعة لمواد اليوم", "Cours aujourd'hui : 🚌 révision rapide des cours du jour"), href: "index.html#bus" }); }   // 29n: the same thing as the path's first step → opens it
+    if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK && x.bus) { if (!x.busDone) add({ k: "cls", key: "cl:" + day, e: "🏫", t: T("اليوم دوام: 🚌 مراجعة الطريق لمواد اليوم (~30 د)", "Cours aujourd'hui : 🚌 révision du trajet, cours du jour (~30 min)"), href: "index.html#bus" }); }   // 29n: the same thing as the path's first step → opens it
     else if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK)
       add({ k: "cls", key: "cl:" + day, e: "🏫", t: x.cls ? T("اليوم دوام: راجع بسرعة «", "Cours aujourd'hui : révise vite « ") + cut(x.cls.n, 40) + T("»", " »") : T("اليوم دوام: مراجعة سريعة ٥ دقايق قبل الصف", "Cours aujourd'hui : 5 min de révision avant"), href: x.cls ? x.cls.href : "hifzi.html" });
     if (!off.ph) {

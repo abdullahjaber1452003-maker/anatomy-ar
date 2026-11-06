@@ -358,7 +358,8 @@
     switch (s.k) {
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
       case "bus": var BS = w.NursinBus, sbn = BS ? BS.subjects(s.id || today()).map(function (k) { var S0 = (w.NLESSONS && w.NLESSONS.subjects || {})[k]; return S0 ? T(S0.ar, S0.fr) : k; }).join(" · ") : "";
-        return { tag: T("🚌 قبل الدوام", "🚌 Avant les cours"), t: T("🚌 مراجعة سريعة قبل الدوام", "🚌 Révision rapide avant les cours"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn), min: 3 };
+        var bp = BS && BS.prog ? BS.prog(s.id || today()) : null;   // 🚌 29o: fills the ~30 min ride; «12/30» once started
+        return { tag: T("🚌 بالطريق عالدوام", "🚌 En route vers les cours"), t: T("🚌 مراجعة الطريق (~30 د)", "🚌 Révision du trajet (~30 min)"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn) + (bp && bp.n ? " · " + bp.n + "/" + (bp.of || 30) : ""), min: 30 };
       case "cls": return { tag: T("🏫 رجعت من المعهد", "🏫 De retour de l'institut"), t: T("راجع درس اليوم: ", "Révise la leçon du jour : ") + nm, sub: s.id2 ? T("وكمان «", "Et aussi « ") + esc(curName(s, s.id2, s.n2)) + T("»", " »") : T("مرّ عليه وهوّي بعدو سخن", "Pendant que c'est encore frais"), min: 8 };
       case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: esc(s.n), sub: esc(s.s || ""), min: 10 };
       case "mid": var M = w.NursinMid, sn = function (k) { return esc(M && M.subjName ? M.subjName(k) : k); };
