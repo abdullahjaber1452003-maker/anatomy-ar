@@ -71,7 +71,8 @@
         add({ k: "hw", key: "hw:" + h.id, e: "📌", t: T("وظيفة: ", "Devoir : ") + cut(h.title, 44) + " · " + T("التسليم ", "à rendre ") + left(n), href: "homework.html?id=" + encodeURIComponent(h.id) }); });
       if (x.exam) { var n = diff(x.exam, day); if (n >= 0 && n <= 2) add({ k: "hw", key: "ex:" + x.exam, e: "🎯", t: T("امتحان الفصل ", "Examen de mi-semestre ") + left(n) + T(" — راجع موادك", " — révise tes matières"), href: "midterm.html" }); }
     }
-    if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK)
+    if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK && x.bus) { if (!x.busDone) add({ k: "cls", key: "cl:" + day, e: "🏫", t: T("اليوم دوام: 🚌 مراجعة سريعة لمواد اليوم", "Cours aujourd'hui : 🚌 révision rapide des cours du jour"), href: "index.html#bus" }); }   // 29n: the same thing as the path's first step → opens it
+    else if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK)
       add({ k: "cls", key: "cl:" + day, e: "🏫", t: x.cls ? T("اليوم دوام: راجع بسرعة «", "Cours aujourd'hui : révise vite « ") + cut(x.cls.n, 40) + T("»", " »") : T("اليوم دوام: مراجعة سريعة ٥ دقايق قبل الصف", "Cours aujourd'hui : 5 min de révision avant"), href: x.cls ? x.cls.href : "hifzi.html" });
     if (!off.ph) {
       for (var i = 0; i <= 2; i++) { var dd = addDays(day, -i); if (!classDay(dd) || (i === 0 && hm < BACK)) continue;
@@ -109,6 +110,7 @@
     try { var HW = w.NursinHW; x.hw = HW && HW.open ? HW.open(day) : []; } catch (e) {}
     try { var M = w.NursinMid; x.exam = M && M.EXAM ? M.EXAM : ""; } catch (e) {}
     try { var td = H.todayNow ? H.todayNow() : null; if (td) x.today = { n: td.n, href: td.href }; } catch (e) {}
+    try { var BU = w.NursinBus; if (BU && BU.on && BU.on(day, x.hm | 0)) { x.bus = true; x.busDone = !!(BU.isDone && BU.isDone(day)); } } catch (e) {}
     try { if (H.classNewest && H.lessonsNow && classDay(day)) { var cl = H.classNewest(H.lessonsNow() || [], dow(day))[0]; if (cl) x.cls = { n: cl.n, href: cl.href }; } } catch (e) {}
     var st = state(), q = st.off.st ? null : pickQ(st, day); if (q) x.q = { id: q.id, q: FR() && q.fr && q.fr.q ? q.fr.q : q.q };
     return x;

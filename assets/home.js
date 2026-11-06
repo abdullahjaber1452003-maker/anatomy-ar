@@ -69,7 +69,7 @@
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): ONE list — the day's tasks first (📖 درس اليوم, 🏫 the class lesson, 🔁 the
   // pinned reviews, 📌 homework, ⭐ exams, 🎯, ⚔️, 🏁), then the rest of the path (🧑‍🏫 Osman, 💪, 🎮…); more than 7 → «+N كمان» (p.more)
-  var ORDER = { today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
+  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
   function byOrder(a, b) { return (ORDER[a.k] == null ? 99 : ORDER[a.k]) - (ORDER[b.k] == null ? 99 : ORDER[b.k]); }
   var FEATS = ["games", "cards", "cases", "quiz", "highlights", "notes"], NEVER = ["games", "cards", "cases", "quiz"];
   function skey(s) { return s.k + ":" + (s.id || s.ik || s.f || ""); }
@@ -78,6 +78,8 @@
   function dowOf(day) { return new Date(Date.parse(day + "T12:00:00Z")).getUTCDay(); }
   // class day afternoon? (Thu 4 · Fri 5 · Sat 6, after 2:30 PM Beirut)
   function afterClass(day, hm) { var w0 = dowOf(day); return w0 >= 4 && w0 <= 6 && (hm | 0) >= BACK; }
+  // 🚌 29n (Abdullah, Nov 6 2026 7:37 AM): class-day morning (Thu/Fri/Sat, 4:00 AM → 2:30 PM) = «مراجعة سريعة قبل الدوام» is the FIRST step (assets/commute.js)
+  function busOn(day, hm) { var w0 = dowOf(day); return w0 >= 4 && w0 <= 6 && (hm | 0) >= 4 * 60 && (hm | 0) < BACK; }
   // the newest lesson(s) of the subjects taught on that weekday: the latest «added» date among them, at most 2 (list order)
   function classNewest(L, wd) {
     var xs = L.filter(function (l) { return CLASSDAY[l.s] === wd; }); if (!xs.length) return [];
@@ -126,6 +128,7 @@
     L.forEach(function (l) { byId[l.id] = l; });
     function add(s, pr) { s.pr = pr; cand.push(s); }
     // 🏫 back from the institute: today's newest class lesson(s)
+    if (x.bus && busOn(x.day, x.hm)) add({ k: "bus", e: "🚌", id: x.day, href: "#bus" }, 0);   // 🚌 29n: before the institute (pr 0 = always among the 7)
     var cls = afterClass(x.day, x.hm) ? classNewest(L, dowOf(x.day)) : [];
     if (cls.length) add({ k: "cls", e: "🏫", id: cls[0].id, n: cls[0].n, href: cls[0].href, id2: cls[1] ? cls[1].id : "", n2: cls[1] ? cls[1].n : "" }, 1);
     // ⭐ today's exams / class exam / سؤال اليوم / class quiz + the tournament round
@@ -222,7 +225,7 @@
   function ctxNow() {
     var L = lessonsNow(), S = w.NursinSRS, RT = w.Retain, wx = { ready: false, done: false }, us = U().usage ? U().usage() : (lsGet("nursin_use_v1") || { f: {} }), tn = tnNow();
     try { var st = RT && RT.wstatus ? RT.wstatus() : null; if (st) wx = { ready: !!st.ready, done: !!st.done }; } catch (e) {}
-    return { day: today(), hm: hmB(), due: S && S.count ? S.count() : 0, last: lastNow(L), lessons: L, today: todayNow(), qids: qidsNow(), weak: weakNow(), use: us.f || {}, since: us.s || 0,
+    return { bus: !!w.NursinBus, day: today(), hm: hmB(), due: S && S.count ? S.count() : 0, last: lastNow(L), lessons: L, today: todayNow(), qids: qidsNow(), weak: weakNow(), use: us.f || {}, since: us.s || 0,
       recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }), mid: midNow(), hw: hwNow() };
   }
   function plan() {
@@ -239,7 +242,7 @@
       s.at = now; p.steps.push(s); p.steps.sort(byOrder); ch = true;
       p.more = (p.more || []).filter(function (t) { return skey(t) !== skey(s); });
       while (p.steps.length > MAXS) {           // the lightest step not done yet goes behind «+N كمان» (never Osman / class / ⭐ / today's lesson) — nothing lost
-        var drop = -1; p.steps.forEach(function (t, i) { if (/^(osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
+        var drop = -1; p.steps.forEach(function (t, i) { if (/^(bus|osm|rev|cls|imp|duel|mid|hw|today)$/.test(t.k) || (p.done || {})[skey(t)]) return; if (drop < 0 || (t.pr | 0) >= (p.steps[drop].pr | 0)) drop = i; });
         if (drop < 0) break; p.more.push(p.steps.splice(drop, 1)[0]); p.more.sort(byOrder);
       }
     }
@@ -255,6 +258,12 @@
     var tn = tnNow(); if (tn && tn.k === "todo" && !keys["duel:"]) ins({ k: "duel", e: "⚔️", op: tn.op || "", href: "index.html#duel", pr: 2 });
     hwNow().forEach(function (w0) { var s = { k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw", pr: 1 }; if (!keys[skey(s)] && p.steps.filter(function (t) { return t.k === "hw"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
     var mi = midNow(); if (mi && !p.steps.some(function (t) { return t.k === "mid"; })) { mi.pr = 2; ins(mi); }
+    if (w.NursinBus) {                                   // 🚌 29n: joins on a class-day morning (path made before 4 AM), leaves at 2:30 PM / on other days
+      var bOn = busOn(p.d, hmB()), hasB = p.steps.some(function (t) { return t.k === "bus"; });
+      if (bOn && !hasB) ins({ k: "bus", e: "🚌", id: p.d, href: "#bus", pr: 0 });
+      else if (!bOn && hasB) { p.steps = p.steps.filter(function (t) { return t.k !== "bus"; }); ch = true; }
+      p.more = (p.more || []).filter(function (t) { return t.k !== "bus"; });
+    }
     if (!p.steps.some(function (t) { return t.k === "rev"; })) ins({ k: "rev", e: "🔁", base: 0, href: "quiz.html?t=review", pr: 0.5 });   // 🔁 pinned, even on a path made before
     if (ch) { lsSet(PK, p); push(p); }
     return p;
@@ -273,6 +282,7 @@
     if ((p.done || {})[key]) return true;
     switch (s.k) {
       case "osm": var A = p.ans || {}; return s.qs && s.qs.length ? s.qs.every(function (q) { return A[q] != null; }) : vis > 0 && back(vis);
+      case "bus": var B = w.NursinBus; return !!(B && B.isDone && B.isDone(p.d));   // 🚌 every question of the morning review answered
       case "rev": var S = w.NursinSRS; return !!(S && S.count) && S.count() === 0;   // 🔁 today's list (≤ 20 + new ones) all answered
       case "today": if (s.pk) { var m = lsGet("nursin_read_v1") || {}; if (m[s.pk] || (s.pk.indexOf("#") > 0 && m[s.pk.split("#")[0]])) return true; } r = retRec(s.id); return !!(r && (r.rd || 0) > at);
       case "cls": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at) || (!!s.id2 && readAfter(s.id2, at));
@@ -347,6 +357,8 @@
     var nm = esc(curName(s));
     switch (s.k) {
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
+      case "bus": var BS = w.NursinBus, sbn = BS ? BS.subjects(s.id || today()).map(function (k) { var S0 = (w.NLESSONS && w.NLESSONS.subjects || {})[k]; return S0 ? T(S0.ar, S0.fr) : k; }).join(" · ") : "";
+        return { tag: T("🚌 قبل الدوام", "🚌 Avant les cours"), t: T("🚌 مراجعة سريعة قبل الدوام", "🚌 Révision rapide avant les cours"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn), min: 3 };
       case "cls": return { tag: T("🏫 رجعت من المعهد", "🏫 De retour de l'institut"), t: T("راجع درس اليوم: ", "Révise la leçon du jour : ") + nm, sub: s.id2 ? T("وكمان «", "Et aussi « ") + esc(curName(s, s.id2, s.n2)) + T("»", " »") : T("مرّ عليه وهوّي بعدو سخن", "Pendant que c'est encore frais"), min: 8 };
       case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: esc(s.n), sub: esc(s.s || ""), min: 10 };
       case "mid": var M = w.NursinMid, sn = function (k) { return esc(M && M.subjName ? M.subjName(k) : k); };
@@ -492,7 +504,7 @@
       h += (duel ? '<button type="button" class="bx" data-hzduel data-step="' + esc(k) + '">' : '<a class="bx" href="' + esc(s.href) + '" data-step="' + esc(k) + '">') + '<span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' +
         (D[k] ? T("✅ خلصت", "✅ Fait") : "~" + x.min + T(" د", " min")) + "</span></span>" +
         (st.indexOf("now") === 0 ? "<h3>" + x.t + "</h3>" + (x.sub ? "<p>" + x.sub + "</p>" : "") + '<span class="nowft"><small>' + T("الخطوة ", "Étape ") + (i + 1) + T(" من ", " sur ") + tot + '</small><span class="go">' + (dn ? T("كمّل", "Continuer") : T("ابدأ", "Commencer")) + " " + CHEV + "</span></span>"
-          : "<b>" + x.t + "</b>" + (x.sub && s.k !== "osm" && (s.k === "weak" || s.k === "use" || s.k === "cls" || s.k === "imp" || s.k === "mid") ? "<small>" + x.sub + "</small>" : "")) + (duel ? "</button>" : "</a>") + "</li>";
+          : "<b>" + x.t + "</b>" + (x.sub && s.k !== "osm" && (s.k === "bus" || s.k === "weak" || s.k === "use" || s.k === "cls" || s.k === "imp" || s.k === "mid") ? "<small>" + x.sub + "</small>" : "")) + (duel ? "</button>" : "</a>") + "</li>";
     }
     return h;
   }
@@ -559,6 +571,10 @@
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
+    // 🚌 29n: while the morning review waits (class day, before 2:30 PM, not done yet) the path comes right under the greeting and the 🏥 card
+    // goes under the path (it is 380 px tall on a phone) — so «🧭 مسار اليوم» + 🚌 are on the first screen on the way to the institute
+    try { var lv = root.querySelector(".hzlivew"), pa = root.querySelector(".hzpath"), bs = null; p.steps.forEach(function (s) { if (s.k === "bus") bs = s; });
+      var busUp = !!(bs && !isDoneS(p, bs)); if (lv && pa && (lv.nextElementSibling === pa) === busUp) { if (busUp) pa.parentNode.insertBefore(lv, pa.nextSibling); else pa.parentNode.insertBefore(lv, pa); } } catch (e) {}
     parts.top.innerHTML = headHtml() + chipsHtml();
     parts.pin.innerHTML = pathHtml(p) + remHtml();   // 🧭 29k: the path comes first again (Abdullah 7:42 AM Nov 6: the 📌 card had pushed it off the screen); 📌 compact card right under it
     parts.foot.innerHTML = footHtml();
@@ -603,6 +619,7 @@
     if ((b = t.closest("[data-hzmore]"))) { moreOpen = !moreOpen; draw(); return; }   // 29f «+N كمان»
     if ((b = t.closest("[data-hznext]"))) { fbQ = ""; if (b.hasAttribute("data-end")) openK = ""; draw(); return; }
     if ((b = t.closest("[data-hzduel]"))) { var dk = b.getAttribute("data-step"); if (dk) { p.vis = p.vis || {}; p.vis[dk] = Date.now(); lsSet(PK, p); } else if (parts && !parts.duel.hidden) { parts.duel.hidden = true; return; } openDuel(); return; }
+    if ((b = t.closest('a[data-step^="bus:"]')) && w.NursinBus) { e.preventDefault(); p.vis = p.vis || {}; p.vis[b.getAttribute("data-step")] = Date.now(); lsSet(PK, p); w.NursinBus.open(p.d); return; }   // 🚌 29n: the flash review opens right here
     var a = t.closest("a[data-step]"); if (!a) return;
     var key = a.getAttribute("data-step");
     if (/^osm:/.test(key)) { e.preventDefault(); openK = openK === key ? "" : key; draw(); return; }
@@ -624,9 +641,12 @@
     setInterval(function () { if (!d.hidden) redraw(); }, 5 * 60e3);   // ⏰ 2:30 PM on a class day: «راجع درس اليوم» joins by itself
     if (location.hash === "#avatar") setTimeout(function () { if (U().picker) U().picker(null); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }, 700);
     if (location.hash === "#duel") setTimeout(function () { openDuel(); }, 500);
+    // 🚌 29n: «#bus» (the 📌 card's 🏫 line, a shared link) opens the morning review; it ticks the path when done
+    var busH = function () { if (location.hash === "#bus" && w.NursinBus) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} w.NursinBus.open(); } };
+    d.addEventListener("nursin:bus", redraw); w.addEventListener("hashchange", busH); if (location.hash === "#bus") setTimeout(busH, 600);
   }
   var UI = U();
-  w.HomePath = { todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
