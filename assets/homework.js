@@ -11,7 +11,7 @@
   var K = "nursin_hw_v1", DK = "nursin_hwdone_v1", MAXT = 120, MAXN = 300;
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function today() { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch (e) { return new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10); } }
+  function today() { try { var o = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).forEach(function (x) { o[x.type] = x.value; }); if (o.year && o.month && o.day) return o.year + "-" + o.month + "-" + o.day; } catch (e) {} return new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10); }   // 29j: formatToParts (WebKit's en-CA format() is «11/06/2026»)
   function cut(s, n) { return Array.from(String(s == null ? "" : s)).slice(0, n).join(""); }
   function clean(id, x) {                                  // pure (tests): a Firestore doc → a homework, or null
     if (!id || !x || typeof x !== "object") return null;

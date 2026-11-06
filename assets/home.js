@@ -549,6 +549,7 @@
       T("➕ إضافة · ✏️ تعديل · 🐞 مشكلة — منقرا كل اقتراح ومنردّ عليك", "➕ Ajout · ✏️ Modif · 🐞 Bug — on lit tout et on te répond") + '</small></span><span class="hzsuga" aria-hidden="true">' + T("◀", "▶") + "</span></a>";
   }
   var parts = null;
+  function remHtml() { var R = w.NursinRem; try { return R && R.homeHtml ? R.homeHtml() : ""; } catch (e) { return ""; } }
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
@@ -558,7 +559,7 @@
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
-    parts.top.innerHTML = headHtml() + chipsHtml();
+    parts.top.innerHTML = headHtml() + remHtml() + chipsHtml();      // 📌 29j: «تذكيرات اليوم» = the first thing under the greeting (assets/remind.js)
     parts.pin.innerHTML = pathHtml(p);
     parts.foot.innerHTML = footHtml();
     parts.sug.innerHTML = sugHtml();
@@ -613,7 +614,7 @@
     draw();
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });
@@ -625,7 +626,7 @@
     if (location.hash === "#duel") setTimeout(function () { openDuel(); }, 500);
   }
   var UI = U();
-  w.HomePath = { pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

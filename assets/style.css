@@ -1341,3 +1341,6 @@ html[data-theme=night] #caddmsg.err{color:#e5938a}
 .sublessons .lawtbl,.subintro .lawtbl{overflow-x:auto}.sublessons .lawtbl th,.sublessons .lawtbl td,.subintro .lawtbl td{overflow-wrap:anywhere;word-break:normal}
 .mslist{margin:6px 0 10px;padding-inline-start:22px}.mslist li{margin:4px 0}
 
+
+/* 📌 29j «أنا» → التذكيرات: one switch per kind (assets/remind.js #merem) */
+.merem h2{font-size:18px;margin:0 0 8px}.remsw{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(127,127,127,.18);cursor:pointer}.remsw input{width:20px;height:20px;flex:0 0 auto}
