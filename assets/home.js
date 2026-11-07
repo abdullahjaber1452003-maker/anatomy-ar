@@ -589,8 +589,18 @@
     for (i = 0; i < ix.length; i++) a[i] = ix[i].s;
     return a;
   }
+  /* ⬇️ 30h (Abdullah, Nov 7 2026 1:15 PM «بمسار اليوم يلّي بيتم إنجازه ينحط بالأسفل»): done steps (✅ خلصت) go to the BOTTOM of the
+     path; pending ones stay on top in their own order (↩️ carried first…), done ones keep their order among themselves. */
+  function doneLast(a, D) {
+    D = D || {}; var top = [], bot = [];
+    (a || []).forEach(function (s) { (D[skey(s)] ? bot : top).push(s); });
+    return top.concat(bot);
+  }
+  var seenDone = null, justK = {};                                  // ⬇️ keys drawn as done last time → a just-ticked step slides in once (no loop)
   function pathHtml(p) {
-    var st = allSteps(p), tot = st.length, dn = 0, cur = -1, i, D = p.done || {};
+    var D = p.done || {}, st = doneLast(allSteps(p), D), tot = st.length, dn = 0, cur = -1, i, k0;
+    var was = seenDone; seenDone = {}; for (k0 in D) seenDone[k0] = 1; justK = {};
+    if (was) for (k0 in D) if (!was[k0]) justK[k0] = 1;
     for (i = 0; i < tot; i++) { if (D[skey(st[i])]) dn++; else if (cur < 0) cur = i; }
     var all = dn === tot, near = !all && dn > 0 && tot - dn <= 2, mn = 0;
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
@@ -607,7 +617,7 @@
     for (i = 0; i < tot; i++) {
       var s = arr[i], x = texts(s), k = skey(s), st = D[k] ? "done" : i === cur ? "now" : "todo";
       if (s.bonus && st !== "done") st += " bonus";
-      h += '<li class="hzst ' + st + (s.k === "osm" ? " hzosmst" : "") + '"><span class="nd" aria-hidden="true"><i>' + (D[k] ? "✓" : s.e) + "</i></span>";
+      h += '<li class="hzst ' + st + (s.k === "osm" ? " hzosmst" : "") + (D[k] && justK[k] ? " hzjust" : "") + '"><span class="nd" aria-hidden="true"><i>' + (D[k] ? "✓" : s.e) + "</i></span>";
       if (s.k === "osm" && ((st.indexOf("now") === 0) || openK === k || (fbQ && s.qs && s.qs.indexOf(fbQ) > -1))) { h += osmHtml(p, s, st.indexOf("now") === 0 ? "now" : D[k] ? "done" : "todo") + "</li>"; continue; }
       if (s.k === "hw") {                               // 📌 homework: not a link — the text + his own «سلّمتها ✅»
         h += '<div class="bx hzhwbx" id="hw"><span class="k"><span>' + (st.indexOf("now") === 0 ? "▶ " + T("هلّق", "Maintenant") + " • " : "") + x.tag + '</span><span class="mini">' + (D[k] ? T("✅ سلّمتها", "✅ Rendu") : "") + "</span></span><b data-nofr>" + x.t + "</b>" + (x.sub ? "<small data-nofr>" + x.sub + "</small>" : "") +
@@ -822,7 +832,7 @@
     w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
-  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, doneLast: doneLast, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

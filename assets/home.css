@@ -205,3 +205,9 @@ body.busopen{overflow:hidden}
 .nzshf .btn{display:block;width:100%}
 html.nzshon,html.nzshon body{overflow:hidden}
 @media (min-width:1024px){.nzsh{justify-content:center;align-items:center}.nzshc{width:720px;max-width:calc(100% - 48px);height:88%;border-radius:16px}}
+
+/* ⬇️ 30h: a step that just got ✅ lands at the bottom of «🧭 مسار اليوم» with one short slide (no loop) */
+.hzst.hzjust{-webkit-animation:hzjust .45s ease-out 1;animation:hzjust .45s ease-out 1}
+@-webkit-keyframes hzjust{from{opacity:.2;-webkit-transform:translateY(-14px)}to{opacity:1;-webkit-transform:none}}
+@keyframes hzjust{from{opacity:.2;transform:translateY(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hzst.hzjust{-webkit-animation:none;animation:none}}
