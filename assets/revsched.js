@@ -10,7 +10,8 @@
    «📅 راجع N دروس قبل ما تنساهم» → hifzi.html#due). Pure parts are exported for the tests. ES5 for iOS 12. */
 (function (w, d) {
   "use strict";
-  var K = "nursin_rsch_v1", DAY = 864e5, I = [1, 3, 7, 14, 30, 60];
+  var K = "nursin_rsch_v1", DAY = 864e5, I = [1, 3, 7, 14, 30, 60], CAP = 6;
+  var EXD = { prev: "2026-11-14", rea: "2026-11-14", psych: "2026-11-21", geri: "2026-11-21", quality: "2026-11-21", comm: "2026-11-28", pharma: "2026-11-28" }, EXD0 = "2026-11-16";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -46,6 +47,8 @@
   }
   // {k:'later'|'today'|'late', n: days}
   function stateOf(rec, day) { if (!rec || !rec.due) return null; var n = diff(rec.due, day); return { k: n > 0 ? "later" : n === 0 ? "today" : "late", n: Math.abs(n) }; }
+  function an(n) { n = String(n); return FR() ? n : n.replace(/[0-9]/g, function (c) { return "٠١٢٣٤٥٦٧٨٩".charAt(+c); }); }   // ٦
+  function nLes(n) { return n === 1 ? T("درس واحد", "1 leçon") : n === 2 ? T("درسين", "2 leçons") : T(an(n) + " دروس", n + " leçons"); }
   function daysAr(n) { return n === 1 ? "يوم" : n === 2 ? "يومين" : n <= 10 ? n + " أيام" : n + " يوم"; }
   function chipText(rec, day) {
     var s = stateOf(rec, day); if (!s) return "";
@@ -68,6 +71,16 @@
     var out = []; (L || []).forEach(function (l) { var r = S[l.id]; if (r && r.due && r.due <= day) out.push({ id: l.id, n: l.n, href: l.href, s: l.s, late: diff(day, r.due) }); });
     return out.sort(function (a, b) { return b.late - a.late || (a.id < b.id ? -1 : 1); });
   }
+  // 📦 30l: the date of a subject's exam (assets/midterm.js when loaded, else the mirror EXD)
+  function exOf(s) { var M = w.NursinMid; try { if (M && M.examOf) return M.examOf(s); } catch (e) {} return EXD[s] || EXD0; }
+  // due lessons ranked for today's batch: the NEXT exam's subjects first (exams already past go last), then the most overdue
+  function rankDue(ys, day) {
+    return (ys || []).slice().sort(function (a, b) {
+      var ea = exOf(a.s), eb = exOf(b.s), pa = ea >= day ? 0 : 1, pb = eb >= day ? 0 : 1;
+      return pa - pb || (pa === 0 && ea !== eb ? (ea < eb ? -1 : 1) : 0) || b.late - a.late || (a.id < b.id ? -1 : 1);
+    });
+  }
+  function pickBatch(ys, day, cap) { return rankDue(ys, day).slice(0, cap || CAP).map(function (l) { return l.id; }); }
 
   /* ---------------- store ---------------- */
   function lessons() { return ((w.NLESSONS && w.NLESSONS.list) || []).map(function (l) { return { id: l.s + ":" + (l.l || l.t), n: l.n, href: l.href, s: l.s }; }); }
@@ -88,13 +101,33 @@
     if (kind === "open") a.o = 1;
     else if (kind === "ans") { a.q[1]++; if (val) a.q[0]++; }
     else if (kind === "x") a.x = Math.max(a.x == null ? 0 : a.x, +val || 0);
-    var r = judge(x.L[id], a, day); if (r) x.L[id] = r;
+    var was = x.L[id], wasDue = !!(was && was.due && was.due <= day && was.last !== day);
+    var r = judge(x.L[id], a, day); if (r) { x.L[id] = r; if (wasDue) { x.a.rv = x.a.rv || []; if (x.a.rv.indexOf(id) < 0) x.a.rv.push(id); } }   // ✅ left the due list today
     lsSet(K, x); clearTimeout(tPaint); tPaint = setTimeout(paint, 80);
     return x.L[id] || null;
   }
   function rec(id) { return sched()[id] || null; }
   function due(day) { return dueList(sched(), lessons(), day || today()); }
   function dueCount() { return due().length; }
+  // 📦 today's batch (≤ CAP), fixed for the day once picked; null while the lesson list isn't there yet (never «0 left» by accident)
+  function batch(day) {
+    day = day || today(); var L = lessons(); if (!L.length) return null;
+    var x = load(); if (x.b && x.b.d === day && x.b.ids && x.b.ids.join) return x.b;
+    if (!x.bf) { backfill(x); x.bf = 1; }
+    x.b = { d: day, ids: pickBatch(dueList(x.L, L, day), day, CAP) }; lsSet(K, x); return x.b;
+  }
+  // {n, done:[id], left:[{id,n,href,s,late}], rest:[…due, not in today's batch], rv:[{id,n,href,s}] left the list today}
+  function batchInfo(day) {
+    day = day || today(); var b = batch(day); if (!b) return null;
+    var S = sched(), L = lessons(), by = {}, x = load(); L.forEach(function (l) { by[l.id] = l; });
+    var ids = b.ids.filter(function (id) { return !!by[id]; });
+    var done = ids.filter(function (id) { var r = S[id]; return !r || !r.due || r.due > day; });
+    var all = dueList(S, L, day), left = all.filter(function (l) { return ids.indexOf(l.id) > -1; }), rest = all.filter(function (l) { return ids.indexOf(l.id) < 0; });
+    var rv = (x.a && x.a.d === day && x.a.rv) ? x.a.rv.slice() : [];
+    Object.keys(S).forEach(function (id) { var r = S[id]; if (r && r.last === day && (r.n | 0) >= 2 && !r.bf && rv.indexOf(id) < 0) rv.push(id); });   // reviews before 30l
+    return { d: day, n: ids.length, ids: ids, done: done, left: rankDue(left, day), rest: rankDue(rest, day), rv: rv.filter(function (id) { return !!by[id]; }).map(function (id) { return by[id]; }) };
+  }
+  function batchDone(day) { var i = batchInfo(day); return !!(i && !i.left.length); }   // nothing of today's batch left (an empty batch = nothing due)
 
   /* ---------------- events (the same ones the lesson memory listens to) ---------------- */
   function ofQid(qid) { var R = w.NursinRet, q = null; (w.QUIZ || []).concat(w.LINKQ || []).some(function (y) { if (y && y.id === qid) { q = y; return true; } return false; }); if (!q) return []; if (q.ls) return q.ls.slice(); var id = R && R.ofQ ? R.ofQ(q) : null; return id ? [id] : []; }
@@ -130,7 +163,9 @@
     s.textContent = ".rvchip{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.6;vertical-align:middle;white-space:nowrap;background:rgba(15,118,110,.1);color:#0f766e}" +
       ".rvchip.rv-today{background:rgba(217,119,6,.14);color:#b45309}.rvchip.rv-late{background:rgba(220,38,38,.12);color:#b91c1c}" +
       ".rvdue{margin:8px 0;padding:8px 12px;border-radius:12px;border:1px solid rgba(217,119,6,.35);background:rgba(217,119,6,.07);font-size:14px;line-height:1.8}" +
-      ".rvdue a{text-decoration:underline}.rvall{list-style:none;padding:0;margin:8px 0}.rvall li{padding:6px 0;border-bottom:1px solid rgba(127,127,127,.18)}";
+      ".rvdue a{text-decoration:underline}.rvall{list-style:none;padding:0;margin:8px 0}.rvall li{padding:6px 0;border-bottom:1px solid rgba(127,127,127,.18)}" +
+      ".rvhow{margin:6px 0 8px;padding:8px 12px;border-radius:12px;background:rgba(15,118,110,.08);font-size:14px;line-height:1.7}.rvcap{margin:6px 0;line-height:1.7}.rvpg{font-size:13px;color:#0f766e;font-weight:600}" +
+      ".rvall li.rvok{opacity:.65}.rvyay{font-weight:700;color:#0f766e}.rvrest{margin:10px 0}.rvrest summary{cursor:pointer;font-size:14px}";
     (d.head || d.body).appendChild(s);
   }
   function paint() {
@@ -149,11 +184,24 @@
     }
     var all = d.getElementById("due");
     if (all && p === "hifzi.html") {
-      style(); var ys = dueList(S, lessons(), day), SUB = (w.NLESSONS && w.NLESSONS.subjects) || {};
-      all.innerHTML = "<h2>" + esc(T("📅 لازم تراجع اليوم قبل ما تنسى", "📅 À réviser aujourd'hui, avant d'oublier (قبل ما تنسى)")) + "</h2>" +
-        (ys.length ? '<ul class="rvall">' + ys.map(function (l) { var sj = SUB[l.s]; return '<li><a href="' + esc(l.href) + '">' + esc(l.n) + "</a> " + chipHtml(S[l.id], day) + (sj ? ' <small>' + esc(T(sj.ar, sj.fr)) + "</small>" : "") + "</li>"; }).join("") + "</ul>" +
-          '<p class="small">' + esc(T("افتح الدرس وجاوب سؤالين عليه (أو ✍️ اشرحلي بكلامك) وبيتسجّل موعد المراجعة الجاية.", "Ouvre la leçon et réponds à 2 questions (ou ✍️ explique-la) : la prochaine date se fixe toute seule.")) + "</p>"
-          : '<p class="small">' + esc(T("👌 ما في ولا درس لازم تراجعو اليوم.", "👌 Aucune leçon à réviser aujourd'hui (ما في درس لازم تراجعو).")) + "</p>");
+      style(); var bi = batchInfo(day), SUB = (w.NLESSONS && w.NLESSONS.subjects) || {};
+      var dm = function (s0) { var e = String(exOf(s0)).split("-"); return +e[2] + "/" + +e[1]; };
+      var li = function (l, ok) { var sj = SUB[l.s]; return '<li' + (ok ? ' class="rvok"' : "") + ">" + (ok ? "✅ <s>" + esc(l.n) + "</s>" : '<a href="' + esc(l.href) + '">' + esc(l.n) + "</a> " + chipHtml(S[l.id], day)) +
+        (sj ? " <small>" + esc(T(sj.ar, sj.fr)) + " · " + esc(T("امتحانو ", "examen ")) + dm(l.s) + "</small>" : "") + "</li>"; };
+      var h = "<h2>" + esc(T("📅 مراجعة اليوم قبل ما تنسى", "📅 Révision du jour, avant d'oublier (قبل ما تنسى)")) + "</h2>" +
+        '<p class="rvhow">' + esc(T("💡 كل درس: افتحو وجاوب سؤالين (أو ✍️ اشرحلي بكلامك) ← بيطلع من اللائحة. الرقم بينقص لما تراجع أو بتخلص كويز بنفس الدرس.",
+          "💡 Chaque leçon : ouvre-la et réponds à 2 questions (ou ✍️ explique-la) → elle sort de la liste. Le nombre baisse quand tu révises ou finis un quiz sur cette leçon.")) + "</p>";
+      if (bi && bi.n) {
+        var byId = {}; (bi.rv || []).concat(bi.left).forEach(function (l) { byId[l.id] = l; }); (lessons()).forEach(function (l) { if (!byId[l.id]) byId[l.id] = l; });
+        h += '<p class="rvcap"><b>' + esc(T("🎯 " + an(bi.n) + " اليوم · الباقي بكرا", "🎯 " + bi.n + " aujourd'hui · le reste demain (الباقي بكرا)")) + "</b>" + (bi.rest.length ? " <small>" + esc(T("(" + an(bi.rest.length) + " بالدور، الأقرب لامتحانك أول)", "(" + bi.rest.length + " en attente, l'examen le plus proche d'abord)")) + "</small>" : "") +
+          '<br><span class="rvpg">' + esc(T("راجعت " + an(bi.done.length) + " من " + an(bi.n), "Révisé " + bi.done.length + " sur " + bi.n + " (راجعت)")) + "</span></p>" +
+          '<ul class="rvall">' + bi.left.map(function (l) { return li(l, false); }).join("") + bi.done.map(function (id) { return li(byId[id] || { id: id, n: id, s: "" }, true); }).join("") + "</ul>" +
+          (bi.left.length ? "" : '<p class="rvyay">' + esc(T("👏 خلّصت مراجعة اليوم! الباقي بيجي بكرا", "👏 Révision du jour terminée ! Le reste arrive demain")) + "</p>");
+      } else h += '<p class="small">' + esc(T("👌 ما في ولا درس لازم تراجعو اليوم.", "👌 Aucune leçon à réviser aujourd'hui (ما في درس لازم تراجعو).")) + "</p>";
+      if (bi && bi.rv.length) h += '<p class="rvleft small">' + esc(T("✅ راجعت اليوم (طلعو من اللائحة): ", "✅ Révisé aujourd'hui (sorti de la liste) : ")) + bi.rv.map(function (l) { return esc(l.n); }).join(" · ") + "</p>";
+      if (bi && bi.rest.length) h += '<details class="rvrest"><summary>' + esc(T("📦 الباقي بالدور (" + an(bi.rest.length) + ") — بيتوزّعو عالأيام الجاية، إذا عندك وقت فيك تبلّش فيهن", "📦 En attente (" + bi.rest.length + ") — répartis sur les prochains jours ; si tu as le temps, vas-y")) + "</summary>" +
+        '<ul class="rvall">' + bi.rest.map(function (l) { return li(l, false); }).join("") + "</ul></details>";
+      all.innerHTML = h;
     }
   }
   function boot() { sched(); paint(); setTimeout(paint, 700); }
@@ -162,5 +210,5 @@
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else setTimeout(boot, 0);
   }
   w.NursinRev = { key: K, I: I, next: next, fromRet: fromRet, stateOf: stateOf, chipText: chipText, judge: judge, dueList: dueList, ivl: ivl,
-    touch: touch, rec: rec, due: due, dueCount: dueCount, sched: sched, listHtml: listHtml, chipHtml: chipHtml, paint: paint };
+    touch: touch, rec: rec, due: due, dueCount: dueCount, CAP: CAP, EXD: EXD, EXD0: EXD0, exOf: exOf, rankDue: rankDue, pickBatch: pickBatch, batch: batch, batchInfo: batchInfo, batchDone: batchDone, an: an, nLes: nLes, sched: sched, listHtml: listHtml, chipHtml: chipHtml, paint: paint };
 })(window, window.document);

@@ -203,6 +203,7 @@ body.busopen{overflow:hidden}
 .nzshf{flex:none;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(0,0,0,.08)}
 .nzshf[hidden]{display:none}
 .nzshf .btn{display:block;width:100%}
+.nzshpg{display:block;text-align:center;font-size:13px;font-weight:600;color:#0f766e;margin:0 0 6px}.nzshpg:empty{display:none}
 html.nzshon,html.nzshon body{overflow:hidden}
 @media (min-width:1024px){.nzsh{justify-content:center;align-items:center}.nzshc{width:720px;max-width:calc(100% - 48px);height:88%;border-radius:16px}}
 

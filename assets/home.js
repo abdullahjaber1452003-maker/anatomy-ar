@@ -356,7 +356,7 @@
     }
     if (!p.steps.some(function (t) { return t.k === "rev"; })) ins({ k: "rev", e: "🔁", base: 0, href: "quiz.html?t=review", pr: 0.5 });   // 🔁 pinned, even on a path made before
     // 📅 29y: the lessons due for review today = ONE step «📅 راجع N دروس قبل ما تنساهم» → the list (hifzi.html#due, assets/revsched.js)
-    var RV = w.NursinRev, nd = 0; try { nd = RV && RV.dueCount ? RV.dueCount() : 0; } catch (e) {}
+    var RV = w.NursinRev, nd = 0; try { var bi0 = RV && RV.batchInfo ? RV.batchInfo() : null; nd = bi0 ? bi0.n : RV && RV.dueCount ? Math.min(6, RV.dueCount()) : 0; } catch (e) {}   // 30l: today's batch (≤ 6)
     if (nd > 0 && !p.steps.concat(p.more || []).some(function (t) { return t.k === "due"; })) ins({ k: "due", e: "📅", id: p.d, n: nd, href: "hifzi.html#due", pr: 1 });
     // 📚 30d «وين واصل» (Abdullah, Nov 7 2026: «لازم الطالب يحرق ع كل الدروس»): at most 2 steps a day — «📖 درس ما فتحته» / «💪 قوّي: …»
     // (assets/cover.js steps(): never a lesson already on the path), added once per day (p.cv), the 7-step rule above still holds
@@ -374,14 +374,33 @@
   function useAt(f) { var o = lsGet("nursin_use_v1"); return o && o.f ? +o.f[f] || 0 : 0; }
   // is step i done now? (once done it stays done for the day)
   function isDone(p, i) { return isDoneS(p, p.steps[i]); }
+  /* 30l (Abdullah Nov 7 7:59 PM: the 📅 review step and «سؤال اليوم» got crossed out without doing them): these steps tick ONLY by their own
+     rule (📅 today's batch reviewed · 🔁 today's list answered · ⭐ that goal marked done) — a stray tick (an old «✅ خلصت» / any quiz
+     finishing inside the sheet) is taken off on load. ruleNow: true / false, or null when the data isn't loaded yet (then nothing changes). */
+  var RULE = { due: 1, rev: 1, imp: 1 };
+  function ruleNow(s) {
+    try {
+      if (s.k === "due") { var RV = w.NursinRev, bi = RV && RV.batchInfo ? RV.batchInfo() : null; return bi ? !bi.left.length : null; }
+      if (s.k === "rev") { var S = w.NursinSRS; return S && S.count ? S.count() === 0 : null; }
+      if (s.k === "imp") { var G = w.NursinGoals, gl = G && G.list ? G.list() : null; if (!gl || !gl.length) return null; var g = impNow().filter(function (y) { return y.ik === s.ik; })[0]; return g ? !!g.done : null; }
+    } catch (e) {}
+    return null;
+  }
+  // which finishing event from the inline sheet really completes step s (30l: 📅/🔁/🧑‍🏫/🚌/📌/⚔️ never by event; ⭐ only its own goal)
+  function evHits(s, t, det) {
+    det = det || {};
+    if (/^(due|rev|osm|bus|hw|duel)$/.test(s.k)) return false;
+    if (s.k === "imp") { var ik = String(s.ik || ""); return (t === "nursin:goal-done" && !!det.k && det.k === ik) || (t === "nursin:quiz-done" && !!det.exam && ik === "ex:" + det.exam); }
+    return t === "nursin:quiz-done" || t === "nursin:goal-done";
+  }
   function isDoneS(p, s) {
     var key = skey(s), at = s.at || p.at, vis = (p.vis || {})[key] || 0, r;
-    if ((p.done || {})[key]) return true;
+    if ((p.done || {})[key]) { if (!RULE[s.k] || (p.ev || {})[key]) return true; var rk = ruleNow(s); if (rk !== false) return true; }   // 30l: a review / سؤال اليوم tick needs its real rule
     switch (s.k) {
       case "osm": var A = p.ans || {}; return s.qs && s.qs.length ? s.qs.every(function (q) { return A[q] != null; }) : vis > 0 && back(vis);
       case "bus": var B = w.NursinBus; return !!(B && B.isDone && B.isDone(p.d));   // 🚌 every question of the morning review answered
       case "rev": var S = w.NursinSRS; return !!(S && S.count) && S.count() === 0;
-      case "due": var RV = w.NursinRev; try { return !!(RV && RV.dueCount) && RV.dueCount() === 0; } catch (e) { return false; }   // 📅 every due lesson reviewed   // 🔁 today's list (≤ 20 + new ones) all answered
+      case "due": var RV = w.NursinRev; try { return !!(RV && RV.batchDone) && RV.batchDone(); } catch (e) { return false; }   // 30l: today's batch (≤ 6) all reviewed — never a closed sheet   // 📅 every due lesson reviewed   // 🔁 today's list (≤ 20 + new ones) all answered
       case "today": if (s.pk) { var m = lsGet("nursin_read_v1") || {}; if (m[s.pk] || (s.pk.indexOf("#") > 0 && m[s.pk.split("#")[0]])) return true; } r = retRec(s.id); return !!(r && (r.rd || 0) > at);
       case "cls": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at) || (!!s.id2 && readAfter(s.id2, at));
       case "cont": case "new": r = s.id ? retRec(s.id) : null; if ((r && (r.rd || 0) > at) || readAfter(s.id, at)) return true; return !s.id && vis > 0 && back(vis);
@@ -410,7 +429,11 @@
   function back(vis) { return Date.now() - vis > 20e3; }     // opened the step and came back (≥ 20 s later)
   function refreshDone(p) {
     var ch = false; p.done = p.done || {};
-    p.steps.concat(p.more || []).forEach(function (s) { var k = skey(s); if (!p.done[k] && isDoneS(p, s)) { p.done[k] = Date.now(); ch = true; } });
+    p.steps.concat(p.more || []).forEach(function (s) {
+      var k = skey(s);
+      if (p.done[k] && RULE[s.k] && !(p.ev || {})[k] && ruleNow(s) === false) { delete p.done[k]; ch = true; return; }   // 30l: un-tick a false ✅
+      if (!p.done[k] && isDoneS(p, s)) { p.done[k] = Date.now(); ch = true; }
+    });
     if (carryClean(p)) ch = true;                       // ↩️ 29y: a carried step that is done disappears
     if (ch) { lsSet(PK, p); push(p); } return p;
   }
@@ -470,9 +493,11 @@
     var nm = bidiT(esc(curName(s)));
     switch (s.k) {
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
-      case "due": var RV = w.NursinRev, dl = [], dn0 = s.n | 0; try { dl = RV && RV.due ? RV.due() : []; if (RV) dn0 = dl.length || dn0; } catch (e) {}
-        return { tag: T("📅 قبل ما تنسى", "📅 Avant d'oublier (قبل ما تنسى)"), t: dn0 === 1 ? T("📅 راجع درس واحد قبل ما تنساه", "📅 Révise 1 leçon avant de l'oublier (قبل ما تنساه)") : T("📅 راجع " + dn0 + " دروس قبل ما تنساهم", "📅 Révise " + dn0 + " leçons avant de les oublier (قبل ما تنساهم)"),
-          sub: dl.slice(0, 2).map(function (l) { return esc(lname(l.n)); }).join(" · ") + (dl.length > 2 ? " +" + (dl.length - 2) : ""), min: Math.min(20, Math.max(3, dn0 * 4)) };
+      case "due": var RV = w.NursinRev, bi = null, dn0 = s.n | 0, dl = []; try { bi = RV && RV.batchInfo ? RV.batchInfo() : null; if (bi) { dn0 = bi.n || dn0; dl = bi.left; } } catch (e) {}   // 30l: today's batch (≤ 6)
+        var nl = RV && RV.nLes ? RV.nLes(dn0) : dn0 + " دروس", an0 = RV && RV.an ? RV.an : String;
+        return { tag: T("📅 قبل ما تنسى", "📅 Avant d'oublier (قبل ما تنسى)"), t: T("📅 راجع " + nl, "📅 Révise " + nl + " (راجع)"),
+          sub: (bi ? esc(T("راجعت " + an0(bi.done.length) + " من " + an0(bi.n), "Révisé " + bi.done.length + " sur " + bi.n)) + (bi.rest.length ? esc(T(" · الباقي بكرا", " · le reste demain")) : "") + (dl.length ? " · " : "") : "") +
+            dl.slice(0, 2).map(function (l) { return esc(lname(l.n)); }).join(" · ") + (dl.length > 2 ? " +" + (dl.length - 2) : ""), min: Math.min(20, Math.max(3, dn0 * 3)) };
       case "bus": var BS = w.NursinBus, sbn = BS ? BS.subjects(s.id || today()).map(function (k) { var S0 = (w.NLESSONS && w.NLESSONS.subjects || {})[k]; return S0 ? T(S0.ar, S0.fr) : k; }).join(" · ") : "";
         var bp = BS && BS.prog ? BS.prog(s.id || today()) : null;   // 🚌 29o: fills the ~30 min ride; «12/30» once started
         return { tag: T("🚌 بالطريق عالدوام", "🚌 En route vers les cours"), t: T("🚌 مراجعة الطريق", "🚌 Révision du trajet"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn) + (bp && bp.n ? " · " + bp.n + "/" + (bp.of || 30) : ""), min: 30 };
@@ -789,7 +814,7 @@
     d.body.appendChild(sh); d.documentElement.classList.add("nzshon");
     sh.addEventListener("click", function (e) { var t = e.target; if (t === sh || (t.closest && t.closest(".nzshx,.nzshback"))) shBack(); });
     try { history.pushState({ nzs: 1 }, "", location.href); shPush = true; } catch (x) { shPush = false; }
-    shT = setInterval(shCheck, 1500);
+    shT = setInterval(function () { shCheck(); }, 1500); setTimeout(function () { shCheck(); }, 60);
   }
   function shBack() { if (shPush && history.state && history.state.nzs) { try { history.back(); return; } catch (x) {} } closeSheet(); }
   function closeSheet() {
@@ -798,17 +823,30 @@
     d.documentElement.classList.remove("nzshon"); draw(); try { w.scrollTo(0, shY); } catch (x) {}
   }
   function shDone() { shFin = true; if (sh) { var f = sh.querySelector(".nzshf"); if (f) f.hidden = false; } }
-  function shCheck(mark) {
+  // 📅 30l: the review sheet always shows «راجعت X من N» + «رجوع للمسار»; «✅ خلصت» only once today's batch is really reviewed
+  function shFoot(p, s, ok) {
+    if (!sh || s.k !== "due") return false; var f = sh.querySelector(".nzshf"), RV = w.NursinRev, bi = null; if (!f) return true;
+    try { bi = RV && RV.batchInfo ? RV.batchInfo() : null; } catch (e) {}
+    var an0 = RV && RV.an ? RV.an : String, pg = bi && bi.n ? T("راجعت " + an0(bi.done.length) + " من " + an0(bi.n), "Révisé " + bi.done.length + " sur " + bi.n + " (راجعت)") : "";
+    var b = f.querySelector(".nzshback"), g = f.querySelector(".nzshpg");
+    if (!g) { g = d.createElement("span"); g.className = "nzshpg"; f.insertBefore(g, f.firstChild); }
+    g.textContent = pg; if (b) b.textContent = ok ? T("✅ خلصت · رجوع للمسار", "✅ Fini · Retour au parcours (رجوع للمسار)") : T("رجوع للمسار", "Retour au parcours (رجوع للمسار)");
+    f.hidden = false; return true;
+  }
+  function shCheck(mark, t, det) {
     if (!sh || !shKey) return; var p = lsGet(PK); if (!p || p.d !== today()) return; var s = shStep(p); if (!s) return;
-    if (mark) { p.done = p.done || {}; if (!p.done[shKey]) { p.done[shKey] = Date.now(); save(p); } }
-    if (mark || isDoneS(p, s)) shDone();
+    if (mark && !evHits(s, t, det)) mark = false;                                  // 30l: only the event that really finishes THIS step
+    if (mark) { p.done = p.done || {}; p.ev = p.ev || {}; if (!p.done[shKey]) { p.done[shKey] = Date.now(); p.ev[shKey] = 1; save(p); } }
+    var ok = mark || isDoneS(p, s);
+    if (shFoot(p, s, ok)) { if (ok) shFin = true; return; }
+    if (ok) shDone();
   }
   if (w.addEventListener) {
     w.addEventListener("popstate", function () { if (sh) { shPush = false; closeSheet(); } });
     w.addEventListener("message", function (e) {
       if (!sh || e.origin !== location.origin) return; var m = e.data; if (!m || typeof m !== "object") return;
       if (m.nz === "close") { shBack(); return; }
-      if (m.nz === "ev") shCheck(m.t === "nursin:quiz-done" || m.t === "nursin:goal-done");
+      if (m.nz === "ev") shCheck(m.t === "nursin:quiz-done" || m.t === "nursin:goal-done", m.t, m.d);
     });
     w.addEventListener("keydown", function (e) { if (sh && (e.key === "Escape" || e.key === "Esc")) shBack(); });
   }
@@ -836,7 +874,7 @@
     w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
-  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, doneLast: doneLast, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, doneLast: doneLast, isDoneS: isDoneS, ruleNow: ruleNow, evHits: evHits, shCheck: shCheck, RULE: RULE, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

@@ -5,6 +5,7 @@
    New lessons don't need a line here: a lesson with added: 'YYYY-MM-DD' in assets/lessons.js gets a «جديد» badge for 7 days by itself.
    Brand-new students start with every entry already seen (no flood on the first visit). No ads in this card. */
 window.NURSIN_WHATSNEW = [
+  { id: "30l", date: "2026-11-07", text: "📅 المراجعة صارت ٦ دروس باليوم (الأقرب لامتحانك أول) وما بتنشطب إلا لما تخلصها", link: "/hifzi.html#due" },
   { id: "30k", date: "2026-11-07", text: "🫁 درس جديد بالإنعاش: التهوية الميكانيكية (VCV · PCV · PSV · VNI) + كويز", link: "/rea.html#r5" },
   { id: "30j", date: "2026-11-07", text: "📅 مواعيد الامتحانات الجديدة: ١٤/١١ وقائية + Réa · ١٦/١١ الباقي · ٢١/١١ عقلية + Géria + Qualité · ٢٨/١١ صحة جماعية + Pharmaco", link: "/midterm.html" },
   { id: "30i", date: "2026-11-07", text: "❓ شرح صغير لكل شي بالموقع: أول مرة بتفوت عحاجة بيورجيك كيف تستعملها (والقلم 🖍️ أول شي). بدك ترجع تشوفو؟ «❓ كيف بستعمل» بالقائمة", link: "" },
