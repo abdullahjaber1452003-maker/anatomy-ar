@@ -10,7 +10,7 @@
   var hands = [], washed = false, sheet = null, panel = null, fbT = 0, endSeen = false, openQ = null, prevSt = {};
   // 28y: 💡 open hint box (bed k) · the step a paid hint pointed at · the 📤 checklist · each bed has its own IV set (soluté + cathéter + tubulure) at the bed
   var hintOpen = null, hl = null, handOpen = null, BEDSIDE = { kit: 1 };
-  var helpOpen = false, helpAsk = null, helpTxt = "", talkOpen = null;   // 29m 🧑‍⚕️ the helper bubble · the 📞/💡 it asked for · 💬 the question asked at a bed
+  var helpOpen = false, helpAsk = null, helpTxt = "", talkOpen = null, helpMode = "", helpStuck = null, helpPk = "", nud = { t: 0 };   // 30c: 💡/📊/❓ for the patient I am with · the 🔴 line's clock   // 29m 🧑‍⚕️ the helper bubble · the 📞/💡 it asked for · 💬 the question asked at a bed
   // 👥 the other students in the room (assets/livepres.js): their drawn position, path, sprite; the join/leave toast queue
   // 28z 🏥 the floor strip (all departments small, mine big above): its canvas, my walk between departments (trv), the ambulance, the sound
   var fcv = null, fcx = null, fsc = 1, fdpr = 1, trv = null, lastDep = "er", ambSeen = 0, ambAnim = null, snd = false, SNDK = "nursin_live_snd_v1", actx = null, pAll = [];
@@ -177,9 +177,30 @@
     docNeed: { ar: "«قبل ما قلّك شو تعطو، بدّي: {m}»", fr: "« Avant de prescrire, il me faut : {m} »" },
     // 29m 🧑‍⚕️ the helper nurse · 💬 talk to the patient · 📞 an unstable patient's doctor gives an order
     docGo: { ar: "«🚨 مش وقت ننطر — هلّق: {o}، وخبّرني دغري بالأرقام.»", fr: "« 🚨 On n'attend pas — tout de suite : {o}, et rappelle-moi avec les constantes. »" },
-    asNm: { ar: "مساعد", fr: "Aide" }, asQ: { ar: "بدّك ساعدك؟", fr: "Je t'aide ?" }, asY: { ar: "ايه", fr: "Oui" }, asN: { ar: "لأ", fr: "Non" },   // 29p
+    asNm: { ar: "مساعد 👆", fr: "Aide 👆" }, asQ: { ar: "بدّك ساعدك؟", fr: "Je t'aide ?" }, asY: { ar: "ايه", fr: "Oui" }, asN: { ar: "لأ", fr: "Non" },   // 29p
     hlp: { ar: "🧑‍⚕️ الممرض المساعد", fr: "🧑‍⚕️ L'infirmier aide" }, hlpAsk: { ar: "❓ شو بعمل؟", fr: "❓ Je fais quoi ?" },
     hlpIntro: { ar: "اسألني «شو بعمل؟» وبقلّك الخطوة الجاية — خطوة وحدة كل مرّة (−1 نقطة، {m} لكل مريض).", fr: "Demande-moi « Je fais quoi ? » : je te dis l'étape suivante, une à la fois (−1 point, {m} par patient)." },
+    // 30c 🧑‍⚕️ he helps with the patient I am with (Abdullah, Nov 7 11:05 AM): 💡 what now · 📊 the vitals explained · ❓ hints that never give the answer
+    ahFor: { ar: "🛏️ مع {n}", fr: "🛏️ Avec {n}" }, ahNone: { ar: "قرّب من تخت مريض (أو افتح تختو) وبساعدك فيه.", fr: "Approche-toi d'un lit (ou ouvre-le) et je t'aide avec ce patient." },
+    ahTip: { ar: "💡 شو بعمل هلّق؟", fr: "💡 Je fais quoi maintenant ?" }, ahVit: { ar: "📊 شرحلي العلامات", fr: "📊 Explique les constantes" }, ahStuck: { ar: "❓ علقت", fr: "❓ Je bloque" },
+    hlpAsk2: { ar: "🎯 قلّي الخطوة بالزبط (−1)", fr: "🎯 Dis-moi l'étape exacte (−1)" },
+    abcL: { ar: "🔤 ABCDE: أخطر شي هلّق عند {n} هو {l}: {s} {v} ({st})", fr: "🔤 ABCDE : le plus urgent chez {n} = {l} : {s} {v} ({st})" },
+    abcOk: { ar: "🔤 ABCDE: أرقامو ما فيها شي برّا الطبيعي هلّق — كمّل بالترتيب ومراقبة.", fr: "🔤 ABCDE : rien d'anormal dans ses constantes — continue dans l'ordre et surveille." },
+    abcA: { ar: "A مجرى الهوا (Airway)", fr: "A voies aériennes" }, abcB: { ar: "B التنفّس (Breathing)", fr: "B respiration" }, abcC: { ar: "C الدورة الدمويّة (Circulation)", fr: "C circulation" },
+    abcD: { ar: "D الوعي (Disability)", fr: "D conscience" }, abcE: { ar: "E الباقي: الحرارة والوجع (Exposure)", fr: "E le reste : T°, douleur" },
+    abcTri: { ar: "(أرقامو عالفرز — Tri = الفرز؛ المونيتور لسّا مش مركّب)", fr: "(constantes du tri — le moniteur n'est pas encore branché)" },
+    vHi: { ar: "⬆️ عالي", fr: "⬆️ élevé" }, vLo: { ar: "⬇️ واطي", fr: "⬇️ bas" }, vOk: { ar: "✅ طبيعي", fr: "✅ normal" },
+    vNorm: { ar: "الطبيعي {r}", fr: "normal {r}" }, vSrc: { ar: "🌐 معلومات عامة: الأرقام الطبيعية عند الكبار (adulte = الكبير)", fr: "🌐 Notions générales : valeurs normales de l'adulte" },
+    vTri: { ar: "📟 هيدي أرقامو عالفرز (Tri = الفرز) — الحيّة بتبيّن عالمونيتور (Moniteur = جهاز المراقبة):", fr: "📟 Ses constantes en direct s'affichent quand le moniteur est branché — voici celles du tri :" },
+    stk1: { ar: "🧠 تلميح 1:", fr: "🧠 Indice 1 :" }, stk2: { ar: "🧠 تلميح 2:", fr: "🧠 Indice 2 :" },
+    stkFile: { ar: "📖 ارجع لقصّتو وعوارضو وفحوصاتو — الجواب مكتوب فيهن.", fr: "📖 Relis son histoire, ses signes et ses examens — la réponse y est." },
+    stkAcc: { ar: "🤝 فكّر: شو أوّل شي بينعمل مع أي مريض بيوصل؟", fr: "🤝 Pense : que fait-on en premier avec tout patient qui arrive ?" },
+    stkMon: { ar: "📟 قبل أي قرار: بدّك تعرف أرقامو.", fr: "📟 Avant de décider : il te faut ses chiffres." },
+    stkPh: { ar: "📍 إنت بمرحلة {p}.", fr: "📍 Tu es à l'étape {p}." },
+    stkFld: { ar: "📝 الخانة: «{f}».", fr: "📝 Le champ : « {f} »." },
+    stkMore: { ar: "بدّك أوضح؟ اكبس ❓ كمان مرّة.", fr: "Plus clair ? Touche ❓ encore." },
+    stkEnd: { ar: "هيدا آخر تلميح ببلاش 💪 — الجواب بس بـ«🎯» (−1) أو جرّب لحالك.", fr: "Dernier indice gratuit 💪 — la réponse : « 🎯 » (−1) ou essaie seul." },
+    critO: { ar: "🔴 بس عالخفيف: {n} حالتو خطرة — مرّق عليه بس تخلص هون.", fr: "🔴 Juste pour info : {n} est critique — passe le voir après." },
     hlpCost: { ar: "−1 · باقي {l}/{m} لـ{n}", fr: "−1 · reste {l}/{m} pour {n}" },
     hlpItem: { ar: "روح جيب {i} من {s}، وبعدين {a} لـ{n}.", fr: "Va chercher {i} ({s}), puis {a} pour {n}." },
     hlpCall: { ar: "📞 اتصل بالدكتور عن {n} (من {s}) — {w}", fr: "📞 Appelle le médecin pour {n} ({s}) — {w}" },
@@ -266,7 +287,7 @@
     ov = d.createElement("div"); ov.className = "lcr"; ov.hidden = true; ov.setAttribute("data-nofr", ""); ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true");
     ov.innerHTML = '<div class="lcr-top"><button type="button" class="lcr-x" data-lcx="1" aria-label="' + esc(u("close")) + '">✕</button>' +
       '<span class="lcr-tt"></span><span class="lcr-tm" dir="ltr"></span><span class="lcr-sc" dir="ltr"></span>' +
-      '<button type="button" class="lcr-ib lcr-hlpb" data-lchelp="1" aria-label="' + esc(u("hlp")) + '">🧑‍⚕️</button><button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib lcr-fub" data-lcfu="1" aria-label="' + esc(u("myFu")) + '">⏰<i hidden></i></button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
+      '<button type="button" class="lcr-ib" data-lcarch="1" aria-label="' + esc(u("archive")) + '">📚</button><button type="button" class="lcr-ib" data-lclog="1" aria-label="' + esc(u("myLog")) + '">📒</button><button type="button" class="lcr-ib lcr-fub" data-lcfu="1" aria-label="' + esc(u("myFu")) + '">⏰<i hidden></i></button><button type="button" class="lcr-ib" data-lcpush="1" aria-label="' + esc(u("push")) + '">🔔</button><button type="button" class="lcr-ib lcr-snd" data-lcsnd="1" aria-label="' + esc(u("sndOn")) + '">🔇</button></div>' +
       '<div class="lcr-ban"></div><div class="lcr-pts"></div>' +
       '<div class="lcr-stage"><canvas class="lcr-cv"></canvas><div class="lcr-over" hidden></div><div class="lcr-fb" aria-live="polite"></div><div class="lcr-help" hidden aria-live="polite"></div><div class="lcr-ptoast" aria-live="polite"></div><div class="lcr-siren" hidden></div><div class="lcr-work" hidden></div></div>' +
       '<div class="lcr-floor"><canvas class="lcr-fcv" aria-label="' + esc(u("hosp")) + '"></canvas><div class="lcr-flt" role="tablist" aria-label="' + esc(u("elev")) + '"></div></div>' +
@@ -324,7 +345,7 @@
     // 28v: an ended case is shown as ended everywhere in the room (dimmed room + «🏁 انتهت الحالة» card + countdown to the next one)
     ov.classList.toggle("ended", !!s.end); if (!s.end) endSeen = false;
     var tm = q(".lcr-tm"); tm.textContent = s.end ? "⏭️ " + L.left(s.t1 - Date.now()) : "⏳ " + L.left(s.t1 - Date.now());
-    overPaint();
+    overPaint(); if (helpOpen && !helpTxt) helpPaint();   // 30c: the help sheet follows the case
     var M = L.me(), mine = (s.pts[M.uid] || {}).p | 0; q(".lcr-sc").textContent = "🏅 " + (mine > 0 ? "+" : "") + mine + (w.NursinPay ? " · 💵 " + w.NursinPay.money(w.NursinPay.mine()) : "");
     if (w.NursinPay) { w.NursinPay.reset(); var rk0 = w.NursinPay.tagOf(M.uid), rkk = rk0.sup ? "sup" : rk0.r.k; if (lastRank && lastRank !== rkk && rkk !== "tr") say("good", u("rankUp", { r: (rk0.sup ? w.NursinPay.core.SUP : rk0.r).ic + " " + T(rk0.sup ? w.NursinPay.core.SUP : rk0.r) })); lastRank = rkk; }
     var ban = q(".lcr-ban"), why = L.why();
@@ -351,8 +372,9 @@
   }
   function finSay(x) {
     if (!st || st.end || !x || !x.over || x.ghost) return; var o = st.P[x.k === "a" ? 1 : 0]; if (!o || o.ghost) return say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }));
-    say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) }));
+    say(x.over.w === "ok" ? "good" : "bad", x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) }), otherSay(o));
   }
+  function otherSay(o) { return AS && AS.nudge(nud, o, nowMs()) ? u("critO", { n: nm(o).split(" ")[0] }) : ""; }   // 30c: no «روح عالحالة التانية» — only 🔴, ≤ 1/min
   function cards() {
     var el = q(".lcr-pts"); if (!el || !st) return;
     if (st.end) {
@@ -686,6 +708,7 @@
   function asstTick(ts, dt) {
     if (!asst || !AS || !E) return;
     if (!(trv && trv.ph === 2)) AS.follow(asst, nurse, dt, E.W, E.H);
+    if (helpOpen && !helpTxt) { var hp = asstPat(), hk = hp ? hp.k : ""; if (hk !== helpPk) { helpPk = hk; helpPaint(); } }   // 30c: I walked to the other bed → he helps with that one
     if (!offer) return; var now = nowMs(), walking = !!(nurse.pts.length || trv || asst.mv);
     if (walking) AS.seen(offer, now);                            // moving = activity
     if (offer.shown) { if (AS.expired(offer, now) || helpOpen) AS.hide(offer, now); return; }
@@ -714,13 +737,13 @@
     asBtn = { y: Y, n: N, box: { x: bx, y: by, w: bw, h: bh } };
   }
   function inR(p, b, pad) { pad = pad || 3; return p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad; }
-  function asstHelp() { helpOpen = true; helpTxt = ""; helpPaint(); }   // the same box as the top-bar 🧑‍⚕️ (−1 · 3 per patient on «شو بعمل؟»)
+  function asstHelp() { helpOpen = true; helpTxt = ""; helpMode = helpMode || "tip"; helpPaint(); }   // the same box as the top-bar 🧑‍⚕️ (−1 · 3 per patient on «شو بعمل؟»)
   function asstTap(p) {
     if (!asst || !AS) return false; var now = nowMs();
     if (offer && offer.shown && asBtn) {
       if (inR(p, asBtn.y)) { AS.hide(offer, now); asstHelp(); return true; }
       if (inR(p, asBtn.n)) { AS.hide(offer, now); return true; }
-      if (inR(p, asBtn.box, 0)) return true;
+      if (inR(p, asBtn.box, 0)) { AS.hide(offer, now); asstHelp(); return true; }   // 30c: a tap on his bubble = help too
     }
     if (AS.hit(asst, p)) { if (offer && offer.shown) AS.hide(offer, now); if (helpOpen) { helpOpen = false; helpTxt = ""; helpPaint(); } else asstHelp(); return true; }
     return false;
@@ -1506,7 +1529,7 @@
     if (x.over && !st.end) {                                     // 28x: his case is finished — his steps stay, the other bed is one tap away
       var o = st.P[k === "b" ? 0 : 1];
       h += '<div class="lcr-pover ' + x.over.w + '" role="status"><b>' + esc(x.over.w === "ok" ? ug("pOk", x, { n: nm(x) }) : u("pLost", { n: nm(x) })) + "</b>" +
-        (o.over ? "" : "<small>" + esc(ug("pGoOn", o, { n: nm(o) })) + "</small>") + '<div class="lcr-acts"><button type="button" class="lcr-btn on" data-lcrec="' + k + '">' + esc(u("pRec", { n: nm(x) })) + "</button>" +
+        (o.over || o.st !== "crit" ? "" : "<small>" + esc(ug("pGoOn", o, { n: nm(o) })) + "</small>") + '<div class="lcr-acts"><button type="button" class="lcr-btn on" data-lcrec="' + k + '">' + esc(u("pRec", { n: nm(x) })) + "</button>" +
         (o.over ? "" : '<button type="button" class="lcr-btn" data-lcbed="' + o.k + '">' + esc(u("pGo", { n: nm(o) })) + "</button>") + "</div></div>";
     }
     if (tab === "file") return h + fileHtml(x);
@@ -1804,9 +1827,72 @@
   // A plain box: no animation, no loop; it paints only when tapped.
   function helpPaint() {
     var b = q(".lcr-help"); if (!b) return; b.hidden = !helpOpen; if (!helpOpen) return;
-    b.innerHTML = '<div class="lcr-hlph"><b>' + esc(u("hlp")) + '</b><button type="button" class="lcr-shx" data-lchelp="1" aria-label="' + esc(u("close")) + '">✕</button></div>' +
-      '<p class="lcr-hlpt">' + esc(helpTxt || u("hlpIntro", { m: C.HMAX })) + "</p>" +
-      '<button type="button" class="lcr-btn on lcr-hlpq" data-lchelpq="1">' + esc(u("hlpAsk")) + "</button>";
+    var x = asstPat(), n = x ? nm(x).split(" ")[0] : "", o = x && st && st.P[x.k === "a" ? 1 : 0];
+    var h = '<div class="lcr-hlph"><b>' + esc(u("hlp")) + (x ? " · " + esc(u("ahFor", { n: n })) : "") + '</b><button type="button" class="lcr-shx" data-lchelp="1" aria-label="' + esc(u("close")) + '">✕</button></div>';
+    if (x && !x.over) h += '<div class="lcr-ahr">' + ["tip", "vit", "stuck"].map(function (m) { var K = { tip: "ahTip", vit: "ahVit", stuck: "ahStuck" }[m];
+      return '<button type="button" class="lcr-ahb' + (helpMode === m && !helpTxt ? " on" : "") + '" data-lcah="' + m + '">' + esc(u(K)) + "</button>"; }).join("") + "</div>";
+    h += helpTxt ? '<p class="lcr-hlpt">' + esc(helpTxt) + "</p>" : '<div class="lcr-ahx">' + (x ? (x.over ? "<p>" + esc(u("hlpNone", { n: n })) + "</p>" : helpBody(x, helpMode)) : "<p>" + esc(st && !st.end && !(st.svc || svcRoom()) ? u("ahNone") : st && !st.end ? u("hlpSvc") : u("hlpFree")) + "</p>") + "</div>";
+    if (x && o && !o.ghost && !o.over && o.st === "crit") h += '<p class="small lcr-ahc">' + esc(u("critO", { n: nm(o).split(" ")[0] })) + "</p>";   // the one gentle 🔴 line
+    if (x && !x.over) h += '<button type="button" class="lcr-btn lcr-hlpq" data-lchelpq="1">' + esc(u("hlpAsk2")) + "</button>";
+    b.innerHTML = h;
+  }
+  // 30c: the patient I am WITH — the bed whose sheet is open, else the bed nearest my nurse (an open case before a finished one); none in a service room
+  function asstPat() {
+    if (!st || st.end || st.svc || svcRoom() || !E || !E.stations) return null;
+    if (sheet && sheet.kind === "bed") { var y = X(sheet.k); if (y && !y.ghost) return y; }
+    var best = null, bd = 1e15;
+    ["a", "b"].forEach(function (k) { var x = X(k), S = E.stations[k === "a" ? "bed1" : "bed2"]; if (!x || x.ghost || !S || !inBed(x)) return;
+      var dx = S.x + S.w / 2 - nurse.x, dy = S.y + S.h / 2 - nurse.y, dd = dx * dx + dy * dy + (x.over ? 1e12 : 0); if (dd < bd) { bd = dd; best = x; } });
+    return best;
+  }
+  function vRow(r) { return r.fr + " (" + r.ar + ")"; }
+  function vSt(r) { return u(r.st === "hi" ? "vHi" : r.st === "lo" ? "vLo" : "vOk"); }
+  function vitOf(x) { var mon = !!(x.done && x.done.mon && x.v), v = {}, s0 = mon ? x.v : (x.p.vit || {}), k; for (k in s0) v[k] = s0[k]; if (x.p.eva != null) v.eva = x.p.eva; return { mon: mon, rows: AS.vit(v) }; }
+  // 💡 «شو بعمل هلّق؟» · 📊 «شرحلي العلامات» · ❓ «علقت» — all built from the case's own state (clue, ABCDE, the 28y kinds of step); nothing invented
+  function helpBody(x, m) {
+    var n = nm(x).split(" ")[0], c = C.clue(DK(), st, x.k), V = vitOf(x), h = "";
+    if (m === "vit") {
+      if (!V.mon) h += '<p class="small">' + esc(u("vTri")) + "</p>";
+      var bad = V.rows.filter(function (r) { return r.st !== "ok"; }), good = V.rows.filter(function (r) { return r.st === "ok"; });   // what is off first
+      h += '<ul class="lcr-vt">' + bad.map(function (r) { var rg = r.lo === r.hi ? r.lo + r.u : r.lo + "–" + r.hi + " " + r.u;
+        return '<li class="' + r.st + '">' + esc(vSt(r)) + " <b>" + esc(vRow(r)) + '</b> <span dir="ltr">' + esc(r.val + " " + r.u) + '</span> <small>· ' + esc(u("vNorm", { r: "" })) + '<span dir="ltr">' + esc(rg) + "</span></small></li>"; }).join("") +
+        (good.length ? '<li class="ok">' + esc(u("vOk")) + ": " + good.map(function (r) { return "<b>" + esc(vRow(r)) + '</b> <span dir="ltr">' + esc(r.val + (r.u === "%" ? "%" : "")) + "</span>"; }).join(" · ") + "</li>" : "") + "</ul>";
+      return h + '<p class="small lcr-src">' + esc(u("vSrc")) + "</p>";
+    }
+    if (m === "stuck") {
+      if (!c) return "<p>" + esc(u("hlpNone", { n: n })) + "</p>";
+      var sid = x.k + ":" + c.s.id; if (!helpStuck || helpStuck.id !== sid) helpStuck = { id: sid, n: 0 }; helpStuck.n = Math.min(2, helpStuck.n + (helpStuck.tap ? 1 : 0)); helpStuck.tap = 0;
+      var L0 = stuckLines(x, c), got = AS.ladder(L0, helpStuck.n + 1, stuckBans(x, c.s));
+      got.forEach(function (t, i) { h += "<p>" + esc(u(i ? "stk2" : "stk1") + " " + t) + "</p>"; });
+      return h + '<p class="small">' + esc(u(helpStuck.n + 1 >= Math.min(2, L0.length) ? "stkEnd" : "stkMore")) + "</p>";
+    }
+    // 💡 (default): the phase + the ABCDE priority among his own vitals + what KIND of step comes next (the same words as the free 💡 level 1)
+    var ab = AS.abc(V.rows), L = ab && ab.L;
+    h += '<p class="lcr-hph"><b>' + esc(phNow(x)) + "</b></p>";
+    h += "<p>" + esc(ab ? u("abcL", { n: n, l: u("abc" + L), s: vRow(ab), v: ab.val + " " + ab.u, st: vSt(ab) }) : u("abcOk")) + (ab && !V.mon ? ' <small>' + esc(u("abcTri")) + "</small>" : "") + "</p>";
+    if (c) { var k = catOf(x, c); h += "<p>" + esc(k.cat) + "</p>" + (k.wh ? '<p class="small">' + esc(k.wh) + "</p>" : ""); }
+    else h += "<p>" + esc(u("hlpNone", { n: n })) + "</p>";
+    return h;
+  }
+  function catOf(x, c) {                                       // 28y level-1 words (the free 💡): what kind of step + where to think
+    var s = c.s, g = s.kind === "file" ? "file" : s.id === "acc" ? "acc" : s.id === "mon" ? "mon" : grpOf(s.a), n = nm(x).split(" ")[0];
+    var A = s.kind === "act" && D.A[s.a], I = A && A.need && !BEDSIDE[A.need] && D.I[A.need], Si = I && E.stations[I.st];
+    return { g: g, Si: Si, cat: { acc: u("cAcc"), file: u("cFile"), mon: u("cMon"), eval: u("cEval", { n: n }), pos: u("cPos"), soin: u("cSoin", { n: n }), rx: u("cRx"), call: u("cCall") }[g],
+      wh: { eval: u("wEval", { t: T(x.p.file.ant) }), pos: u("wPos"), soin: u("wSoin"), rx: u("wRx"), call: u("wCall") }[g] || "" };
+  }
+  // ❓ hint 1 = where to think (vague) · hint 2 = what kind of step + where its thing is — never the step itself
+  function stuckLines(x, c) {
+    var k = catOf(x, c), g = k.g;
+    if (g === "file") return [k.cat, u("stkFld", { f: L.stepName(c.s) }) + " " + u("stkFile")];   // the field is named, never its answer
+    var h1 = g === "acc" ? u("stkAcc") : g === "mon" ? u("stkMon") : (k.wh || u("stkPh", { p: T(U["ph" + Math.min(5, c.s.ph || x.ph)]) }));
+    var h2 = k.cat + (k.Si && g !== "rx" ? " " + u("wItem", { s: k.Si.ic + " " + T(k.Si) }) : "");
+    return [h1, h2];
+  }
+  function stuckBans(x, s) {                                   // the words that WOULD be the answer
+    var b = s.kind === "file" ? [] : [L.stepName(s)], A = s.kind === "act" && D.A[s.a];   // a dossier field: its NAME is fine, its answer is not
+    if (A) { b.push(A.ar || "", A.fr || "", T(A)); }
+    if (s.kind === "file") try { var fa = fieldAnswer(x, s.f); b.push(T(fa) || String(fa || "")); } catch (e) {}
+    return b.filter(function (t) { return t && String(t).length >= 3; });
   }
   function helpSet(t) { helpTxt = t; helpOpen = true; helpPaint(); }
   function helpWords(h) {                                      // the step told as an errand, in the student's language
@@ -1821,7 +1907,8 @@
     kick();
     if (!st || st.end) return helpSet(u("hlpFree"));
     if (st.svc || svcRoom()) return helpSet(u("hlpSvc"));
-    var h = C.helpStep(DK(), st, null, hands);
+    var cur = asstPat(); if (cur && cur.over) return helpSet(u("hlpNone", { n: nm(cur).split(" ")[0] }));   // 30c: the patient I am with — never «go to the other one»
+    var h = C.helpStep(DK(), st, cur ? cur.k : null, hands);
     if (!h) return helpSet(u("hlpFree"));
     var n = nm(h.x).split(" ")[0];
     if (!inBed(h.x)) return helpSet(u("hlpWait", { n: n }));              // still in the waiting room: free — bringing him in is the step
@@ -1849,7 +1936,7 @@
   }
   // 29m 📞 an unstable / critical patient: the doctor never answers «wait» — his concrete order (the case's own next gesture)
   function docGo(x, s) { var o = s ? L.stepName(s) : L.actName("mon"); return u("docGo", { o: o }); }
-  function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), o.over ? "" : ug("pGoOn", o, { n: nm(o) })); if (sheet) sheetPaint(); }
+  function overSay(x) { var o = st.P[x.k === "a" ? 1 : 0]; say("neutral", ug("pOver", x, { n: nm(x) }), otherSay(o)); if (sheet) sheetPaint(); }
   function result(k, a, r) {
     try { careAfter(k, a, r); } catch (e) { console.warn("nursin care", e); }
     try {                                                                                      // 29e 🧪 🩻 🩸 💊 the services · ⚠️ the report
@@ -2120,6 +2207,7 @@
     if (g("data-lcreev")) return reev(g("data-lcreev"));                                     // 29d ⏰
     if (g("data-lchelp")) { helpOpen = !helpOpen; if (!helpOpen) helpTxt = ""; helpPaint(); return; }   // 29m 🧑‍⚕️
     if (g("data-lchelpq")) return helpGo();
+    if (g("data-lcah")) { var hm = g("data-lcah"); if (hm === "stuck" && helpMode === "stuck" && !helpTxt && helpStuck) helpStuck.tap = 1; helpMode = hm; helpTxt = ""; return helpPaint(); }   // 30c 💡 📊 ❓
     if (g("data-lcfu")) { sheet = { kind: "fu", k: "", tab: "" }; openQ = null; q(".lcr-sheet").hidden = false; return sheetPaint(); }
     if (g("data-lcsnd")) { snd = !snd; try { localStorage.setItem(SNDK, snd ? "1" : "0"); } catch (x) {} sndPaint(); if (snd) chime(); return; }
     if (g("data-lcamb")) { sirenHide(); var A0 = hNow() && hNow().amb; return A0 && A0.cur && !L.admOf("x", "a", A0.cur.i) ? walkTo("wt") : walkTo("x"); }   // 29d: he waits at the door until a nurse receives him
@@ -2241,7 +2329,7 @@
     w.addEventListener("popstate", function () { if (location.hash !== "#live") close(); else if (!ov || ov.hidden) open(); });
     w.addEventListener("hashchange", function () { if (location.hash === "#live" && (!ov || ov.hidden)) open(); });
   }
-  w.LiveRoom = { open: open, close: close, sheet: function (kind, k) { sheetOpen(kind, k); }, rout: function () { return routLoad(); }, pkAdd: function (k, a, s) { pkAdd(k, a, s); }, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
+  w.LiveRoom = { help: function (m) { if (m) helpMode = m; asstHelp(); return helpOpen; }, open: open, close: close, sheet: function (kind, k) { sheetOpen(kind, k); }, rout: function () { return routLoad(); }, pkAdd: function (k, a, s) { pkAdd(k, a, s); }, bedSheet: function (k, t) { bedSheet(k, t); }, arch: archPanel, end: endPanel, feed: feedPanel, wash: function () { washed = true; }, hold: function (i) { if (hands.indexOf(i) < 0 && hands.length < 2) hands.push(i); slots(); }, openQ: function (k, f) { openQ = k + f; sheetPaint(); }, st: function () { return st; },
     walkTo: function (dk) { walkTo(dk); }, travel: function () { return trv; }, acc: function (t) { accPanel(t); }, seated: function () { return seated().map(function (o) { return { id: wkey(o.x), at: o.at, spot: o.spot, kind: o.x.kind }; }); },
     tri: function (id) { var o = seated().filter(function (x) { return wkey(x.x) === id; })[0]; if (o) { triSel = id; triPick = { pr: 0, dc: '' }; sheetOpen('tri', id); } }, view: function (f) { vf = f; vfAt = Date.now(); flTabs(); },
     asst: function () { return asst ? { x: asst.x, y: asst.y, mv: asst.mv, offer: offer ? { shown: offer.shown, last: offer.last, act: offer.act } : null, gate: { sheet: !!sheet, panel: !!panel, help: helpOpen, st: !!st, trv: !!trv } } : null; }, asstOffer: function () { if (offer) { offer.last = -1e12; offer.act = -1e12; } },   // 29p

@@ -57,4 +57,8 @@
   body.ui details.topic>summary:hover{background:var(--hzaccsoft,rgba(13,148,136,.06))}
   body.ui a.card:hover,body.ui .htile:hover{transform:translateY(-2px)}
   body.ui .grid.ggrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  /* 30c: the see-through top bar let the lesson's own rows («كويز على هالدرس / 20 سؤال», the chips) show under the «Med-Surg» title when
+     scrolled or opened at an anchor (medsurg.html#csh) → an opaque bar on wide screens + anchors land below it */
+  html.uion body.ui .topbar{background:var(--hzbg);-webkit-backdrop-filter:none;backdrop-filter:none}
+  html.uion body.ui main#main [id]{scroll-margin-top:74px}
 }

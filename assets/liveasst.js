@@ -42,6 +42,55 @@
   function show(o, now) { o.shown = now; o.last = now; o.miss = 0; }
   function hide(o, now) { o.shown = 0; o.miss = 0; o.act = now; }
   function expired(o, now) { return !!o.shown && now - o.shown > SHOW; }
-  w.LiveAsst = { OX: OX, OY: OY, SPEED: SPEED, IDLE: IDLE, GAP: GAP, MISS: MISS, SHOW: SHOW, target: target, make: make, snap: snap, follow: follow, hit: hit,
+
+  /* 30c (Abdullah, Nov 7 2026 11:05 AM «بدي انه يساعدني بالحالة لبكون فيها»): he helps with the patient I am WITH — 📊 my patient's vitals
+     explained one by one, 🔤 the ABCDE priority among them, ❓ progressive hints that never say the answer, and no «روح عالحالة التانية» nagging
+     (one gentle line only when the other patient is critical 🔴, at most once a minute). Pure — the room builds the words. */
+  // 🌐 notion générale: standard adult normal ranges (the case bank only has one «normal» value per sign, D.vok)
+  var VR = [
+    { k: "sys", fr: "TA systolique", ar: "الضغط الفوقاني", u: "mmHg", lo: 90, hi: 139, L: "C" },
+    { k: "dia", fr: "TA diastolique", ar: "الضغط التحتاني", u: "mmHg", lo: 60, hi: 89, L: "C" },
+    { k: "fc", fr: "FC (fréquence cardiaque)", ar: "نبض القلب", u: "/min", lo: 60, hi: 100, L: "C" },
+    { k: "fr", fr: "FR (fréquence respiratoire)", ar: "عدد الأنفاس بالدقيقة", u: "/min", lo: 12, hi: 20, L: "B" },
+    { k: "spo2", fr: "SpO₂ (saturation)", ar: "نسبة الأكسجين بالدم", u: "%", lo: 95, hi: 100, L: "B" },
+    { k: "t", fr: "T° (température)", ar: "الحرارة", u: "°C", lo: 36.5, hi: 37.5, L: "E", dp: 1 },
+    { k: "gcs", fr: "Glasgow (GCS)", ar: "مقياس الوعي", u: "/15", lo: 15, hi: 15, L: "D" },
+    { k: "eva", fr: "EVA (douleur)", ar: "مقياس الوجع", u: "/10", lo: 0, hi: 3, L: "E" }
+  ];
+  function rnd(n, dp) { var m = dp ? 10 : 1; return Math.round(n * m) / m; }
+  // v = { sys, dia, fc, fr, spo2, t, gcs, eva? } → one row per sign that has a number: value, range, ok | hi | lo
+  function vit(v) {
+    var out = []; v = v || {};
+    for (var i = 0; i < VR.length; i++) { var r = VR[i], n = +v[r.k]; if (v[r.k] == null || v[r.k] === "" || !isFinite(n)) continue; n = rnd(n, r.dp);
+      out.push({ k: r.k, fr: r.fr, ar: r.ar, u: r.u, lo: r.lo, hi: r.hi, L: r.L, val: n, st: n < r.lo ? "lo" : n > r.hi ? "hi" : "ok" }); }
+    return out;
+  }
+  // 🔤 ABCDE: the first abnormal sign in A → B → C → D → E order (B: SpO₂ before FR · C: TA before FC), or null when all are normal
+  var ORD = ["spo2", "fr", "sys", "dia", "fc", "gcs", "t", "eva"];
+  function abc(rows) {
+    var best = null;
+    for (var i = 0; i < rows.length; i++) { var r = rows[i]; if (r.st === "ok") continue; if (!best || ORD.indexOf(r.k) < ORD.indexOf(best.k)) best = r; }
+    return best;
+  }
+  // ❓ «علقت»: hint n (1 = vague … max) from the ladder, without any line that would say the answer (bans = the step / action / field answer)
+  function norm(t) { return String(t || "").toLowerCase().replace(/[«»"'“”().,:;!?·—-]/g, " ").replace(/\s+/g, " ").trim(); }
+  function leaks(t, bans) {
+    var a = norm(t);
+    for (var i = 0; i < (bans || []).length; i++) { var b = norm(bans[i]).replace(/^[^a-z0-9\u0600-\u06ff]+/, ""); if (b.length >= 3 && a.indexOf(b) > -1) return true; }
+    return false;
+  }
+  function ladder(lines, n, bans) {
+    var ok = []; for (var i = 0; i < lines.length; i++) if (lines[i] && !leaks(lines[i], bans)) ok.push(lines[i]);
+    return ok.slice(0, Math.max(0, Math.min(n, ok.length)));
+  }
+  // the one gentle line about the OTHER patient: only when he is critical (🔴), never twice within a minute
+  var NUDGE = 60000;
+  function nudge(o, other, now) {
+    if (!o || !other || other.over || other.ghost || other.st !== "crit") return false;
+    if (o.t && now - o.t < NUDGE) return false;
+    o.t = now; return true;
+  }
+  w.LiveAsst = { VR: VR, vit: vit, abc: abc, leaks: leaks, ladder: ladder, nudge: nudge, NUDGE: NUDGE,
+    OX: OX, OY: OY, SPEED: SPEED, IDLE: IDLE, GAP: GAP, MISS: MISS, SHOW: SHOW, target: target, make: make, snap: snap, follow: follow, hit: hit,
     offerNew: offerNew, seen: seen, missed: missed, should: should, show: show, hide: hide, expired: expired };
 })(window);
