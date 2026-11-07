@@ -24,6 +24,7 @@
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function escN(s) { return esc(s).replace(/\(([^()<>\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()<>\u0600-\u06FF]*)\)/g, '<bdi dir="ltr" class="bdl">($1)</bdi>'); }   // ↔️ 30g: lesson names with a French bracket
   function lsGet(k) { try { return JSON.parse(w.localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v) { try { w.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function cut(s, n) { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
@@ -159,12 +160,12 @@
       '<p class="cvtot"><b>' + S.tot.done + " " + esc(T("من", "sur")) + " " + S.tot.n + " " + esc(T("دروس", "leçons")) + "</b> " + esc(T("مرقت عليهن", "parcourues")) + " · ✅ " + S.tot.strong + " · ⚠️ " + S.tot.weak + "</p>" +
       '<div class="cvbar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
       (m ? '<p class="cvosm">👨‍🏫 <b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + ":</b> " + esc(m.t) + ' <a href="' + esc(m.href) + '">' + esc(T("📖 الدرس", "📖 La leçon")) + "</a></p>" : "") +
-      (nx.length ? '<div class="cvnext"><b>🎯 ' + esc(T("الجاي:", "Ensuite :")) + "</b><ol>" + nx.map(function (l) { return '<li><a href="' + esc(l.href) + '">' + esc(l.n) + "</a> <small>" + esc(stTxt(l)) + "</small></li>"; }).join("") + "</ol></div>"
+      (nx.length ? '<div class="cvnext"><b>🎯 ' + esc(T("الجاي:", "Ensuite :")) + "</b><ol>" + nx.map(function (l) { return '<li><a href="' + esc(l.href) + '">' + escN(l.n) + "</a> <small>" + esc(stTxt(l)) + "</small></li>"; }).join("") + "</ol></div>"
         : '<p class="cvnext">🎉 ' + esc(T("مرقت على كل الدروس! كمّل قوّي اللي مش ✅", "Toutes les leçons parcourues ! Renforce celles qui ne sont pas ✅")) + "</p>") +
       S.subj.map(function (g) {
         var p = g.n ? Math.round(g.done * 100 / g.n) : 0;
         return '<details class="cvsub"><summary>' + esc(g.name) + " <small>· " + g.done + " " + esc(T("من", "sur")) + " " + g.n + " " + esc(T("دروس", "leçons")) + (g.weak ? " · ⚠️ " + g.weak : "") + (g.strong ? " · ✅ " + g.strong : "") + '</small><span class="cvbar cvbar2"><i style="width:' + p + '%"></i></span></summary>' +
-          '<ul class="cvls">' + g.L.map(function (l) { return '<li><span class="cvst">' + (ST[l.k] || ST.none)[0] + '</span> <a href="' + esc(l.href) + '">' + esc(l.n) + "</a> <small>" + esc(stTxt(l).replace(/^\S+ /, "")) + "</small></li>"; }).join("") + "</ul></details>";
+          '<ul class="cvls">' + g.L.map(function (l) { return '<li><span class="cvst">' + (ST[l.k] || ST.none)[0] + '</span> <a href="' + esc(l.href) + '">' + escN(l.n) + "</a> <small>" + esc(stTxt(l).replace(/^\S+ /, "")) + "</small></li>"; }).join("") + "</ul></details>";
       }).join("") +
       '<p class="cvleg">⚪ ' + esc(T("ما فتحتو", "pas ouverte")) + " · 📖 " + esc(T("قريتو", "lue")) + " · 📝 " + esc(T("عملت كويز", "quiz fait")) + " · ✅ " + esc(T("قوي (٨٠٪ وفوق)", "solide (≥ 80 %)")) + " · ⚠️ " + esc(T("ضعيف (تحت ٥٠٪)", "faible (< 50 %)")) + "</p>";
   }

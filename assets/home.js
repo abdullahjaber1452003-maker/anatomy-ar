@@ -459,8 +459,11 @@
   function texts(s) {                                 // ↩️ 29y: a carried step wears «↩️ من مبارح» before its own label
     var x = texts0(s); if (x && s.cf) x.tag = carryTag(s.cf, today()) + " · " + x.tag; return x;
   }
+  // ↔️ 30g: a French name in brackets inside an Arabic title is isolated (same fix as the 30a lesson headers), so
+  // «المحاليل الوريدية (Les solutés de perfusion)» never wraps as «Les solutés de) … (perfusion»
+  function bidiT(s) { return String(s).replace(/\(([^()<>\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()<>\u0600-\u06FF]*)\)/g, '<bdi dir="ltr" class="bdl">($1)</bdi>'); }
   function texts0(s) {
-    var nm = esc(curName(s));
+    var nm = bidiT(esc(curName(s)));
     switch (s.k) {
       case "osm": return { tag: T("الأستاذ عثمان", "Professeur Osman"), t: s.qs && s.qs.length ? T("🧑‍🏫 سؤالين سريعين عن «", "🧑‍🏫 Deux questions rapides sur « ") + nm + T("»", " »") : T("🧑‍🏫 اسأل الأستاذ عثمان", "🧑‍🏫 Demande au Professeur Osman"), sub: T("بتجاوب هون بلا ما تفتح شي", "Tu réponds ici, sans rien ouvrir"), min: 2 };
       case "due": var RV = w.NursinRev, dl = [], dn0 = s.n | 0; try { dl = RV && RV.due ? RV.due() : []; if (RV) dn0 = dl.length || dn0; } catch (e) {}
@@ -470,7 +473,7 @@
         var bp = BS && BS.prog ? BS.prog(s.id || today()) : null;   // 🚌 29o: fills the ~30 min ride; «12/30» once started
         return { tag: T("🚌 بالطريق عالدوام", "🚌 En route vers les cours"), t: T("🚌 مراجعة الطريق", "🚌 Révision du trajet"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn) + (bp && bp.n ? " · " + bp.n + "/" + (bp.of || 30) : ""), min: 30 };
       case "cls": return { tag: T("🏫 رجعت من المعهد", "🏫 De retour de l'institut"), t: T("راجع درس اليوم: ", "Révise la leçon du jour : ") + nm, sub: s.id2 ? T("وكمان «", "Et aussi « ") + esc(curName(s, s.id2, s.n2)) + T("»", " »") : T("مرّ عليه وهوّي بعدو سخن", "Pendant que c'est encore frais"), min: 8 };
-      case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: esc(s.n), sub: esc(s.s || ""), min: 10 };
+      case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: bidiT(esc(s.n)), sub: bidiT(esc(s.s || "")), min: 10 };
       case "wq": return { tag: T("🎯 نقاط ضعفك", "🎯 Tes points faibles"), t: T("🎯 كويز نقاط ضعفك", "🎯 Quiz de tes points faibles"), sub: T((s.n | 0) + ((s.n | 0) === 1 ? " سؤال غلطت فيه" : " أسئلة غلطت فيها"), (s.n | 0) + " question(s) ratée(s) (أسئلة غلطت فيها)"), min: 5 };
       case "pomo": var sm2 = studyMins(today()); return { tag: T("⏱️ وقت الدرس", "⏱️ Temps d'étude"), t: T("⏱️ ٢٥ دقيقة دراسة", "⏱️ 25 min d'étude (٢٥ دقيقة دراسة)"), sub: sm2.m ? T("درست " + sm2.m + " د من ٢٥ (قراءة الدروس والكويز)", sm2.m + " min sur 25") : T("اقرا درس أو جولة بومودورو، بينحسب الوقت لحالو", "Lis une leçon ou fais un pomodoro, le temps se compte tout seul"), min: 25 };
       case "xtra": return { tag: T("📚 إضافي", "📚 En plus"), t: T("📚 إضافي (إذا عندك وقت)", "📚 En plus (si tu as le temps)"), sub: esc(s.s || ""), min: 5 };
@@ -743,6 +746,57 @@
     var key = a.getAttribute("data-step");
     if (/^osm:/.test(key)) { e.preventDefault(); openK = openK === key ? "" : key; draw(); return; }
     p.vis = p.vis || {}; p.vis[key] = Date.now(); lsSet(PK, p);
+    var ih = inlineHref(key, a.getAttribute("href") || "");
+    if (ih && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); var tb = a.querySelector("h3,b"); openSheet(ih, key, tb ? tb.innerHTML : ""); }
+  }
+
+  /* ---------------- 30g «بدي الكويز والامتحانات وسؤال اليوم… مباشر من المسار» (Abdullah Nov 7 1:10 PM, + 🔁/📅 spaced review 1:11 PM) ----------------
+     A quiz / exam / class exam / سؤال اليوم / 🔁 review / 📅 «لازم تراجع اليوم» step opens in a full-height sheet OVER home (desktop: a 720px modal):
+     the very same page engine runs inside it (quiz.js, classes.html exams + سؤال اليوم, hifzi.html#due with revsched), in embed mode
+     (?embed=1 + frame name «nzsheet», assets/theme.js: no header / nav / footer / ads), so scoring, ليش غلط، qvary, revsched, coverage,
+     readiness and the class / friends exam records are exactly the same. URL stays index.html; ✕, «رجوع للمسار» and the back button close it
+     at the same scroll; the step ticks ✅ when the embedded page says it finished (nursin:quiz-done / nursin:goal-done) or when its own rule holds. */
+  var INL = /^(quiz\.html|exams\.html|classes\.html|hifzi\.html(\?[^#]*)?#due)/;
+  function inlineHref(key, href) {
+    if (/^(weak|wq):/.test(key)) href = "quiz.html?t=weak";          // 💪/🎯 = «كويز نقاط ضعفك» (30e)
+    if (d && d.documentElement && String(d.documentElement.className).indexOf("gl-out") > -1) return "";   // signed out: the page itself shows its sign-in lock (never an ad-unlock inside the sheet)
+    return INL.test(href) ? href : "";
+  }
+  function embUrl(h) { var i = h.indexOf("#"), hs = i > -1 ? h.slice(i) : "", b = i > -1 ? h.slice(0, i) : h; return b + (b.indexOf("?") > -1 ? "&" : "?") + "embed=1" + hs; }
+  var sh = null, shKey = "", shY = 0, shPush = false, shT = 0, shFin = false;
+  function shStep(p) { var all = (p.steps || []).concat(p.more || []); for (var i = 0; i < all.length; i++) if (skey(all[i]) === shKey) return all[i]; return null; }
+  function openSheet(href, key, ttl) {
+    if (sh) closeSheet();
+    shKey = key; shFin = false; shY = w.pageYOffset || d.documentElement.scrollTop || 0;
+    sh = d.createElement("div"); sh.className = "nzsh"; sh.setAttribute("role", "dialog"); sh.setAttribute("aria-modal", "true");
+    sh.innerHTML = '<div class="nzshc"><div class="nzshh"><button type="button" class="nzshx" aria-label="' + T("سكّر ورجاع عالمسار", "Fermer, retour au parcours") + '">✕</button><b>' + (ttl || "🧭") + "</b></div>" +
+      '<div class="nzshb"><iframe name="nzsheet" title="' + T("مسار اليوم", "Parcours du jour") + '" src="' + esc(embUrl(href)) + '"></iframe></div>' +
+      '<div class="nzshf" hidden><button type="button" class="btn pri nzshback">' + T("✅ خلصت · رجوع للمسار", "✅ Fini · Retour au parcours (رجوع للمسار)") + "</button></div></div>";
+    d.body.appendChild(sh); d.documentElement.classList.add("nzshon");
+    sh.addEventListener("click", function (e) { var t = e.target; if (t === sh || (t.closest && t.closest(".nzshx,.nzshback"))) shBack(); });
+    try { history.pushState({ nzs: 1 }, "", location.href); shPush = true; } catch (x) { shPush = false; }
+    shT = setInterval(shCheck, 1500);
+  }
+  function shBack() { if (shPush && history.state && history.state.nzs) { try { history.back(); return; } catch (x) {} } closeSheet(); }
+  function closeSheet() {
+    if (!sh) return; clearInterval(shT); shCheck();
+    if (sh.parentNode) sh.parentNode.removeChild(sh); sh = null; shPush = false; shKey = "";
+    d.documentElement.classList.remove("nzshon"); draw(); try { w.scrollTo(0, shY); } catch (x) {}
+  }
+  function shDone() { shFin = true; if (sh) { var f = sh.querySelector(".nzshf"); if (f) f.hidden = false; } }
+  function shCheck(mark) {
+    if (!sh || !shKey) return; var p = lsGet(PK); if (!p || p.d !== today()) return; var s = shStep(p); if (!s) return;
+    if (mark) { p.done = p.done || {}; if (!p.done[shKey]) { p.done[shKey] = Date.now(); save(p); } }
+    if (mark || isDoneS(p, s)) shDone();
+  }
+  if (w.addEventListener) {
+    w.addEventListener("popstate", function () { if (sh) { shPush = false; closeSheet(); } });
+    w.addEventListener("message", function (e) {
+      if (!sh || e.origin !== location.origin) return; var m = e.data; if (!m || typeof m !== "object") return;
+      if (m.nz === "close") { shBack(); return; }
+      if (m.nz === "ev") shCheck(m.t === "nursin:quiz-done" || m.t === "nursin:goal-done");
+    });
+    w.addEventListener("keydown", function (e) { if (sh && (e.key === "Escape" || e.key === "Esc")) shBack(); });
   }
   function init() {
     root = d.getElementById("hz"); if (!root) return;
@@ -768,7 +822,7 @@
     w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
-  w.HomePath = { carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

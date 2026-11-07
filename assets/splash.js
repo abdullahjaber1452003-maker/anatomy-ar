@@ -2,6 +2,7 @@
    بتبيّن مرّة وحدة بأوّل فتحة للموقع بكل جلسة (sessionStorage). ما بتخبّي المحتوى: الصفحة كلها تحت،
    والشاشة بتختفي لحالها بالـ CSS (~6 ث) حتى لو وقف الـ JS. كبسة وحدة أو زر «تخطّي» بيسكّرها. */
 (function(){
+  if(document.documentElement.className.indexOf('nzemb')>-1)return; // 🧭 30g: never inside the path sheet
   try{
     var K='nursin_splash_v2';
     if(window.sessionStorage.getItem(K))return;

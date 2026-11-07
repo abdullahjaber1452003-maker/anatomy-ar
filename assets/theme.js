@@ -5,6 +5,23 @@
    every page (assets/nav.js «المزيد»). It never touches the ads. */
 (function (w, d) {
   var K = "nursin_theme_v1", html = d.documentElement;
+  /* 🧭 30g embed mode: a page opened INSIDE the home path sheet (assets/home.js openSheet: ?embed=1, frame name «nzsheet») shows only its
+     activity — no header / nav / footer / ad slots, and no ad is requested at all (AdSense paused before its script loads; assets/ads.js
+     skips its slots). Finishing events go up to home so the step ticks ✅; a link back to home closes the sheet instead of nesting home. */
+  var emb = false; try { emb = /[?&]embed=1(&|$)/.test(location.search) || (w.name === "nzsheet" && w.parent && w.parent !== w); } catch (e) {}
+  if (emb) {
+    html.className += " nzemb"; w.NursinEmbed = true;
+    try { (w.adsbygoogle = w.adsbygoogle || []).pauseAdRequests = 1; } catch (e) {}
+    try { var est = d.createElement("style"); est.textContent = "html.nzemb .topbar,html.nzemb .gnav,html.nzemb .foot,html.nzemb .adx,html.nzemb .ad-slot,html.nzemb .nsplash,html.nzemb .skip,html.nzemb .uiback,html.nzemb .annbar,html.nzemb .annbell,html.nzemb .glk-ad,html.nzemb .glk-or{display:none!important}html.nzemb body{padding-bottom:16px!important}"; (d.head || html).appendChild(est); } catch (e) {}
+    var up = function (m) { try { if (w.parent && w.parent !== w) w.parent.postMessage(m, location.origin); } catch (e) {} };
+    ["nursin:quiz-done", "nursin:goal-done", "nursin:srs", "nursin:ret"].forEach(function (t) {
+      d.addEventListener(t, function (e) { var x = null; try { x = JSON.parse(JSON.stringify(e.detail || null)); } catch (er) {} up({ nz: "ev", t: t, d: x }); });
+    });
+    d.addEventListener("click", function (e) {
+      var a = e.target && e.target.closest ? e.target.closest("a[href]") : null; if (!a) return; var h = a.getAttribute("href") || "";
+      if (h && h.charAt(0) !== "#" && /^(\.\/|\/)?(index\.html)?(#.*)?$/.test(h)) { e.preventDefault(); up({ nz: "close" }); }
+    }, true);
+  }
   var THEMES = [
     { id: "classic", e: "🩺", n: "كلاسيك", s: "الأخضر الأساسي تبع الموقع", hd: "#0f766e", bg: "#f6f8fa", card: "#ffffff", ink: "#1d2a33", pri: "#0f766e" },
     { id: "night", e: "🌙", n: "ليلي", s: "غامق ومريح للعيون بالليل", hd: "#0f1d24", bg: "#0d1318", card: "#161f26", ink: "#e4ebf0", pri: "#5fd6c6" },

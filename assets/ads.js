@@ -5,6 +5,8 @@
    A slot whose ad does not come back collapses, so no empty box stays on the page;
    an .adx-keep slot (result screens, mid-lesson) keeps its reserved size instead, so the page never jumps. */
 (function () {
+  // 🧭 30g: no ad inside the home path sheet (embed mode, assets/theme.js)
+  if (document.documentElement.className.indexOf('nzemb') > -1) { window.NursinAds = { scan: function () {} }; return; }
   var SIZE = {
     '735f5c76ee5abde951ff9d70e2263fab': [320, 50],
     'f0cd90c85278798fba5a155236050d61': [728, 90],

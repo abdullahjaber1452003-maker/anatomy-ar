@@ -191,3 +191,17 @@ html[data-theme=night] .hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(
 .busnote{margin:4px 0 8px;font-size:13px;font-weight:700;color:#2e7d4f}.busstop{display:block;width:100%;margin-top:8px;background:none;border:1px solid var(--hzedge,#ddd);color:var(--hzmut,#666);border-radius:12px;padding:9px;font:inherit;font-size:13.5px}.buscard .hzqq small{display:block;font-size:12px;color:var(--hzmut,#666);margin-bottom:2px}
 .buscard .hzqq p{font-weight:700;line-height:1.55}.buscard .hzqo{display:grid;gap:7px}.buscard .hzoa{margin-top:10px}
 body.busopen{overflow:hidden}
+
+/* 🧭 30g: quizzes / exams / سؤال اليوم / 🔁 review run in a sheet over the path (assets/home.js openSheet) */
+.nzsh{position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;background:rgba(10,20,25,.5);display:-webkit-box;display:flex;-webkit-box-orient:vertical;flex-direction:column;-webkit-box-pack:end;justify-content:flex-end}
+.nzshc{background:var(--card,#fff);color:var(--ink,#1d2a33);height:94%;height:calc(100% - 28px);border-radius:16px 16px 0 0;display:-webkit-box;display:flex;-webkit-box-orient:vertical;flex-direction:column;overflow:hidden;box-shadow:0 -6px 24px rgba(0,0,0,.18)}
+.nzshh{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid rgba(0,0,0,.08);flex:none}
+.nzshh b{-webkit-box-flex:1;flex:1;min-width:0;font-size:15px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nzshx{flex:none;width:40px;height:40px;border:0;border-radius:50%;background:rgba(0,0,0,.06);color:inherit;font-size:18px;cursor:pointer}
+.nzshb{-webkit-box-flex:1;flex:1;min-height:0;position:relative;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.nzshb iframe{display:block;width:100%;height:100%;border:0;background:var(--bg,#f6f8fa)}
+.nzshf{flex:none;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(0,0,0,.08)}
+.nzshf[hidden]{display:none}
+.nzshf .btn{display:block;width:100%}
+html.nzshon,html.nzshon body{overflow:hidden}
+@media (min-width:1024px){.nzsh{justify-content:center;align-items:center}.nzshc{width:720px;max-width:calc(100% - 48px);height:88%;border-radius:16px}}

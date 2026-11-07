@@ -233,6 +233,7 @@
     return "push";
   }
   function due() {
+    if (typeof document !== "undefined" && document.documentElement && String(document.documentElement.className).indexOf("nzemb") > -1) return 0;   // 🧭 30g: never inside the home path sheet
     var s = lsGet(OB) || {}, now = Date.now();
     if (s.p === 2 && signedIn() && pushNeed()) return 2;              // came back from the Google redirect
     if (!signedIn()) return (!s.t || (now - s.t > OUT_GAP && (s.n | 0) < OUT_MAX)) ? 1 : 0;
