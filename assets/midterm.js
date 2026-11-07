@@ -1,4 +1,4 @@
-/* 🎯 «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
+/* 🎯 «امتحانات الفصل» — 📅 20261030j: split over 14/11 · 16/11 · 21/11 · 28/11, see EXAMS below. Originally «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
    الفصل وينعمل امتحان لكل المادة» — كل الدروس من كل المواد تقريباً; «ما يروح المسار، يكون موجود مع المسار»).
    • midterm.html: a live countdown to Monday Nov 16 2026 (08:00 Asia/Beirut), per subject a «امتحان كامل» (quiz.html?t=mid&s=<subject>),
      the best score per subject, «أضعف دروسك», and «خطة المراجعة» (Nov 1 → Nov 15, every subject twice, Nov 14–15 light review), ✅ per day.
@@ -10,8 +10,28 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030i", K = "nursin_mid_v1";
-  var EXAM = "2026-11-16", START = "2026-11-01", EXAM_TS = Date.parse("2026-11-16T08:00:00+02:00");   // Lebanon = UTC+2 in November
+  var V = "20261030j", K = "nursin_mid_v1";
+  /* 📅 Nov 7 2026 (20261030j, Abdullah 1:21 / 1:45 / 2:52 PM): the midterm was split — some subjects moved. ONE source of truth: EXAMS,
+     each date with its subjects ("*" = every subject not listed on another date, i.e. what stayed on Mon 16/11). «prev» (الرعاية الوقائية)
+     and «psych» (عقلية) have no lessons on the site: they show as a date only. Every countdown, the smart plan, Osman and the reminders
+     read each subject's OWN date from here (examOf). EXAM stays the big Monday 16/11 for old callers. */
+  var EXAMS = [
+    { d: "2026-11-14", subs: ["prev", "rea"], ar: "وقائية + Réa", fr: "Prévention + Réa" },
+    { d: "2026-11-16", subs: ["*"], ar: "الباقي (Law، Management، Med-Surg…)", sh: "الباقي", fr: "le reste (Législation, Management, Med-Surg…)", fsh: "le reste" },
+    { d: "2026-11-21", subs: ["psych", "geri", "quality"], ar: "عقلية + Géria + Qualité", fr: "Psychiatrie + Gériatrie + Qualité" },
+    { d: "2026-11-28", subs: ["comm", "pharma"], ar: "صحة جماعية + Pharmaco", fr: "Santé communautaire + Pharmaco" }
+  ];
+  var XSUB = { prev: ["الرعاية الوقائية", "Soins préventifs", "🛡️"], psych: ["الصحة العقلية (عقلية)", "Santé mentale (psychiatrie)", "🧩"] };
+  function tsOf(day) { var p = String(day).split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2], 6, 0, 0); }   // 08:00 Asia/Beirut (UTC+2 in November)
+  var EXAM = "2026-11-16", START = "2026-11-01", FIRST = EXAMS[0].d, LAST = EXAMS[EXAMS.length - 1].d, EXAM_TS = tsOf(EXAM);
+  function examOf(s) {                                     // the date of THIS subject's exam (msall / weak / anything unlisted → 16/11)
+    for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].subs.indexOf(s) > -1) return EXAMS[i].d;
+    return EXAM;
+  }
+  function examAt(day) { for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d === day) return EXAMS[i]; return null; }
+  function next(day) { day = day || today(); for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d >= day) return EXAMS[i]; return null; }   // today's exam counts until the day ends
+  function exLabel(E, short) { return E ? T(short && E.sh || E.ar, short && E.fsh || E.fr) : ""; }
+  function dmOf(day) { var p = String(day).split("-"); return (+p[2]) + "/" + (+p[1]); }
   var MINQ = 20, MAXQ = 30;
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -26,11 +46,14 @@
   }
   function addDays(day, n) { return new Date(Date.parse(day + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10); }
   function dayDiff(a, b) { return Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5); }
-  function daysLeft(day) { return Math.max(0, dayDiff(day || today(), EXAM)); }
-  function active(day) { return (day || today()) < EXAM; }
-  function countdown(now) {                                // {d,h,m,s,over} until 08:00 Beirut on Nov 16
-    var ms = EXAM_TS - (now == null ? Date.now() : +now); if (ms <= 0) return { d: 0, h: 0, m: 0, s: 0, over: true };
-    var t = Math.floor(ms / 1000); return { d: Math.floor(t / 86400), h: Math.floor(t % 86400 / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, over: false };
+  function daysLeft(day) { var E = next(day); return E ? Math.max(0, dayDiff(day || today(), E.d)) : 0; }   // to the NEXT exam
+  function daysTo(s, day) { return Math.max(0, dayDiff(day || today(), examOf(s))); }                       // to THIS subject's exam
+  function active(day) { return (day || today()) < LAST; }
+  function countdown(now) {                                // {d,h,m,s,over,ex} until 08:00 Beirut of the next exam still ahead
+    now = now == null ? Date.now() : +now; var E = null, i;
+    for (i = 0; i < EXAMS.length; i++) if (tsOf(EXAMS[i].d) > now) { E = EXAMS[i]; break; }
+    var ms = E ? tsOf(E.d) - now : 0; if (ms <= 0) return { d: 0, h: 0, m: 0, s: 0, over: true, ex: null };
+    var t = Math.floor(ms / 1000); return { d: Math.floor(t / 86400), h: Math.floor(t % 86400 / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, over: false, ex: E };
   }
   function shuffle(a, rnd) { rnd = rnd || Math.random; for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function seeded(n) { var x = (n >>> 0) || 1; return function () { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return (x % 100000) / 100000; }; }
@@ -50,6 +73,7 @@
   function subjName(s) {
     if (s === "msall") return T("Med-Surg كلّو", "Med-Surg complet");
     if (s === "weak") return T("أضعف دروسك", "Tes leçons faibles");
+    if (XSUB[s]) return T(XSUB[s][0], XSUB[s][1]);
     if (s === "medsurg") { var ml = lessonsOf("medsurg"); if (ml.length === 1) return T("التسريب الوريدي", "Perfusion IV"); }
     var x = (NL().subjects || {})[s] || {}; return T(x.ar || s, x.fr || x.ar || s);
   }
@@ -147,7 +171,7 @@
      = 10 questions + its weakest lesson, a 2nd pass = the full mock), class days (Thu/Fri/Sat) lighter, Nov 14–15 light review of
      weak points only. Today's tasks are fixed once shown (x.fix[day]); a task ticks ✓ by itself when that subject's quiz / mock is
      finished that day (x.h), or by hand (x.tk). Re-plans by itself: what was not done comes back from today on. */
-  var LIGHT = addDays(EXAM, -2);                           // Nov 14
+  /* 📅 20261030j: no single «LIGHT» day any more — the eve of EACH exam is light (that exam's subjects only; the eve of the big 16/11 = weak points) */
   function msSubs() { return ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"]; }
   function isCls(day) { var g = new Date(day + "T12:00:00Z").getUTCDay(); return g === 4 || g === 5 || g === 6; }
   function readMap(o) { return (o && o.read) || lsGet("nursin_read_v1") || {}; }
@@ -179,39 +203,66 @@
   function nDone(c, s) { return Object.keys(c[s] || {}).length; }
   function taskHref(t) { return t.s === "weak" ? "quiz.html?t=mid&s=weak&n=10" : "quiz.html?t=mid&s=" + t.s + (t.k === "quiz" ? "&n=10" : ""); }
   function mkTask(u, k, R) { var rd = R[u.s] || {}; return { s: u.s, k: k, les: u.s === "weak" ? "" : (rd.weakL || "") }; }
-  function smart(day, o) {                                 // pure when o.x is given → [{d, k: main|light, cls, tasks:[{s,k,les}], subs, fixed}]
-    o = o || {}; day = day || today(); if (day >= EXAM) return [];
-    var x = o.x || load(), subs = subjList(), ms = msSubs(), R = {}, out = [], c = credits(x, day), fx = (x.fix || {})[day] && !o.fresh ? x.fix[day] : null;
+  function isEve(day) { return !!examAt(addDays(day, 1)); }
+  function dayKind(day) { return isEve(day) ? "light" : "main"; }
+  function smart(day, o) {                                 // pure when o.x is given → [{d, k: main|light, cls, xm, tasks:[{s,k,les}], subs, fixed}]
+    o = o || {}; day = day || today(); if (day >= LAST) return [];
+    var x = o.x || load(), ms = msSubs(), R = {}, out = [], c = credits(x, day), fx = (x.fix || {})[day] && !o.fresh ? x.fix[day] : null;
+    var subs = subjList().filter(function (s) { return examOf(s) > day; });   // 📅 a subject whose own exam is today / past is done
     subs.forEach(function (s) { R[s] = readiness(s, o); });
     var inFx = {}; (fx || []).forEach(function (t) { if (t.s === "msall") ms.forEach(function (y) { inFx[y] = 1; }); else inFx[t.s] = 1; });
     var need = {}; subs.forEach(function (s) { need[s] = Math.max(0, 2 - nDone(c, s) - (inFx[s] ? 1 : 0)); });
-    var d0 = fx ? addDays(day, 1) : day, main = [], dd;
-    for (dd = d0; dd < LIGHT; dd = addDays(dd, 1)) main.push(dd);
-    function capOf(dy, hard) { return isCls(dy) ? (hard ? 3 : 2) : 3; }
-    var capT = 0, capH = 0; main.forEach(function (dy) { capT += capOf(dy); capH += capOf(dy, 1); });
-    var reqSep = 0; subs.forEach(function (s) { reqSep += need[s]; });
-    var merge = reqSep > capT, units = [];                 // not enough room: the 4 Med-Surg subjects go as ONE «Med-Surg كلّو» mock
-    subs.forEach(function (s) { if (!(merge && ms.indexOf(s) > -1)) units.push({ s: s, r: R[s].r, need: need[s], n: lessonsOf(s).length }); });
-    if (merge) { var mn = 0, mr = 0, k = 0; ms.forEach(function (s) { if (R[s]) { mn = Math.max(mn, need[s]); mr += R[s].r; k++; } }); if (k) { R.msall = { r: Math.round(mr / k), weakL: R[ms[0]].weakL }; units.push({ s: "msall", r: R.msall.r, need: mn, n: 99 }); } }
+    var d0 = fx ? addDays(day, 1) : day, days = [], dd;
+    for (dd = d0; dd < LAST; dd = addDays(dd, 1)) days.push(dd);
+    function capOf(dy, hard) { return examAt(dy) ? (hard ? 2 : 1) : isCls(dy) ? (hard ? 3 : 2) : 3; }   // exam day: one thing, after the exam
+    function wOf(dy) { return examAt(dy) ? 1 : isCls(dy) ? 2 : 3; }
+    function lastFor(dl) { var l = addDays(dl, -2); return l >= d0 ? l : addDays(dl, -1); }          // main work ends 2 days before its exam (the eve is light)
+    function lightOf(dy) {                                 // the eve of an exam: a light review of THAT exam's subjects
+      var E = examAt(addDays(dy, 1)); if (!E) return [];
+      if (E.d === EXAM) {                                  // the eve of the big Monday: weak points (+ the weakest lesson of a 16/11 subject)
+        var lt = [{ s: "weak", k: "weak", les: "" }], m16 = subs.filter(function (s) { return examOf(s) === EXAM; }).sort(function (a, b) { return R[a].r - R[b].r; });
+        if (!isCls(dy) && m16.length) lt.push({ s: m16[0], k: "les", les: R[m16[0]].weakL || "" });
+        return lt;
+      }
+      return E.subs.filter(function (s) { return R[s]; }).sort(function (a, b) { return R[a].r - R[b].r; }).slice(0, 2).map(function (s) { return { s: s, k: "quiz", les: R[s].weakL || "" }; });
+    }
+    function slotsOf(dy, hard) { var E = examAt(addDays(dy, 1)); if (E && E.d === EXAM) return 0; return Math.max(0, capOf(dy, hard) - lightOf(dy).length); }
+    function capTo(L, hard) { var n = 0; days.forEach(function (dy) { if (dy <= L) n += slotsOf(dy, hard); }); return n; }
+    var lastM = lastFor(EXAM), reqSep = 0;
+    subs.forEach(function (s) { if (examOf(s) <= EXAM) reqSep += need[s]; });
+    var merge = reqSep > capTo(lastM), units = [];         // not enough room before 16/11: the 4 Med-Surg subjects go as ONE «Med-Surg كلّو» mock
+    subs.forEach(function (s) { if (!(merge && ms.indexOf(s) > -1)) units.push({ s: s, r: R[s].r, need: need[s], n: lessonsOf(s).length, dl: examOf(s) }); });
+    if (merge) { var mn = 0, mr = 0, k = 0; ms.forEach(function (s) { if (R[s]) { mn = Math.max(mn, need[s]); mr += R[s].r; k++; } }); if (k) { R.msall = { r: Math.round(mr / k), weakL: R[ms[0]].weakL }; units.push({ s: "msall", r: R.msall.r, need: mn, n: 99, dl: EXAM }); } }
     units.sort(function (a, b) { return a.r - b.r || b.n - a.n || (a.s < b.s ? -1 : 1); });   // weakest first
     var Lq = [];
-    units.forEach(function (u) { if (u.need >= 1) Lq.push({ u: u, k: u.need >= 2 && u.r < 60 ? "quiz" : "mock" }); });
-    units.forEach(function (u) { if (u.need >= 2) Lq.push({ u: u, k: "mock" }); });
-    var hard = Lq.length > capT; if (hard && Lq.length > capH) Lq = Lq.slice(0, capH);
-    if (fx) out.push({ d: day, k: day >= LIGHT ? "light" : "main", cls: isCls(day), tasks: fx, fixed: true });
-    var wRem = 0; main.forEach(function (dy) { wRem += isCls(dy) ? 2 : 3; });
-    main.forEach(function (dy) {
-      var w0 = isCls(dy) ? 2 : 3, cap = capOf(dy, hard), want = Lq.length ? Math.min(cap, Math.max(1, Math.ceil(Lq.length * w0 / wRem))) : 0, ts = [], seen = {};
-      wRem -= w0;
-      for (var i = 0; i < Lq.length && ts.length < want;) { var q = Lq[i]; if (seen[q.u.s]) { i++; continue; } seen[q.u.s] = 1; ts.push(mkTask(q.u, q.k, R)); Lq.splice(i, 1); }
-      if (!ts.length && units.length) ts.push(mkTask(units[0], "quiz", R));   // everything covered: a short quiz on the weakest subject
-      out.push({ d: dy, k: "main", cls: isCls(dy), tasks: ts });
+    units.forEach(function (u) { if (u.need >= 1) Lq.push({ u: u, k: u.need >= 2 && u.r < 60 ? "quiz" : "mock", p: 1 }); });
+    units.forEach(function (u) { if (u.need >= 2) Lq.push({ u: u, k: "mock", p: 2 }); });
+    Lq.forEach(function (q, i) { q.last = lastFor(q.u.dl); q.i = i; });
+    Lq.sort(function (a, b) { return a.last < b.last ? -1 : a.last > b.last ? 1 : a.i - b.i; });   // earliest exam first (EDF); 1st passes before 2nd; weakest first
+    var hard = false; Lq.forEach(function (q) { var n = 0; Lq.forEach(function (y) { if (y.last <= q.last) n++; }); if (n > capTo(q.last)) hard = true; });
+    if (fx) out.push({ d: day, k: dayKind(day), cls: isCls(day), xm: examAt(day) ? 1 : 0, tasks: fx, fixed: true });
+    var wt = {}; days.forEach(function (dy) { wt[dy] = slotsOf(dy, hard) ? wOf(dy) : 0; });
+    days.forEach(function (dy) {
+      var ts = lightOf(dy), seen = {}, slots = slotsOf(dy, hard), want = 0, i;
+      ts.forEach(function (t) { seen[t.s] = 1; });
+      for (i = Lq.length - 1; i >= 0; i--) if (Lq[i].u.dl <= dy) Lq.splice(i, 1);            // its exam came: too late for it
+      if (slots && Lq.length) {
+        Lq.forEach(function (q) {                          // the pace each exam needs: what is due by its last day, spread over the days left
+          var n = 0, wr = 0; Lq.forEach(function (y) { if (y.last <= q.last) n++; });
+          days.forEach(function (z) { if (z >= dy && z <= q.last) wr += wt[z]; });
+          want = Math.max(want, wr ? Math.ceil(n * wOf(dy) / wr) : slots);
+        });
+        want = Math.min(slots, Math.max(1, want));
+      }
+      var nm = 0;
+      for (i = 0; i < Lq.length && nm < want;) { var q = Lq[i]; if (seen[q.u.s]) { i++; continue; } seen[q.u.s] = 1; ts.push(mkTask(q.u, q.k, R)); Lq.splice(i, 1); nm++; }
+      if (!ts.length) {                                    // everything covered: a short quiz on the weakest subject of the next exam
+        var used = {}; out.forEach(function (p) { p.tasks.forEach(function (t) { used[t.s] = (used[t.s] || 0) + 1; }); });   // rotate: the one planned least so far
+        var nx = units.filter(function (u) { return u.dl > dy; }).sort(function (a, b) { return a.dl < b.dl ? -1 : a.dl > b.dl ? 1 : (used[a.s] || 0) - (used[b.s] || 0) || a.r - b.r; })[0];
+        if (nx) ts.push(mkTask(nx, "quiz", R));
+      }
+      if (ts.length) out.push({ d: dy, k: dayKind(dy), cls: isCls(dy), xm: examAt(dy) ? 1 : 0, tasks: ts });
     });
-    for (dd = fx && day >= LIGHT ? addDays(day, 1) : (d0 > LIGHT ? d0 : LIGHT); dd < EXAM; dd = addDays(dd, 1)) {   // Nov 14–15: weak points only
-      var lt = [{ s: "weak", k: "weak", les: "" }];
-      if (!isCls(dd) && units.length) lt.push({ s: units[0].s, k: "les", les: R[units[0].s].weakL || "" });
-      out.push({ d: dd, k: "light", cls: isCls(dd), tasks: lt });
-    }
     out.forEach(function (p) { p.subs = p.tasks.map(function (t) { return t.s; }); });
     return out;
   }
@@ -222,9 +273,9 @@
   }
   function planDay(day) {
     day = day || today(); var td = today(), x = load();
-    if (day < td) { var f = (x.fix || {})[day]; return f ? { d: day, k: day >= LIGHT ? "light" : "main", cls: isCls(day), tasks: f, subs: f.map(function (t) { return t.s; }), past: true } : null; }
+    if (day < td) { var f = (x.fix || {})[day]; return f ? { d: day, k: dayKind(day), cls: isCls(day), xm: examAt(day) ? 1 : 0, tasks: f, subs: f.map(function (t) { return t.s; }), past: true } : null; }
     var P = smart(td, { x: x }); for (var i = 0; i < P.length; i++) if (P[i].d === day) return P[i];
-    P = day < EXAM ? smart(day, { x: x }) : []; return P[0] && P[0].d === day ? P[0] : null;
+    P = day < LAST ? smart(day, { x: x }) : []; return P[0] && P[0].d === day ? P[0] : null;
   }
   function taskDone(day, t, x) {
     x = x || load(); if (x.plan[day]) return true; if ((x.tk || {})[day] && x.tk[day][t.s]) return true;
@@ -248,7 +299,8 @@
     var p = day === today() ? plan(day)[0] : planDay(day), left = daysLeft(day), x = load();
     var ts = p && p.d === day ? p.tasks : [{ s: "weak", k: "weak", les: "" }], dn = ts.filter(function (t) { return taskDone(day, t, x); }).length;
     var t = ts.filter(function (t) { return !taskDone(day, t, x); })[0] || ts[0], s2 = ts.filter(function (y) { return y !== t; }).map(function (y) { return y.s; })[0] || "";
-    return { k: "mid", e: "🎯", id: day, s: t.s, s2: s2, light: p && p.k === "light" ? 1 : 0, left: left, n: ts.length, dn: dn, tk: t.k, href: t.k === "les" && t.les && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t) };
+    var nx = next(day);
+    return { k: "mid", e: "🎯", id: day, s: t.s, s2: s2, light: p && p.k === "light" ? 1 : 0, left: left, xd: nx ? nx.d : "", xl: nx ? nx.ar : "", xf: nx ? nx.fr : "", n: ts.length, dn: dn, tk: t.k, href: t.k === "les" && t.les && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t) };
   }
   function stepDone(day) { return planDone(day); }
 
@@ -277,20 +329,30 @@
   /* ---------------- midterm.html ---------------- */
   var root = null, tk = 0;
   function pctCls(p) { return p >= 85 ? "g" : p >= 60 ? "y" : "r"; }
-  function cdHtml() {
-    var c = countdown();
-    if (c.over) return '<p class="midover">🍀 ' + T("اليوم الامتحان! بالتوفيق، إنت جاهز 💪", "C'est le jour de l'examen ! Bonne chance, tu es prêt(e) 💪") + "</p>";
+  function cdHtml() {                                     // 📅 j: today's exam (if any) + the countdown to the next one still ahead
+    var td = today(), E0 = examAt(td), c = countdown();
+    var h = E0 ? '<p class="midover">🍀 ' + T("اليوم امتحان " + E0.ar + "! بالتوفيق، إنت جاهز 💪", "Aujourd'hui : examen " + E0.fr + " ! Bonne chance, tu es prêt(e) 💪") + "</p>" : "";
+    if (c.over) return h || '<p class="midover">🎉 ' + T("خلصت كل الامتحانات! برافو 💪", "Tous les examens sont finis ! Bravo 💪") + "</p>";
     function u(n, ar, fr) { return '<span class="midu"><b>' + n + "</b><small>" + T(ar, fr) + "</small></span>"; }
-    return '<div class="midcd" role="timer" aria-live="off">' + u(c.d, "يوم", "jours") + u(c.h, "ساعة", "heures") + u(c.m, "دقيقة", "min") + u(("0" + c.s).slice(-2), "ثانية", "s") + "</div>";
+    return h + '<div class="midcd" role="timer" aria-live="off">' + u(c.d, "يوم", "jours") + u(c.h, "ساعة", "heures") + u(c.m, "دقيقة", "min") + u(("0" + c.s).slice(-2), "ثانية", "s") + "</div>";
   }
+  function examsHtml(td) {                                 // the four dates, compact; past ✅, the next one highlighted
+    var nx = next(td);
+    return '<ul class="midexams">' + EXAMS.map(function (E) {
+      var n = dayDiff(td, E.d), st = n < 0 ? "✅" : n === 0 ? T("اليوم", "aujourd'hui") : T("باقي " + n + " يوم", "J-" + n);
+      return '<li class="' + (n < 0 ? "dn" : E === nx ? "nx" : "") + '"><b>' + dayLabel(E.d) + "</b><span>" + esc(exLabel(E)) + "</span><small>" + st + "</small></li>";
+    }).join("") + "</ul>";
+  }
+
   function dayLabel(day) {
     var dt = new Date(day + "T12:00:00Z"), wd = dt.getUTCDay();
     var A = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], F = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
     return T(A[wd], F[wd]) + " " + dt.getUTCDate() + "/" + (dt.getUTCMonth() + 1);
   }
   function subjBtn(s) {
-    var x = load(), b = x.best[s], n = sizeOf(s), nl = lessonsOf(s).length;
+    var x = load(), b = x.best[s], n = sizeOf(s), nl = lessonsOf(s).length, ed = examOf(s), dl = dayDiff(today(), ed);
     return '<li class="midsub"><span class="e" aria-hidden="true">' + (EMO[s] || "📘") + '</span><span class="tx"><b>' + esc(subjName(s)) + "</b><small>" +
+      '<span class="midexd">📅 ' + dayLabel(ed) + (dl > 0 ? " · " + T("باقي " + dl + " يوم", "J-" + dl) : dl === 0 ? " · " + T("اليوم", "aujourd'hui") : " ✅") + "</span> " +
       T(n + " سؤال · " + n + " د · " + nl + (nl === 1 ? " درس" : " دروس"), n + " questions · " + n + " min · " + nl + " leçon" + (nl > 1 ? "s" : "")) + " " +
       (b ? '<span class="midbest ' + pctCls(b.p) + '" title="' + T("أحسن علامة", "Meilleur score") + '">🏅 ' + b.p + "%</span>" : '<span class="midbest none">' + T("ما جرّبت", "Pas encore") + "</span>") + "</small></span>" +
       '<a class="btn pri sm" href="quiz.html?t=mid&amp;s=' + s + '">' + T("امتحان كامل ⏱️", "Examen complet ⏱️") + "</a></li>";
@@ -310,18 +372,18 @@
   function planHtml() {
     var td = today(); if (!active(td)) return "";
     var P = plan(td), x = load(), left = daysLeft(td), mi = missed(td), p0 = P[0], rest = P.slice(1);
-    var h = '<section class="qcard midplan" id="plan"><h2>🎯 ' + T("خطة امتحان 16", "Plan examen du 16") + ' <small>⏳ ' + T("باقي " + left + " يوم", "J-" + left) + "</small></h2>" +
-      '<p class="small">' + T("مبنية على علاماتك ودروسك اللي فتحتها وغلطاتك: الأضعف أول، كل مادة مرّتين قبل ١٤/١١، أيام الدوام (خميس/جمعة/سبت) أخف، و١٤–١٥ نقاط ضعفك بس. بيتعلّم ✓ لحالو لما تخلص الامتحان أو الأسئلة.",
-        "Basé sur tes scores, les leçons ouvertes et tes erreurs : la plus faible d'abord, chaque matière deux fois avant le 14/11, jours de cours (jeu./ven./sam.) plus légers, et les 14–15 seulement tes points faibles. Coché ✓ tout seul quand tu finis.") + "</p>" +
+    var h = '<section class="qcard midplan" id="plan"><h2>🎯 ' + T("خطة الامتحانات", "Plan des examens") + ' <small>⏳ ' + T("باقي " + left + " يوم · " + exLabel(next(td), 1), "J-" + left + " · " + exLabel(next(td), 1)) + "</small></h2>" +
+      '<p class="small">' + T("مبنية على علاماتك ودروسك اللي فتحتها وغلطاتك وعلى تاريخ امتحان كل مادة: المادة اللي امتحانها أقرب أول (Réa قبل ١٤/١١، وPharmaco وصحة جماعية آخر شي)، كل مادة مرّتين وبتخلص قبل امتحانها بيومين، أيام الدوام (خميس/جمعة/سبت) أخف، وليلة كل امتحان مراجعة خفيفة لموادّو. بيتعلّم ✓ لحالو لما تخلص الامتحان أو الأسئلة.",
+        "Basé sur tes scores, les leçons ouvertes, tes erreurs et la date de l'examen de chaque matière : l'examen le plus proche d'abord (Réa avant le 14/11, Pharmaco et santé communautaire en dernier), chaque matière deux fois et finie deux jours avant son examen, jours de cours (jeu./ven./sam.) plus légers, et la veille de chaque examen une révision légère de ses matières. Coché ✓ tout seul quand tu finis.") + "</p>" +
       (mi ? '<p class="midre">🔄 ' + T("فاتك شي مبارح؟ ولا يهمّك، رتّبتلك الخطة من جديد.", "Raté hier ? Pas grave, le plan est refait.") + "</p>" : "");
     if (p0 && p0.d === td) {
       var nd = p0.tasks.filter(function (t) { return taskDone(td, t, x); }).length;
-      h += '<h3 class="midgh">📌 ' + T("اليوم", "Aujourd'hui") + " · " + dayLabel(td) + (p0.cls && p0.k === "main" ? ' <small class="dp">🏫 ' + T("يوم دوام: خفيف", "jour de cours : léger") + "</small>" : p0.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") +
+      h += '<h3 class="midgh">📌 ' + T("اليوم", "Aujourd'hui") + " · " + dayLabel(td) + (p0.xm ? ' <small class="dp">📝 ' + T("يوم امتحان", "jour d'examen") + "</small>" : "") + (p0.cls && p0.k === "main" && !p0.xm ? ' <small class="dp">🏫 ' + T("يوم دوام: خفيف", "jour de cours : léger") + "</small>" : p0.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") +
         " <small>" + nd + "/" + p0.tasks.length + "</small></h3><ol class=\"midtasks\">" + p0.tasks.map(function (t) { return taskRow(td, t, x, true); }).join("") + "</ol>" +
         (nd === p0.tasks.length ? '<p class="midok">✅ ' + T("خلصت خطة اليوم. برافو!", "Plan du jour terminé. Bravo !") + "</p>" : "");
     }
     if (rest.length) h += '<details class="midall"' + (rest.length <= 3 ? " open" : "") + "><summary>📅 " + T("الأيام الجاية", "Les jours suivants") + " (" + rest.length + ")</summary><ol class=\"middays\">" + rest.map(function (p) {
-      return '<li class="midday"><span class="dl">' + dayLabel(p.d) + (p.cls && p.k === "main" ? ' <small class="dp">🏫 ' + T("دوام", "cours") + "</small>" : p.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") + '</span><span class="dgo">' +
+      return '<li class="midday"><span class="dl">' + dayLabel(p.d) + (p.xm ? ' <small class="dp">📝 ' + T("امتحان", "examen") + "</small>" : "") + (p.cls && p.k === "main" && !p.xm ? ' <small class="dp">🏫 ' + T("دوام", "cours") + "</small>" : p.k === "light" ? ' <small class="dp">' + T("مراجعة خفيفة", "révision légère") + "</small>" : "") + '</span><span class="dgo">' +
         p.tasks.map(function (t) { return '<a class="btn sm" href="' + esc(t.k === "les" && lessonInfo(t.les) ? lessonInfo(t.les).href : taskHref(t)) + '">' + taskName(t) + " · " + kindName(t) + "</a>"; }).join("") + "</span></li>";
     }).join("") + "</ol></details>";
     var subs = subjList().map(function (s) { return { s: s, r: readiness(s) }; }).sort(function (a, b) { return a.r.r - b.r.r; });
@@ -343,9 +405,10 @@
   function hub() {
     var subs = subjList(), ms = ((NL().groups || {}).medsurg || {}).subs || [], tried = subs.filter(function (s) { return load().best[s]; }).length;
     var td = today(), p = active(td) ? plan(td)[0] : null;
-    var h = '<section class="qcard midhero"><p class="midk">🎯 ' + T("امتحان الفصل", "Examen de mi-semestre") + '</p><h1>' + T("الإثنين ١٦ تشرين الثاني ٢٠٢٦", "Lundi 16 novembre 2026") + "</h1>" + cdHtml() +
+    var nx = next(td);
+    var h = '<section class="qcard midhero"><p class="midk">🎯 ' + T("امتحانات الفصل · الامتحان الجاي", "Examens de mi-semestre · le prochain") + '</p><h1>' + (nx ? dayLabel(nx.d) + " · " + esc(exLabel(nx)) : T("خلصت الامتحانات", "Examens terminés")) + "</h1>" + cdHtml() + examsHtml(td) +
       '<p class="small">' + T("كل الدروس من كل المواد. جرّبت " + tried + " من " + subs.length + " مواد.", "Toutes les leçons de toutes les matières. Tu as essayé " + tried + " matière(s) sur " + subs.length + ".") + "</p>" +
-      (active(td) ? '<p class="midtoday">⏳ ' + T("باقي " + daysLeft(td) + " يوم", "J-" + daysLeft(td)) + (p && p.tasks ? " · 📌 " + T("خطة اليوم: ", "Plan du jour : ") + p.tasks.map(function (t) { return t.s === "weak" ? T("نقاط ضعفك", "points faibles") : esc(subjName(t.s)); }).join(" + ") : "") + ' <a href="#plan">' + T("🎯 الخطة", "🎯 Le plan") + "</a></p>" : "") + "</section>" + planHtml();
+      (active(td) ? '<p class="midtoday">🎯 ' + T("باقي " + daysLeft(td) + " يوم · " + exLabel(nx, 1), "J-" + daysLeft(td) + " · " + exLabel(nx, 1)) + (p && p.tasks ? " · 📌 " + T("خطة اليوم: ", "Plan du jour : ") + p.tasks.map(function (t) { return t.s === "weak" ? T("نقاط ضعفك", "points faibles") : esc(subjName(t.s)); }).join(" + ") : "") + ' <a href="#plan">' + T("🎯 الخطة", "🎯 Le plan") + "</a></p>" : "") + "</section>" + planHtml();
     h += '<section class="qcard midsubs"><h2>📚 ' + T("امتحان كامل لكل مادة", "Un examen complet par matière") + '</h2><p class="small">' +
       T("أسئلة من كل دروس المادة بالتساوي، دقيقة لكل سؤال. بالآخر: علامتك، نتيجتك بكل درس وأضعف دروسك. الغلط بيرجعلك بمراجعة بكرا.", "Des questions de toutes les leçons de la matière, à parts égales, une minute par question. À la fin : ton score, ton résultat par leçon et tes leçons faibles. Les erreurs reviennent demain en révision.") + "</p>";
     var g = (NL().groups || {}).medsurg;
@@ -360,7 +423,7 @@
     root = d.getElementById("mid-app"); if (!root) return;
     d.documentElement.classList.add("rton");             // no ads on this page at all
     draw();
-    clearInterval(tk); tk = setInterval(function () { var c = root.querySelector(".midcd"); if (!c) return; var t = d.createElement("div"); t.innerHTML = cdHtml(); c.parentNode.replaceChild(t.firstChild, c); }, 1000);
+    clearInterval(tk); tk = setInterval(function () { var c = root.querySelector(".midcd"); if (!c) return; var t = d.createElement("div"); t.innerHTML = cdHtml(); var n = t.querySelector(".midcd"); if (n) c.parentNode.replaceChild(n, c); else draw(); }, 1000);
     root.addEventListener("change", function (e) { var b = e.target.closest && e.target.closest("[data-midtk]"); if (!b) return; var v = b.getAttribute("data-midtk").split("|"); tick(v[0], v[1], b.checked); draw(); });
     if (location.hash === "#plan") setTimeout(function () { var p = d.getElementById("plan"); if (p) p.scrollIntoView({ block: "start" }); }, 200);
   }
@@ -370,9 +433,9 @@
     return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/cases-data.js?v=" + V; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); setTimeout(res, 6000); });
   }
 
-  w.NursinMid = { V: V, EXAM: EXAM, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
+  w.NursinMid = { V: V, hub: hub, examsHtml: examsHtml, cdHtml: cdHtml, EXAM: EXAM, EXAMS: EXAMS, FIRST: FIRST, LAST: LAST, XSUB: XSUB, examOf: examOf, examAt: examAt, next: next, daysTo: daysTo, exLabel: exLabel, dmOf: dmOf, isEve: isEve, tsOf: tsOf, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
     subjects: subjList, lessonsOf: lessonsOf, subjName: subjName, size: size, sizeOf: sizeOf, pools: pools, build: build, seeded: seeded, result: result, weakOf: weakOf,
-    weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls, LIGHT: LIGHT,
+    weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls,
     merge: merge, pull: pull, load: load, loadCases: loadCases, EMO: EMO, KEY: K };
   if (!d || !d.addEventListener) return;
   /* 📊 29v: midterm.js also rides the subject pages (only for readiness(), assets/ready.js) — no profile read there: no new Firestore traffic */

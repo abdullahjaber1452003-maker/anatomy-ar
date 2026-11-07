@@ -64,7 +64,14 @@
   function midInfo(day) {
     var M = w.NursinMid; if (!M || !M.daysLeft) return null;
     day = day || today();
-    var o = { exam: M.EXAM, left: M.daysLeft(day), active: M.active(day), today: null, best: [], last: [], weak: [] };
+    var o = { exam: M.EXAM, left: M.daysLeft(day), active: M.active(day), today: null, best: [], last: [], weak: [], exams: [] };
+    try {                                                  // 📅 20261030j: the midterm is split over 4 dates — each with its subjects and days left
+      (M.EXAMS || []).forEach(function (E) {
+        var n = Math.round((Date.UTC(+E.d.slice(0, 4), +E.d.slice(5, 7) - 1, +E.d.slice(8, 10)) - Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10))) / 864e5);
+        o.exams.push({ d: E.d, ar: E.ar, left: n, subs: E.subs.filter(function (s) { return s !== "*"; }).map(function (s) { return M.subjName(s); }) });
+      });
+      var nx = M.next ? M.next(day) : null; if (nx) o.exam = nx.d;
+    } catch (e) {}
     try { var pd = M.planDay(day); if (pd) o.today = { subs: (pd.subs || []).map(function (s) { return M.subjName(s); }), light: pd.k === "light", done: !!M.planDone(day) }; } catch (e) {}
     try {
       var x = M.load();
@@ -133,15 +140,18 @@
     } else out.push("📌 ما في وظايف مفتوحة هلّق.");
     var m = o.mid;
     if (m && m.active) {
-      var s = "🎯 امتحان الفصل (Midterm، صفحة midterm.html): الاتنين " + dm(m.exam) + " الساعة ٨ الصبح (هيك محطوط بالموقع) — باقي " + m.left + (m.left === 1 ? " يوم" : " يوم") + ". من كل الدروس تقريباً بكل المواد.";
+      var s = m.exams && m.exams.length
+        ? "🎯 امتحانات الفصل (Midterm، صفحة midterm.html) صارت على ٤ تواريخ، كل واحد الساعة ٨ الصبح (هيك محطوط بالموقع): " + m.exams.map(function (e) { return dm(e.d) + " " + e.ar + (e.left < 0 ? " (صار ✅)" : e.left === 0 ? " (اليوم!)" : " (باقي " + e.left + " يوم)"); }).join(" · ") +
+          ". الـ١٦/١١ = كل المواد اللي ما انذكرت بتاريخ تاني (Law، Management، Med-Surg: القلب والأعصاب وHenderson والتسريب الوريدي…). الرعاية الوقائية والعقلية ما إلهن دروس بالموقع. الامتحان الجاي: " + dm(m.exam) + " — باقي " + m.left + " يوم."
+        : "🎯 امتحان الفصل (Midterm، صفحة midterm.html): الاتنين " + dm(m.exam) + " الساعة ٨ الصبح (هيك محطوط بالموقع) — باقي " + m.left + (m.left === 1 ? " يوم" : " يوم") + ". من كل الدروس تقريباً بكل المواد.";
       if (m.today) s += " خطة المراجعة لليوم: " + (m.today.light ? "مراجعة خفيفة لأضعف الدروس (١٠ أسئلة)" : "امتحان تجريبي كامل لـ " + m.today.subs.join(" + ")) + (m.today.done ? " — ✅ عملها" : " — لسّا ما عملها") + ".";
       out.push(s);
       if (m.best.length) out.push("أحسن علامات الطالب بالامتحانات التجريبية: " + m.best.map(function (b) { return b.s + " " + b.p + "% (" + b.sc + "/" + b.n + ")"; }).join("، ") + ".");
       else out.push("الطالب لسّا ما عمل ولا امتحان تجريبي لامتحان الفصل.");
       if (m.last.length) out.push("آخر امتحانات تجريبية: " + m.last.map(function (l) { return l.s + " " + l.p + "%" + (l.d ? " (" + dm(l.d) + ")" : ""); }).join("، ") + ".");
       if (m.weak.length) out.push("أضعف دروسو (من الامتحانات التجريبية وأغلاطو): " + m.weak.map(function (r) { return r.n + (r.p != null ? " " + r.p + "%" : ""); }).join("، ") + ".");
-      out.push("إذا سأل «امتى الامتحان؟» بلا ما يحدّد، قصدو امتحان الفصل هيدا.");
-    } else if (m) out.push("🎯 امتحان الفصل (" + dm(m.exam) + ") صار.");
+      out.push("إذا سأل «امتى الامتحان؟» بلا ما يحدّد، قصدو امتحانات الفصل هودي: قلّو الجاي أول، وكل مادة بتاريخها.");
+    } else if (m) out.push("🎯 امتحانات الفصل (آخرها " + dm(m.exams && m.exams.length ? m.exams[m.exams.length - 1].d : m.exam) + ") خلصت.");
     var p = o.path;
     if (p && !p.none) {
       out.push("🧭 مسار اليوم (الصفحة الرئيسية): خلّص " + p.done + " من " + p.total + " خطوات.");

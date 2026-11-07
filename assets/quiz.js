@@ -191,9 +191,9 @@
     if(!M||(subj!=='weak'&&!M.lessonsOf(subj).length)){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما لقينا هالمادة.','Matière introuvable.')+'</p><p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a></p></div>';return;}
     root.innerHTML='<div class="qcard"><p>⏳ …</p></div>';
     M.loadCases().then(function(){
-      var n=+(params().n)||0,qs=M.build(subj,n?{n:n}:null);if(window.NursinVar)qs=NursinVar.varyAll(qs);var b=M.load().best[subj],ls=subj==='weak'?[]:M.lessonsOf(subj),left=M.daysLeft();
+      var n=+(params().n)||0,qs=M.build(subj,n?{n:n}:null);if(window.NursinVar)qs=NursinVar.varyAll(qs);var b=M.load().best[subj],ls=subj==='weak'?[]:M.lessonsOf(subj),left=subj!=='weak'&&M.daysTo?M.daysTo(subj):M.daysLeft();
       if(!qs.length){root.innerHTML='<div class="qcard"><p>⚠️ '+T2('ما في أسئلة كفاية بعد.','Pas encore assez de questions.')+'</p></div>';return;}
-      var h='<div class="qcard midintro"><p class="midk">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+(M.active()?' · '+T2('باقي '+left+' يوم','J-'+left):'')+'</p><h2>'+(M.EMO[subj]||'📘')+' '+esc(M.subjName(subj))+'</h2>'+
+      var h='<div class="qcard midintro"><p class="midk">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+(M.active()?' · '+(M.examOf&&subj!=='weak'?'📅 '+M.dmOf(M.examOf(subj))+' · ':'')+T2('باقي '+left+' يوم','J-'+left):'')+'</p><h2>'+(M.EMO[subj]||'📘')+' '+esc(M.subjName(subj))+'</h2>'+
         '<p>'+T2(qs.length+' سؤال · '+qs.length+' دقيقة'+(ls.length?' · من كل الـ '+ls.length+(ls.length===1?' درس':' دروس')+' بالتساوي':''),qs.length+' questions · '+qs.length+' minutes'+(ls.length?' · de toutes les '+ls.length+' leçon(s), à parts égales':''))+'</p>'+
         (b?'<p class="small">🏅 '+T2('أحسن علامة إلك: ','Ton meilleur score : ')+b.p+'%</p>':'')+
         '<p class="small">'+T2('متل الامتحان الحقيقي: بلا 50/50، والوقت عم يمشي. الغلط بيرجعلك بمراجعة بكرا وبنقاط ضعفك.','Comme le vrai examen : pas de 50/50, et le temps tourne. Les erreurs reviennent demain en révision et dans tes points faibles.')+'</p>'+

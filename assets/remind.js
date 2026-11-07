@@ -3,7 +3,7 @@
    index.html: a short pinned card at the very top of the home (assets/home.js puts html() between the greeting and the chips), above
    «🧭 مسار اليوم». It is NOT the path: max 4 lines, the rest behind «+N». Items (pure build(), tests):
      📌 hw   a homework (assets/homework.js, not handed in) from 2 days before its due date      → homework.html?id=…
-     🎯 ex   امتحان الفصل (assets/midterm.js EXAM) from 2 days before                           → midterm.html
+     🎯 ex   the NEXT exam (assets/midterm.js EXAMS → next(), 📅 j) from 2 days before                           → midterm.html
      🏫 cls  a class day (Thu/Fri/Sat) morning until 2:30 PM: quick recap of the newest lesson of today's subjects
      📸 ph   a class day after 2:30 PM: «صوّر دروس اليوم وحطّن عالموقع» (stays up to 2 days until done) → suggest.html (draft ready)
      📖 st   today's study suggestion (the timetable's «درس اليوم», assets/lessons.js)
@@ -69,7 +69,7 @@
     if (!off.hw) {
       (x.hw || []).forEach(function (h) { if (!h || !h.id || !h.due) return; var n = diff(h.due, day); if (n < 0 || n > 2) return;
         add({ k: "hw", key: "hw:" + h.id, e: "📌", t: T("وظيفة: ", "Devoir : ") + cut(h.title, 44) + " · " + T("التسليم ", "à rendre ") + left(n), href: "homework.html?id=" + encodeURIComponent(h.id) }); });
-      if (x.exam) { var n = diff(x.exam, day); if (n >= 0 && n <= 2) add({ k: "hw", key: "ex:" + x.exam, e: "🎯", t: T("امتحان الفصل ", "Examen de mi-semestre ") + left(n) + T(" — راجع موادك", " — révise tes matières"), href: "midterm.html" }); }
+      if (x.exam) { var n = diff(x.exam, day); if (n >= 0 && n <= 2) add({ k: "hw", key: "ex:" + x.exam, e: "🎯", t: T(x.exl ? "امتحان " + x.exl + " " : "امتحان الفصل ", x.exf ? "Examen " + x.exf + " " : "Examen de mi-semestre ") + left(n) + T(" — راجع موادك", " — révise tes matières"), href: "midterm.html" }); }
     }
     if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK && x.bus) { if (!x.busDone) add({ k: "cls", key: "cl:" + day, e: "🏫", t: T("اليوم دوام: 🚌 مراجعة الطريق لمواد اليوم (~30 د)", "Cours aujourd'hui : 🚌 révision du trajet, cours du jour (~30 min)"), href: "index.html#bus" }); }   // 29n: the same thing as the path's first step → opens it
     else if (!off.cls && classDay(day) && hm >= 5 * 60 && hm < BACK)
@@ -110,7 +110,7 @@
   function ctx() {
     var day = today(), hm = hmB(), H = w.HomePath || {}, x = { day: day, hm: hm, hw: [], exam: "", today: null, q: null, cls: null };
     try { var HW = w.NursinHW; x.hw = HW && HW.open ? HW.open(day) : []; } catch (e) {}
-    try { var M = w.NursinMid; x.exam = M && M.EXAM ? M.EXAM : ""; } catch (e) {}
+    try { var M = w.NursinMid, nx = M && M.next ? M.next(day) : null; x.exam = nx ? nx.d : M && M.EXAM ? M.EXAM : ""; x.exl = nx ? nx.ar : ""; x.exf = nx ? nx.fr : ""; } catch (e) {}   // 📅 j: the NEXT of the 4 exam dates
     try { var td = H.todayNow ? H.todayNow() : null; if (td) x.today = { n: td.n, href: td.href }; } catch (e) {}
     try { var BU = w.NursinBus; if (BU && BU.on && BU.on(day, x.hm | 0)) { x.bus = true; x.busDone = !!(BU.isDone && BU.isDone(day)); } } catch (e) {}
     try { if (H.classNewest && H.lessonsNow && classDay(day)) { var cl = H.classNewest(H.lessonsNow() || [], dow(day))[0]; if (cl) x.cls = { n: cl.n, href: cl.href }; } } catch (e) {}
