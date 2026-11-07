@@ -1,4 +1,4 @@
-/* 🎯 «امتحانات الفصل» — 📅 20261030j: split over 14/11 · 16/11 · 21/11 · 28/11, see EXAMS below. Originally «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
+/* 🎯 «امتحانات الفصل» — 📅 20261030k: split over 14/11 · 16/11 · 21/11 · 28/11, see EXAMS below. Originally «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
    الفصل وينعمل امتحان لكل المادة» — كل الدروس من كل المواد تقريباً; «ما يروح المسار، يكون موجود مع المسار»).
    • midterm.html: a live countdown to Monday Nov 16 2026 (08:00 Asia/Beirut), per subject a «امتحان كامل» (quiz.html?t=mid&s=<subject>),
      the best score per subject, «أضعف دروسك», and «خطة المراجعة» (Nov 1 → Nov 15, every subject twice, Nov 14–15 light review), ✅ per day.
@@ -10,8 +10,8 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030j", K = "nursin_mid_v1";
-  /* 📅 Nov 7 2026 (20261030j, Abdullah 1:21 / 1:45 / 2:52 PM): the midterm was split — some subjects moved. ONE source of truth: EXAMS,
+  var V = "20261030k", K = "nursin_mid_v1";
+  /* 📅 Nov 7 2026 (20261030k, Abdullah 1:21 / 1:45 / 2:52 PM): the midterm was split — some subjects moved. ONE source of truth: EXAMS,
      each date with its subjects ("*" = every subject not listed on another date, i.e. what stayed on Mon 16/11). «prev» (الرعاية الوقائية)
      and «psych» (عقلية) have no lessons on the site: they show as a date only. Every countdown, the smart plan, Osman and the reminders
      read each subject's OWN date from here (examOf). EXAM stays the big Monday 16/11 for old callers. */
@@ -49,11 +49,15 @@
   function daysLeft(day) { var E = next(day); return E ? Math.max(0, dayDiff(day || today(), E.d)) : 0; }   // to the NEXT exam
   function daysTo(s, day) { return Math.max(0, dayDiff(day || today(), examOf(s))); }                       // to THIS subject's exam
   function active(day) { return (day || today()) < LAST; }
-  function countdown(now) {                                // {d,h,m,s,over,ex} until 08:00 Beirut of the next exam still ahead
+  function countdown(now) {                                // {d,h,m,s,over,ex} to the next exam still ahead (before its 08:00 Beirut)
+    // 30k: d = calendar days in Beirut (the same dayDiff as «باقي X يوم» on the rows / headline / home chip — no more 6 vs 7);
+    // h:m:s = what is left of today (to Beirut midnight), or on the exam's own morning what is left until 08:00
     now = now == null ? Date.now() : +now; var E = null, i;
     for (i = 0; i < EXAMS.length; i++) if (tsOf(EXAMS[i].d) > now) { E = EXAMS[i]; break; }
-    var ms = E ? tsOf(E.d) - now : 0; if (ms <= 0) return { d: 0, h: 0, m: 0, s: 0, over: true, ex: null };
-    var t = Math.floor(ms / 1000); return { d: Math.floor(t / 86400), h: Math.floor(t % 86400 / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, over: false, ex: E };
+    if (!E) return { d: 0, h: 0, m: 0, s: 0, over: true, ex: null };
+    var td = today(new Date(now)), dd = Math.max(0, dayDiff(td, E.d));
+    var ms = dd > 0 ? (tsOf(addDays(td, 1)) - 8 * 36e5 - now) % 864e5 : tsOf(E.d) - now; if (ms < 0) ms = 0;
+    var t = Math.floor(ms / 1000); return { d: dd, h: Math.floor(t / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, over: false, ex: E };
   }
   function shuffle(a, rnd) { rnd = rnd || Math.random; for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function seeded(n) { var x = (n >>> 0) || 1; return function () { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return (x % 100000) / 100000; }; }
@@ -171,7 +175,7 @@
      = 10 questions + its weakest lesson, a 2nd pass = the full mock), class days (Thu/Fri/Sat) lighter, Nov 14–15 light review of
      weak points only. Today's tasks are fixed once shown (x.fix[day]); a task ticks ✓ by itself when that subject's quiz / mock is
      finished that day (x.h), or by hand (x.tk). Re-plans by itself: what was not done comes back from today on. */
-  /* 📅 20261030j: no single «LIGHT» day any more — the eve of EACH exam is light (that exam's subjects only; the eve of the big 16/11 = weak points) */
+  /* 📅 20261030k: no single «LIGHT» day any more — the eve of EACH exam is light (that exam's subjects only; the eve of the big 16/11 = weak points) */
   function msSubs() { return ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"]; }
   function isCls(day) { var g = new Date(day + "T12:00:00Z").getUTCDay(); return g === 4 || g === 5 || g === 6; }
   function readMap(o) { return (o && o.read) || lsGet("nursin_read_v1") || {}; }
