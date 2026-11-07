@@ -113,7 +113,7 @@
     { s: "medsurg", t: "medsurg", l: "iv", n: "💉 التسريب الوريدي (Perfusion)", href: "medsurg.html#iv", added: "2026-10-30" },
     { s: "medsurg", t: "medsurg", l: "csh", n: "🩸 زراعة الخلايا الجذعية المكوّنة للدم (Transplantation de cellules souches hématopoïétiques)", href: "medsurg.html#csh", added: "2026-11-06" },
     { s: "medsurg", t: "medsurg", l: "fdv", n: "🕊️ رعاية نهاية الحياة (Soins de fin de vie)", href: "medsurg.html#fdv", added: "2026-11-06" },
-    { s: "medsurg", t: "medsurg", l: "coro", n: "🫀 القسطرة القلبية (Coronarographie و Artériographie)", href: "medsurg.html#coro", added: "2026-11-07" },
+    { s: "medsurg", t: "medsurg", l: "coro", n: "🫀 القسطرة القلبية (Coronarographie / Artériographie)", href: "medsurg.html#coro", added: "2026-11-07" },
     { s: "medsurg", t: "medsurg", l: "angio", n: "🎈 الرأب الوعائي (Angioplastie)", href: "medsurg.html#angio", added: "2026-11-07" }
     ]
   };
