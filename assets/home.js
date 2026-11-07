@@ -462,6 +462,10 @@
   // ↔️ 30g: a French name in brackets inside an Arabic title is isolated (same fix as the 30a lesson headers), so
   // «المحاليل الوريدية (Les solutés de perfusion)» never wraps as «Les solutés de) … (perfusion»
   function bidiT(s) { return String(s).replace(/\(([^()<>\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()<>\u0600-\u06FF]*)\)/g, '<bdi dir="ltr" class="bdl">($1)</bdi>'); }
+  function xtraT(s) {
+    var xp = String(s.s || "").split(" · "), xl = xp.length > 2 ? xp[1] : "";
+    return { t: xl ? T("إذا عندك وقت: ", "Si tu as le temps : ") + bidiT(esc(xl)) : T("إذا عندك وقت", "Si tu as le temps"), sub: esc(xl ? [xp[0]].concat(xp.slice(2)).join(" · ") : (s.s || "")) };
+  }
   function texts0(s) {
     var nm = bidiT(esc(curName(s)));
     switch (s.k) {
@@ -476,7 +480,7 @@
       case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: bidiT(esc(s.n)), sub: bidiT(esc(s.s || "")), min: 10 };
       case "wq": return { tag: T("🎯 نقاط ضعفك", "🎯 Tes points faibles"), t: T("🎯 كويز نقاط ضعفك", "🎯 Quiz de tes points faibles"), sub: T((s.n | 0) + ((s.n | 0) === 1 ? " سؤال غلطت فيه" : " أسئلة غلطت فيها"), (s.n | 0) + " question(s) ratée(s) (أسئلة غلطت فيها)"), min: 5 };
       case "pomo": var sm2 = studyMins(today()); return { tag: T("⏱️ وقت الدرس", "⏱️ Temps d'étude"), t: T("⏱️ ٢٥ دقيقة دراسة", "⏱️ 25 min d'étude (٢٥ دقيقة دراسة)"), sub: sm2.m ? T("درست " + sm2.m + " د من ٢٥ (قراءة الدروس والكويز)", sm2.m + " min sur 25") : T("اقرا درس أو جولة بومودورو، بينحسب الوقت لحالو", "Lis une leçon ou fais un pomodoro, le temps se compte tout seul"), min: 25 };
-      case "xtra": return { tag: T("📚 إضافي", "📚 En plus"), t: T("📚 إضافي (إذا عندك وقت)", "📚 En plus (si tu as le temps)"), sub: esc(s.s || ""), min: 5 };
+      case "xtra": return { tag: T("📚 إضافي", "📚 En plus"), t: xtraT(s).t, sub: xtraT(s).sub, min: 5 };   // 30i: the title says WHAT the extra is (the tag already says «📚 إضافي»)
       case "mid": var M = w.NursinMid, sn = function (k) { return k === "weak" ? T("نقاط ضعفك", "tes points faibles") : esc(M && M.subjName ? M.subjName(k) : k); };   // 🎯 29q: today's item of «خطة امتحان 16»
         var mk = s.tk === "weak" || s.s === "weak" ? T("١٠ أسئلة من نقاط ضعفك", "10 questions sur tes points faibles") : s.tk === "les" ? T("راجع أضعف درس: ", "Relis la leçon la plus faible : ") + sn(s.s) : s.tk === "quiz" ? T("١٠ أسئلة ", "10 questions ") + sn(s.s) : T("امتحان كامل ", "Examen complet ") + sn(s.s);
         return { tag: T("🎯 خطة امتحان 16 · ⏳ باقي " + (s.left | 0) + " يوم", "🎯 Plan examen du 16 · J-" + (s.left | 0)), t: (s.light ? T("تحضير امتحان الفصل (خفيف): ", "Préparation de l'examen (léger) : ") : T("تحضير امتحان الفصل: ", "Préparation de l'examen : ")) + mk,

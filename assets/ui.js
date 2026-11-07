@@ -63,7 +63,7 @@
       ["#online", "🟢", "مين أونلاين", "En ligne"], ["live.html", "🔴", "تحدّي لايف", "Défi live"], ["index.html#duel", "🏆", "البطولة", "Tournoi"],
       ["chat.html", "💬", "المحادثات", "Messages"], ["suggest.html", "🛠️", "اقتراحاتك", "Tes idées"]] },
     { k: "account", e: "👤", ar: "حسابي", fr: "Mon compte", items: [
-      ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"],
+      ["me.html", "👤", "أنا والإعدادات", "Moi et réglages"], ["#howto", "❓", "كيف بستعمل", "Comment ça marche"], ["#whatsnew", "🆕", "شو الجديد", "Nouveautés"], ["#avatar", "🧑‍⚕️", "صورتي", "Mon avatar"], ["#name", "✏️", "اسمي", "Mon nom"],
       ["#theme", "🎨", "المظهر", "Apparence"], ["#lang", "🇫🇷", "Français / عربي", "عربي / Français"], ["friends.html#fpush", "🔔", "الإشعارات", "Notifications"],
       ["#install", "📲", "حمّل التطبيق", "Installer l'app"], ["privacy.html", "🔒", "الخصوصية", "Confidentialité"], ["about.html", "ℹ️", "من نحن", "À propos"],
       ["credits.html", "📜", "المصادر", "Sources"]] }
@@ -273,7 +273,9 @@
       case "name": closeSheet(); setTimeout(function () { if (w.NursinName) w.NursinName.open(from); else location.href = "me.html"; }, 280); return;   // ✏️ assets/name.js
       case "theme": closeSheet(); if (w.NursinTheme) setTimeout(function () { w.NursinTheme.open(); }, 280); else location.href = "me.html"; return;
       case "lang": if (w.Lang && w.Lang.set) w.Lang.set(FR() ? "ar" : "fr"); return;
-      case "goals": closeSheet(); location.href = "index.html#path"; return;   // 30e: the goals are «🧭 مسار اليوم» now
+      case "goals": closeSheet(); location.href = "index.html#path"; return;
+      case "howto": closeSheet(); setTimeout(function () { if (w.NursinTour) w.NursinTour.replay(); else location.href = "index.html#tour"; }, 300); return;   // ❓ 30i assets/tour.js
+      case "whatsnew": closeSheet(); setTimeout(function () { if (w.NursinWN) w.NursinWN.open(true); }, 300); return;                                        // 🆕 30i assets/whatsnew.js   // 30e: the goals are «🧭 مسار اليوم» now
       case "online": closeSheet(); if (N().me && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; return;
       case "install": closeSheet(); if (w.NursinPWA && w.NursinPWA.install) w.NursinPWA.install(); return;
       case "pen":                                                                  // 🖍️ assets/highlight.js

@@ -1,0 +1,31 @@
+/* ❓ assets/tour.js coach marks + 🆕 assets/whatsnew.js card / «جديد» badge (30i). No loop animation; nothing here locks scrolling. */
+.trov{position:fixed;top:0;right:0;bottom:0;left:0;z-index:2147483000;direction:rtl;-webkit-tap-highlight-color:transparent}
+.trov.trdim{background:rgba(15,23,42,.55)}
+.trhole{position:fixed;border-radius:14px;box-shadow:0 0 0 2px #fbbf24,0 0 0 9999px rgba(15,23,42,.55);pointer-events:auto;cursor:pointer;transition:top .2s,left .2s,width .2s,height .2s}
+.trbub{position:fixed;box-sizing:border-box;background:#fff;color:#0f172a;border-radius:16px;padding:14px 16px 12px;box-shadow:0 12px 32px rgba(0,0,0,.28);font-size:15px;line-height:1.55;text-align:right}
+.trt{margin:0 0 4px;font-weight:800;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.trn{font-weight:600;font-size:12px;color:#64748b;direction:ltr}
+.trb{margin:0 0 10px}
+.trl{margin:-4px 0 10px}.trl a{color:#0f766e;font-weight:700}
+.trbtns{display:flex;gap:8px;justify-content:flex-start}
+.trbtns button{font:inherit;font-weight:700;border-radius:999px;padding:8px 16px;border:0;cursor:pointer}
+.trnext{background:#0f766e;color:#fff}
+.trskip{background:#f1f5f9;color:#334155}
+html.tron .hzjust{animation:none}
+html.tron.uion.uinavaway .hznav{transform:none;opacity:1;pointer-events:auto}
+html.dark .trbub,[data-theme="dark"] .trbub{background:#1e293b;color:#f1f5f9}
+html.dark .trskip,[data-theme="dark"] .trskip{background:#334155;color:#e2e8f0}
+.wncard{position:fixed;left:12px;right:12px;bottom:92px;z-index:2147482000;max-width:440px;margin:0 auto;box-sizing:border-box;background:#fff;color:#0f172a;border-radius:18px;padding:12px 14px 10px;box-shadow:0 12px 32px rgba(0,0,0,.25);direction:rtl;text-align:right;max-height:60vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.wnh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}
+.wnh b{font-size:16px}
+.wnx{font:inherit;border:0;background:#f1f5f9;color:#334155;border-radius:999px;width:32px;height:32px;cursor:pointer;flex:none}
+.wnl{list-style:none;margin:0;padding:0}
+.wnl li{padding:7px 0;border-top:1px solid #e2e8f0;font-size:14.5px;line-height:1.5}
+.wnl li:first-child{border-top:0}
+.wnl a{color:#0f766e;font-weight:700;white-space:nowrap}
+.wnd{color:#64748b;font-size:12px;margin-inline-start:6px;direction:ltr;unicode-bidi:isolate}
+.wnok{font:inherit;font-weight:700;border:0;border-radius:999px;background:#0f766e;color:#fff;padding:7px 16px;margin-top:6px;cursor:pointer}
+html.dark .wncard,[data-theme="dark"] .wncard{background:#1e293b;color:#f1f5f9}
+html.dark .wnl li,[data-theme="dark"] .wnl li{border-color:#334155}
+.wnnew{display:inline-block;vertical-align:middle;background:#ef4444;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:999px;margin-inline-start:6px;letter-spacing:0}
+@media (min-width:900px){.wncard{bottom:24px;left:auto;right:24px;width:400px}}
