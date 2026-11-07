@@ -379,3 +379,17 @@ html[data-theme="night"] .lcr-talk{background:rgba(14,165,233,.1)}html[data-them
 .lcr-how{margin:4px 0 8px;font-size:12.5px;line-height:1.45}.lcr-how summary{cursor:pointer;font-weight:800;color:#0f766e}
 .lcr-how ol{margin:4px 0 0;padding-inline-start:18px}.lcr-how li{margin:1px 0}
 html[data-theme="night"] .lcr-wl .lcr-why{color:#fdba74}html[data-theme="night"] .lcr-how summary{color:#5eead4}
+
+/* 30b 💻 the hospital on a laptop/PC (≥1024 px): the room fills the screen with the patients + floor map as a side panel, no scroll (phone untouched) */
+@media (min-width:1024px){
+  .lcr{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,30vw,460px);grid-template-rows:auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"top top" "ban ban" "stage pts" "stage floor" "bar bar";overflow:hidden}
+  .lcr>.lcr-top{grid-area:top}.lcr>.lcr-ban{grid-area:ban}.lcr>.lcr-stage{grid-area:stage;min-height:0}
+  .lcr>.lcr-pts{grid-area:pts;align-self:start;padding:10px 12px 6px;border-inline-start:1px solid rgba(0,0,0,.06);grid-template-columns:1fr}
+  .lcr>.lcr-floor{grid-area:floor;align-self:stretch;min-height:0;justify-content:flex-start;padding:8px 12px;border-top:0;border-inline-start:1px solid rgba(0,0,0,.06);overflow-y:auto}
+  .lcr>.lcr-bar{grid-area:bar}
+  .lcr-flt{flex-wrap:wrap;overflow:visible}
+  .lcr button:hover{filter:brightness(1.05)}
+  .lcr-sheet{left:auto;right:auto;inset-inline-start:auto;inset-inline-end:0;width:clamp(340px,30vw,460px);max-width:none;bottom:52px;max-height:calc(100% - 100px);border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .lcr-panel>*{max-width:900px;margin-inline:auto}
+}

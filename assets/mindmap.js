@@ -319,7 +319,8 @@
       ".mmsh.on{-webkit-transform:none;transform:none;visibility:visible}.mmshh{display:flex;align-items:flex-start;gap:8px}.mmshh b{flex:1;font-size:16px;line-height:1.45}.mmx{border:0;background:rgba(127,127,127,.15);border-radius:50%;width:32px;height:32px;font-size:15px;cursor:pointer;color:inherit}" +
       ".mmshf{display:block;font-weight:800;font-size:12.5px;margin:2px 0 4px}.mmshp{margin:6px 0 8px;font-size:14.5px;line-height:1.65}.mmsha{margin:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mmgo{font-weight:800;color:#0f766e}" +
       ".mmstatic .mmvp{overflow:auto;touch-action:auto;cursor:auto}.mmstatic .mmst{position:relative}.mmstatic .mmz{display:none}" +
-      "@media(min-width:760px){.mmvp{height:calc(100vh - 230px)}.mmsh{left:50%;right:auto;width:560px;margin-left:-280px}}";
+      "@media(min-width:760px){.mmvp{height:calc(100vh - 230px)}.mmsh{left:50%;right:auto;width:560px;margin-left:-280px}}" +
+      "@media(min-width:1024px){.mmvp{height:calc(100vh - 190px);max-height:none}html[dir=rtl] .mmsh{margin-left:-396px}html[dir=ltr] .mmsh{margin-left:-164px}}";   // 30b 💻 the map takes the whole screen on a laptop (beside the side nav)
     var s = d.createElement("style"); s.id = "mmcss"; s.textContent = c; (d.head || d.documentElement).appendChild(s);
   }
   function boot() {

@@ -1,0 +1,60 @@
+/* ============ 30b 💻 desktop / laptop layout (Abdullah approved Nov 4 2026; he studies on a Mac too).
+   EVERYTHING here sits inside @media (min-width:1024px): under 1024 px — every phone and tablet — nothing changes.
+   ≥1024: the bottom glass bar becomes a persistent side navigation on the right (left in 🇫🇷) with the main sections + every subject
+   (assets/ui.js sideNav, built only on wide screens); content max 1200 px beside it; the home in 2 columns (greeting + 🏥 strip + subjects |
+   «🧭 مسار اليوم»); lessons beside a sticky «📑 دروس هالمادة» list (ui.js lessonList); quizzes centred at a readable 720 px; mouse hover + pointer. */
+.hzside,.dkout{display:none}
+@media (min-width:1024px){
+  html.uion body{padding-inline-start:232px}
+  html.uion .hznav{display:none!important}
+  html.uion .hzside{display:flex;flex-direction:column;position:fixed;z-index:46;top:0;bottom:0;inset-inline-start:0;width:232px;box-sizing:border-box;overflow-y:auto;
+    padding:14px 12px 18px;gap:2px;background:var(--hzglass2);border:0;border-inline-end:1px solid var(--hzedge);box-shadow:var(--hzshadow);font-family:"Cairo","Noto Naskh Arabic",system-ui,sans-serif;scrollbar-width:thin}
+  .hzside .dkbr{display:flex;align-items:center;gap:8px;padding:4px 10px 12px;margin-bottom:6px;border-bottom:1px solid var(--hzedge);color:var(--hzink);text-decoration:none;font:900 19px/1.2 "Cairo",system-ui,sans-serif;letter-spacing:.3px}
+  .hzside .dkh{margin:12px 10px 4px;font-size:12px;font-weight:900;color:var(--hzmut);letter-spacing:.2px}
+  .hzside .dki{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;min-height:38px;padding:6px 10px;border:0;border-radius:12px;background:none;color:var(--hzink);
+    font:700 14px/1.3 "Cairo",system-ui,sans-serif;text-decoration:none;text-align:start;cursor:pointer;transition:background-color .15s}
+  .hzside .dki .ie{flex:none;width:22px;text-align:center;font-size:17px}
+  .hzside .dki:hover,.hzside .dki:focus-visible{background:var(--hzaccsoft,rgba(13,148,136,.12))}
+  .hzside .dki.on{background:var(--hzaccsoft,rgba(13,148,136,.14));box-shadow:inset 0 0 0 1px var(--hzedge);font-weight:900}
+  .hzside .dkft{margin-top:auto;padding-top:10px;border-top:1px solid var(--hzedge)}
+  html.uion .hzsheet{inset-inline-start:248px}
+  html.uion body.ui .obx{bottom:22px;width:400px}
+  html[dir="rtl"].uion body.ui .obx{right:254px;left:auto}
+  html[dir="ltr"].uion body.ui .obx{left:254px;right:auto}
+  html.uion body.home.hz{max-width:none;width:auto}
+  /* content: max 1200 px, centred in the space beside the side nav */
+  html.uion body.ui main#main.wrap,html.uion body.ui .topbar .wrap,html.uion body.ui .foot .wrap{max-width:1200px}
+  html.uion body.ui.mmpage main#main.wrap{max-width:none}
+  /* 🏠 home: two columns — greeting + 🏥 strip + suggestions + subjects | «🧭 مسار اليوم» (the phone order is untouched below 1024 px) */
+  body.home.hz .hz{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto 1fr;gap:0 26px;align-items:start}
+  body.home.hz .hz>.hztop{grid-column:1;grid-row:1}
+  body.home.hz .hz>.hzlivew{grid-column:1;grid-row:2}
+  body.home.hz .hz>.hzsugw{grid-column:1;grid-row:3}
+  body.home.hz .hz>.hzsubw{grid-column:1;grid-row:4}
+  body.home.hz .hz>.hzpath{grid-column:2;grid-row:1/span 4}
+  body.home.hz .hz>*:not(.hztop):not(.hzlivew):not(.hzsugw):not(.hzsubw):not(.hzpath){grid-column:1/-1}
+  body.hz #duel{max-width:900px}
+  /* 📚 subject pages: the lesson text in a readable column + a sticky lesson list beside it (ui.js adds .dkles + nav.dkout) */
+  body.ui main#main.wrap.dkles{display:grid;grid-template-columns:minmax(0,1fr) 260px;column-gap:28px;align-items:start}
+  body.ui main#main.wrap.dkles>*{grid-column:1;min-width:0}
+  body.ui main#main.wrap.dkles>nav.dkout{grid-column:2;grid-row:1/span 999;display:flex;flex-direction:column;gap:2px;position:sticky;top:74px;max-height:calc(100vh - 92px);overflow-y:auto;
+    margin:8px 0 0;padding:12px 10px;border-radius:18px;background:var(--hzglass2);border:1px solid var(--hzedge);box-shadow:var(--hzshadow);scrollbar-width:thin}
+  body.ui main#main.wrap.dkles>nav.toc{display:none}
+  .dkout b{font-size:13px;font-weight:900;opacity:.75;padding:0 6px 6px}
+  .dkout a{display:flex;gap:6px;align-items:baseline;padding:6px 8px;border-radius:10px;color:var(--hzink);text-decoration:none;font-size:13.5px;line-height:1.35;cursor:pointer}
+  .dkout a:hover{background:var(--hzaccsoft,rgba(13,148,136,.12))}
+  .dkout a.on{background:var(--hzaccsoft,rgba(13,148,136,.14));font-weight:800}
+  .dkout a .n{flex:none;min-width:18px;opacity:.6;font-size:12px}
+  /* ⚡ quizzes at a readable width */
+  main.qpage{max-width:760px!important}
+  body.ui main#main .qcard,body.ui main#main .exsheet{max-width:720px;margin-inline:auto;box-sizing:border-box}
+  body.ui main#main.dkles .qcard,body.ui main#main.dkles .exsheet{max-width:none}
+  body.ui main#main .qcard.garea{max-width:820px}
+  /* 🖱️ mouse */
+  body.ui .opt,body.ui .btn,body.ui .chip,body.ui summary,body.ui a.card,body.ui .htile,body.ui .uirow,.hzsheet .it{cursor:pointer}
+  body.ui .opt:not([disabled]):hover{border-color:var(--hzacc,#0d9488);background:var(--hzaccsoft,rgba(13,148,136,.08))}
+  body.ui .btn:hover,body.ui .chip:hover{filter:brightness(1.04)}
+  body.ui details.topic>summary:hover{background:var(--hzaccsoft,rgba(13,148,136,.06))}
+  body.ui a.card:hover,body.ui .htile:hover{transform:translateY(-2px)}
+  body.ui .grid.ggrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}

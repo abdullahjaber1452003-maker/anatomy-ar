@@ -430,6 +430,113 @@
     if (k === "all") openAll("", b); else if (k === "learn") openAll("learn", b); else if (k === "avatar") picker(b);
     else act(k, b);
   }
+
+  /* ---------------- 💻 30b desktop / laptop (≥1024 px; Abdullah approved Nov 4 2026, he studies on a Mac too) ----------------
+     Built ONLY when the screen is wide: under 1024 px nothing here touches the page, so the phone layout stays exactly as it was.
+     ① a persistent side navigation (main sections + every subject; right in Arabic, left in 🇫🇷) in place of the bottom glass bar,
+     ② on subject pages a sticky «📑 دروس هالمادة» list beside the lessons (a click opens the lesson and scrolls to it),
+     ③ keyboard: 1/2/3/4 or a/b/c/d choose a quiz answer, Enter goes to the next question / sends a one-line answer, Ctrl/⌘+Enter sends a written answer. */
+  var DKQ = "(min-width:1024px)", dkSide = null, dkOut = null;
+  function dkWide() { try { return !!(w.matchMedia && w.matchMedia(DKQ).matches); } catch (e) { return false; } }
+  var DKMAIN = [["index.html", "🏠", "الرئيسية", "Accueil"], ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"],
+    ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision"], ["midterm.html", "🎯", "امتحان الفصل", "Examen"],
+    ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#live", "🔴", "حالة لايف", "Cas en direct"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["friends.html", "👥", "أصحابي", "Amis"]];
+  function dkItem(it) {
+    var here = (page + (location.search || "") + (location.hash || "")), on = it[0] === here || (it[0] === page && !/[?#]/.test(it[0]) && !location.search && !location.hash);
+    return '<a class="dki' + (on ? " on" : "") + '" href="' + it[0] + '"' + (on ? ' aria-current="page"' : "") + '><span class="ie" aria-hidden="true">' + it[1] + "</span><span>" + esc(T(it[2], it[3])) + "</span></a>";
+  }
+  function sideNav() {
+    if (dkSide || !dkWide() || !d.body) return;
+    var h = '<a class="dkbr" href="index.html"><span aria-hidden="true">🩺</span><span>nursin</span></a>';
+    DKMAIN.forEach(function (it) { h += dkItem(it); });
+    h += '<p class="dkh">📚 ' + esc(T("المواد", "Matières")) + "</p>";
+    ALL[0].items.forEach(function (it) { h += dkItem(it); });
+    h += '<div class="dkft"><button class="dki" type="button" data-hz="all"><span class="ie" aria-hidden="true">☰</span><span>' + esc(T("كل شي", "Tout")) + "</span></button>" +
+      '<a class="dki" href="me.html"><span class="ie" aria-hidden="true">👤</span><span>' + esc(T("أنا والإعدادات", "Moi et réglages")) + "</span></a></div>";
+    dkSide = d.createElement("aside"); dkSide.className = "hzside"; dkSide.setAttribute("aria-label", T("التنقّل", "Navigation")); dkSide.innerHTML = h;
+    d.body.appendChild(dkSide);
+  }
+  function dkTopics() {
+    var m = d.querySelector("main#main"); if (!m || m.classList.contains("qpage")) return [];
+    return [].filter.call(m.querySelectorAll("details.topic[id]"), function (x) { return !(x.parentElement && x.parentElement.closest && x.parentElement.closest("details.topic")) && x.offsetParent !== null; });
+  }
+  function dkTitle(t) {
+    var s = t.querySelector("summary"), x = s && (s.querySelector(".t") || s);
+    var b = x && (x.querySelector("b,strong") || x), txt = String((b && b.textContent) || "").replace(/\s+/g, " ").trim();
+    return txt.length > 64 ? txt.slice(0, 62) + "…" : txt;
+  }
+  function lessonList() {
+    if (!dkWide()) return;
+    var m = d.querySelector("main#main"), ts = dkTopics(); if (!m) return;
+    if (ts.length < 2) { if (dkOut) { dkOut.remove(); dkOut = null; m.classList.remove("dkles"); } return; }
+    if (dkOut && dkOut.__n === ts.length) return;
+    var h = "<b>📑 " + esc(T("دروس هالمادة", "Leçons de la matière")) + "</b>";
+    ts.forEach(function (t, i) { h += '<a href="#' + esc(t.id) + '" data-dkl="' + esc(t.id) + '"><span class="n">' + (i + 1) + '</span><span dir="auto">' + esc(dkTitle(t)) + "</span></a>"; });
+    if (!dkOut) {
+      dkOut = d.createElement("nav"); dkOut.className = "dkout"; dkOut.setAttribute("aria-label", T("دروس هالمادة", "Leçons"));
+      dkOut.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest("[data-dkl]"); if (!a) return;
+        var t = d.getElementById(a.getAttribute("data-dkl")); if (!t) return;
+        e.preventDefault(); t.open = true;
+        try { t.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (x) { t.scrollIntoView(true); }
+        try { history.replaceState(null, "", "#" + t.id); } catch (x) {}
+        dkMark();
+      });
+      m.insertBefore(dkOut, m.firstChild); m.classList.add("dkles");
+    }
+    dkOut.innerHTML = h; dkOut.__n = ts.length; dkMark();
+  }
+  function dkMark() {
+    if (!dkOut) return; var cur = null;
+    dkTopics().forEach(function (t) { if (t.getBoundingClientRect().top < 120) cur = t.id; });
+    [].forEach.call(dkOut.querySelectorAll("[data-dkl]"), function (a) { a.classList.toggle("on", a.getAttribute("data-dkl") === cur); });
+  }
+  function dkVis(el) { if (!el || el.offsetParent === null && getComputedStyle(el).position !== "fixed") return false; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < w.innerHeight; }
+  function dkEditable(el) { return !!(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))); }
+  // the quiz on screen now: the group of open answer buttons (.opt) nearest the middle of the screen
+  function dkOpts() {
+    var groups = [], seen = [];
+    [].forEach.call(d.querySelectorAll("button.opt:not([disabled])"), function (b) {
+      var p = b.parentElement; if (!p || seen.indexOf(p) >= 0 || !dkVis(b)) return; seen.push(p);
+      groups.push([].filter.call(p.querySelectorAll("button.opt"), function (x) { return x.parentElement === p && dkVis(x); }));
+    });
+    var mid = w.innerHeight / 2, best = null, bd = 1e9;
+    groups.forEach(function (g) { if (!g.length) return; var r = g[0].getBoundingClientRect(), dd = Math.abs((r.top + g[g.length - 1].getBoundingClientRect().bottom) / 2 - mid); if (dd < bd) { bd = dd; best = g; } });
+    return best;
+  }
+  function dkNext() {
+    var c = [].filter.call(d.querySelectorAll("#next,[data-xnext],button.btn.pri,button.btn"), function (b) { return !b.disabled && !b.hidden && dkVis(b) && /^\s*(التالي|Suivant)/.test(b.textContent || ""); });
+    return c[0] || null;
+  }
+  function dkKey(e) {
+    if (!dkWide() || e.defaultPrevented || e.altKey || e.isComposing) return;
+    var el = d.activeElement, k = e.key || "";
+    if (k === "Enter") {
+      if (el && el.tagName === "TEXTAREA") {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        var box = el.closest && el.closest(".qcard,section,form,div"), sb = null;
+        while (box && !sb) { sb = [].filter.call(box.querySelectorAll("button.pri,button[type=submit]"), function (b) { return !b.disabled && dkVis(b); })[0] || null; box = box.parentElement && box.parentElement.closest && box.parentElement.closest(".qcard,section,div"); }
+        if (sb) { e.preventDefault(); sb.click(); } return;
+      }
+      if (el && el.tagName === "INPUT" && /^(text|search|)$/.test(el.type || "") && !(el.form)) {
+        var bx = el.parentElement, b2 = null, n = 0;
+        while (bx && !b2 && n++ < 4) { b2 = [].filter.call(bx.querySelectorAll("button"), function (b) { return !b.disabled && dkVis(b); })[0] || null; bx = bx.parentElement; }
+        if (b2) { e.preventDefault(); b2.click(); } return;
+      }
+      if (e.ctrlKey || e.metaKey || dkEditable(el) || (el && el !== d.body && /^(BUTTON|A|SUMMARY)$/.test(el.tagName) && !el.disabled)) return;
+      var nx = dkNext(); if (nx) { e.preventDefault(); nx.click(); }
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || dkEditable(el)) return;
+    var i = "1234".indexOf(k); if (i < 0) i = "abcd".indexOf(k.toLowerCase()); if (i < 0 || k.length !== 1) return;
+    var g = dkOpts(); if (!g || !g[i]) return;
+    e.preventDefault(); g[i].click();
+  }
+  function desktop() {
+    sideNav(); lessonList();
+    [900, 2500, 5000].forEach(function (t) { setTimeout(lessonList, t); });
+  }
+  w.NursinDesk = { wide: dkWide, side: sideNav, lessons: lessonList, opts: dkOpts, key: dkKey };
   function init() {
     if (!d.body || !d.body.classList.contains("ui")) return;              // only pages that load the shell (body.ui)
     d.documentElement.classList.add("uion");
@@ -448,6 +555,10 @@
     try { new MutationObserver(focusMode).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] }); } catch (e) {}
     try { new MutationObserver(focusMode).observe(d.documentElement, { attributes: true, attributeFilter: ["class"] }); } catch (e) {}
     focusMode();
+    // 💻 30b laptop layout: only when the screen is ≥ 1024 px (and if a window is widened later); the phone never runs it
+    desktop(); d.addEventListener("keydown", dkKey);
+    try { var mq = w.matchMedia(DKQ), mqf = function () { if (mq.matches) desktop(); }; if (mq.addEventListener) mq.addEventListener("change", mqf); else if (mq.addListener) mq.addListener(mqf); } catch (e) {}
+    w.addEventListener("scroll", function () { if (dkOut) dkMark(); }, { passive: true });
     ["nursin:avatar", "nursin:auth", "nursin:me"].forEach(function (ev) { d.addEventListener(ev, drawAv); });
     d.addEventListener("nursin:auth", function () { setTimeout(pull, 1500); });
     setTimeout(drawAv, 1500); setTimeout(drawAv, 4000); setTimeout(pull, 5000);
