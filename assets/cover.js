@@ -158,7 +158,7 @@
     return "<h2>📚 " + esc(T("وين واصل", "Où j'en suis")) + "</h2>" +
       '<p class="cvtot"><b>' + S.tot.done + " " + esc(T("من", "sur")) + " " + S.tot.n + " " + esc(T("دروس", "leçons")) + "</b> " + esc(T("مرقت عليهن", "parcourues")) + " · ✅ " + S.tot.strong + " · ⚠️ " + S.tot.weak + "</p>" +
       '<div class="cvbar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
-      (m ? '<p class="osm"><span class="osa" aria-hidden="true">👨‍🏫</span> <b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + ":</b> " + esc(m.t) + ' <a href="' + esc(m.href) + '">' + esc(T("📖 الدرس", "📖 La leçon")) + "</a></p>" : "") +
+      (m ? '<p class="cvosm">👨‍🏫 <b>' + esc(T("الأستاذ عثمان", "Professeur Osman")) + ":</b> " + esc(m.t) + ' <a href="' + esc(m.href) + '">' + esc(T("📖 الدرس", "📖 La leçon")) + "</a></p>" : "") +
       (nx.length ? '<div class="cvnext"><b>🎯 ' + esc(T("الجاي:", "Ensuite :")) + "</b><ol>" + nx.map(function (l) { return '<li><a href="' + esc(l.href) + '">' + esc(l.n) + "</a> <small>" + esc(stTxt(l)) + "</small></li>"; }).join("") + "</ol></div>"
         : '<p class="cvnext">🎉 ' + esc(T("مرقت على كل الدروس! كمّل قوّي اللي مش ✅", "Toutes les leçons parcourues ! Renforce celles qui ne sont pas ✅")) + "</p>") +
       S.subj.map(function (g) {
@@ -186,7 +186,7 @@
       ".cvsec h2{margin:.2em 0}.cvtot{font-size:15px;margin:4px 0 8px}.cvbar{height:9px;border-radius:9px;background:rgba(15,118,110,.15);overflow:hidden;margin:3px 0}.cvbar i{display:block;height:100%;background:#0f766e;border-radius:9px}" +
       ".cvsub{margin:6px 0;border:1px solid rgba(15,118,110,.25);border-radius:12px;padding:6px 10px}.cvsub summary{cursor:pointer;font-weight:700;list-style:none}.cvsub summary small{font-weight:400;opacity:.8}" +
       ".cvls{list-style:none;padding:0;margin:6px 0}.cvls li{padding:3px 0;font-size:14px}.cvls a{text-decoration:none}.cvst{display:inline-block;min-width:1.4em}" +
-      ".cvnext{margin:8px 0;padding:8px 10px;border-radius:12px;background:rgba(15,118,110,.07)}.cvnext ol{margin:4px 0;padding-inline-start:20px}.cvleg{font-size:12.5px;opacity:.85}" +
+      ".cvnext{margin:8px 0;padding:8px 10px;border-radius:12px;background:rgba(15,118,110,.07)}.cvnext ol{margin:4px 0;padding-inline-start:20px}.cvleg{font-size:12.5px;opacity:.85}.cvosm{margin:6px 0;padding:8px 10px;border-radius:12px;background:rgba(124,58,237,.07);font-size:14px}" +
       "@media (min-width:1024px){.cvnud,.cvbrk{bottom:20px}.cvret{bottom:20px}}";
     (d.head || d.body).appendChild(s);
   }
