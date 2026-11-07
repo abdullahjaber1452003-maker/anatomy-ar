@@ -463,7 +463,7 @@
   function dkTitle(t) {
     var s = t.querySelector("summary"), x = s && (s.querySelector(".t") || s);
     var b = x && (x.querySelector("b,strong") || x), txt = String((b && b.textContent) || "").replace(/\s+/g, " ").trim();
-    return txt.length > 64 ? txt.slice(0, 62) + "…" : txt;
+    return txt.length > 96 ? txt.slice(0, 94) + "…" : txt;
   }
   function lessonList() {
     if (!dkWide()) return;
