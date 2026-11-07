@@ -17,7 +17,7 @@
      read each subject's OWN date from here (examOf). EXAM stays the big Monday 16/11 for old callers. */
   var EXAMS = [
     { d: "2026-11-14", subs: ["prev", "rea"], ar: "وقائية + Réa", fr: "Prévention + Réa" },
-    { d: "2026-11-16", subs: ["*"], ar: "الباقي (Law، Management، Med-Surg…)", sh: "الباقي", fr: "le reste (Législation, Management, Med-Surg…)", fsh: "le reste" },
+    { d: "2026-11-16", subs: ["*"], ar: "الباقي: Law، Management، Med-Surg وغيرن", sh: "الباقي", fr: "le reste : Législation, Management, Med-Surg…", fsh: "le reste" },
     { d: "2026-11-21", subs: ["psych", "geri", "quality"], ar: "عقلية + Géria + Qualité", fr: "Psychiatrie + Gériatrie + Qualité" },
     { d: "2026-11-28", subs: ["comm", "pharma"], ar: "صحة جماعية + Pharmaco", fr: "Santé communautaire + Pharmaco" }
   ];
