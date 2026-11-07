@@ -471,7 +471,7 @@
     if (ts.length < 2) { if (dkOut) { dkOut.remove(); dkOut = null; m.classList.remove("dkles"); } return; }
     if (dkOut && dkOut.__n === ts.length) return;
     var h = "<b>📑 " + esc(T("دروس هالمادة", "Leçons de la matière")) + "</b>";
-    ts.forEach(function (t, i) { h += '<a href="#' + esc(t.id) + '" data-dkl="' + esc(t.id) + '"><span class="n">' + (i + 1) + '</span><span dir="auto">' + esc(dkTitle(t)) + "</span></a>"; });
+    ts.forEach(function (t, i) { h += '<a href="#' + esc(t.id) + '" data-dkl="' + esc(t.id) + '"><span class="n">' + (i + 1) + '</span><span dir="auto">' + esc(dkTitle(t)).replace(/\(([A-Za-z\u00C0-\u024F][^()]*)\)/g, '<bdi dir="ltr">($1)</bdi>') + "</span></a>"; });   // a French parenthetical stays one LTR piece (30a fix)
     if (!dkOut) {
       dkOut = d.createElement("nav"); dkOut.className = "dkout"; dkOut.setAttribute("aria-label", T("دروس هالمادة", "Leçons"));
       dkOut.addEventListener("click", function (e) {
