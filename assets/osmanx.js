@@ -245,7 +245,9 @@
     var say = t.closest("[data-oxsay]"); if (say) { var c = say.closest("[data-say]") || say.parentNode.parentNode; speak(c.getAttribute("data-say") || c.textContent, say); return; }
     var cs = t.closest("[data-oxcase]"); if (cs) { openCase(cs.closest(".rtrow"), cs.getAttribute("data-oxcase")); return; }
     if (t.closest("a,button,input,textarea,select,label,summary,mark,.rtrow,.oxq,.oxcase,.oxmem,.exbox,.oxs,.lsk,.lqz,.osm")) { if (!t.closest(".oxs")) dropChip(); return; }
-    var el = t.closest(TXT); if (!el || !el.closest("details[open]")) { dropChip(); return; }
+    var el = t.closest(TXT);
+    if (!el) { var dv = t.closest("div,section"); if (dv && dv.closest(".tbody") && !dv.classList.contains("tbody") && !dv.querySelector("p,li,div,ul,ol,table,details,section")) el = dv; }   // a box written as one <div>
+    if (!el || !el.closest("details[open]")) { dropChip(); return; }
     try { var sel = w.getSelection && w.getSelection(); if (sel && String(sel).length) return; } catch (e2) {}
     var txt = (el.textContent || "").replace(/\s+/g, " ").trim(); if (txt.length < 20) { dropChip(); return; }
     if (chip && chip.parentNode === el) return;
