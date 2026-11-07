@@ -7949,7 +7949,7 @@ test('#350 30k 🫁 réa r5 ventilation: in the réa list (registry added 2026-1
   // Abdullah 4:06 PM «لا لا تركن متل ما هني»: his notes exactly as written — his own PCV label, no 🌐 correction, no relabel
   assert.ok(!r5.html.includes('🌐') && !/التحك[ّ]?م بالضغط/.test(r5.html), 'no added correction note / relabel');
   assert.ok(r5.html.includes('PCV — التهوية بدعم الضغط') && r5.html.includes('Pressure control') && r5.html.includes('ضغط ثابت</b> أثناء الشهيق'), 'his PCV wording');
-  const tables = r5.html.match(/<table>[\s\S]*?<\/table>/g) || []; assert.strictEqual(tables.length, 2, 'VCV/PCV/PSV + BiPAP/CPAP tables');
+  const tables = r5.html.match(/<table[^>]*>[\s\S]*?<\/table>/g) || []; tables.forEach(t => assert.ok(/^<table style="min-width:0;font-size:13px;overflow-wrap:anywhere">/.test(t), 'fits a 390px phone (no 480px min-width)')); assert.strictEqual(tables.length, 2, 'VCV/PCV/PSV + BiPAP/CPAP tables');
   assert.ok(/<th>VCV<\/th><th>PCV<\/th><th>PSV<\/th>/.test(tables[0]) && /شو ثابت/.test(tables[0]) && /جهد المريض/.test(tables[0]) && /الدواعي/.test(tables[0]), 'what is fixed / patient effort / indications');
   assert.ok(/<th>BiPAP<\/th><th>CPAP<\/th>/.test(tables[1]));
   for (const t of tables) { assert.ok((t.match(/<th>/g) || []).length <= 4, 'at most 4 columns on a 390px phone'); for (const c of t.match(/<td>[\s\S]*?<\/td>/g)) assert.ok(c.replace(/<[^>]+>/g, '').length <= 60, 'short cells: ' + c); }
