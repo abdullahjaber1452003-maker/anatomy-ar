@@ -116,10 +116,12 @@
     var N = w.Nursin, day = N && N.dayKey ? N.dayKey() : new Date(now + 2 * 36e5).toISOString().slice(0, 10);
     var st = lsGet("nursin_stact_v1"), ct = lsGet("nursin_cont_v1"), min = st && st.d === day ? Math.floor(Math.max(st.s || 0, st.r || 0) / 60) : 0;
     var last = Math.max(ct && ct.l || 0, lsGet("nursin_lastact_v1") || 0), S = w.NursinSRS, wk = weakest(1, now)[0] || null, c = counts(now);
+    // 📚 30d: Osman's next lesson «فوت ادرس: …» (assets/cover.js) for worker v16's hourly reminder (v15 ignores these fields)
+    var CV = w.NursinCov, nx = null, cv = null; try { if (CV && CV.nudge) { nx = CV.nudge(); cv = CV.summary().tot; } } catch (e) {}
     return { stAt: last | 0 ? Math.floor(last) : 0, stDay: day, stMin: Math.min(1440, min | 0), stDue: S && S.count ? Math.min(400, S.count() | 0) : 0, stRed: c.red,
       stWeak: wk ? String(wk.n).slice(0, 80) : "", stWeakId: wk ? wk.id : "", stWeakHref: wk ? String(wk.href).slice(0, 120) : "", stWeakPct: wk ? wk.score : -1, stTn: tnPending(),
       // 🌅 worker v10's «سؤال الصبح»: up to 8 question ids it may pick from (his mistakes first, then today's reviews) + his language
-      stMq: w.NursinX && w.NursinX.mqPool ? w.NursinX.mqPool(8) : [], stLang: w.Lang && w.Lang.fr ? "fr" : "ar" };
+      stMq: w.NursinX && w.NursinX.mqPool ? w.NursinX.mqPool(8) : [], stLang: w.Lang && w.Lang.fr ? "fr" : "ar", stNext: nx ? String(nx.n).slice(0, 80) : "", stNextHref: nx ? String(nx.href).slice(0, 120) : "", stNextK: nx ? nx.why : "", stCov: cv ? cv.done + "/" + cv.n : "" };
   }
 
   /* ---------------- events ---------------- */
@@ -187,7 +189,7 @@
   var extra = null;
   function more() {                                       // the question bank + drug cards, once, only when the search opens
     if (extra) return extra;
-    var v = "?v=20261030c", jobs = [];
+    var v = "?v=20261030d", jobs = [];
     if (!w.QUIZ) jobs.push(loadScript("assets/quiz-data.js" + v));
     if (!w.PHARMA) jobs.push(loadScript("assets/pharma-data.js" + v));
     extra = Promise.all(jobs).then(function () { idx = null; });

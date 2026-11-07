@@ -81,6 +81,8 @@
     }
     if (!off.st) {
       if (x.today && x.today.n) add({ k: "st", key: "st:" + day, e: "📖", t: T("ادرس اليوم: ", "À étudier aujourd'hui : ") + cut(x.today.n, 48), href: x.today.href || "index.html" });
+      // 👨‍🏫 30d: Osman's coverage reminder «فوت ادرس: …» (assets/cover.js nudge — a weak lesson or one never opened)
+      if (x.cov && x.cov.n && !(x.today && x.today.href === x.cov.href)) add({ k: "st", key: "cv:" + day, e: "👨‍🏫", t: T("عثمان: فوت ادرس: ", "Osman : va étudier : ") + cut(x.cov.n, 44) + " 📖", href: x.cov.href || "hifzi.html#cover" });
       if (x.q && x.q.id) add({ k: "st", key: "rv:" + day, e: "🔁", t: T("سؤال مراجعة: ", "Question de révision : ") + cut(x.q.q, 52), href: "index.html?mq=" + encodeURIComponent(x.q.id) });
     }
     return out;
@@ -112,6 +114,7 @@
     try { var td = H.todayNow ? H.todayNow() : null; if (td) x.today = { n: td.n, href: td.href }; } catch (e) {}
     try { var BU = w.NursinBus; if (BU && BU.on && BU.on(day, x.hm | 0)) { x.bus = true; x.busDone = !!(BU.isDone && BU.isDone(day)); } } catch (e) {}
     try { if (H.classNewest && H.lessonsNow && classDay(day)) { var cl = H.classNewest(H.lessonsNow() || [], dow(day))[0]; if (cl) x.cls = { n: cl.n, href: cl.href }; } } catch (e) {}
+    try { var CV = w.NursinCov, nn = CV && CV.nudge ? CV.nudge() : null; if (nn) x.cov = { id: nn.id, n: nn.n, href: nn.href }; } catch (e) {}   // 👨‍🏫 30d
     var st = state(), q = st.off.st ? null : pickQ(st, day); if (q) x.q = { id: q.id, q: FR() && q.fr && q.fr.q ? q.fr.q : q.q };
     return x;
   }

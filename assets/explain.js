@@ -13,7 +13,7 @@
      else the lesson's) into the spaced review (assets/srs.js NursinSRS.add) and marks the lesson weak (NursinRet.apply). No new Firestore
      traffic, no ad while a box is open (html.rton hides the page's ad units). ES2017-safe (iOS 12). */
 (function (w, d) {
-  var V = "20261030c", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+  var V = "20261030d", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var KEY = "nursin_explain_v1", TK = "nursin_teach_day_v1", TMAX = 10, TIMEOUT = 12000, SNIP = 2200, MAXK = 10, LOW = 50;
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }

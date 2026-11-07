@@ -69,7 +69,7 @@
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): ONE list — the day's tasks first (📖 درس اليوم, 🏫 the class lesson, 🔁 the
   // pinned reviews, 📌 homework, ⭐ exams, 🎯, ⚔️, 🏁), then the rest of the path (🧑‍🏫 Osman, 💪, 🎮…); more than 7 → «+N كمان» (p.more)
-  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, due: 1.2, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
+  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, due: 1.2, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, cvw: 5.2, cvn: 5.4, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
   // ↩️ 29y: a step carried over from an earlier day (s.cf = the day it was planned) comes first — only the 🚌 morning ride stays above it
   function rank(s) { return s.cf && s.k !== "bus" ? -0.5 : ORDER[s.k] == null ? 99 : ORDER[s.k]; }
   function byOrder(a, b) { return rank(a) - rank(b); }
@@ -288,7 +288,8 @@
     var all = buildAll(ctxNow()), steps = all.steps, now = Date.now();
     p = { v: V, d: dk, at: now, steps: steps, more: all.more, done: {}, vis: {}, ans: {}, cls: afterClass(dk, hmB()) ? 1 : 0 };
     if (prev) { try { var cm = carryMerge(carryOf(prev, function (s) { return isDoneS(prev, s); }), p.steps, p.more); p.steps = cm.steps; p.more = cm.more; } catch (e) {} }   // ↩️ 29y
-    lsSet(PK, p); push(p); return p;
+    lsSet(PK, p); push(p);
+    return w.NursinCov ? upgrade(p) : p;               // 📚 30d: the coverage steps join the day's first plan too
   }
   // what changed since the morning: back from the institute → «راجع درس اليوم» joins; a new exam / class quiz / tournament round joins
   function upgrade(p) {
@@ -324,6 +325,9 @@
     // 📅 29y: the lessons due for review today = ONE step «📅 راجع N دروس قبل ما تنساهم» → the list (hifzi.html#due, assets/revsched.js)
     var RV = w.NursinRev, nd = 0; try { nd = RV && RV.dueCount ? RV.dueCount() : 0; } catch (e) {}
     if (nd > 0 && !p.steps.concat(p.more || []).some(function (t) { return t.k === "due"; })) ins({ k: "due", e: "📅", id: p.d, n: nd, href: "hifzi.html#due", pr: 1 });
+    // 📚 30d «وين واصل» (Abdullah, Nov 7 2026: «لازم الطالب يحرق ع كل الدروس»): at most 2 steps a day — «📖 درس ما فتحته» / «💪 قوّي: …»
+    // (assets/cover.js steps(): never a lesson already on the path), added once per day (p.cv), the 7-step rule above still holds
+    var CV = w.NursinCov; if (!p.cv && CV && CV.steps) { var cvs = []; try { cvs = CV.steps(p); } catch (e) {} if (cvs.length) { p.cv = 1; ch = true; cvs.slice(0, 2).forEach(function (s) { ins(s); }); } }
     if (carryClean(p)) ch = true;
     if (ch) { lsSet(PK, p); push(p); }
     return p;
@@ -350,6 +354,8 @@
       case "cont": case "new": r = s.id ? retRec(s.id) : null; if ((r && (r.rd || 0) > at) || readAfter(s.id, at)) return true; return !s.id && vis > 0 && back(vis);
       case "quiz": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd);
       case "weak": r = retRec(s.id); return readAfter(s.id, at) || !!(r && r.t > at && r.t !== r.rd);
+      case "cvn": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at);   // 📚 the never-opened lesson read
+      case "cvw": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd);                    // 💪 a quiz / cards on the weak lesson
       case "fade": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd) || (vis > 0 && back(vis) && !!(r && r.t > vis));
       case "wex": try { var st = w.Retain && w.Retain.wstatus ? w.Retain.wstatus() : null; return !!(st && st.done); } catch (e) { return false; }
       case "imp": var g = impNow().filter(function (y) { return y.ik === s.ik; })[0]; return !!(g && g.done);
@@ -450,6 +456,8 @@
       case "new": return { tag: T("درس جديد", "Nouvelle leçon"), t: nm, sub: T("خمس دقايق قراءة بيكفّوا لنبلّش", "Cinq minutes de lecture pour commencer"), min: 5 };
       case "quiz": return { tag: T("كويز", "Quiz"), t: T("⚡ 10 أسئلة: ", "⚡ 10 questions : ") + nm, sub: T("بعد الدرس دغري، تا يثبت", "Juste après la leçon, pour fixer"), min: 5 };
       case "weak": return { tag: T("💪 من نقاط ضعفك", "💪 Tes points faibles"), t: T("ادرس «", "Étudie « ") + nm + T("»", " »"), sub: T("غلطت فيه " + s.miss + (s.miss === 1 ? " مرّة" : s.miss === 2 ? " مرّتين" : " مرّات") + " · اقراه وبعدين جرّب الكويز", "Tu t'es trompé(e) " + s.miss + " fois · lis-la puis refais le quiz"), min: 8 };
+      case "cvn": return { tag: T("📚 وين واصل", "📚 Où j'en suis"), t: T("📖 درس ما فتحته: «", "📖 Leçon pas encore ouverte : « ") + nm + T("»", " »"), sub: T("عثمان: لازم نمرق على كل الدروس · ", "Osman : on passe sur toutes les leçons · ") + (s.c | 0) + T(" من ", " sur ") + (s.of | 0), min: 5 };
+      case "cvw": return { tag: T("📚 وين واصل", "📚 Où j'en suis"), t: T("💪 قوّي: «", "💪 Renforce : « ") + nm + T("»", " »"), sub: T("علامتك فيه ", "Ton score : ") + (s.pct | 0) + T("٪ · اقرا الجزء وحلّ «كويز هالجزء»", " % · relis et fais le quiz de la partie"), min: 6 };
       case "fade": return { tag: T("عم يروح منّك", "S'efface"), t: T("رجّع «", "Récupère « ") + nm + T("»", " »"), sub: T("🃏 بطاقات سريعة · حفظك ", "🃏 Cartes rapides · mémoire ") + (s.score | 0) + "%", min: 4 };
       case "case": return { tag: T("حالة مريض", "Cas clinique"), t: "🩺 " + nm, sub: T("حالة واقعية و٣–٤ أسئلة متل الامتحان", "Un cas réel et 3–4 questions comme à l'examen"), min: 6 };
       case "use": var u = USE[s.f] || USE.games, nv = s.never && u[2];
