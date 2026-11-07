@@ -163,9 +163,12 @@ html[data-theme=night] .hzrevbx .hzrevnx{color:#5eead4}
 html[data-theme=night] .hzrevbx .hzhwbt .btn.hzrevgo{background:linear-gradient(135deg,#115e59,#0f766e);color:#ecfeff}
 
 /* 29f «+N كمان»: what did not fit in the 7 steps of «🧭 مسار اليوم» (one list, nothing lost) */
-.hzmorebt{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 55px);margin:0 0 10px;margin-inline-start:55px;min-height:40px;padding:0 14px;border-radius:99px;border:1px dashed color-mix(in srgb,var(--hzacc) 55%,transparent);background:var(--hzbox);color:var(--hzacc);font:inherit;font-size:14px;font-weight:900;cursor:pointer}
-.hzmorebt small{color:var(--hzmut);font-weight:700;font-size:12.5px}
-.hzmorel{margin-bottom:6px}
+/* 30f: every step shown (no «+N كمان») — a long day stays tidy on a 390px phone: compact rows, long words wrap, no overflow */
+.hztl.hzlong .hzst{margin-bottom:6px}
+.hztl.hzlong .hzst:not(.now) .nd{padding-top:6px}
+.hztl.hzlong .hzst:not(.now) .bx{padding:8px 12px;border-radius:18px}
+.hztl.hzlong .hzst:not(.now) .bx b{font-size:14px;line-height:1.4}
+.hzst .bx,.hzst .bx b{overflow-wrap:anywhere;word-break:break-word}
 
 /* 📌 29j «تذكيرات اليوم» (assets/remind.js): the pinned reminder card under the greeting — short, max 4 lines + «+N» */
 .hzrem{margin:8px 0 10px;padding:6px 10px;border-radius:18px;background:var(--hzglass2);border:1px solid var(--hzedge);border-inline-start:4px solid var(--hzacc);box-shadow:var(--hzshadow)}

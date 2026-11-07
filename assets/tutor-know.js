@@ -109,7 +109,7 @@
   function pathInfo(day) {
     day = day || today(); var p = lsGet(PK);
     if (!p || p.d !== day || !Array.isArray(p.steps) || !p.steps.length) return { none: true };
-    var D = p.done || {}, steps = p.steps.map(function (s) { return { k: s.k, t: stepLabel(s), done: !!D[skey(s)] }; });
+    var D = p.done || {}, steps = p.steps.concat(p.more || []).filter(function (s) { return s && s.k; }).map(function (s) { return { k: s.k, t: stepLabel(s), done: !!D[skey(s)] }; });   // 30f: every step is on the path (no «+N كمان»)
     return { none: false, steps: steps, done: steps.filter(function (s) { return s.done; }).length, total: steps.length };
   }
 

@@ -577,9 +577,17 @@
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): the 29d block «📋 المهام اليومية» is gone — the day's tasks (📖 درس اليوم first,
   // 🔁 the pinned reviews, 📌 homework, ⭐ exams…) and the rest of the path (🧑‍🏫 Osman, 💪, 🎮…) are ONE list «🧭 مسار اليوم», 5–7 steps,
   // right under the hospital card. What did not fit in 7 waits behind «+N كمان» (p.more) — nothing from either list is lost.
-  var moreOpen = false;
+  // 30f (Abdullah, Nov 7 2026 12:46 PM «هيدي +6 كمان ما بدي ياها، خليهم دغري يكونو موجودين»): no «+N كمان» any more — every step
+  // of the day (p.steps + p.more) is shown at once, in the path's own order (↩️ carried first, then ORDER; ties keep their place).
+  function allSteps(p) {
+    var a = (p.steps || []).concat(p.more || []).filter(function (s) { return s && s.k; }), i;
+    var ix = a.map(function (s, j) { return { s: s, j: j }; });
+    ix.sort(function (x, y) { return rank(x.s) - rank(y.s) || x.j - y.j; });
+    for (i = 0; i < ix.length; i++) a[i] = ix[i].s;
+    return a;
+  }
   function pathHtml(p) {
-    var st = p.steps || [], mo = (p.more || []).filter(function (s) { return s && s.k; }), tot = st.length, dn = 0, cur = -1, i, D = p.done || {};
+    var st = allSteps(p), tot = st.length, dn = 0, cur = -1, i, D = p.done || {};
     for (i = 0; i < tot; i++) { if (D[skey(st[i])]) dn++; else if (cur < 0) cur = i; }
     var all = dn === tot, near = !all && dn > 0 && tot - dn <= 2, mn = 0;
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
@@ -588,13 +596,7 @@
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
-    h += stepsHtml(p, st, tot, dn, cur, D) + "</ol>";
-    if (mo.length) {
-      var md = mo.filter(function (s) { return D[skey(s)]; }).length;
-      h += '<button type="button" class="hzmorebt" data-hzmore aria-expanded="' + (moreOpen ? "true" : "false") + '">' + (moreOpen ? T("− خبّي", "− Masquer") : T("+" + mo.length + " كمان", "+" + mo.length + " de plus")) +
-        (md ? ' <small>' + T("(" + md + " خلصت)", "(" + md + " fait" + (md > 1 ? "s" : "") + ")") + "</small>" : "") + "</button>";
-      if (moreOpen) h += stepsHtml(p, mo, mo.length, md, -1, D).replace('<ol class="hztl">', '<ol class="hztl hzmorel">') + "</ol>";
-    }
+    h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
   }
   function stepsHtml(p, arr, tot, dn, cur, D) {
@@ -734,7 +736,6 @@
       var hid = b.getAttribute("data-hzhw"), HW = w.NursinHW; if (!HW) return; var on = !HW.isDone(hid); HW.tick(hid, on);
       if (!on && p.done) delete p.done["hw:" + hid]; save(p); draw(); return;
     }
-    if ((b = t.closest("[data-hzmore]"))) { moreOpen = !moreOpen; draw(); return; }   // 29f «+N كمان»
     if ((b = t.closest("[data-hznext]"))) { fbQ = ""; if (b.hasAttribute("data-end")) openK = ""; draw(); return; }
     if ((b = t.closest("[data-hzduel]"))) { var dk = b.getAttribute("data-step"); if (dk) { p.vis = p.vis || {}; p.vis[dk] = Date.now(); lsSet(PK, p); } else if (parts && !parts.duel.hidden) { parts.duel.hidden = true; return; } openDuel(); return; }
     if ((b = t.closest('a[data-step^="bus:"]')) && w.NursinBus) { e.preventDefault(); p.vis = p.vis || {}; p.vis[b.getAttribute("data-step")] = Date.now(); lsSet(PK, p); w.NursinBus.open(p.d); return; }   // 🚌 29n: the flash review opens right here
@@ -767,7 +768,7 @@
     w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
-  w.HomePath = { carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
