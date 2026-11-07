@@ -1,5 +1,7 @@
 /* ⚖️ law.html: بيرسم الدروس من window.LAW (assets/law-data.js) + اختيار الدرس لـ «كويز متل الصف». */
 (function (w, d) {
+  // 30a: a Latin parenthetical in an Arabic lesson title is one LTR isolate — «(Coronarographie / Artériographie)» never wraps as «/)» … «(…»
+  function bidiT(s) { return String(s).replace(/\(([^()<>\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()<>\u0600-\u06FF]*)\)/g, '<bdi dir="ltr" class="bdl">($1)</bdi>'); }
   var L = (w.LAW || {}).lessons || [], S = (w.LAW || {}).soon || [];
   // 📝 «كويز على هالدرس» تحت كل درس (مادة ← دروسها): أسئلة هالدرس بس (q.l)، وإذا أقل من ٣ الكويز بيقول «ما في أسئلة كافية» وبيعرض كويز المادة كلّها
   function lq(t, k) {
@@ -10,7 +12,7 @@
   var box = d.getElementById("lawlessons");
   if (box && L.length) {
     box.innerHTML = L.map(function (x, i) {
-      return '<details class="topic" id="' + x.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + (i + 1) + '</span><span class="t"><b>' + x.n + '</b><span class="small">' + (x.fr ? '<span lang="fr">' + x.fr + '</span> — ' : "") + (x.d || "") + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody prose">' + x.html + '</div></details>' + lq("law", x.k);
+      return '<details class="topic" id="' + x.k + '"' + (i === 0 ? " open" : "") + '><summary><span class="n">' + (i + 1) + '</span><span class="t"><b>' + bidiT(x.n) + '</b><span class="small">' + (x.fr ? '<span lang="fr">' + x.fr + '</span> — ' : "") + (x.d || "") + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody prose">' + x.html + '</div></details>' + lq("law", x.k);
     }).join("") + S.map(function (x) { return '<div class="lsoon"><b>🔜 ' + x.n + ' — قريباً</b><p class="small">' + (x.d || "") + '</p></div>'; }).join("");
     if (w.NursinLessons && w.NursinLessons.splitPage) w.NursinLessons.splitPage();   // ✂️ long lessons → «الجزء 1 / 2 …» (assets/lessons.js)
   }

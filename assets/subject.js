@@ -3,6 +3,8 @@
    with its «📝 كويز على هالدرس», then ✂️ splitPage (assets/lessons.js). medsurg.html also gets #msgroup: the lessons of القلب /
    الأعصاب / Henderson straight from NLESSONS, linking to their own pages and anchors (URLs, ids and progress unchanged). */
 (function (w, d) {
+  // 30a: a Latin parenthetical in an Arabic lesson title is one LTR isolate — «(Coronarographie / Artériographie)» never wraps as «/)» … «(…»
+  function bidiT(s) { return String(s).replace(/\(([^()<>\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()<>\u0600-\u06FF]*)\)/g, '<bdi dir="ltr" class="bdl">($1)</bdi>'); }
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -15,7 +17,7 @@
     var M = w[box.getAttribute("data-var")] || {}, L = M.lessons || [], t = box.getAttribute("data-t");
     if (!L.length) return;
     box.innerHTML = L.map(function (x, i) {
-      return '<details class="topic" id="' + x.k + '"' + (i === 0 && L.length === 1 ? " open" : "") + '><summary><span class="n">' + (i + 1) + '</span><span class="t"><b>' + x.n + '</b><span class="small">' + (x.fr ? '<span lang="fr">' + x.fr + '</span> — ' : "") + (x.d || "") + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody prose">' + x.html + '</div></details>' + lq(t, x.k);
+      return '<details class="topic" id="' + x.k + '"' + (i === 0 && L.length === 1 ? " open" : "") + '><summary><span class="n">' + (i + 1) + '</span><span class="t"><b>' + bidiT(x.n) + '</b><span class="small">' + (x.fr ? '<span lang="fr">' + x.fr + '</span> — ' : "") + (x.d || "") + '</span></span><span class="chev" aria-hidden="true">▾</span></summary><div class="tbody prose">' + x.html + '</div></details>' + lq(t, x.k);
     }).join("");
   });
   var g = d.getElementById("msgroup"), NL = w.NLESSONS, G = NL && NL.groups && NL.groups.medsurg;

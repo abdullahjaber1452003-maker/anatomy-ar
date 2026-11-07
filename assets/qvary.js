@@ -118,6 +118,7 @@
       var S = lsGet(K); if (!S || typeof S !== "object") S = {};
       var cur = S[q.id] || null, n = cur ? cur[0] | 0 : 0, prev = cur ? cur[1] : "";
       if (!n && seenBefore(q.id)) n = 1;
+      if (!prev) for (var z = 0; z < q.o.length; z++) prev += z;   // 30a: shown as written last → the first repeat avoids that order too
       var seed = hash(q.id + "|" + n + "|" + (keep || Date.now()));
       var v = variant(q, peersOf(q), n, seed, prev || null);
       S[q.id] = [n + 1, v.vp || "", Date.now()];
