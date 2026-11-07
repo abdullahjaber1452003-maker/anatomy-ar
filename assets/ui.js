@@ -57,7 +57,7 @@
       ["#blank", "📃", "الورقة البيضا", "Page blanche"], ["#teach", "🧑‍🏫", "علِّم عثمان", "Enseigne à Osman"],
       ["quiz.html#blanks", "✍️", "عبّي الفراغ", "Trous"], ["law.html#classquiz", "📝", "كويز الصف", "Quiz de classe"],
       ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["highlights.html", "🖍️", "تعليماتي", "Mes surlignages"], ["#pen", "🖊️", "وضع القلم", "Mode stylo", "pen"],
-      ["#goals", "✅", "أهداف اليوم", "Objectifs"], ["#search", "🔎", "دوّر", "Chercher"]] },
+      ["#goals", "🧭", "مسار اليوم", "Parcours du jour"], ["#search", "🔎", "دوّر", "Chercher"]] },
     { k: "community", e: "👥", ar: "المجتمع", fr: "Communauté", items: [
       ["classes.html", "🏫", "صفّي", "Ma classe"], ["classes.html#cdq", "❓", "سؤال اليوم", "Question du jour"], ["friends.html", "👥", "أصحابي", "Amis"],
       ["#online", "🟢", "مين أونلاين", "En ligne"], ["live.html", "🔴", "تحدّي لايف", "Défi live"], ["index.html#duel", "🏆", "البطولة", "Tournoi"],
@@ -273,7 +273,7 @@
       case "name": closeSheet(); setTimeout(function () { if (w.NursinName) w.NursinName.open(from); else location.href = "me.html"; }, 280); return;   // ✏️ assets/name.js
       case "theme": closeSheet(); if (w.NursinTheme) setTimeout(function () { w.NursinTheme.open(); }, 280); else location.href = "me.html"; return;
       case "lang": if (w.Lang && w.Lang.set) w.Lang.set(FR() ? "ar" : "fr"); return;
-      case "goals": closeSheet(); var gp = d.querySelector(".gopill"); if (gp) setTimeout(function () { gp.click(); }, 280); else location.href = "me.html"; return;
+      case "goals": closeSheet(); location.href = "index.html#path"; return;   // 30e: the goals are «🧭 مسار اليوم» now
       case "online": closeSheet(); if (N().me && w.NursinOnline) w.NursinOnline.open(); else location.href = "friends.html"; return;
       case "install": closeSheet(); if (w.NursinPWA && w.NursinPWA.install) w.NursinPWA.install(); return;
       case "pen":                                                                  // 🖍️ assets/highlight.js

@@ -1,5 +1,6 @@
 /* ✅ أهدافك اليوم (Abdullah, Oct 26 2026 12:36 PM: "a button at the top side with the goals you have to finish: your weak points,
-   today's exams, your class's exams…"). A small pill in the header's top corner on every page (never over the content or the ads).
+   today's exams, your class's exams…"). 30e (Nov 7 2026 12:31 PM): the header pill + sheet are GONE — every goal below is a step of
+   «🧭 مسار اليوم» on the home page (assets/home.js); this file stays the data engine (list / done marks / sync / push mirror).
    Signed in: tap → a sheet with today's goals, built only from data the site already has (no new backend):
      🎯 كويز نقاط ضعفك      — when Weak.count() > 0; done when a weak-points quiz is finished today (weak store's ranAt, nursin_weak_v1.ran)
      📅 امتحان اليوم: …      — each weekly exam scheduled today (Nursin.examsFor); done when taken (examResults / examStarts via exams.js tutorStatus, or finished here today)
@@ -294,7 +295,7 @@
     d.addEventListener("visibilitychange", function () { if (d.hidden) mirror(true); });
   }
   /* ---- UI ---- */
-  var pill = null, sheet = null, scrim = null;
+  var pill = null, sheet = null, scrim = null, mounted = false;
   function count() { var g = goals(), n = 0; g.forEach(function (x) { if (x.done) n++; }); return { g: g, n: n }; }
   function paint() {
     try { d.dispatchEvent(new CustomEvent("nursin:goals")); } catch (e) {}   // 🏠 the home tiles (assets/tiles.js) re-count
@@ -321,21 +322,12 @@
       }).join("") + (function (x) { return x ? '<a class="gi goi goopt" href="' + esc(x.href) + '" data-k="xtra"><span class="gie" aria-hidden="true">' + x.e + '</span><span class="git"><b>' + esc(x.n) + "</b><small>" + esc(x.s) + '</small></span><span class="gotick" aria-hidden="true">➕</span></a>' : ""; })(xtra(c.g)) + gpHtml();
   }
   function close() { if (sheet) sheet.remove(); if (scrim) scrim.remove(); sheet = scrim = null; if (pill) pill.setAttribute("aria-expanded", "false"); }
+  // 30e (Abdullah, Nov 7 2026 12:31 PM): ONE list — the goals live in «🧭 مسار اليوم» (assets/home.js); no header chip, no sheet.
+  // Anything that used to open the sheet opens the path on the home page.
   function open() {
-    if (sheet) { close(); return; }
-    if (!signed() && N().loadFB) N().loadFB();
-    scrim = d.createElement("div"); scrim.className = "gscrim"; scrim.addEventListener("click", close);
-    sheet = d.createElement("div"); sheet.className = "gsheet gosheet"; sheet.id = "gosheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "درس اليوم");
-    d.body.appendChild(scrim); d.body.appendChild(sheet); fill();
-    if (w.matchMedia && w.matchMedia("(min-width: 860px)").matches) {
-      var r = pill.getBoundingClientRect(), wd = Math.min(360, innerWidth - 24);
-      sheet.style.top = Math.round(r.bottom + 6) + "px"; sheet.style.width = wd + "px";
-      sheet.style.left = Math.round(Math.max(12, Math.min(innerWidth - wd - 12, r.left))) + "px";
-    }
-    pill.setAttribute("aria-expanded", "true");
-    if (signed()) fetchLive(!live || Date.now() - live.at > 5e3);   // re-read the real answers every time the sheet opens
-    gsPull();
-    if (signed() && fbA()) { syncFlag(); if (w.NursinPWA && w.NursinPWA.state) w.NursinPWA.state(fbA()).then(function (s) { pst = s; }, function () {}); }
+    var page = (location.pathname.split("/").pop() || "index.html").toLowerCase(), el = d.getElementById("path");
+    if ((page === "index.html" || page === "") && el) { try { el.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { el.scrollIntoView(); } return; }
+    location.href = "index.html#path";
   }
   function fill() {
     try { d.dispatchEvent(new CustomEvent("nursin:gpush")); } catch (e) {}   // 👤 «أنا» page redraws its copy of the switch
@@ -366,11 +358,7 @@
     close();
   }
   function mount() {
-    var bar = d.querySelector(".topbar .bar"); if (!bar || d.querySelector(".gopill")) return;
-    pill = d.createElement("button"); pill.type = "button"; pill.className = "gopill";
-    pill.setAttribute("aria-haspopup", "dialog"); pill.setAttribute("aria-expanded", "false"); pill.setAttribute("aria-controls", "gosheet");
-    pill.addEventListener("click", open);
-    bar.insertBefore(pill, bar.querySelector(".menu-btn"));
+    if (mounted) return; mounted = true;   // 30e: no header chip any more — the data engine (list / done marks / sync / push mirror) keeps running
     d.addEventListener("click", function (e) { if (sheet && sheet.contains(e.target)) goTo(e); });
     d.addEventListener("keydown", function (e) { if (e.key === "Escape" && sheet) close(); });
     paint();
@@ -387,7 +375,7 @@
   });
   // classes.html: «سؤال اليوم» answered / class exam submitted (or opened already done)
   d.addEventListener("nursin:goal-done", function (e) { var k = e.detail && e.detail.k; if (k) { mark(k); stale(); } });
-  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible") gsPull(); if (d.visibilityState === "visible" && signed() && pill && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
+  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible") gsPull(); if (d.visibilityState === "visible" && signed() && mounted && (!live || Date.now() - live.at > 60e3)) fetchLive(true); });
   w.addEventListener("focus", function () { gsPull(); });
   d.addEventListener("nursin:gate", function () { refresh(); if (signed()) fetchLive(); });
   d.addEventListener("nursin:auth", function (e) { if (e.detail && e.detail.signedIn) { fetchLive(); setTimeout(syncFlag, 1500); setTimeout(function () { gsPull(true); }, 1200); } else { synced = ""; refresh(); } });
@@ -398,7 +386,7 @@
   w.addEventListener("storage", function (e) { if (e.key === K || e.key === "nursin_weak_v1" || e.key === "nursin_study_v1" || e.key === "nursin_read_v1") refresh(); else if (e.key === "nursin_stact_v1" && minsToday() !== stM) { stM = minsToday(); refresh(); } });   // ⏱️ another tab counted a minute
   w.addEventListener("pageshow", function (e) { if (e.persisted) { refresh(); if (signed()) fetchLive(true); } });
   // the cached Firebase read is out of date → re-read now (keep the old one on screen until the new one lands)
-  function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && pill) fetchLive(true); }
+  function stale() { if (live) { live.at = 0; lsSet(LK, live, true); } if (signed() && mounted) fetchLive(true); }
 
   w.NursinGoals = { list: function () { return signed() ? goals() : null; }, fetch: function () { return signed() ? fetchLive(false) : Promise.resolve(null); }, gsMerge: gsMerge, gsApply: gsApply, pull: gsPull, build: build, mark: mark, state: state, KEY: K, refresh: refresh, open: open, stale: stale, mirrorData: mirrorData, pushOn: pushOn, toggle: toggle, pushHtml: function () { return gpHtml(); } };
   if (typeof module !== "undefined" && module.exports) module.exports = w.NursinGoals;

@@ -69,7 +69,7 @@
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): ONE list — the day's tasks first (📖 درس اليوم, 🏫 the class lesson, 🔁 the
   // pinned reviews, 📌 homework, ⭐ exams, 🎯, ⚔️, 🏁), then the rest of the path (🧑‍🏫 Osman, 💪, 🎮…); more than 7 → «+N كمان» (p.more)
-  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, due: 1.2, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, cvw: 5.2, cvn: 5.4, use: 6, quiz: 7, "case": 8, game: 11, cards: 12, qall: 13, again: 14, hl: 15 };
+  var ORDER = { bus: -1, today: 0, cont: 0, "new": 0, cls: 0.5, rev: 1, due: 1.2, hw: 1.5, imp: 2, mid: 2.5, duel: 3, wex: 3.5, osm: 4, weak: 5, fade: 5, cvw: 5.2, cvn: 5.4, use: 6, quiz: 7, "case": 8, pomo: 9, wq: 5.1, game: 11, cards: 12, qall: 13, again: 14, hl: 15, xtra: 16 };
   // ↩️ 29y: a step carried over from an earlier day (s.cf = the day it was planned) comes first — only the 🚌 morning ride stays above it
   function rank(s) { return s.cf && s.k !== "bus" ? -0.5 : ORDER[s.k] == null ? 99 : ORDER[s.k]; }
   function byOrder(a, b) { return rank(a) - rank(b); }
@@ -185,7 +185,10 @@
     var cls = afterClass(x.day, x.hm) ? classNewest(L, dowOf(x.day)) : [];
     if (cls.length) add({ k: "cls", e: "🏫", id: cls[0].id, n: cls[0].n, href: cls[0].href, id2: cls[1] ? cls[1].id : "", n2: cls[1] ? cls[1].n : "" }, 1);
     // ⭐ today's exams / class exam / سؤال اليوم / class quiz + the tournament round
-    (x.imp || []).slice(0, 2).forEach(function (g) { if (g && g.ik) add({ k: "imp", e: g.e || "📅", ik: g.ik, n: g.n || "", s: g.s || "", href: g.href || "index.html" }, 2); });
+    // 30e (Abdullah, Nov 7 2026 12:31 PM «هيدول الأهداف إذا عم ينحطو مع مسار اليوم مافي داعي ينحطو هون»): the old «✅ درس اليوم» goals sheet is
+    // gone — EVERY one of its goals is a path step now: all of today's exams / class exams / سؤال اليوم (the first 2 among the 7, the rest
+    // behind «+N كمان»), 🎯 كويز نقاط ضعفك (= the 💪 step when there is one), ⏱️ ٢٥ دقيقة دراسة, 🎮 لعبة وحدة, 📚 إضافي (behind «+N كمان»)
+    var ni = 0; (x.imp || []).forEach(function (g) { if (g && g.ik) add({ k: "imp", e: g.e || "📅", ik: g.ik, n: g.n || "", s: g.s || "", href: g.href || "index.html" }, ni++ < 2 ? 2 : 6); });
     // 📌 the teacher's homework (admin → homework/, assets/homework.js) until its due date · 🎯 ONE «تحضير امتحان الفصل» step until Nov 15 (assets/midterm.js)
     (x.hw || []).slice(0, 2).forEach(function (w0) { if (w0 && w0.id) add({ k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw" }, 1); });
     if (x.mid && x.mid.k === "mid") add({ k: "mid", e: "🎯", id: x.mid.id, s: x.mid.s, s2: x.mid.s2 || "", light: x.mid.light | 0, left: x.mid.left | 0, n: x.mid.n | 0, dn: x.mid.dn | 0, tk: x.mid.tk || "", href: x.mid.href }, 1.9);   // 1.9: kept before a 2nd ⭐ when 🔁 takes its pinned place
@@ -236,6 +239,11 @@
     if (cur && (cur.q | 0) >= 3 && cur.id !== oid) add({ k: "quiz", e: "⚡", id: cur.id, n: cur.n, href: "quiz.html?t=" + encodeURIComponent(cur.t) + (cur.l ? "&l=" + encodeURIComponent(cur.l) : "") + "&n=10" }, 8);
     var cc = caseL.filter(function (l) { return (!wl || l.id !== wl.id) && onPath.indexOf(l.id) < 0; }); if (!cc.length) cc = caseL.filter(function (l) { return !wl || l.id !== wl.id; });
     if (cc.length && !(u && u.f === "cases")) { var c = cc[h % cc.length]; add({ k: "case", e: "🩺", id: c.id, n: c.n, href: c.href.split("#")[0] + "?case=" + encodeURIComponent(c.id) }, 9); }
+    // 🎯 كويز نقاط ضعفك — the 💪 step IS it when there is one (its ✅ also comes from a weak-points quiz), else its own step
+    if ((x.wq | 0) > 0 && !wl) add({ k: "wq", e: "🎯", id: x.day, n: x.wq | 0, href: "quiz.html?t=weak" }, 5.5);
+    // ⏱️ ٢٥ دقيقة دراسة (reading / quizzes / one pomodoro round) and 🎮 one game — every day, ticked by themselves
+    add({ k: "pomo", e: "⏱️", id: x.day, href: "index.html#study" }, 9.2);
+    if (!(u && u.f === "games")) add({ k: "game", e: "🎮", href: "games.html" }, 9.6);
     // keep the 7 that matter most, then fill up to 5 with light ones
     cand.sort(function (a, b) { return a.pr - b.pr; });
     var steps = cand.slice(0, MAXS), more = cand.slice(MAXS).sort(byOrder), has = {}; steps.forEach(function (s) { has[s.k + (s.f || "")] = 1; });
@@ -243,7 +251,9 @@
     var ag = L.filter(function (l) { return (l.read || l.score != null) && !steps.some(function (s) { return s.id === l.id; }); });   // 📖 a quick look back at an old lesson
     if (ag.length) fill.push({ k: "again", e: "📖", id: ag[h % ag.length].id, n: ag[h % ag.length].n, href: ag[h % ag.length].href, pr: 13, x: "again" });
     else fill.push({ k: "hl", e: "🖍️", href: "highlights.html", pr: 13, x: "usehighlights" });
+    more.forEach(function (s) { has[s.k + (s.f || "")] = 1; });
     fill.forEach(function (f) { if (steps.length < MINS && !has[f.x] && !has[f.k]) { delete f.x; steps.push(f); } else delete f.x; });
+    if (x.xtra && x.xtra.href) more.push({ k: "xtra", e: "📚", id: x.day, n: x.xtra.n || "", s: x.xtra.s || "", href: x.xtra.href, pr: 16 });   // 📚 إضافي — optional, never on top
     steps.sort(byOrder);
     return { steps: steps, more: more };
   }
@@ -279,7 +289,18 @@
     var L = lessonsNow(), S = w.NursinSRS, RT = w.Retain, wx = { ready: false, done: false }, us = U().usage ? U().usage() : (lsGet("nursin_use_v1") || { f: {} }), tn = tnNow();
     try { var st = RT && RT.wstatus ? RT.wstatus() : null; if (st) wx = { ready: !!st.ready, done: !!st.done }; } catch (e) {}
     return { bus: !!w.NursinBus, day: today(), hm: hmB(), due: S && S.count ? S.count() : 0, last: lastNow(L), lessons: L, today: todayNow(), qids: qidsNow(), weak: weakNow(), use: us.f || {}, since: us.s || 0,
-      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }), mid: midNow(), hw: hwNow() };
+      recent: recentNow(), imp: impNow().filter(function (g) { return !g.done; }), tn: tn && tn.k === "todo" ? { op: tn.op || "" } : null, wex: wx, cases: (RT && RT.CASE_IDS) || [], links: (w.LINKQ || []).map(function (q) { return { id: q.id, ls: q.ls }; }), mid: midNow(), hw: hwNow(), wq: wqNow(), xtra: xtraNow() };
+  }
+  // 30e: the former goals-sheet data, read where the sheet read it (assets/weak.js store, assets/lessons.js extraRow, study.js / studytime.js)
+  function wqNow() { try { if (w.Weak && w.Weak.count) return w.Weak.count() | 0; var x = lsGet("nursin_weak_v1"); return x && x.items ? Object.keys(x.items).length : 0; } catch (e) { return 0; } }
+  function wqRanAfter(at) { var t = 0; try { t = w.Weak && w.Weak.ranAt ? w.Weak.ranAt() : ((lsGet("nursin_weak_v1") || {}).ran || 0); } catch (e) {} return !!t && t > at; }
+  function xtraNow() {
+    var L2 = w.NursinLessons; if (!L2 || !L2.extraRow) return null;
+    try { var G = w.NursinGoals, gl = G && G.list ? G.list() || [] : []; return L2.extraRow(gl.filter(function (g) { return /^les:/.test(String(g.k)); }).map(function (g) { return String(g.k).slice(4); })); } catch (e) { return null; }
+  }
+  function studyMins(day) {
+    var o = lsGet("nursin_study_v1"), a = lsGet("nursin_stact_v1"), p0 = o && o.td === day ? o.tp | 0 : 0, m = a && a.d === day ? Math.floor(Math.max(a.s | 0, a.r | 0) / 60) : 0;
+    return { p: p0, m: m };
   }
   function plan() {
     var p = lsGet(PK), dk = today();
@@ -311,7 +332,19 @@
       if (c && !p.steps.some(function (s) { return s.k === "cls"; })) ins(c);
     }
     var keys = {}; p.steps.forEach(function (s) { keys[skey(s)] = 1; });
-    impNow().forEach(function (g) { var s = { k: "imp", e: g.e, ik: g.ik, n: g.n, s: g.s, href: g.href, pr: 2 }; if (!g.done && !keys[skey(s)] && p.steps.filter(function (t) { return t.k === "imp"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
+    (p.more || []).forEach(function (s) { keys[skey(s)] = 1; });
+    impNow().forEach(function (g) {
+      var s = { k: "imp", e: g.e, ik: g.ik, n: g.n, s: g.s, href: g.href, pr: 2 }; if (g.done || keys[skey(s)]) return; keys[skey(s)] = 1;
+      if (p.steps.filter(function (t) { return t.k === "imp"; }).length < 2) ins(s);
+      else { s.pr = 6; s.at = now; p.more = (p.more || []).concat([s]).sort(byOrder); ch = true; }   // 30e: every goal stays on the path — the 3rd+ behind «+N كمان»
+    });
+    // 30e: a path made today before the goals moved here gets ⏱️ / 🎮 / 🎯 (behind «+N كمان» when the 7 are full)
+    var all0 = p.steps.concat(p.more || []), hasK = function (k) { return all0.some(function (t) { return t.k === k || (k === "game" && t.k === "use" && t.f === "games"); }); };
+    var toMore = function (s) { s.at = now; if (p.steps.length < MAXS) ins(s); else { p.more = (p.more || []).concat([s]).sort(byOrder); ch = true; } };
+    if (!hasK("pomo")) toMore({ k: "pomo", e: "⏱️", id: p.d, href: "index.html#study", pr: 9.2 });
+    if (!hasK("game")) toMore({ k: "game", e: "🎮", href: "games.html", pr: 9.6 });
+    if (!hasK("wq") && !hasK("weak") && wqNow() > 0) toMore({ k: "wq", e: "🎯", id: p.d, n: wqNow(), href: "quiz.html?t=weak", pr: 5.5 });
+    if (!hasK("xtra")) { var xr = xtraNow(); if (xr && xr.href) { p.more = (p.more || []).concat([{ k: "xtra", e: "📚", id: p.d, n: xr.n || "", s: xr.s || "", href: xr.href, pr: 16, at: now }]); ch = true; } }
     var tn = tnNow(); if (tn && tn.k === "todo" && !keys["duel:"]) ins({ k: "duel", e: "⚔️", op: tn.op || "", href: "index.html#duel", pr: 2 });
     hwNow().forEach(function (w0) { var s = { k: "hw", e: "📌", id: w0.id, n: w0.title || "", subj: w0.subj || "", due: w0.due || "", note: w0.note || "", href: "#hw", pr: 1 }; if (!keys[skey(s)] && p.steps.filter(function (t) { return t.k === "hw"; }).length < 2) { ins(s); keys[skey(s)] = 1; } });
     var mi = midNow(); if (mi && !p.steps.some(function (t) { return t.k === "mid"; })) { mi.pr = 2; ins(mi); }
@@ -353,7 +386,9 @@
       case "cls": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at) || (!!s.id2 && readAfter(s.id2, at));
       case "cont": case "new": r = s.id ? retRec(s.id) : null; if ((r && (r.rd || 0) > at) || readAfter(s.id, at)) return true; return !s.id && vis > 0 && back(vis);
       case "quiz": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd);
-      case "weak": r = retRec(s.id); return readAfter(s.id, at) || !!(r && r.t > at && r.t !== r.rd);
+      case "weak": r = retRec(s.id); return readAfter(s.id, at) || !!(r && r.t > at && r.t !== r.rd) || wqRanAfter(at);   // 30e: = «🎯 كويز نقاط ضعفك»
+      case "wq": return wqRanAfter(at) || wqNow() === 0;
+      case "pomo": var sm = studyMins(p.d); return sm.m >= 25 || sm.p >= 1;          // 30e: ⏱️ 25 min read / quizzed today, or one pomodoro round
       case "cvn": r = retRec(s.id); return readAfter(s.id, at) || !!(r && (r.rd || 0) > at);   // 📚 the never-opened lesson read
       case "cvw": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd);                    // 💪 a quiz / cards on the weak lesson
       case "fade": r = retRec(s.id); return !!(r && r.t > at && r.t !== r.rd) || (vis > 0 && back(vis) && !!(r && r.t > vis));
@@ -436,6 +471,9 @@
         return { tag: T("🚌 بالطريق عالدوام", "🚌 En route vers les cours"), t: T("🚌 مراجعة الطريق", "🚌 Révision du trajet"), sub: T("مواد اليوم: ", "Cours du jour : ") + esc(sbn) + (bp && bp.n ? " · " + bp.n + "/" + (bp.of || 30) : ""), min: 30 };
       case "cls": return { tag: T("🏫 رجعت من المعهد", "🏫 De retour de l'institut"), t: T("راجع درس اليوم: ", "Révise la leçon du jour : ") + nm, sub: s.id2 ? T("وكمان «", "Et aussi « ") + esc(curName(s, s.id2, s.n2)) + T("»", " »") : T("مرّ عليه وهوّي بعدو سخن", "Pendant que c'est encore frais"), min: 8 };
       case "imp": return { tag: T("⭐ مهم اليوم", "⭐ Important aujourd'hui"), t: esc(s.n), sub: esc(s.s || ""), min: 10 };
+      case "wq": return { tag: T("🎯 نقاط ضعفك", "🎯 Tes points faibles"), t: T("🎯 كويز نقاط ضعفك", "🎯 Quiz de tes points faibles"), sub: T((s.n | 0) + ((s.n | 0) === 1 ? " سؤال غلطت فيه" : " أسئلة غلطت فيها"), (s.n | 0) + " question(s) ratée(s) (أسئلة غلطت فيها)"), min: 5 };
+      case "pomo": var sm2 = studyMins(today()); return { tag: T("⏱️ وقت الدرس", "⏱️ Temps d'étude"), t: T("⏱️ ٢٥ دقيقة دراسة", "⏱️ 25 min d'étude (٢٥ دقيقة دراسة)"), sub: sm2.m ? T("درست " + sm2.m + " د من ٢٥ (قراءة الدروس والكويز)", sm2.m + " min sur 25") : T("اقرا درس أو جولة بومودورو، بينحسب الوقت لحالو", "Lis une leçon ou fais un pomodoro, le temps se compte tout seul"), min: 25 };
+      case "xtra": return { tag: T("📚 إضافي", "📚 En plus"), t: T("📚 إضافي (إذا عندك وقت)", "📚 En plus (si tu as le temps)"), sub: esc(s.s || ""), min: 5 };
       case "mid": var M = w.NursinMid, sn = function (k) { return k === "weak" ? T("نقاط ضعفك", "tes points faibles") : esc(M && M.subjName ? M.subjName(k) : k); };   // 🎯 29q: today's item of «خطة امتحان 16»
         var mk = s.tk === "weak" || s.s === "weak" ? T("١٠ أسئلة من نقاط ضعفك", "10 questions sur tes points faibles") : s.tk === "les" ? T("راجع أضعف درس: ", "Relis la leçon la plus faible : ") + sn(s.s) : s.tk === "quiz" ? T("١٠ أسئلة ", "10 questions ") + sn(s.s) : T("امتحان كامل ", "Examen complet ") + sn(s.s);
         return { tag: T("🎯 خطة امتحان 16 · ⏳ باقي " + (s.left | 0) + " يوم", "🎯 Plan examen du 16 · J-" + (s.left | 0)), t: (s.light ? T("تحضير امتحان الفصل (خفيف): ", "Préparation de l'examen (léger) : ") : T("تحضير امتحان الفصل: ", "Préparation de l'examen : ")) + mk,
@@ -649,7 +687,7 @@
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
       // 🏥 29t (Abdullah, Nov 6 2026 8:50 PM «بدي المستشفى تكون فوق المسار»): the compact 🏥 strip right under the greeting, then «🧭 مسار اليوم» (📌 card inside it)
-      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" id="path" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
         '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
       parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
@@ -724,6 +762,9 @@
     // 🚌 29n: «#bus» (the 📌 card's 🏫 line, a shared link) opens the morning review; it ticks the path when done
     var busH = function () { if (location.hash === "#bus" && w.NursinBus) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} w.NursinBus.open(); } };
     d.addEventListener("nursin:bus", redraw); w.addEventListener("hashchange", busH); if (location.hash === "#bus") setTimeout(busH, 600);
+    // 30e: «🧭 مسار اليوم» from the menu / any page (index.html#path) — the path is drawn by JS, so scroll once it's there
+    var pathH = function () { if (location.hash !== "#path") return; var el = d.getElementById("path"); if (el) { try { el.scrollIntoView({ block: "start" }); } catch (e) { el.scrollIntoView(); } } };
+    w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
   w.HomePath = { carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, showMore: function (v) { moreOpen = !!v; }, isDoneS: isDoneS, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };

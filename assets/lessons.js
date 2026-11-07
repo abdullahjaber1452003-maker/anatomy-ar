@@ -367,8 +367,8 @@
     el.innerHTML = "<h2>📌 دروس هالأسبوع ودرس اليوم</h2>" + (mn ? '<p class="small wkmin">⏱️ درست اليوم ' + mn + " د (قراءة الدروس والكويز)</p>" : "") + (rows.length
       ? '<ul class="wkl">' + rows.slice(0, 12).map(function (x) { var r = isRead(x, m); return '<li' + (r ? ' class="ok"' : "") + '><a href="' + esc(x.href) + '">' + (r ? "✅ " : "📖 ") + esc(x.n) + "</a></li>"; }).join("") + "</ul>"
       : '<p class="small">لسّا ما في دروس مثبّتة هالأسبوع' + (w && Object.keys(w).length ? "" : " (بتبين بعد ما تسجّل دخول)") + ".</p>") +
-      '<p><button class="btn pri sm" type="button" id="wkgoals">✅ درس اليوم</button> <a class="btn sm" href="quiz.html">📝 الكويز</a></p>';
-    d.getElementById("wkgoals").addEventListener("click", function () { var p = d.querySelector(".gopill"); if (p) p.click(); else location.href = "friends.html"; });
+      '<p><button class="btn pri sm" type="button" id="wkgoals">🧭 مسار اليوم</button> <a class="btn sm" href="quiz.html">📝 الكويز</a></p>';
+    d.getElementById("wkgoals").addEventListener("click", function () { location.href = "index.html#path"; });   // 30e: goals = «🧭 مسار اليوم»
   }
   d.addEventListener("nursin:weekles", homeWeek); d.addEventListener("nursin:lesson-read", homeWeek); d.addEventListener("nursin:study", homeWeek);
   w.addEventListener("load", function () { if (stMins()) homeWeek(); });   // Beirut day from account.js once it ran

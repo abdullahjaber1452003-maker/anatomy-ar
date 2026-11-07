@@ -163,7 +163,7 @@
         : '<p class="cvnext">🎉 ' + esc(T("مرقت على كل الدروس! كمّل قوّي اللي مش ✅", "Toutes les leçons parcourues ! Renforce celles qui ne sont pas ✅")) + "</p>") +
       S.subj.map(function (g) {
         var p = g.n ? Math.round(g.done * 100 / g.n) : 0;
-        return '<details class="cvsub"><summary>' + esc(g.name) + " <small>· " + g.done + " " + esc(T("من", "sur")) + " " + g.n + " " + esc(T("دروس", "leçons")) + (g.weak ? " · ⚠️ " + g.weak : "") + (g.strong ? " · ✅ " + g.strong : "") + '</small><div class="cvbar"><i style="width:' + p + '%"></i></div></summary>' +
+        return '<details class="cvsub"><summary>' + esc(g.name) + " <small>· " + g.done + " " + esc(T("من", "sur")) + " " + g.n + " " + esc(T("دروس", "leçons")) + (g.weak ? " · ⚠️ " + g.weak : "") + (g.strong ? " · ✅ " + g.strong : "") + '</small><span class="cvbar cvbar2"><i style="width:' + p + '%"></i></span></summary>' +
           '<ul class="cvls">' + g.L.map(function (l) { return '<li><span class="cvst">' + (ST[l.k] || ST.none)[0] + '</span> <a href="' + esc(l.href) + '">' + esc(l.n) + "</a> <small>" + esc(stTxt(l).replace(/^\S+ /, "")) + "</small></li>"; }).join("") + "</ul></details>";
       }).join("") +
       '<p class="cvleg">⚪ ' + esc(T("ما فتحتو", "pas ouverte")) + " · 📖 " + esc(T("قريتو", "lue")) + " · 📝 " + esc(T("عملت كويز", "quiz fait")) + " · ✅ " + esc(T("قوي (٨٠٪ وفوق)", "solide (≥ 80 %)")) + " · ⚠️ " + esc(T("ضعيف (تحت ٥٠٪)", "faible (< 50 %)")) + "</p>";
@@ -184,13 +184,15 @@
       ".cvnud p,.cvbrk p{margin:0 0 6px}.cvnud .cvact,.cvbrk .cvact{display:flex;flex-wrap:wrap;gap:6px}.cvx{position:absolute;top:4px;left:6px;border:0;background:none;font-size:18px;cursor:pointer;color:inherit}" +
       ".cvret{right:auto;left:10px;bottom:calc(74px + env(safe-area-inset-bottom,0px));padding:8px 12px;border-radius:999px;max-width:300px;cursor:pointer;font-weight:700}" +
       ".cvsec h2{margin:.2em 0}.cvtot{font-size:15px;margin:4px 0 8px}.cvbar{height:9px;border-radius:9px;background:rgba(15,118,110,.15);overflow:hidden;margin:3px 0}.cvbar i{display:block;height:100%;background:#0f766e;border-radius:9px}" +
-      ".cvsub{margin:6px 0;border:1px solid rgba(15,118,110,.25);border-radius:12px;padding:6px 10px}.cvsub summary{cursor:pointer;font-weight:700;list-style:none}.cvsub summary small{font-weight:400;opacity:.8}" +
-      ".cvls{list-style:none;padding:0;margin:6px 0}.cvls li{padding:3px 0;font-size:14px}.cvls a{text-decoration:none}.cvst{display:inline-block;min-width:1.4em}" +
+      ".cvsub{margin:6px 0;border:1px solid rgba(15,118,110,.25);border-radius:12px;padding:6px 10px}.cvsub summary{cursor:pointer;font-weight:700;list-style:none;display:block}.cvsub summary::-webkit-details-marker{display:none}.cvsub summary::marker{content:''}.cvsub summary::before{content:'▸ ';opacity:.7}.cvsub[open] summary::before{content:'▾ '}.cvsub .cvbar2{display:block;width:100%;min-width:60px;margin-top:5px}.cvsub summary small{font-weight:400;opacity:.8}" +
+      ".cvls{list-style:none!important;padding:0!important;margin:6px 0}.cvls li{list-style:none!important;padding:3px 0;font-size:14px}.cvls li::before,.cvls li::marker{content:none!important}.cvls a{text-decoration:none}.cvst{display:inline-block;min-width:1.4em}" +
       ".cvnext{margin:8px 0;padding:8px 10px;border-radius:12px;background:rgba(15,118,110,.07)}.cvnext ol{margin:4px 0;padding-inline-start:20px}.cvleg{font-size:12.5px;opacity:.85}.cvosm{margin:6px 0;padding:8px 10px;border-radius:12px;background:rgba(124,58,237,.07);font-size:14px}" +
       "@media (min-width:1024px){.cvnud,.cvbrk{bottom:20px}.cvret{bottom:20px}}";
     (d.head || d.body).appendChild(s);
   }
-  function paintView() { var el = d.getElementById("cover"); if (el) { el.className = "cvsec card"; el.innerHTML = viewHtml(); } }
+  // 30e: the view's own styles were only injected with a nudge / break / return pill — without them the folded rows showed list bullets
+  // and an empty bar. paintView() now injects them itself.
+  function paintView() { var el = d.getElementById("cover"); if (el) { style(); el.className = "cvsec card"; el.innerHTML = viewHtml(); } }
 
   /* ---- events: answers → coverage + mistakes ---- */
   function ofQid(qid) { var R = w.NursinRet, q = qById(qid); if (!q) { var LQ = w.LINKQ || []; for (var i = 0; i < LQ.length; i++) if (LQ[i].id === qid) q = LQ[i]; } if (!q) return []; if (q.ls) return q.ls.slice(); var id = R && R.ofQ ? R.ofQ(q) : null; return id ? [id] : []; }

@@ -10,7 +10,7 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030d", K = "nursin_mid_v1";
+  var V = "20261030e", K = "nursin_mid_v1";
   var EXAM = "2026-11-16", START = "2026-11-01", EXAM_TS = Date.parse("2026-11-16T08:00:00+02:00");   // Lebanon = UTC+2 in November
   var MINQ = 20, MAXQ = 30;
   function FR() { return !!(w.Lang && w.Lang.fr); }
