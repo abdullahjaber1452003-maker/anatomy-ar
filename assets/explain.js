@@ -13,7 +13,7 @@
      else the lesson's) into the spaced review (assets/srs.js NursinSRS.add) and marks the lesson weak (NursinRet.apply). No new Firestore
      traffic, no ad while a box is open (html.rton hides the page's ad units). ES2017-safe (iOS 12). */
 (function (w, d) {
-  var V = "20261029y", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
+  var V = "20261029z", API = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev/";
   var KEY = "nursin_explain_v1", TK = "nursin_teach_day_v1", TMAX = 10, TIMEOUT = 12000, SNIP = 2200, MAXK = 10, LOW = 50;
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
@@ -177,8 +177,71 @@
       ".exbox h4{margin:0 0 6px;font-size:15px;line-height:1.45}.exbox textarea{width:100%;box-sizing:border-box;min-height:84px;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.4);background:var(--card,#fff);color:inherit}" +
       ".exrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px}.exrow small{opacity:.75;font-size:12px}.exres p{margin:4px 0}.exsc{font-weight:800}.exsc.low{color:#b91c1c}.exsc.ok{color:#b45309}.exsc.top{color:#15803d}" +
       ".exbar{height:5px;border-radius:9px;background:rgba(127,127,127,.2);overflow:hidden;margin:2px 0 6px}.exbar i{display:block;height:100%;background:currentColor}.exsm{font-size:12px;opacity:.7}" +
-      ".exgo{font-weight:800;color:#0f766e;text-decoration:none}.exbtn{margin-top:6px}.exshake{border-color:#dc2626!important}";
+      ".exgo{font-weight:800;color:#0f766e;text-decoration:none}.exbtn{margin-top:6px}.exshake{border-color:#dc2626!important}" +
+      ".exmic{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:6px}.exmicb{min-width:44px;font-size:18px;line-height:1}.exmicb.rec{border-color:#dc2626;color:#b91c1c}" +
+      ".exmicb .exdot{display:none;width:9px;height:9px;border-radius:50%;background:#dc2626;margin-inline-start:6px;vertical-align:middle;-webkit-animation:expulse 1s infinite;animation:expulse 1s infinite}.exmicb.rec .exdot{display:inline-block}" +
+      ".exlang{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;cursor:pointer}.exlang span{opacity:.5}.exlang span.on{opacity:1;font-weight:800;color:#0f766e}" +
+      ".exmst{font-size:12px;opacity:.8}.exmhint{margin:6px 0 0;font-size:12px;opacity:.75}" +
+      "@-webkit-keyframes expulse{0%,100%{opacity:1}50%{opacity:.2}}@keyframes expulse{0%,100%{opacity:1}50%{opacity:.2}}";
     (d.head || d.documentElement).appendChild(s);
+  }
+  /* 🎤 voice in «✍️ اشرحلي بكلامك» (Abdullah, Nov 7 2026 10:06 AM: «اشرحلي بكلامك فيو يكون فويس»). Where the browser has SpeechRecognition /
+     webkitSpeechRecognition (iOS Safari 14.5+, Chrome) a 🎤 button records and writes the words live into the textarea (continuous, interim
+     results; tap again to stop; red pulsing dot while recording); a chip «عربي / Français» picks the language (ar-LB, falling back to ar).
+     He edits and presses «صحّحلي» as before — the grader is unchanged. Elsewhere (old iOS 12 phone…) one hint line: the keyboard's own
+     🎤 dictation works in any textarea. No audio is uploaded or kept by the site; no new network call from here. */
+  var MICK = "nursin_exmic_lang_v1";
+  function SR() { return w.SpeechRecognition || w.webkitSpeechRecognition || null; }
+  function micLang() { var v = null; try { v = w.localStorage && w.localStorage.getItem(MICK); } catch (e) {} return v === "fr" ? "fr" : "ar"; }
+  function micCodes(l) { return l === "fr" ? ["fr-FR", "fr"] : ["ar-LB", "ar"]; }
+  function micHtml() {
+    if (!SR()) return '<p class="exmhint">' + esc(T("🎤 اكبس على المايك بالكيبورد وحكي", "🎤 Appuie sur le micro du clavier et parle (اكبس على المايك بالكيبورد وحكي)")) + "</p>";
+    var l = micLang();
+    return '<div class="exmic"><button class="btn sm exmicb" type="button" aria-pressed="false" aria-label="' + esc(T("سجّل بصوتك", "Dicter (سجّل بصوتك)")) + '">🎤<i class="exdot"></i></button>' +
+      '<button class="exlang" type="button" aria-label="' + esc(T("لغة التسجيل", "Langue de la dictée (لغة التسجيل)")) + '"><span data-l="ar"' + (l === "ar" ? ' class="on"' : "") + '>عربي</span> / <span data-l="fr"' + (l === "fr" ? ' class="on"' : "") + ">Français</span></button>" +
+      '<small class="exmst" aria-live="polite">' + esc(T("🎤 احكي وبيتكتب لحالو", "🎤 Parle, ça s’écrit tout seul (احكي وبيتكتب لحالو)")) + "</small></div>";
+  }
+  function micWire(box, ta) {
+    var C = SR(), mb = box.querySelector(".exmicb"); if (!C || !mb) return null;
+    var chip = box.querySelector(".exlang"), st = box.querySelector(".exmst"), lang = micLang(), rec = null, on = false, codes = [], ci = 0, base = "", got = false;
+    function say(s) { if (st) st.textContent = s; }
+    function ui(r) { on = r; mb.classList[r ? "add" : "remove"]("rec"); mb.setAttribute("aria-pressed", r ? "true" : "false"); }
+    function paint() { [].forEach.call(chip.querySelectorAll("span"), function (s) { s.className = s.getAttribute("data-l") === lang ? "on" : ""; }); }
+    function stop() { if (!on) return; ui(false); try { if (rec) rec.stop(); } catch (e) {} say(T("✋ وقّفت. صحّح الكتابة إذا بدك، وبعدين «صحّحلي»", "✋ Arrêté. Corrige le texte si besoin, puis «Corrige-moi»")); }
+    function begin() {
+      try { rec = new C(); } catch (e) { rec = null; }
+      if (!rec) { say(T("🎤 اكبس على المايك بالكيبورد وحكي", "🎤 Appuie sur le micro du clavier et parle")); return; }
+      rec.lang = codes[ci]; rec.continuous = true; rec.interimResults = true;
+      try { rec.maxAlternatives = 1; } catch (e) {}
+      rec.onresult = function (e) {
+        var fin = "", tmp = "", R = e.results || [];
+        for (var i = 0; i < R.length; i++) { var r = R[i], t = r && r[0] ? r[0].transcript : ""; if (r && r.isFinal) fin += t; else tmp += t; }
+        got = true; ta.value = (base + fin + tmp).slice(0, 1500);
+      };
+      rec.onerror = function (e) {
+        var c = e && e.error;
+        if (c === "language-not-supported" && ci + 1 < codes.length) { ci++; try { rec.onend = null; rec.abort(); } catch (x) {} begin(); return; }
+        ui(false);
+        if (c === "not-allowed" || c === "service-not-allowed") say(T("🚫 ما في إذن للمايك. اسمحلو من إعدادات المتصفح، أو استعمل مايك الكيبورد", "🚫 Micro non autorisé. Autorise-le dans les réglages du navigateur, ou utilise le micro du clavier"));
+        else if (c === "no-speech") say(T("🤫 ما سمعت شي، جرّب مرة تانية", "🤫 Je n’ai rien entendu, réessaie"));
+        else if (c !== "aborted") say(T("⚠️ وقف التسجيل. جرّب مرة تانية أو مايك الكيبورد", "⚠️ La dictée s’est arrêtée. Réessaie ou utilise le micro du clavier"));
+      };
+      rec.onend = function () { if (on) { ui(false); say(got ? T("✋ وقّفت. صحّح الكتابة إذا بدك، وبعدين «صحّحلي»", "✋ Arrêté. Corrige le texte si besoin, puis «Corrige-moi»") : T("🎤 اكبس 🎤 وحكي", "🎤 Appuie sur 🎤 et parle")); } };
+      try { rec.start(); ui(true); say(T("🔴 عم سجّل… اكبس 🎤 لتوقّف", "🔴 J’enregistre… appuie sur 🎤 pour arrêter")); }
+      catch (e) { ui(false); say(T("⚠️ ما قدرت بلّش التسجيل. جرّب مايك الكيبورد", "⚠️ Impossible de démarrer. Utilise le micro du clavier")); }
+    }
+    mb.addEventListener("click", function () {
+      if (on) return stop();
+      codes = micCodes(lang); ci = 0; got = false;
+      base = ta.value ? ta.value.replace(/\s+$/, "") + " " : "";
+      begin();
+    });
+    chip.addEventListener("click", function () {
+      lang = lang === "ar" ? "fr" : "ar"; try { w.localStorage.setItem(MICK, lang); } catch (e) {} paint();
+      if (on) { stop(); }
+    });
+    [].forEach.call(box.querySelectorAll(".exsend,.exx"), function (b) { b.addEventListener("click", stop); });
+    return { stop: stop, isOn: function () { return on; } };
   }
   function busy() { var n = d.querySelectorAll(".exbox").length; d.documentElement.classList[n ? "add" : "remove"]("rton"); }
   function open(host, sec, after) {
@@ -190,12 +253,14 @@
     box.className = "exbox"; box.setAttribute("data-k", sec.k);
     box.innerHTML = "<h4>✍️ " + esc(T("اشرح بكلامك: ", "Explique avec tes mots (اشرح بكلامك) : ")) + esc(sec.title) + "</h4>" +
       '<textarea rows="4" maxlength="1500" placeholder="' + esc(T("اكتب شو فهمت من هالجزء…", "Écris ce que tu as compris (اكتب شو فهمت)…")) + '"></textarea>' +
+      micHtml() +
       '<div class="exrow"><button class="btn sm pri exsend" type="button">' + esc(T("صحّحلي", "Corrige-moi (صحّحلي)")) + "</button>" +
       (L ? "<small>" + esc(T("آخر مرة: ", "Dernière fois (آخر مرة) : ")) + L.s + "%</small>" : "") + '<button class="btn sm exx" type="button" aria-label="✕">✕</button></div><div class="exres" aria-live="polite"></div>';
     if (after && after.parentNode) after.parentNode.insertBefore(box, after.nextSibling); else host.appendChild(box);
     busy();
     var ta = box.querySelector("textarea"), out = box.querySelector(".exres"), btn = box.querySelector(".exsend");
     box.querySelector(".exx").addEventListener("click", function () { box.remove(); busy(); });
+    micWire(box, ta);
     btn.addEventListener("click", function () {
       var said = ta.value.trim();
       if (said.length < 8) { ta.classList.add("exshake"); setTimeout(function () { ta.classList.remove("exshake"); }, 600); try { ta.focus(); } catch (e) {} return; }
@@ -243,7 +308,7 @@
     });
   }
   w.NursinEx = { V: V, KEY: KEY, LOW: LOW, TIMEOUT: TIMEOUT, fold: fold, tokens: tokens, sides: sides, named: named, grade: grade, level: level, pair: pair, termsFor: termsFor,
-    save: save, last: last, toReview: toReview, judge: judge, prompt: prompt, osman: osman, canOsman: canOsman, localHtml: localHtml, partSection: partSection, branchSection: branchSection, open: open };
+    save: save, last: last, toReview: toReview, judge: judge, prompt: prompt, osman: osman, canOsman: canOsman, localHtml: localHtml, partSection: partSection, branchSection: branchSection, open: open, SR: SR, micHtml: micHtml, micWire: micWire, micCodes: micCodes, MICK: MICK };
   if (!d || !d.addEventListener) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(window, typeof document !== "undefined" ? document : null);
