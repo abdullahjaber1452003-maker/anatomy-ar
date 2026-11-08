@@ -144,6 +144,8 @@ body.reels .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:
 .rlmas.sad .tk-tear{-webkit-animation:tkdrip 1.4s ease-in infinite;animation:tkdrip 1.4s ease-in infinite}
 .rlmas.yay .tk-wave{-webkit-animation-duration:.45s;animation-duration:.45s}
 .rlvq .rltag{max-width:calc(100% - 70px)}
+/* 🔄 30w: on phones the mascot sits in the question's header row, beside the tag — never over the question text */
+@media (max-width:1023px){.rlqhd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.rlqhd .rltag{max-width:none;-webkit-flex:0 1 auto;flex:0 1 auto;min-width:0}.rlqhd .rlmas{position:relative;top:auto;left:auto;-webkit-flex:0 0 52px;flex:0 0 52px;width:52px;height:52px;margin:-6px 0 4px}}
 /* the daily look */
 .rllook{position:absolute;top:calc(64px + env(safe-area-inset-top));left:50%;z-index:25;-webkit-transform:translateX(-50%);transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:800;color:#fff;background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:999px;pointer-events:none;-webkit-animation:rllook 2s ease forwards;animation:rllook 2s ease forwards}
 @-webkit-keyframes rllook{0%{opacity:0}12%,80%{opacity:1}100%{opacity:0}}

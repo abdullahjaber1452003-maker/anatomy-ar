@@ -79,13 +79,14 @@
     }
     return shuffle(pool, rnd);
   }
+  function qvToday(q) { var X = w.NURSIN_QV; try { return X && q && q.id ? X.pick(q.id, q) : q; } catch (e) { return q; } }   // 🔄 30w: the day's wording (assets/qv.js)
   function qPool(f, day) { var Q = D().q || {}, out = []; subsOf(f, day).forEach(function (s) { (Q[s] || []).forEach(function (q) { out.push({ s: s, q: q }); }); }); return out; }
   /* the feed: 4 reels, then an MCQ (every 5th item), … */
   function feed(f, st, rnd, day) {
     var rs = order(f, st, rnd, day), qs = shuffle(qPool(f === "saved" ? "rand" : f, day), rnd), out = [], qi = 0;
     rs.forEach(function (r) {
       out.push({ k: "r", r: r });
-      if (out.length % MCQ_EVERY === MCQ_EVERY - 1 && qs.length) { out.push({ k: "q", q: qs[qi % qs.length].q, s: qs[qi % qs.length].s }); qi++; }
+      if (out.length % MCQ_EVERY === MCQ_EVERY - 1 && qs.length) { out.push({ k: "q", q: qvToday(qs[qi % qs.length].q), s: qs[qi % qs.length].s }); qi++; }
     });
     return out;
   }
@@ -123,7 +124,7 @@
     var top = '<div class="rlpgw"><div class="rlprog"><i></i></div></div>';
     if (it.k === "q") {
       var q = it.q, m = S(it.s);
-      return top + '<div class="rlbody rlo' + q.o.length + '">' + mascotHtml() + '<span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + bdx(T(m[1], m[2])) + "</span>" +
+      return top + '<div class="rlbody rlo' + q.o.length + '"><div class="rlqhd"><span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + bdx(T(m[1], m[2])) + "</span>" + mascotHtml() + "</div>" +
         '<div class="rlq">' + bdx(q.q, 1) + "</div>" +
         q.o.map(function (o, k) { return '<button type="button" class="rlopt" data-k="' + k + '">' + esc(o) + "</button>"; }).join("") + '<div class="rlqout"></div></div>';
     }

@@ -1,4 +1,4 @@
-/* 🎯 «امتحانات الفصل» — 📅 20261030v: split over 14/11 · 16/11 · 21/11 · 28/11, see EXAMS below. Originally «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
+/* 🎯 «امتحانات الفصل» — 📅 20261030w: split over 14/11 · 16/11 · 21/11 · 28/11, see EXAMS below. Originally «امتحان الفصل 16/11» (Abdullah, Oct 31 2026 11:50–11:53 PM: «في عنا امتحان فصلي ب ١٦/١١ … من كل مادة يكون فيه الاستعداد ل امتحان
    الفصل وينعمل امتحان لكل المادة» — كل الدروس من كل المواد تقريباً; «ما يروح المسار، يكون موجود مع المسار»).
    • midterm.html: a live countdown to Monday Nov 16 2026 (08:00 Asia/Beirut), per subject a «امتحان كامل» (quiz.html?t=mid&s=<subject>),
      the best score per subject, «أضعف دروسك», and «خطة المراجعة» (Nov 1 → Nov 15, every subject twice, Nov 14–15 light review), ✅ per day.
@@ -10,8 +10,8 @@
    signed-in profile users/{uid}.midterm (the owner may merge a field there — same as dayPath; no rules change). No ads anywhere here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030v", K = "nursin_mid_v1";
-  /* 📅 Nov 7 2026 (20261030v, Abdullah 1:21 / 1:45 / 2:52 PM): the midterm was split — some subjects moved. ONE source of truth: EXAMS,
+  var V = "20261030w", K = "nursin_mid_v1";
+  /* 📅 Nov 7 2026 (20261030w, Abdullah 1:21 / 1:45 / 2:52 PM): the midterm was split — some subjects moved. ONE source of truth: EXAMS,
      each date with its subjects ("*" = every subject not listed on another date, i.e. what stayed on Mon 16/11). «prev» (الرعاية الوقائية)
      and «psych» (عقلية) have no lessons on the site: they show as a date only. Every countdown, the smart plan, Osman and the reminders
      read each subject's OWN date from here (examOf). EXAM stays the big Monday 16/11 for old callers. */
@@ -175,7 +175,7 @@
      = 10 questions + its weakest lesson, a 2nd pass = the full mock), class days (Thu/Fri/Sat) lighter, Nov 14–15 light review of
      weak points only. Today's tasks are fixed once shown (x.fix[day]); a task ticks ✓ by itself when that subject's quiz / mock is
      finished that day (x.h), or by hand (x.tk). Re-plans by itself: what was not done comes back from today on. */
-  /* 📅 20261030v: no single «LIGHT» day any more — the eve of EACH exam is light (that exam's subjects only; the eve of the big 16/11 = weak points) */
+  /* 📅 20261030w: no single «LIGHT» day any more — the eve of EACH exam is light (that exam's subjects only; the eve of the big 16/11 = weak points) */
   function msSubs() { return ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"]; }
   function isCls(day) { var g = new Date(day + "T12:00:00Z").getUTCDay(); return g === 4 || g === 5 || g === 6; }
   function readMap(o) { return (o && o.read) || lsGet("nursin_read_v1") || {}; }
