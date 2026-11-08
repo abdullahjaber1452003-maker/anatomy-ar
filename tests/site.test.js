@@ -8441,7 +8441,7 @@ test('#376 30q 🆕 whats-new 30q on top, plain line, parseable', () => {
 
 test('#377 30r ❓ «ليش غلط؟» for the 16/11 subjects: reasons aligned to options, "" at the right answer, coverage per subject at least as shipped', () => {
   const w = WX(), Q = w.QUIZ, G = w.QGROUPS, sub = q => { for (const g in G) if (G[g].indexOf(q.t) >= 0) return g; return q.t; };
-  const MIN = {"law": 41, "mgmt": 38, "medsurg": 60, "henderson": 20, "cardio": 0, "neuro": 0}, cov = {};
+  const MIN = {"law": 41, "mgmt": 38, "medsurg": 60, "henderson": 20, "cardio": 89, "neuro": 52}, cov = {};
   for (const q of Q) { const s = sub(q); if (!(s in MIN)) continue; if (!('why' in q)) continue;
     assert.ok(Array.isArray(q.why) && q.why.length === q.o.length, q.id + ': why length = options length');
     assert.strictEqual(q.why[q.a], '', q.id + ': nothing at the right answer');
