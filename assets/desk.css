@@ -61,4 +61,11 @@
      scrolled or opened at an anchor (medsurg.html#csh) → an opaque bar on wide screens + anchors land below it */
   html.uion body.ui .topbar{background:var(--hzbg);-webkit-backdrop-filter:none;backdrop-filter:none}
   html.uion body.ui main#main [id]{scroll-margin-top:74px}
+  /* 30m 🏆 مين بدو يربح المليون؟: the money ladder becomes a vertical column beside the question (1,000,000 on top) */
+  .mil .mlbody{max-width:980px}
+  .mil .mlplay{display:grid;grid-template-columns:minmax(0,1fr) 200px;grid-template-areas:"bar lad" "ll lad" "q lad" "o lad" "fb lad" "wk lad";column-gap:18px;align-content:start}
+  .mil .mlladder{grid-area:lad;flex-direction:column-reverse;overflow:visible;margin:0}
+  .mil .mlbar{grid-area:bar}.mil .mlll{grid-area:ll}.mil .mlq{grid-area:q;font-size:19px}.mil .mlopts{grid-area:o;display:grid;grid-template-columns:1fr 1fr}.mil .mlfb{grid-area:fb}.mil .mlwalk{grid-area:wk}
+  .mil .mlst{font-size:13px;padding:4px 10px;justify-content:space-between}
+  .mil .mlo:hover:not(:disabled){border-color:#f5c542}
 }
