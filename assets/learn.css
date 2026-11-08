@@ -1,0 +1,35 @@
+/* 📖 «وضع التعلّم» (31f, assets/learn.js) — phone first; desktop ≥1024px lives in assets/desk.css */
+#ln-app{margin:6px 0 28px}
+.lnhd{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin:4px 0 8px}
+.lnhd .lnt{min-width:0}.lnhd .lnt small{display:block;color:var(--mut);font-size:12.5px}
+.lnhd .lnt b{display:block;font-size:17px;line-height:1.35;overflow-wrap:anywhere}
+.lnfull{flex:0 0 auto;font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--pri);text-decoration:none;white-space:nowrap}
+.lnpg{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:6px 0}
+.lnbar{flex:1;height:8px;border-radius:99px;background:var(--line,#e5e7eb);overflow:hidden}
+.lnbar i{display:block;height:100%;background:linear-gradient(90deg,#34d399,var(--pri,#0f766e));border-radius:99px;transition:width .35s ease}
+.lnpn{font-weight:700;font-size:13.5px;white-space:nowrap;color:var(--ink)}
+.lnpara{background:var(--card);border:1px solid var(--line);border-radius:var(--r,16px);padding:14px 15px;box-shadow:var(--sh);line-height:1.85;font-size:16.5px;overflow-wrap:anywhere}
+.lnpara h3,.lnpara h4{margin:2px 0 8px;font-size:17px}
+.lnpara ul,.lnpara ol{margin:6px 0;padding-inline-start:22px}
+.lnpara table{width:100%;border-collapse:collapse;font-size:14.5px;display:block;overflow-x:auto}
+.lnpara td,.lnpara th{border:1px solid var(--line);padding:5px 7px;vertical-align:top}
+.lnpara img{max-width:100%;height:auto}
+.lnpara .lpart{display:none}
+mark.lnmk{background:#fde68a;color:inherit;border-radius:4px;padding:0 2px;box-shadow:0 0 0 2px #fde68a}
+.lnnav{display:flex;justify-content:flex-end;margin:14px 0}
+.lnnav .btn{min-width:60%}
+.lnpeek{margin:0 0 6px}.lnpeek>summary{cursor:pointer;font-size:14px;color:var(--pri);padding:6px 2px;list-style:none}
+.lnpeek>summary::-webkit-details-marker{display:none}
+.lnpeek[open]>summary{font-weight:700}
+.lnq .qnum{margin:0 0 4px;font-size:13px;color:var(--mut)}
+.lnq .qq{font-size:17px;font-weight:600;line-height:1.6;margin:0 0 6px}
+.lnlater{color:var(--mut);margin:8px 2px 0}
+.lnfint{font-weight:700;margin:6px 2px 4px}
+.lnend{background:var(--card);border:1px solid var(--line);border-radius:var(--r,16px);padding:18px 16px;box-shadow:var(--sh);text-align:center}
+.lnsc{font-size:30px;margin:0 0 6px}
+.lnwr{text-align:start;margin:10px 0;padding-inline-start:18px;line-height:1.6}.lnwr li{margin:6px 0}
+.lnact{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.lnload,.lnerr{padding:22px 4px;text-align:center;color:var(--mut)}
+html.nzemb #ln-app{margin-top:0}
+html.nzemb body.lnpage main{padding-top:6px}
+.lnpick ul{margin:4px 0 10px;padding-inline-start:20px;line-height:1.9}.lnpick a{color:var(--pri)}

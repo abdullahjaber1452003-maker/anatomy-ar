@@ -132,4 +132,14 @@
   body.dspage .dsapp .ib{margin-bottom:22px}
   body.dspage .dsapp .qr button:hover,body.dspage .dsapp .qr a:hover,body.dspage .dsapp .snd:hover{filter:brightness(.96);cursor:pointer}
   .hz .hzdcard:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(16,40,48,.14)}
+  /* 📖 31f «وضع التعلّم» on a laptop / Mac: a calm reading column */
+  body.lnpage #ln-app{max-width:780px;margin:18px auto 40px}
+  body.lnpage .lnpara{font-size:18px;padding:22px 26px;line-height:1.95}
+  body.lnpage .lnq{padding:20px 24px}
+  body.lnpage .lnq .qq{font-size:18.5px}
+  body.lnpage .lnq .opt{font-size:17px;padding:12px 14px}
+  body.lnpage .lnq .opt:hover:not(:disabled){border-color:var(--pri)}
+  body.lnpage .lnhd .lnt b{font-size:20px}
+  body.lnpage .lnnav .btn{min-width:240px}
+  html.nzemb body.lnpage #ln-app{margin-top:6px}
 }

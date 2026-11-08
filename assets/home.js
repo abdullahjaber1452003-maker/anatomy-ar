@@ -806,7 +806,19 @@
   function inlineHref(key, href) {
     if (/^(weak|wq):/.test(key)) href = "quiz.html?t=weak";          // 💪/🎯 = «كويز نقاط ضعفك» (30e)
     if (d && d.documentElement && String(d.documentElement.className).indexOf("gl-out") > -1) return "";   // signed out: the page itself shows its sign-in lock (never an ad-unlock inside the sheet)
+    var lh = learnHref(key, href); if (lh) return lh;                // 📖 31f: a lesson to read = «وضع التعلّم» (paragraph → question → … → 🏁 كويز شامل)
     return INL.test(href) ? href : "";
+  }
+  /* 📖 31f (Abdullah, Nov 8 2026 7:34 PM «بالمسار محطوط كمّل درس الجودة، بس ما بدي فوت عالدرس… فقرة فقرة… وكل فقرة كويز عليها… وبالآخر كويز
+     شامل»): every step that sends him to READ a lesson (📖 درس اليوم / كمّل / درس جديد, 🏫 the class lesson, 📚 the never-opened / weak one,
+     📖 again) opens learn.html?u=<the part> in the same sheet (assets/learn.js); «📄 افتح الدرس كامل» stays inside it. Pure (tests). */
+  var LRN = /^(today|cont|new|cls|cvn|cvw|again):/;
+  function learnHref(key, href) {
+    if (!LRN.test(String(key || ""))) return "";
+    var m = /^(?:\.\/|\/)?([a-z0-9_-]+\.html)(#[^?#]*)?$/i.exec(String(href || "")); if (!m) return "";
+    var R = w.NLESSONS, P = R && R.parts ? R.parts : [], ok = false;
+    for (var i = 0; i < P.length; i++) if (String(P[i].href).split("#")[0] === m[1]) { ok = true; break; }
+    return ok ? "learn.html?u=" + encodeURIComponent(m[1] + (m[2] || "")) : "";
   }
   function embUrl(h) { var i = h.indexOf("#"), hs = i > -1 ? h.slice(i) : "", b = i > -1 ? h.slice(0, i) : h; return b + (b.indexOf("?") > -1 ? "&" : "?") + "embed=1" + hs; }
   var sh = null, shKey = "", shY = 0, shPush = false, shT = 0, shFin = false;
@@ -881,7 +893,7 @@
     w.addEventListener("hashchange", pathH); if (location.hash === "#path") { setTimeout(pathH, 400); setTimeout(pathH, 1200); }
   }
   var UI = U();
-  w.HomePath = { inlineHref: inlineHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, doneLast: doneLast, isDoneS: isDoneS, ruleNow: ruleNow, evHits: evHits, shCheck: shCheck, RULE: RULE, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
+  w.HomePath = { inlineHref: inlineHref, learnHref: learnHref, embUrl: embUrl, bidiT: bidiT, openSheet: openSheet, closeSheet: closeSheet, carryOf: carryOf, carryMerge: carryMerge, carryTag: carryTag, carryClean: carryClean, rank: rank, busOn: busOn, todayNow: todayNow, lessonsNow: lessonsNow, remHtml: remHtml, pathHtml: pathHtml, buildAll: buildAll, ORDER: ORDER, allSteps: allSteps, doneLast: doneLast, isDoneS: isDoneS, ruleNow: ruleNow, evHits: evHits, shCheck: shCheck, RULE: RULE, sugHtml: sugHtml, SUGK: SUGK, build: build, plan: plan, isDone: isDone, refreshDone: refreshDone, merge: merge, skey: skey, usePick: usePick, weakPick: weakPick, classNewest: classNewest, afterClass: afterClass, openDuel: openDuel, V: V, MAXS: MAXS, MINS: MINS, ALL: UI.ALL, SUBJ: SUBJ, KEY: PK, AKEY: AK, setAvatar: UI.setAvatar, avUrl: UI.avUrl, AVN: UI.AVN, shrink: UI.shrink, texts: texts, greet: greet, open: UI.open, picker: UI.picker, close: UI.close };
   if (!d || !d.getElementById) return;
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
