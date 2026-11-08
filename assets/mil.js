@@ -1,4 +1,4 @@
-/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030m.
+/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030n.
    A show-style quiz built ONLY from the site's existing quiz bank (window.QUIZ, the same items the lesson quizzes use; no new content).
    • Start: pick a subject (every QSUBJ subject that has questions), «🎯 امتحاني الجاي» (the next exam date's subjects, read from
      NursinMid.EXAMS when assets/midterm.js is on the page, else the EXAMS mirror below — tests keep both equal; subjects without
@@ -14,7 +14,89 @@
    • 30 s a question, paused while a lifeline dialog is open. Lock-in: orange ~1 s, then green / red; a wrong answer shows the right one +
      the item's short explanation. Result: points, best (localStorage nursin_mil_v1), «العب مرة تانية», «📚 راجع الدروس اللي غلطت فيها».
    • Signals: every answered question → NursinSRS.record (the site's existing spaced-review entry point); the round → NursinStudy.activity
-     ("game", ≤ 15 points, same caps as the other games). Sound OFF by default (🔇/🔊). No continuous animations. No ads in here. */
+     ("game", ≤ 15 points, same caps as the other games). Sound: see the 🔊 block above (30n, ON by default). No continuous animations. No ads in here. */
+/* 🔊 30n — the show's sound, SYNTHESIZED with Web Audio (Abdullah, Nov 8 2026 8:57 AM: «بدي يطلع صوت اللي انه عم يخلص الوقت متل الحقيقية»).
+   No audio files, no downloads: oscillators + gain envelopes only, scheduled ONE SECOND AT A TIME by the game's own timer (no audio loop).
+   • Each question: a soft low heartbeat (sine ~60 Hz) once a second. Last 10 s: a clock tick every second, louder + higher each second,
+     the heartbeat doubles. Last 5 s: two ticks a second, rising tone. Time out: a short descending buzzer.
+   • lockin (rising chord ~1 s) · correct (major arpeggio) · wrong (low minor thud) · lifeline (shimmer) · safe (Q5/Q10 short fanfare) · fanfare (result ≥ safe level).
+   • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. The AudioContext (webkitAudioContext on iOS 12) is created /
+     resumed on the first tap. stop() cuts everything at once (answer, lifeline dialog, leaving, hidden tab). Without Web Audio: silent, no throw. */
+(function (w, d) {
+  var KEY = "nursin_mil_snd", ac = null, live = [], st = { running: false, paused: false, last: -1 };
+  function on() { try { return w.localStorage.getItem(KEY) !== "0"; } catch (e) { return true; } }
+  function set(v) { try { w.localStorage.setItem(KEY, v ? "1" : "0"); } catch (e) {} if (!v) stop(); return on(); }
+  function hidden() { return !!(d && d.hidden); }
+  function ctx() {
+    if (ac) return ac;
+    var C = w.AudioContext || w.webkitAudioContext; if (!C) return null;
+    try { ac = new C(); } catch (e) { ac = null; } return ac;
+  }
+  function unlock() {   // call from a user tap (iOS needs the context made / resumed inside a gesture)
+    if (!on()) return false;
+    var c = ctx(); if (!c) return false;
+    try { if (c.state === "suspended" && c.resume) c.resume(); var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start ? s.start(0) : s.noteOn(0); } catch (e) {}
+    return true;
+  }
+  function forget(n) { var i = live.indexOf(n); if (i > -1) live.splice(i, 1); }
+  function tone(f, at, dur, vol, type, f2, tag) {   // one enveloped oscillator, `at` seconds from now
+    var c = ac; if (!c || !on() || hidden()) return;
+    try {
+      var t = c.currentTime + Math.max(0, at), o = c.createOscillator(), g = c.createGain();
+      o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + Math.min(0.02, dur / 4));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+      var n = { o: o, g: g, tag: tag || "" }; live.push(n); o.onended = function () { forget(n); try { g.disconnect(); } catch (e) {} };
+    } catch (e) {}
+  }
+  function play(list, tag) {
+    if (ac && ac.state === "suspended" && ac.resume) try { ac.resume(); } catch (e) {}
+    (list || []).forEach(function (x) { tone(x.f, x.at, x.dur, x.g, x.type, x.f2, tag); }); return list; }
+  function kill(only) {   // cut ringing / scheduled sounds now (only = "sus": just the suspense ones)
+    live.slice().forEach(function (n) {
+      if (only && n.tag !== only) return; forget(n);
+      try { n.g.gain.cancelScheduledValues(0); n.g.gain.value = 0; n.o.stop(0); } catch (e) {} try { n.g.disconnect(); } catch (e) {}
+    });
+  }
+  function stop() { st.running = false; st.paused = false; st.last = -1; kill(); }   // everything off
+  /* the per-second plan: pure, so it is unit-tested without audio */
+  function plan(s) {
+    var L = [];
+    if (s <= 0) return L;
+    if (s > 10) { L.push({ k: "beat", f: 62, at: 0, dur: 0.22, g: 0.18 }); return L; }
+    var u = (10 - s) / 9;   // 0 at 10 s → 1 at 1 s
+    L.push({ k: "beat", f: 64, at: 0, dur: 0.18, g: 0.2 + 0.1 * u }, { k: "beat", f: 58, at: 0.26, dur: 0.18, g: 0.16 + 0.1 * u });
+    var tf = 1400 + Math.round(600 * u), tg = 0.05 + 0.13 * u;
+    L.push({ k: "tick", f: tf, at: 0, dur: 0.05, g: tg, type: "square" });
+    if (s <= 5) L.push({ k: "tick", f: tf + 200, at: 0.5, dur: 0.05, g: tg, type: "square" }, { k: "rise", f: 330 + 40 * (5 - s), f2: 380 + 40 * (5 - s), at: 0, dur: 0.9, g: 0.04 + 0.02 * (5 - s), type: "triangle" });
+    return L;
+  }
+  function start() { stop(); st.running = true; }
+  function pause(p) { if (!st.running) return; st.paused = !!p; st.last = -1; if (p) kill("sus"); }   // lifeline dialog: suspense off, its shimmer stays
+  function second(s) {   // the game's timer calls this on every change of the whole second shown
+    if (!st.running || st.paused || s === st.last) return [];
+    st.last = s; if (!on() || hidden()) return [];
+    return play(plan(s), "sus");
+  }
+  var FX = {
+    buzzer: [{ f: 220, f2: 90, at: 0, dur: 0.7, g: 0.22, type: "sawtooth" }, { f: 165, f2: 70, at: 0, dur: 0.7, g: 0.12, type: "square" }],
+    lockin: [{ f: 220, f2: 440, at: 0, dur: 1, g: 0.08, type: "triangle" }, { f: 277, f2: 554, at: 0, dur: 1, g: 0.06, type: "triangle" }, { f: 330, f2: 659, at: 0, dur: 1, g: 0.06, type: "triangle" }],
+    correct: [{ f: 523, at: 0, dur: 0.25, g: 0.16, type: "triangle" }, { f: 659, at: 0.1, dur: 0.25, g: 0.16, type: "triangle" }, { f: 784, at: 0.2, dur: 0.3, g: 0.16, type: "triangle" }, { f: 1047, at: 0.3, dur: 0.45, g: 0.14, type: "triangle" }],
+    wrong: [{ f: 110, f2: 70, at: 0, dur: 0.6, g: 0.28 }, { f: 131, at: 0, dur: 0.5, g: 0.08, type: "triangle" }, { f: 156, at: 0, dur: 0.5, g: 0.06, type: "triangle" }],
+    lifeline: [{ f: 1568, at: 0, dur: 0.18, g: 0.06 }, { f: 1976, at: 0.06, dur: 0.18, g: 0.06 }, { f: 2349, at: 0.12, dur: 0.22, g: 0.05 }, { f: 2637, at: 0.18, dur: 0.3, g: 0.04 }],
+    safe: [{ f: 523, at: 0, dur: 0.15, g: 0.14, type: "triangle" }, { f: 523, at: 0.16, dur: 0.15, g: 0.14, type: "triangle" }, { f: 784, at: 0.32, dur: 0.5, g: 0.16, type: "triangle" }],
+    fanfare: [{ f: 392, at: 0, dur: 0.2, g: 0.14, type: "triangle" }, { f: 523, at: 0.2, dur: 0.2, g: 0.14, type: "triangle" }, { f: 659, at: 0.4, dur: 0.2, g: 0.14, type: "triangle" }, { f: 784, at: 0.6, dur: 0.7, g: 0.16, type: "triangle" }, { f: 1047, at: 0.6, dur: 0.7, g: 0.08, type: "triangle" }]
+  };
+  function fx(name) { if (!on() || hidden()) return []; ctx(); return play(FX[name]); }
+  if (d && d.addEventListener) d.addEventListener("visibilitychange", function () {
+    if (d.hidden) { kill(); st.last = -1; if (ac && ac.suspend) try { ac.suspend(); } catch (e) {} }
+    else if (ac && ac.resume && st.running) try { ac.resume(); } catch (e) {}
+  });
+  w.NursinMilSnd = { KEY: KEY, on: on, set: set, unlock: unlock, start: start, pause: pause, stop: stop, second: second, plan: plan, fx: fx, FX: FX,
+    state: function () { return { running: st.running, paused: st.paused, last: st.last, live: live.length, ctx: !!ac }; } };
+})(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
+
 (function (w, d) {
   var K = "nursin_mil_v1", N = 15, SECS = 30, LOCK_MS = 1000;
   var LADDER = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000], SAFE = [5, 10];
@@ -118,18 +200,9 @@
   function load() { try { return JSON.parse(localStorage.getItem(K) || "null") || {}; } catch (e) { return {}; } }
   function save(o) { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} }
 
-  /* ---- sound (off by default) ---- */
-  var ac = null;
-  function sndOn() { return !!load().snd; }
-  function beep(ok) {
-    if (!sndOn()) return;
-    try {
-      ac = ac || new (w.AudioContext || w.webkitAudioContext)();
-      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
-      o.type = "sine"; o.frequency.value = ok ? 880 : 196; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + (ok ? 0.35 : 0.6));
-      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.65);
-    } catch (e) {}
-  }
+  /* ---- sound: window.NursinMilSnd (above) ---- */
+  function S() { return w.NursinMilSnd || { on: function () { return false; }, set: function () { return false; }, unlock: function () {}, start: function () {}, pause: function () {}, stop: function () {}, second: function () { return []; }, fx: function () { return []; } }; }
+  function sndOn() { return S().on(); }
 
   /* ---- UI ---- */
   var ov = null, st = null, tick = 0, sel = "exam";
@@ -150,14 +223,14 @@
     startScreen();
   }
   function close(fromPop) {
-    stopT(); if (!ov) return; ov.hidden = true; d.documentElement.classList.remove("mil-open"); st = null;
+    stopT(); S().stop(); if (!ov) return; ov.hidden = true; d.documentElement.classList.remove("mil-open"); st = null;
     if (!fromPop && location.hash === "#mil") { try { if (history.state && history.state.mil) history.back(); else history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
   }
   function body(h) { var b = $("#mlbody"); b.innerHTML = h; b.scrollTop = 0; }
 
   function examLabel(x) { if (!x) return ""; var p = x.d.split("-"), S = subjects(); return " · " + (+p[2]) + "/" + (+p[1]) + ": " + x.subs.map(function (s) { return S[s]; }).join(" + "); }
   function startScreen() {
-    stopT(); st = null;
+    stopT(); S().stop(); st = null;
     var S = subjects(), x = nextExam(), b = load(), h = "";
     if (sel === "exam" && !x) sel = "all";
     h += '<p class="mlintro">١٥ سؤال من دروسك، كل ما تطلع بيصعب 📈 · ٣ مساعدات · ٣٠ ثانية للسؤال · 🔒 نقاط أمان عند السؤال ٥ و١٠</p>';
@@ -172,6 +245,7 @@
     body(h);
   }
   function begin() {
+    S().unlock();   // the start tap = the gesture iOS needs for audio
     var qs = pick(sel);
     if (qs.short) { body('<p class="mlintro">😕 ما في أسئلة كفاية بهالمادة بعد (' + qs.have + " من " + N + ').</p><p class="small">جرّب «🔀 كل المواد» أو مادة تانية.</p><button type="button" class="mlgo" data-mlhome="1">رجوع</button>'); return; }
     st = { qs: qs.map(function (q) { return shuffled(q); }), i: 0, k: 0, used: {}, rm: [], left: SECS * 1000, at: 0, busy: false, miss: [], done: false };
@@ -186,7 +260,7 @@
     return h + "</ol>";
   }
   function ask() {
-    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000;
+    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; S().start();
     var h = '<div class="mlplay">' + ladder() +
       '<div class="mlbar"><span class="mlqn">سؤال ' + (st.i + 1) + " / " + N + ' · <b>' + num(LADDER[st.i]) + '</b></span><span class="mltm" id="mltm" aria-live="off">' + SECS + "</span></div>" +
       '<div class="mlll">' + ll("ff", "٥٠:٥٠") + ll("ph", "📞 اسأل عثمان") + ll("au", "👥 رأي الجمهور") + "</div>" +
@@ -203,11 +277,18 @@
   /* timer: wall clock, paused while a dialog is open */
   function runT() { stopT(); st.at = Date.now(); tick = setInterval(function () { if (!st || st.busy || st.paused) return; var now = Date.now(); st.left -= now - st.at; st.at = now; paintT(); if (st.left <= 0) { stopT(); answer(-1); } }, 250); paintT(); }
   function stopT() { clearInterval(tick); tick = 0; }
-  function paintT() { var e = ov && $("#mltm"); if (!e || !st) return; var s = Math.max(0, Math.ceil(st.left / 1000)); e.textContent = s; e.className = "mltm" + (s <= 10 ? " low" : ""); }
-  function pause(on) { if (!st) return; if (!on) st.at = Date.now(); st.paused = on; }
+  function paintT() {
+    var e = ov && $("#mltm"); if (!e || !st) return; var s = Math.max(0, Math.ceil(st.left / 1000));
+    e.textContent = s; e.className = "mltm" + (s <= 10 ? " low" : "") + (s <= 5 ? " vlow" : "");
+    if (s !== st.ls) {   // a new whole second: its sound + (last 10 s) one red flash, faded by a CSS transition — no animation loop
+      st.ls = s; if (!st.busy && !st.paused) S().second(s);
+      if (s <= 10 && s > 0) { e.classList.add("fl"); setTimeout(function () { e.classList.remove("fl"); }, s <= 5 ? 220 : 320); }
+    }
+  }
+  function pause(on) { if (!st) return; if (!on) { st.at = Date.now(); st.ls = -1; } st.paused = on; S().pause(on); }
 
   function answer(k) {
-    if (!st || st.busy) return; st.busy = true; stopT();
+    if (!st || st.busy) return; st.busy = true; stopT(); S().stop(); S().fx(k >= 0 ? "lockin" : "buzzer");
     var q = st.qs[st.i], B = ov.querySelectorAll("[data-mlo]");
     [].forEach.call(ov.querySelectorAll("[data-mlll],[data-mlwalk]"), function (b) { b.disabled = true; });
     [].forEach.call(B, function (b) { b.disabled = true; });
@@ -221,15 +302,15 @@
     if (k >= 0 && B[k]) B[k].classList.remove("lock");
     if (B[q.a]) B[q.a].classList.add("ok"); if (!good && k >= 0 && B[k]) B[k].classList.add("bad");
     try { if (w.NursinSRS && w.NursinSRS.record) w.NursinSRS.record(q.src, good); } catch (e) {}
-    beep(good);
+    if (k >= 0) S().stop();   // cuts the lock-in chord (a time-out keeps its buzzer)
     if (good) {
-      st.k++; var lvl = st.k;
+      st.k++; var lvl = st.k; S().fx(SAFE.indexOf(lvl) > -1 ? "safe" : "correct");
       if (lvl >= N) { $("#mlfb").innerHTML = '<p class="mlok">✅ صح!</p>'; return setTimeout(function () { end("win"); }, 1200); }
       var sf = SAFE.indexOf(lvl) > -1;
       $("#mlfb").innerHTML = '<p class="mlok">✅ صح! معك ' + num(LADDER[lvl - 1]) + (sf ? " · 🔒 ضمنتهن!" : "") + '</p><button type="button" class="mlnext" data-mlnext="1">السؤال الجاي ⬅️</button>';
       return;
     }
-    st.miss.push(q);
+    st.miss.push(q); if (k >= 0) S().fx("wrong");
     $("#mlfb").innerHTML = '<p class="mlbad">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ غلط. ") + "الصح: <b>" + AR[q.a] + "</b> " + fr(q.o[q.a]) + "</p>" + (q.x ? '<p class="mlx2">💡 ' + fr(q.x) + "</p>" : "") +
       '<button type="button" class="mlnext" data-mlend="1">شوف النتيجة ⬅️</button>';
     var f = $("#mlfb"); if (f && f.scrollIntoView) try { f.scrollIntoView({ block: "nearest" }); } catch (e) {}
@@ -240,6 +321,7 @@
     if (!st || st.busy || st.used[k]) return;
     var q = st.qs[st.i]; st.used[k] = 1;
     var b = ov.querySelector('[data-mlll="' + k + '"]'); if (b) { b.classList.add("used"); b.disabled = true; }
+    S().fx("lifeline");
     if (k === "ff") {
       st.rm = fifty(q.o.length, q.a);
       st.rm.forEach(function (i) { var o = ov.querySelector('[data-mlo="' + i + '"]'); if (o) { o.classList.add("gone"); o.disabled = true; } });
@@ -260,8 +342,9 @@
   function closeDlg() { var x = $(".mldlg"); if (x) x.parentNode.removeChild(x); pause(false); }
 
   function end(how) {
-    stopT(); if (!st || st.done) return; st.done = true;
+    stopT(); S().stop(); if (!st || st.done) return; st.done = true;
     var pts = payout(st.k, how), b = load(), nb = pts > (b.best | 0);
+    if (pts >= LADDER[SAFE[0] - 1]) setTimeout(function () { if (ov && !ov.hidden && st && st.done) S().fx("fanfare"); }, 150);
     b.n = (b.n | 0) + 1; if (nb) b.best = pts;
     var mm = st.miss.map(function (q) { return { id: q.id, t: q.t, l: q.l || "" }; }).concat(b.miss || []), seen = {};
     b.miss = mm.filter(function (m) { var kk = m.t + ":" + m.l; if (seen[kk]) return false; seen[kk] = 1; return true; }).slice(0, 8);
@@ -288,7 +371,8 @@
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button,a"); if (!t || !ov.contains(t)) return;
     if (t.hasAttribute("data-mlx")) { if (st && !st.done && st.i > 0 && !w.confirm("تطلع من اللعبة؟ (النقاط ما بتنحفظ)")) return; close(); return; }
-    if (t.hasAttribute("data-mlsnd")) { var b = load(); b.snd = !b.snd; save(b); paintSnd(); beep(true); return; }
+    if (t.hasAttribute("data-mlsnd")) { var on = S().set(!sndOn()); paintSnd(); if (on) { S().unlock(); S().fx("lifeline"); if (st && !st.busy && !st.done) { S().start(); if (st.paused) S().pause(true); } } return; }
+    if (t.hasAttribute("data-mls")) S().unlock();
     if (t.hasAttribute("data-mls")) { sel = t.getAttribute("data-mls"); [].forEach.call(ov.querySelectorAll("[data-mls]"), function (c) { c.classList.toggle("on", c === t); }); return; }
     if (t.hasAttribute("data-mlgo")) { begin(); return; }
     if (t.hasAttribute("data-mlhome")) { startScreen(); return; }

@@ -1,4 +1,4 @@
-/* 🏆 مين بدو يربح المليون؟ (20261030m, assets/mil.js) — dark navy/purple show style, gold accents; phone first (fits 390×664 during a
+/* 🏆 مين بدو يربح المليون؟ (20261030n, assets/mil.js) — dark navy/purple show style, gold accents; phone first (fits 390×664 during a
    question), the side ladder for desktop lives in assets/desk.css. No continuous animations, no ads. */
 html.mil-open,html.mil-open body{overflow:hidden}
 html.mil-open .osmt,html.mil-open .stoast{z-index:2147483100}
@@ -29,7 +29,9 @@ html.mil-open .osmt,html.mil-open .stoast{z-index:2147483100}
 .mlbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 6px}
 .mlqn{font-size:14px}.mlqn b{color:#f5c542}
 .mltm{min-width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:2.5px solid #f5c542;font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
-.mltm.low{border-color:#f87171;color:#fecaca}
+.mltm.low{border-color:#f87171;color:#fecaca;transition:background-color .3s ease-out,color .3s ease-out}
+.mltm.vlow{border-width:3px;color:#fff}
+.mltm.low.fl{background-color:#dc2626;color:#fff;transition:none}   /* 30n: one red flash per second in the last 10 s (a transition, no animation) */
 .mlll{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
 .mlll1{min-height:44px;padding:4px 6px;border-radius:12px;border:1.5px solid rgba(245,197,66,.6);background:rgba(245,197,66,.1);font-size:13px;font-weight:700;line-height:1.2}
 .mlll1.used,.mlll1:disabled{opacity:.35;text-decoration:line-through}
