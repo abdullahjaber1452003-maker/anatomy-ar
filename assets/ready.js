@@ -12,7 +12,7 @@
    Local only: no network, no Firestore. ES5 for iOS 12. No ads here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030w";
+  var V = "20261030x";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

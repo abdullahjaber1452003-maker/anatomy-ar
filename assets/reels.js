@@ -221,6 +221,7 @@
   function answer(b) {
     var el = b.closest(".rlv"), i = [].indexOf.call(fd.children, el), it = items[i]; if (!it || it.k !== "q" || it.done) return;
     var q = it.q, k = +b.getAttribute("data-k"), ok = k === q.a; it.done = true;
+    try { var QV = w.NURSIN_QV; if (QV && QV.mark) QV.mark(q.id, ok); } catch (e0) {}   // 🔄 30x: practised here too → next time another wording
     [].forEach.call(el.querySelectorAll(".rlopt"), function (o) { var kk = +o.getAttribute("data-k"); o.disabled = true; if (kk === q.a) { o.classList.add("good"); o.textContent = "✅ " + o.textContent; } else if (kk === k) { o.classList.add("bad"); o.textContent = "❌ " + o.textContent; } });
     var out = "";
     if (!ok) { var why = d.createElement("div"); why.className = "rlwhy"; why.innerHTML = "<b>" + T("❓ ليش غلط؟", "❓ Pourquoi c'est faux ?") + "</b> " + esc(whyOf(q, k)); b.parentNode.insertBefore(why, b.nextSibling); }
