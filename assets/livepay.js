@@ -84,7 +84,7 @@ var LivePay = (function () {
 /* ==/pay-core== */
 if (typeof window !== "undefined") window.LivePay = LivePay;
 if (!d || !d.addEventListener) return;
-var V = "20261030s", CK = "nursin_pay_v1", P = LivePay;
+var V = "20261030t", CK = "nursin_pay_v1", P = LivePay;
 function L() { return w.LiveCase; }
 function LC() { return w.LiveCore; }
 function LD() { return w.LiveDept; }

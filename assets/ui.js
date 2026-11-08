@@ -441,11 +441,13 @@
      ③ keyboard: 1/2/3/4 or a/b/c/d choose a quiz answer, Enter goes to the next question / sends a one-line answer, Ctrl/⌘+Enter sends a written answer. */
   var DKQ = "(min-width:1024px)", dkSide = null, dkOut = null;
   function dkWide() { try { return !!(w.matchMedia && w.matchMedia(DKQ).matches); } catch (e) { return false; } }
-  var DKMAIN = [["index.html", "🏠", "الرئيسية", "Accueil"], ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"],
+  var DKMAIN = [["index.html", "🏠", "الرئيسية", "Accueil"], ["reels.html", "🎬", "Reels", "Reels"], ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"],
     ["quiz.html", "⚡", "كويز", "Quiz"], ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision"], ["midterm.html", "🎯", "امتحان الفصل", "Examen"],
     ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#live", "🔴", "حالة لايف", "Cas en direct"], ["notes.html", "📒", "ملاحظاتي", "Mes notes"], ["friends.html", "👥", "أصحابي", "Amis"]];
+  /* 🎬 30t (Abdullah, Nov 8 2026 2:27 PM: «ليش ما موجود كمان لل pc لل mac؟»): «🎬 Reels» in the side navigation right after الرئيسية,
+     as in the phone bar (it lights on reels.html); the subjects list under «📚 المواد» stays. */
   function dkItem(it) {
-    var here = (page + (location.search || "") + (location.hash || "")), on = it[0] === here || (it[0] === page && !/[?#]/.test(it[0]) && !location.search && !location.hash);
+    var here = (page + (location.search || "") + (location.hash || "")), on = it[0] === here || (it[0] === page && !/[?#]/.test(it[0]) && ((!location.search && !location.hash) || page === "reels.html"));
     return '<a class="dki' + (on ? " on" : "") + '" href="' + it[0] + '"' + (on ? ' aria-current="page"' : "") + '><span class="ie" aria-hidden="true">' + it[1] + "</span><span>" + esc(T(it[2], it[3])) + "</span></a>";
   }
   function sideNav() {

@@ -72,4 +72,11 @@
   body.reels .rlapp{left:calc(50% - 116px - 215px);right:auto;width:430px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 20px 60px rgba(0,0,0,.5)}
   html[lang="fr"] body.reels .rlapp,html[dir="ltr"] body.reels .rlapp{left:calc(50% + 116px - 215px)}
   body.reels .rlpill:hover,body.reels .rlopt:hover:not([disabled]){border-color:#fff}
+  /* 💻 30t Reels on a computer: the 📢 announcement bar no longer peeks out beside the column (on a phone the reels cover it too);
+     buttons show they are clickable */
+  body.reels .annbar{display:none}
+  body.reels{background:#0b0f14}
+  body.reels .rlside a,body.reels .rlside button,body.reels .rlsnd,body.reels .rlback,body.reels .rlpill,body.reels .rlopt:not([disabled]){cursor:pointer}
+  body.reels .rlpills{cursor:ew-resize}
+  body.reels .rlpills .rlpill{cursor:pointer}
 }

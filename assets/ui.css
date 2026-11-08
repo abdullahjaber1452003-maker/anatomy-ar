@@ -408,7 +408,7 @@ html[data-theme=night] .xtk{background:rgba(255,255,255,.05)}
 .midu b{font-size:26px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--hzink)}
 .midu small{font-size:11px;font-weight:800;color:var(--hzmut)}
 .midover{font-size:18px;font-weight:900}
-/* 📅 20261030s: the four exam dates (assets/midterm.js examsHtml) + each subject's own date */
+/* 📅 20261030t: the four exam dates (assets/midterm.js examsHtml) + each subject's own date */
 .midexams{list-style:none;margin:8px 0 6px;padding:0;display:grid;gap:4px;font-size:13px}.midexams li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:5px 9px;border-radius:10px;background:var(--hztrack)}.midexams li b{white-space:nowrap}.midexams li span{flex:1;min-width:0}.midexams li small{white-space:nowrap;font-weight:800}.midexams li.nx{background:rgba(15,118,110,.14);font-weight:800}.midexams li.dn{opacity:.55}.midexd{font-weight:800;margin-inline-end:4px}
 .midtoday{margin:6px 0 0;font-weight:800;font-size:14px}
 .midlist{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}

@@ -225,11 +225,39 @@
     }
     unlock();
   }
+  /* 💻 30t desktop only (≥1024 px, Abdullah Nov 8 2026 2:27 PM «ليش ما موجود كمان لل pc لل mac؟»): one wheel / trackpad swipe = one reel
+     (a trackpad's long glide no longer skips several, and Chrome's small wheel steps no longer snap back); the wheel over the filter pills
+     slides them sideways; ↑/↓ glide smoothly. Phones keep native scroll-snap untouched. */
+  var wAcc = 0, wLast = 0, wMove = 0, wPrev = 0;
+  function wide() { try { return !!(w.matchMedia && w.matchMedia("(min-width:1024px)").matches); } catch (e) { return false; } }
+  function step(n) {
+    var h = fd.clientHeight || 1, max = fd.children.length - 1, base = Math.round(fd.scrollTop / h), to = Math.max(0, Math.min(max, base + n));
+    if (to === base) return;
+    try { fd.scrollTo({ top: to * h, behavior: "smooth" }); } catch (e) { fd.scrollTop = to * h; }
+  }
+  function wheel(e) {
+    if (!fd || !wide()) return;
+    var t = e.target, dy = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY, dx = e.deltaX || 0, now = Date.now();
+    var pl = t && t.closest && t.closest(".rlpills");
+    if (pl) { if (Math.abs(dy) > Math.abs(dx)) { e.preventDefault(); pl.scrollLeft -= dy; } return; }
+    var qv = t && t.closest && t.closest(".rlvq");
+    if (qv && qv.scrollHeight > qv.clientHeight + 4 && ((dy > 0 && qv.scrollTop + qv.clientHeight < qv.scrollHeight - 2) || (dy < 0 && qv.scrollTop > 0))) return;
+    e.preventDefault();
+    var ady = Math.abs(dy);
+    if (wMove) {
+      if (now - wMove < 380 || (now - wLast < 220 && ady <= wPrev * 1.3 + 2)) { wPrev = ady; wLast = now; return; }
+      wMove = 0; wAcc = 0;
+    }
+    if (now - wLast > 250) wAcc = 0;
+    wLast = now; wPrev = ady; wAcc += dy;
+    if (Math.abs(wAcc) < 30) return;
+    step(wAcc > 0 ? 1 : -1); wAcc = 0; wMove = now;
+  }
   function keys(e) {
     if (!fd || /INPUT|TEXTAREA/.test((e.target && e.target.tagName) || "")) return;
     var h = fd.clientHeight;
-    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j") { e.preventDefault(); fd.scrollTop = (cur + 1) * h; }
-    else if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "k") { e.preventDefault(); fd.scrollTop = Math.max(0, cur - 1) * h; }
+    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j") { e.preventDefault(); if (wide()) step(1); else fd.scrollTop = (cur + 1) * h; }
+    else if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "k") { e.preventDefault(); if (wide()) step(-1); else fd.scrollTop = Math.max(0, cur - 1) * h; }
   }
   function boot() {
     var host = d.getElementById("reels"); if (!host || app) return;
@@ -241,6 +269,7 @@
     host.appendChild(app); fd = app.querySelector(".rlfeed");
     fd.addEventListener("scroll", onScroll, { passive: true });
     app.addEventListener("click", click);
+    app.addEventListener("wheel", wheel, { passive: false });
     d.addEventListener("keydown", keys);
     d.addEventListener("visibilitychange", function () { if (d.hidden) hush(); });
     w.addEventListener("pagehide", hush);
