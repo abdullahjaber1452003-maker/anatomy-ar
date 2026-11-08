@@ -221,3 +221,15 @@ html.nzshon,html.nzshon body{overflow:hidden}
 .hz .rsm.done .rsmt b{color:#16a34a}
 .hz .rsmx{flex:0 0 32px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;font-size:14px;opacity:.6;padding:0}
 .hz .rsmx:active{opacity:1}
+
+/* 💬 31c «نقاش»: the chip (after «🗺️ الخرائط الذهنية», badge «جديد») + the compact card right under the chips — the approved preview (259da39b) */
+.hzchips>.hzdis{position:relative;background:linear-gradient(135deg,#7c3aed,#0f766e)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 6px 16px rgba(76,58,180,.30)}
+.hzchips>.hzdis .nw{position:absolute;top:-7px;inset-inline-start:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;line-height:1;padding:3px 6px;border-radius:99px;border:2px solid #fff}
+.hzchips{padding-top:9px}
+.hz .hzdcard{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px 12px;border-radius:20px;background:var(--hzbox);border:1px solid var(--hzedge);box-shadow:var(--hzshadow);font-family:Cairo,sans-serif;text-decoration:none;color:var(--hzink)}
+.hz .hzdcard .av{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#ede9fe,#ccfbf1);border:2px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.08);position:relative}
+.hz .hzdcard .av:after{content:"";position:absolute;bottom:1px;inset-inline-end:1px;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #fff}
+.hz .hzdcard .tx{flex:1;min-width:0;line-height:1.4}
+.hz .hzdcard .tx b{display:block;font-size:14.5px;color:var(--hzink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hz .hzdcard .tx span{display:block;font-size:12.5px;color:var(--hzmut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hz .hzdcard .go{flex:0 0 auto;height:34px;padding:0 14px;border-radius:99px;display:inline-flex;align-items:center;font-weight:800;font-size:13.5px;color:#fff;background:linear-gradient(135deg,#7c3aed,#0f766e)}

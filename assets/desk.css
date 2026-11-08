@@ -122,4 +122,14 @@
   body.reels .rlapp .rlvq .rltag{max-width:calc(100% - 110px)}
   body.reels .rlapp .rllook{top:78px;font-size:15px}
   .hzside .dki:not(.on):hover{background:rgba(13,148,136,.06)}
+  /* 💬 31c «نقاش» on a wide screen: the chat beside the side nav, a readable centred column. */
+  body.dspage .dsapp{left:0;right:232px;width:auto;align-items:center}
+  html[lang="fr"] body.dspage .dsapp,html[dir="ltr"] body.dspage .dsapp{left:232px;right:0}
+  body.dspage .dsapp .hd,body.dspage .dsapp .ch,body.dspage .dsapp .ib{width:100%;max-width:820px}
+  body.dspage .dsapp .hd{margin-top:22px}
+  body.dspage .dsapp .ch{padding:16px 18px 10px}
+  body.dspage .dsapp .m{max-width:74%;font-size:16px}
+  body.dspage .dsapp .ib{margin-bottom:22px}
+  body.dspage .dsapp .qr button:hover,body.dspage .dsapp .qr a:hover,body.dspage .dsapp .snd:hover{filter:brightness(.96);cursor:pointer}
+  .hz .hzdcard:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(16,40,48,.14)}
 }
