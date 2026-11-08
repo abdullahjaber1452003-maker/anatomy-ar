@@ -69,8 +69,42 @@
   .mil .mlst{font-size:13px;padding:4px 10px;justify-content:space-between}
   .mil .mlo:hover:not(:disabled){border-color:#f5c542}
   /* 🎬 30s Reels: a centered phone-width column beside the side navigation (no change under 1024 px) */
-  body.reels .rlapp{left:calc(50% - 116px - 215px);right:auto;width:430px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 20px 60px rgba(0,0,0,.5)}
-  html[lang="fr"] body.reels .rlapp,html[dir="ltr"] body.reels .rlapp{left:calc(50% + 116px - 215px)}
+  /* 💻 30u wide Reels (Abdullah Nov 8 2026 2:40 PM «ما بيمشي الحال ينفتح الفيديو بالعرض»): on a computer each reel fills the whole area
+     beside the side nav like a landscape video — icon + subject tag on one side, big title + lines on the other, ❤️ 📖 ↗️ stacked on the
+     outer edge, MCQ options in a grid. Phones (<1024 px) keep the full-screen phone reel from reels.css untouched. */
+  body.reels .rlapp{left:0;right:232px;width:auto}
+  html[lang="fr"] body.reels .rlapp,html[dir="ltr"] body.reels .rlapp{left:232px;right:0}
+  body.reels .rlapp .rlchrome{top:22px;padding:0 28px}
+  body.reels .rlapp .rlpgw{padding:10px 28px 0;height:130px}
+  body.reels .rlapp .rlprog{height:4px}
+  body.reels .rlapp .rlbar{gap:10px}
+  body.reels .rlapp .rlpill{font-size:15px;padding:8px 16px}
+  body.reels .rlapp .rlback,body.reels .rlapp .rlsnd{width:42px;height:42px;font-size:19px}
+  body.reels .rlapp .rlv{padding:118px 64px 96px 150px;justify-content:center}
+  body.reels .rlapp .rlv:not(.rlvq) .rlbody{display:grid;grid-template-columns:minmax(150px,230px) minmax(0,900px);-webkit-column-gap:56px;column-gap:56px;-webkit-box-align:center;align-items:center;justify-content:center;width:100%;margin:auto}
+  body.reels .rlapp .rlv:not(.rlvq) .rltag{grid-column:1;grid-row:1;justify-self:center;align-self:end;white-space:normal;text-align:center;font-size:16px;padding:6px 16px;margin-bottom:18px;line-height:1.5}
+  body.reels .rlapp .rlv:not(.rlvq) .rlico{grid-column:1;grid-row:2/span 6;justify-self:center;align-self:start;display:inline-block;font-size:clamp(96px,9vw,150px);margin:0}
+  body.reels .rlapp .rlv:not(.rlvq) h2,body.reels .rlapp .rlv:not(.rlvq) .rlfr,body.reels .rlapp .rlv:not(.rlvq) .rlln{grid-column:2}
+  body.reels .rlapp .rlv h2{font-size:clamp(36px,min(3.5vw,6vh),56px);line-height:1.3;margin:0 0 12px}
+  body.reels .rlapp .rlfr{font-size:clamp(18px,1.45vw,22px);margin-bottom:20px}
+  body.reels .rlapp .rlln{font-size:clamp(20px,min(1.85vw,3.1vh),28px);line-height:1.6;padding:12px 20px;margin-bottom:14px;min-height:0;border-radius:18px;border-right-width:4px}
+  body.reels .rlapp .rlsrc{bottom:40px;right:64px;left:150px;text-align:center;font-size:15px}
+  body.reels .rlapp .rlside{right:auto;left:40px;bottom:auto;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);gap:24px}
+  body.reels .rlapp .rlside button,body.reels .rlapp .rlside a{font-size:13px;gap:5px}
+  body.reels .rlapp .rlside .c{width:62px;height:62px;font-size:28px}
+  body.reels .rlapp .rlhint{bottom:76px;font-size:14px}
+  body.reels .rlapp .rltap{top:84px;font-size:15px;padding:8px 18px}
+  body.reels .rlapp .rltoast{bottom:110px;font-size:15px}
+  body.reels .rlapp .rlvq{padding-left:64px}
+  body.reels .rlapp .rlvq .rlbody{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row dense;gap:16px;max-width:1120px;margin:auto}
+  body.reels .rlapp .rlvq .rlbody.rlo2,body.reels .rlapp .rlvq .rlbody.rlo4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.reels .rlapp .rlvq .rltag,body.reels .rlapp .rlvq .rlq,body.reels .rlapp .rlvq .rlwhy,body.reels .rlapp .rlvq .rlqout{grid-column:1/-1}
+  body.reels .rlapp .rlvq .rltag{font-size:16px;padding:6px 16px;margin-bottom:6px}
+  body.reels .rlapp .rlvq .rlq{font-size:clamp(24px,min(2.3vw,4vh),34px);line-height:1.5;margin-bottom:10px}
+  body.reels .rlapp .rlvq .rlopt{margin:0;min-height:96px;font-size:clamp(17px,1.45vw,21px);line-height:1.5;padding:16px 20px;border-radius:18px;display:block;text-align:right}
+  body.reels .rlapp .rlvq .rlwhy{-webkit-box-ordinal-group:2;order:1;font-size:clamp(17px,1.4vw,20px);padding:12px 18px;margin:4px 0 0}
+  body.reels .rlapp .rlvq .rlqout{-webkit-box-ordinal-group:3;order:2}
+  body.reels .rlapp .rlvq .rlqout:empty{display:none}
   body.reels .rlpill:hover,body.reels .rlopt:hover:not([disabled]){border-color:#fff}
   /* 💻 30t Reels on a computer: the 📢 announcement bar no longer peeks out beside the column (on a phone the reels cover it too);
      buttons show they are clickable */

@@ -65,7 +65,7 @@
     var M = w.NursinMid; if (!M || !M.daysLeft) return null;
     day = day || today();
     var o = { exam: M.EXAM, left: M.daysLeft(day), active: M.active(day), today: null, best: [], last: [], weak: [], exams: [] };
-    try {                                                  // 📅 20261030t: the midterm is split over 4 dates — each with its subjects and days left
+    try {                                                  // 📅 20261030u: the midterm is split over 4 dates — each with its subjects and days left
       (M.EXAMS || []).forEach(function (E) {
         var n = Math.round((Date.UTC(+E.d.slice(0, 4), +E.d.slice(5, 7) - 1, +E.d.slice(8, 10)) - Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10))) / 864e5);
         o.exams.push({ d: E.d, ar: E.ar, left: n, subs: E.subs.filter(function (s) { return s !== "*"; }).map(function (s) { return M.subjName(s); }) });

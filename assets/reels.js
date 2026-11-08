@@ -113,7 +113,7 @@
     var top = '<div class="rlpgw"><div class="rlprog"><i></i></div></div>';
     if (it.k === "q") {
       var q = it.q, m = S(it.s);
-      return top + '<div class="rlbody"><span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + esc(T(m[1], m[2])) + "</span>" +
+      return top + '<div class="rlbody rlo' + q.o.length + '"><span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + esc(T(m[1], m[2])) + "</span>" +
         '<div class="rlq">' + esc(q.q) + "</div>" +
         q.o.map(function (o, k) { return '<button type="button" class="rlopt" data-k="' + k + '">' + esc(o) + "</button>"; }).join("") + '<div class="rlqout"></div></div>';
     }
