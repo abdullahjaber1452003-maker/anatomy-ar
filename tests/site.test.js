@@ -6715,7 +6715,7 @@ test('#281 29u ❌ a wrong answer shows ❌ ليش غلط؟ + ✅ الصح from 
   const nx = { id: 'zz1', t: 'infarctus', q: 'test?', o: ['Troponine', 'Myoglobine', 'LDH'], a: 0 };
   const les = ['La Troponine est le marqueur le plus spécifique de la nécrose.', 'La Myoglobine monte tôt mais elle est peu spécifique.'];
   const z = X.why(nx, 1, les); assert.ok(z.w === null && /Troponine/.test(z.r) && z.src === 'lesson', '✅ from the lesson sentence carrying the right answer; ❌ never from a lesson sentence that merely names his option');
-  const q637 = Q.find(q => q.id === 'q637'), y637 = X.why(q637, 2, []); assert.ok(y637.w === null && /استبدال/.test(y637.r), 'q637 (c): the right answer\'s sentence is never shown as «ليش غلط؟»');
+  const q637 = Q.find(q => q.id === 'q637'), y637 = X.why(q637, 2, []); assert.ok((y637.w === null || (q637.why && y637.w === q637.why[2])) && y637.w !== y637.r && /استبدال/.test(y637.r), 'q637 (c): the right answer\'s sentence is never shown as «ليش غلط؟» (30r: the bank\'s own reason for (c) is)');
   const z0 = X.why(nx, 2, []); assert.ok(z0.w === null && z0.r === null && z0.src === 'none', 'nothing found → nothing invented');
   const h0 = X.html(nx, 2, {}); assert.ok(h0.includes('الصح:') && h0.includes('Troponine') && h0.includes('cardio.html#infarctus'), 'right answer + lesson link only');
 });
@@ -8441,7 +8441,7 @@ test('#376 30q 🆕 whats-new 30q on top, plain line, parseable', () => {
 
 test('#377 30r ❓ «ليش غلط؟» for the 16/11 subjects: reasons aligned to options, "" at the right answer, coverage per subject at least as shipped', () => {
   const w = WX(), Q = w.QUIZ, G = w.QGROUPS, sub = q => { for (const g in G) if (G[g].indexOf(q.t) >= 0) return g; return q.t; };
-  const MIN = {"law": 41, "mgmt": 38, "medsurg": 0, "henderson": 0, "cardio": 0, "neuro": 0}, cov = {};
+  const MIN = {"law": 41, "mgmt": 38, "medsurg": 60, "henderson": 20, "cardio": 0, "neuro": 0}, cov = {};
   for (const q of Q) { const s = sub(q); if (!(s in MIN)) continue; if (!('why' in q)) continue;
     assert.ok(Array.isArray(q.why) && q.why.length === q.o.length, q.id + ': why length = options length');
     assert.strictEqual(q.why[q.a], '', q.id + ': nothing at the right answer');
