@@ -17,7 +17,8 @@
      ("game", ≤ 15 points, same caps as the other games). Sound: see the 🔊 block above (30n, ON by default). No continuous animations. No ads in here. */
 /* 🔊 30n — the show's sound, SYNTHESIZED with Web Audio (Abdullah, Nov 8 2026 8:57 AM: «بدي يطلع صوت اللي انه عم يخلص الوقت متل الحقيقية»).
    No audio files, no downloads: oscillators + gain envelopes only, scheduled ONE SECOND AT A TIME by the game's own timer (no audio loop).
-   • Each question: a soft low heartbeat (sine ~60 Hz) once a second. Last 10 s: a clock tick every second, louder + higher each second,
+   • Each question: a short «sting» when it appears, then a quiet continuous suspense bed (a low pad scheduled per second, overlapping)
+     with a soft low heartbeat (sine ~60 Hz) once a second. Last 10 s: a clock tick every second, louder + higher each second,
      the heartbeat doubles. Last 5 s: two ticks a second, rising tone. Time out: a short descending buzzer.
    • lockin (rising chord ~1 s) · correct (major arpeggio) · wrong (low minor thud) · lifeline (shimmer) · safe (Q5/Q10 short fanfare) · fanfare (result ≥ safe level).
    • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. The AudioContext (webkitAudioContext on iOS 12) is created /
@@ -39,20 +40,21 @@
     return true;
   }
   function forget(n) { var i = live.indexOf(n); if (i > -1) live.splice(i, 1); }
-  function tone(f, at, dur, vol, type, f2, tag) {   // one enveloped oscillator, `at` seconds from now
+  function tone(f, at, dur, vol, type, f2, tag, pad) {   // one enveloped oscillator, `at` seconds from now (pad: slow in/out so seconds overlap)
     var c = ac; if (!c || !on() || hidden()) return;
     try {
       var t = c.currentTime + Math.max(0, at), o = c.createOscillator(), g = c.createGain();
       o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + Math.min(0.02, dur / 4));
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      if (pad) { g.gain.linearRampToValueAtTime(vol, t + 0.25); g.gain.setValueAtTime(vol, t + dur - 0.25); g.gain.linearRampToValueAtTime(0.0001, t + dur); }
+      else { g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + Math.min(0.02, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
       var n = { o: o, g: g, tag: tag || "" }; live.push(n); o.onended = function () { forget(n); try { g.disconnect(); } catch (e) {} };
     } catch (e) {}
   }
   function play(list, tag) {
     if (ac && ac.state === "suspended" && ac.resume) try { ac.resume(); } catch (e) {}
-    (list || []).forEach(function (x) { tone(x.f, x.at, x.dur, x.g, x.type, x.f2, tag); }); return list; }
+    (list || []).forEach(function (x) { tone(x.f, x.at, x.dur, x.g, x.type, x.f2, tag, x.k === "bed"); }); return list; }
   function kill(only) {   // cut ringing / scheduled sounds now (only = "sus": just the suspense ones)
     live.slice().forEach(function (n) {
       if (only && n.tag !== only) return; forget(n);
@@ -64,6 +66,10 @@
   function plan(s) {
     var L = [];
     if (s <= 0) return L;
+    // the suspense bed: a low two-note pad, 1.3 s long each second (so it overlaps into one continuous drone), a semitone wobble
+    // every other second; it only exists while the question runs and is cut with everything else on the answer
+    var lo = s % 2 ? 110 : 116.5, bg = s > 10 ? 0.035 : 0.035 + 0.003 * (10 - s);
+    L.push({ k: "bed", f: lo, at: 0, dur: 1.3, g: bg, type: "triangle" }, { k: "bed", f: lo * 1.5, at: 0, dur: 1.3, g: bg * 0.6, type: "triangle" });
     if (s > 10) { L.push({ k: "beat", f: 62, at: 0, dur: 0.22, g: 0.18 }); return L; }
     var u = (10 - s) / 9;   // 0 at 10 s → 1 at 1 s
     L.push({ k: "beat", f: 64, at: 0, dur: 0.18, g: 0.2 + 0.1 * u }, { k: "beat", f: 58, at: 0.26, dur: 0.18, g: 0.16 + 0.1 * u });
@@ -80,6 +86,7 @@
     return play(plan(s), "sus");
   }
   var FX = {
+    sting: [{ f: 110, f2: 55, at: 0, dur: 0.6, g: 0.25 }, { f: 440, f2: 880, at: 0, dur: 0.35, g: 0.05, type: "triangle" }, { f: 659, at: 0.08, dur: 0.5, g: 0.05, type: "triangle" }, { f: 988, at: 0.16, dur: 0.6, g: 0.04, type: "triangle" }],
     buzzer: [{ f: 220, f2: 90, at: 0, dur: 0.7, g: 0.22, type: "sawtooth" }, { f: 165, f2: 70, at: 0, dur: 0.7, g: 0.12, type: "square" }],
     lockin: [{ f: 220, f2: 440, at: 0, dur: 1, g: 0.08, type: "triangle" }, { f: 277, f2: 554, at: 0, dur: 1, g: 0.06, type: "triangle" }, { f: 330, f2: 659, at: 0, dur: 1, g: 0.06, type: "triangle" }],
     correct: [{ f: 523, at: 0, dur: 0.25, g: 0.16, type: "triangle" }, { f: 659, at: 0.1, dur: 0.25, g: 0.16, type: "triangle" }, { f: 784, at: 0.2, dur: 0.3, g: 0.16, type: "triangle" }, { f: 1047, at: 0.3, dur: 0.45, g: 0.14, type: "triangle" }],
@@ -260,7 +267,7 @@
     return h + "</ol>";
   }
   function ask() {
-    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; SND().start();
+    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; SND().start(); SND().fx("sting");
     var h = '<div class="mlplay">' + ladder() +
       '<div class="mlbar"><span class="mlqn">سؤال ' + (st.i + 1) + " / " + N + ' · <b>' + num(LADDER[st.i]) + '</b></span><span class="mltm" id="mltm" aria-live="off">' + SECS + "</span></div>" +
       '<div class="mlll">' + ll("ff", "٥٠:٥٠") + ll("ph", "📞 اسأل عثمان") + ll("au", "👥 رأي الجمهور") + "</div>" +
