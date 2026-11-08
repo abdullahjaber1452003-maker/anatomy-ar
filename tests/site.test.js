@@ -8181,7 +8181,7 @@ function sndCtx(opts) {
   c.window = c; c.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
   if (opts && opts.audio) {
     const made = [];
-    const param = () => ({ value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {} });
+    const param = () => ({ value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {}, cancelScheduledValues() {} });
     c.webkitAudioContext = function () { this.currentTime = 0; this.state = 'running'; this.destination = {}; made.push(this); };
     c.webkitAudioContext.prototype = {
       createOscillator() { const o = { frequency: param(), connect() {}, start() {}, stopped: false, stop(t) { if (t === 0) o.stopped = true; } }; return o; },
@@ -8211,7 +8211,8 @@ test('#362 30n 🔊 sound module: loads with no Web Audio (no throw, silent), ON
 });
 test('#363 30n 🔊 the per-second plan: heartbeat each second, last 10 s ticks louder + higher with a double heartbeat, last 5 s two ticks/s', () => {
   const S = sndCtx().NursinMilSnd, P = S.plan;
-  for (let s = 30; s > 10; s--) { const p = P(s); assert.strictEqual(p.length, 1); assert.strictEqual(p[0].k, 'beat'); assert.ok(p[0].f >= 55 && p[0].f <= 70 && p[0].g <= 0.2, 'soft low beat'); }
+  for (let s = 30; s > 10; s--) { const p = P(s), b = p.filter(x => x.k === 'beat'), bed = p.filter(x => x.k === 'bed'); assert.strictEqual(b.length, 1); assert.ok(b[0].f >= 55 && b[0].f <= 70 && b[0].g <= 0.2, 'soft low beat'); assert.ok(bed.length === 2 && bed.every(x => x.dur > 1 && x.g <= 0.05), 'quiet bed overlapping into the next second'); }
+  for (let s = 10; s >= 1; s--) assert.strictEqual(P(s).filter(x => x.k === 'bed').length, 2, s + ': the bed keeps going to the end');
   let prev = null;
   for (let s = 10; s >= 1; s--) {
     const p = P(s), ticks = p.filter(x => x.k === 'tick'), beats = p.filter(x => x.k === 'beat');
@@ -8220,10 +8221,10 @@ test('#363 30n 🔊 the per-second plan: heartbeat each second, last 10 s ticks 
     if (s <= 5) assert.ok(ticks[1].at === 0.5 && p.some(x => x.k === 'rise' && x.f2 > x.f), s + ': second tick + rising tone');
     if (prev) assert.ok(ticks[0].g > prev.g && ticks[0].f > prev.f, s + ': louder + higher');
     prev = ticks[0];
-    assert.ok(p.every(x => x.at >= 0 && x.at < 1 && x.g <= 0.35), 'inside its own second, never loud');
+    assert.ok(p.every(x => x.at >= 0 && x.at < 1 && x.g <= 0.35), 'starts inside its own second, never loud');
   }
   assert.strictEqual(P(0).length, 0, 'time out → the buzzer instead');
-  ['buzzer', 'lockin', 'correct', 'wrong', 'lifeline', 'safe', 'fanfare'].forEach(k => assert.ok(S.FX[k] && S.FX[k].length, k));
+  ['sting', 'buzzer', 'lockin', 'correct', 'wrong', 'lifeline', 'safe', 'fanfare'].forEach(k => assert.ok(S.FX[k] && S.FX[k].length, k));
   assert.ok(S.FX.buzzer[0].f2 < S.FX.buzzer[0].f, 'buzzer descends');
   assert.ok(S.FX.lockin.every(x => x.f2 > x.f && x.dur >= 0.9), 'lock-in rises ~1 s');
 });
@@ -8231,8 +8232,8 @@ test('#364 30n 🔊 scheduler state: plays once per whole second, silent while p
   const c = sndCtx({ audio: true }), S = c.NursinMilSnd;
   S.unlock(); assert.strictEqual(c.__made.length, 1, 'context made on the tap (webkitAudioContext)');
   assert.strictEqual(S.second(20).length, 0, 'not running → nothing');
-  S.start(); assert.strictEqual(S.second(20).length, 1); assert.strictEqual(S.second(20).length, 0, 'same second → once');
-  assert.ok(S.second(9).length >= 3 && S.state().live > 0, 'scheduled');
+  S.start(); assert.strictEqual(S.second(20).length, 3, 'bed (2) + heartbeat'); assert.strictEqual(S.second(20).length, 0, 'same second → once');
+  assert.ok(S.second(9).length >= 5 && S.state().live >= 5, 'scheduled (bed + double beat + tick)');
   S.pause(true); assert.strictEqual(S.state().live, 0, 'dialog open → suspense cut'); assert.strictEqual(S.second(8).length, 0, 'paused → silent');
   S.fx('lifeline'); const shimmer = S.state().live; assert.ok(shimmer > 0, 'shimmer plays during the pause');
   S.pause(false); assert.ok(S.second(8).length > 0, 'resumes'); 
@@ -8242,6 +8243,7 @@ test('#364 30n 🔊 scheduler state: plays once per whole second, silent while p
   const js = read('assets/mil.js');
   assert.ok(/function answer\(k\) \{\s*if \(!st \|\| st\.busy\) return; st\.busy = true; stopT\(\); SND\(\)\.stop\(\);/.test(js), 'answer stops the suspense');
   assert.ok(/function close\(fromPop\) \{\s*stopT\(\); SND\(\)\.stop\(\);/.test(js) && /function end\(how\) \{\s*stopT\(\); SND\(\)\.stop\(\);/.test(js), 'leaving / result stops it');
+  assert.ok(/st\.ls = -1; SND\(\)\.start\(\); SND\(\)\.fx\("sting"\);/.test(js), 'each question: sting + the bed restarts');
   assert.ok(/function pause\(on\) \{[^\n]*SND\(\)\.pause\(on\)/.test(js), 'lifeline dialog pauses the suspense');
   assert.ok(/visibilitychange[\s\S]{0,120}d\.hidden\) \{ kill\(\)/.test(js), 'hidden tab → cut');
   assert.ok(/\.mltm\.low\.fl\{background-color:#dc2626/.test(read('assets/mil.css')) && !/animation\s*:|@keyframes/.test(read('assets/mil.css')), 'red flash = a transition, no animation');
