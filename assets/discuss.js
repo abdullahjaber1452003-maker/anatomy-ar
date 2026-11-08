@@ -462,7 +462,8 @@
   function page() { var p = (location.pathname || "").split("/").pop() || "index.html"; return p; }
   function nudge() {
     try {
-      var pg = page(); if (pg === "discuss.html" || pg === "index.html" || pg === "" || pg === "admin.html" || pg === "reels.html") return;
+      var pg = page(); if (pg === "discuss.html" || pg === "index.html" || pg === "" || pg === "admin.html" || pg === "reels.html" || pg === "learn.html") return;
+      if (String(d.documentElement.className).indexOf("nzemb") > -1) return;   // 31f: never inside the path sheet / the hidden lesson frame of 📖 وضع التعلّم (it would spend the day's nudge unseen)
       var day = today(), st = state(); if (quiet(day, minB())) return;
       if (st.nudge === day || (st.days[day] | 0) > 0 || !st.pick[day]) return;
       st.nudge = day; save(st);

@@ -12,7 +12,7 @@
   if (emb) {
     html.className += " nzemb"; w.NursinEmbed = true;
     try { (w.adsbygoogle = w.adsbygoogle || []).pauseAdRequests = 1; } catch (e) {}
-    try { var est = d.createElement("style"); est.textContent = "html.nzemb .topbar,html.nzemb .gnav,html.nzemb .foot,html.nzemb .adx,html.nzemb .ad-slot,html.nzemb .nsplash,html.nzemb .skip,html.nzemb .uiback,html.nzemb .annbar,html.nzemb .annbell,html.nzemb .glk-ad,html.nzemb .glk-or{display:none!important}html.nzemb body{padding-bottom:16px!important}"; (d.head || html).appendChild(est); } catch (e) {}
+    try { var est = d.createElement("style"); est.textContent = "html.nzemb .topbar,html.nzemb .gnav,html.nzemb .foot,html.nzemb .adx,html.nzemb .ad-slot,html.nzemb .nsplash,html.nzemb .skip,html.nzemb .uiback,html.nzemb .annbar,html.nzemb .annbell,html.nzemb .glk-ad,html.nzemb .glk-or,html.nzemb .hznav,html.nzemb .dsnudge{display:none!important}html.nzemb body{padding-bottom:16px!important}"; (d.head || html).appendChild(est); } catch (e) {}
     var up = function (m) { try { if (w.parent && w.parent !== w) w.parent.postMessage(m, location.origin); } catch (e) {} };
     ["nursin:quiz-done", "nursin:goal-done", "nursin:srs", "nursin:ret"].forEach(function (t) {
       d.addEventListener(t, function (e) { var x = null; try { x = JSON.parse(JSON.stringify(e.detail || null)); } catch (er) {} up({ nz: "ev", t: t, d: x }); });
