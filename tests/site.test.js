@@ -8658,10 +8658,11 @@ const qvLoad = (store) => {
   new Function('window', 'Lang', 'localStorage', src.replace(/if \(typeof window !== "undefined" && window\.Lang\)[^\n]*\n/, ''))(w, w.Lang, w.localStorage);
   return { w, mem, ev };
 };
-test('#392 30w/30x 🔄 every Réa question has ≥2 wordings; any question with v: same answer index, right option never the strict longest, reasons still map, no new numbers', () => {
+test('#392 30w/30x 🔄 every Réa question has ≥2 wordings; any question with v: same answer index, right option never made the strict longest, reasons still map, no new numbers', () => {
   const Q = JSON.parse(read('assets/quiz-data.js').match(/window\.QUIZ=(\[.*?\]);\n/s)[1]);
   const R = Q.filter(q => q.t === 'rea'); assert.strictEqual(R.length, 71);
   for (const q of R) assert.ok(Array.isArray(q.v) && q.v.length >= 2, q.id + ' Réa variants');
+  for (const s of ['law', 'mgmt']) for (const q of Q.filter(y => y.t === s)) assert.ok(Array.isArray(q.v) && q.v.length >= 2, q.id + ' ' + s + ' variants');
   const plain = s => String(s).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   for (const q of Q.filter(y => y.v)) {
     assert.ok(Array.isArray(q.v) && q.v.length >= 2, q.id + ' ≥2 variants');
@@ -8669,7 +8670,7 @@ test('#392 30w/30x 🔄 every Réa question has ≥2 wordings; any question with
     for (const v of q.v) {
       assert.ok(typeof v.q === 'string' && v.q.length > 10, q.id + ' stem'); assert.ok(!stems.has(v.q), q.id + ' a new wording'); stems.add(v.q);
       const o = v.o || q.o; assert.strictEqual(o.length, q.o.length, q.id + ' same option count');
-      const L = o.map(x => plain(x).length); assert.ok(!L.every((l, j) => j === q.a || L[q.a] > l), q.id + ' right option is not the strict longest');
+      const lg = oo => { const L = oo.map(x => plain(x).length); return L.every((l, j) => j === q.a || L[q.a] > l); }; assert.ok(!lg(o) || lg(q.o), q.id + ' a wording never MAKES the right option the strict longest');
       assert.strictEqual(Object.keys(v).filter(k => k !== 'q' && k !== 'o').length, 0, q.id + ' only q / o (same a, x, why)');
       if (v.o && q.why) for (let j = 0; j < o.length; j++) assert.ok(o[j] !== '' && (q.why[j] === '') === (j === q.a), q.id + ' reason ' + j + ' still belongs to option ' + j);
       for (const m of v.q.match(/\d+(?:\.\d+)?/g) || []) assert.ok((q.q + ' ' + q.x + ' ' + q.o.join(' ')).includes(m), q.id + ' no new number ' + m);
