@@ -8332,7 +8332,7 @@ test('#368 30o ↩️ restore: heading + stored offset, fallback to the part / s
   assert.strictEqual(R.targetY(rec, Object.assign(rsmEl(500, 0, [{ t: 'VNI', top: 0 }]), { open: false })), 500, 'part still closed (locked for a guest) → its title, never a bogus 0');
   const lj = read('assets/lessons.js');
   assert.ok(/sessionStorage\.setItem\(GO/.test(lj) && /sessionStorage\.removeItem\(GO\)/.test(lj), 'one-shot flag set on tap, consumed on arrival');
-  assert.ok(/Date\.now\(\) - t0 < 1500\) setTimeout\(step, 120\)/.test(lj) && /el\.open = true/.test(lj), 'opens the part and re-applies for 1.5 s (late content)');
+  assert.ok(/now - t0 < 1500 \|\| \(now - calm < 700 && now - t0 < 5000\)\) setTimeout\(step, 120\)/.test(lj) && /el\.open = true/.test(lj), 'opens the part and re-applies for 1.5 s (late content)');
 });
 test('#369 30o ✅ finished (≥ 95 %) → «خلّصت … · ابدأ الجاي» to the next lesson of the same subject', async () => {
   const { R, ctx } = rsmCtx(null), P = ctx.NursinLessons.parts, now = Date.now();
