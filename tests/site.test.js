@@ -9090,6 +9090,8 @@ test('#415 31f 📖 where he stopped (nursin_learn_v1), path steps that send him
   assert.ok(!/adsbygoogle|ca-pub-|adsterra|class="adx|ad-slot/i.test(pg), 'no ads on learn.html');
   assert.ok(pg.includes('<section id="ln-app"') && pg.indexOf('<script src="assets/partq-data.js?v=20261031f"') < pg.indexOf('<script src="assets/learn.js?v=20261031f"') && pg.indexOf('<script src="assets/quiz-data.js') < pg.indexOf('<script src="assets/learn.js'), 'bank + part map before learn.js');
   const lj = read('assets/learn.js'); assert.ok(lj.includes('"?embed=1&learn=1"') && lj.includes('target="_top">📄 '), 'the lesson read in a hidden frame without ads; «📄 افتح الدرس كامل»');
+  assert.ok(read('assets/theme.js').includes('html.nzemb .hznav,html.nzemb .dsnudge{display:none!important}'), 'inside the sheet: no floating nav over «التالي», no 💬 nudge');
+  assert.ok(read('assets/discuss.js').includes('pg === "learn.html") return;'), 'no 💬 nudge on learn.html');
   const dk = read('assets/desk.css'); assert.ok(dk.indexOf('body.lnpage #ln-app{max-width:780px') > dk.indexOf('@media (min-width:1024px){'), 'desktop only in desk.css');
   assert.ok(!/@media/.test(read('assets/learn.css')), 'phone-first css, no breakpoint of its own');
   const src = read('assets/whatsnew-data.js'), c = {}; new Function('window', src)(c);
