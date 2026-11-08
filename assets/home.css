@@ -214,8 +214,9 @@ html.nzshon,html.nzshon body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.hzst.hzjust{-webkit-animation:none;animation:none}}
 /* 📖 30o «كمّل من وين وقفت» — one ~40px line under the chips (assets/lessons.js NursinResume.html); no ad near it */
 .hz .rsm{display:flex;align-items:center;gap:4px;min-height:40px;margin:-6px 0 12px;padding:0 4px 0 0;border-radius:14px;font-size:13.5px;line-height:1.3}
-.hz .rsma{flex:1 1 auto;min-width:0;display:block;padding:9px 12px 9px 4px}
-.hz .rsmt{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.hz .rsma{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;padding:9px 12px 9px 4px}
+.hz .rsma>.wnnew{flex:0 0 auto}
+.hz .rsmt{display:block;flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .hz .rsmt b{color:var(--hzacc);font-weight:800}
 .hz .rsm.done .rsmt b{color:#16a34a}
 .hz .rsmx{flex:0 0 32px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;font-size:14px;opacity:.6;padding:0}

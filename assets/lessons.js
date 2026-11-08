@@ -438,6 +438,7 @@ if (typeof window !== "undefined" && window.Lang) { Lang.fix("NLESSONS"); }   //
   function hide() { var r = get(); if (r) ls(XKEY, r.u); }
   function targetY(r, el) {                                   // where to scroll on a lesson page; el = the part element (or null)
     if (!el || !el.getBoundingClientRect) return r.y;
+    if (el.tagName === "DETAILS" && !el.open) return Math.max(0, Math.round(el.getBoundingClientRect().top + (w.pageYOffset || 0)));   // still closed (or locked): its title
     var sy = w.pageYOffset || 0, hs = el.querySelectorAll ? [].slice.call(el.querySelectorAll(HS)) : [], h = null, i;
     if (r.hi >= 0) { h = hs[r.hi] && clip(hs[r.hi].textContent, 50) === r.h ? hs[r.hi] : null; for (i = 0; !h && r.h && i < hs.length; i++) if (clip(hs[i].textContent, 50) === r.h) h = hs[i]; }
     var ref = h || el; return Math.max(0, Math.round(ref.getBoundingClientRect().top + sy + (h || r.hi < 0 ? r.off : 0)));
