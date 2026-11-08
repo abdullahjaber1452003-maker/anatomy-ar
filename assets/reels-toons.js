@@ -55,7 +55,7 @@
     {"id": "sunset", "ar": "غروب", "fr": "Coucher de soleil", "e": "🌅", "sh": 0, "d": 16, "sat": 80, "L": [15, 27, 33], "ang": 160, "card": "glass", "pat": "dots", "anim": "type", "font": "round", "acc": "#fde68a"},
     {"id": "ocean", "ar": "محيط", "fr": "Océan", "e": "🌊", "sh": -24, "d": 14, "sat": 72, "L": [12, 24, 36], "ang": 185, "card": "solid", "pat": "waves", "anim": "fade", "font": "soft", "acc": "#a5f3fc"},
     {"id": "neon", "ar": "نيون", "fr": "Néon", "e": "💜", "sh": 0, "d": 30, "sat": 92, "L": [7, 12, 22], "ang": 145, "card": "outline", "pat": "grid", "anim": "slide", "font": "glow", "acc": "#f0abfc"},
-    {"id": "candy", "ar": "حلويات", "fr": "Bonbons", "e": "🍬", "sh": 22, "d": 20, "sat": 70, "L": [18, 28, 34], "ang": 135, "card": "solid", "pat": "confetti", "anim": "fade", "font": "round", "acc": "#fbcfe8"},
+    {"id": "candy", "ar": "حلويات", "fr": "Bonbons", "e": "🍬", "sh": -40, "d": 20, "sat": 70, "L": [18, 28, 34], "ang": 135, "card": "solid", "pat": "confetti", "anim": "fade", "font": "round", "acc": "#fbcfe8"},
     {"id": "night", "ar": "ليل ونجوم", "fr": "Nuit étoilée", "e": "🌙", "sh": -12, "d": 12, "sat": 58, "L": [6, 12, 24], "ang": 200, "card": "glass", "pat": "stars", "anim": "type", "font": "soft", "acc": "#c7d2fe"},
     {"id": "spring", "ar": "ربيع", "fr": "Printemps", "e": "🌸", "sh": 36, "d": 18, "sat": 66, "L": [13, 26, 36], "ang": 170, "card": "outline", "pat": "petals", "anim": "slide", "font": "comic", "acc": "#bbf7d0"},
     {"id": "comic", "ar": "كوميكس", "fr": "BD", "e": "💥", "sh": 0, "d": 24, "sat": 84, "L": [16, 26, 32], "ang": 120, "card": "solid", "pat": "halftone", "anim": "fade", "font": "comic", "acc": "#fef08a"}

@@ -85,8 +85,9 @@ body.reels .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:
 .rltight .rlsrc{display:none}
 .rltight h2{font-size:20px}
 .rltight .rlln{font-size:14.5px;line-height:1.5}
-.rlsm .rltag{display:inline-block;max-width:calc(100% - 92px)}
-.rlsm .rlfr,.rlsm .rlln{overflow:hidden}
+.rlsm .rltag{display:inline-block;max-width:calc(100% - 100px)}
+.rlsm .rlfr,.rlsm .rlln{clear:left}
+.rlapp .rlbody .rltag{white-space:normal;overflow:visible;line-height:1.5}
 .tk-bob{-webkit-animation:tkbob 2.6s ease-in-out infinite;animation:tkbob 2.6s ease-in-out infinite}
 .tk-d2{-webkit-animation-delay:-.9s;animation-delay:-.9s}.tk-d3{-webkit-animation-delay:-1.7s;animation-delay:-1.7s}
 @-webkit-keyframes tkbob{0%,100%{-webkit-transform:translateY(0)}50%{-webkit-transform:translateY(-7px)}}

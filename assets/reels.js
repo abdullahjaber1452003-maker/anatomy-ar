@@ -142,14 +142,17 @@
   }
   function sec(i) { return fd.children[i]; }
   function draw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") === "1") return; el.innerHTML = reelHtml(items[i], i); el.setAttribute("data-on", "1"); fit(el); }
-  function fit(el) {                           // 🎨 30v phone: a long reel moves its cartoon beside the title (then smaller) so nothing is cut
-    var b = el.querySelector(".rlbody"), tn = el.querySelector(".rltoon"); if (!b || !tn || wide() || !el.clientHeight) return;
-    var ls = el.querySelectorAll(".rlln.wait"), cs = w.getComputedStyle ? w.getComputedStyle(el) : null;
-    [].forEach.call(ls, function (x) { x.textContent = x.getAttribute("data-t") || ""; });
+  function fit(el) {                           // 🎨 30v phone: a long reel moves its cartoon beside the title (then smaller) so nothing is cut — measured on a hidden copy with every line written
+    var b = el && el.querySelector(".rlbody"), tn = b && b.querySelector(".rltoon"); if (!tn || wide() || !el.clientHeight) return;
+    el.classList.remove("rlsm", "rlxs", "rltight");
+    var c = b.cloneNode(true), cs = w.getComputedStyle ? w.getComputedStyle(el) : null, lv = ["rlsm", "rlxs", "rltight"];
+    [].forEach.call(c.querySelectorAll(".rlln"), function (x) { x.textContent = x.getAttribute("data-t") || ""; x.className = "rlln"; x.removeAttribute("style"); });
+    c.setAttribute("aria-hidden", "true"); c.style.position = "absolute"; c.style.visibility = "hidden"; c.style.top = "0"; c.style.width = b.offsetWidth + "px"; el.appendChild(c);
     var room = el.clientHeight - (cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 270) - 4;
-    if (b.offsetHeight > room) { el.classList.add("rlsm"); if (b.offsetHeight > room) el.classList.add("rlxs"); if (b.offsetHeight > room) el.classList.add("rltight"); }
-    [].forEach.call(ls, function (x) { if (x.classList.contains("wait")) x.textContent = ""; });
+    for (var k = 0; k < lv.length && c.offsetHeight > room; k++) el.classList.add(lv[k]);
+    el.removeChild(c);
   }
+
   function undraw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") !== "1") return; el.innerHTML = ""; el.setAttribute("data-on", "0"); }
   function typeIn(el, it) {
     var ls = el.querySelectorAll(".rlln"), n = 0, total = 0;
@@ -176,7 +179,7 @@
     if (cur > -1 && sec(cur)) finishTyping(sec(cur));
     clearTimers(); hush(); cur = i;
     for (var j = 0; j < items.length; j++) { if (Math.abs(j - i) <= WIN) draw(j); else undraw(j); }
-    typeIn(sec(i), items[i]); tStart = Date.now();
+    fit(sec(i)); typeIn(sec(i), items[i]); tStart = Date.now();
     var it = items[i];
     if (it.k === "r") timers.push(setTimeout(function () { if (cur === i) { st.seen[it.r.id] = 1; save(st); } }, 1500));
     if (i >= items.length - 3 && items.length) more();
@@ -306,6 +309,7 @@
     w.addEventListener("pagehide", hush);
     pickVoice(); try { if (w.speechSynthesis && "onvoiceschanged" in w.speechSynthesis) w.speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
     build(first);
+    try { if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { [].forEach.call(fd.children, function (s) { if (s.getAttribute("data-on") === "1") fit(s); }); }); } catch (e) {}
   }
   API.boot = boot; API.cur = function () { return cur; }; API.items = function () { return items; }; API.filter = function () { return filter; }; API.look = function () { return look; };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
