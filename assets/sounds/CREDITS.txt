@@ -1,0 +1,16 @@
+Sounds of «🏆 مين بدو يربح المليون؟» (assets/mil.js, 20261030p) — royalty-free recordings, NOT the TV show's own (copyrighted) music.
+Source: Mixkit (mixkit.co, by Envato). License: Mixkit Sound Effects Free License — https://mixkit.co/license/#sfxFree
+  (free for commercial and non-commercial projects, incl. websites/apps/games; no attribution required; not to be redistributed as standalone sound files).
+Downloaded 2026-11-08; re-encoded here to mono mp3 (64–80 kbps), leading silence trimmed, loudness normalized to about -16 LUFS.
+
+mil-bed.mp3        «Game show suspense waiting» (Mixkit sfx #667) — 1.19 s → 30.0 s cut = a 28.8 s loop (12 bars). https://mixkit.co/free-sound-effects/game-show/  (file: https://assets.mixkit.co/active_storage/sfx/667/667-preview.mp3)
+mil-tick.mp3       «Clock ticker single» (Mixkit sfx #1061), first 0.35 s.  https://mixkit.co/free-sound-effects/clock/  (https://assets.mixkit.co/active_storage/sfx/1061/1061-preview.mp3)
+mil-lock.mp3       «Tension and suspense drum roll» (Mixkit sfx #577), first 1.6 s with a fade.  https://mixkit.co/free-sound-effects/suspense/  (https://assets.mixkit.co/active_storage/sfx/577/577-preview.mp3)
+mil-correct.mp3    «Correct answer reward» (Mixkit sfx #952).  https://mixkit.co/free-sound-effects/game-show/  (https://assets.mixkit.co/active_storage/sfx/952/952-preview.mp3)
+mil-wrong.mp3      «Wrong answer bass buzzer» (Mixkit sfx #948).  (https://assets.mixkit.co/active_storage/sfx/948/948-preview.mp3)
+mil-timeout.mp3    «Wrong long buzzer» (Mixkit sfx #954).  (https://assets.mixkit.co/active_storage/sfx/954/954-preview.mp3)
+mil-safe.mp3       «Musical reveal» (Mixkit sfx #961).  (https://assets.mixkit.co/active_storage/sfx/961/961-preview.mp3)
+mil-lifeline.mp3   «Game magic hint» (Mixkit sfx #962).  (https://assets.mixkit.co/active_storage/sfx/962/962-preview.mp3)
+mil-win.mp3        «Medieval show fanfare announcement» (Mixkit sfx #226), first 7 s with a fade.  (https://assets.mixkit.co/active_storage/sfx/226/226-preview.mp3)
+
+(Pixabay was the first choice but its pages refuse automated downloads; Mixkit's license gives the same freedom.)
