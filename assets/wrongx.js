@@ -10,7 +10,7 @@
    Every reason line is clamped to 2 lines (tap = open). Local only: no network, no Firestore. ES5 for iOS 12. No ads here. */
 (function (w, d) {
   "use strict";
-  var V = "20261030p";
+  var V = "20261030q";
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -57,6 +57,25 @@
   // why(q, k, lessonSentences) → { w: why HIS option is wrong (or null), r: why the right one is right (or null), src: "x" | "lesson" | "none" }
   // ❌ only ever comes from the question's own explanation, from a sentence that speaks of HIS option at least as much as of the right one
   // (a lesson sentence that merely names his option is not a reason, so the lesson text only feeds ✅ when there is no x)
+  /* 30q: a per-option reason written into the bank — QUIZ item .why = ["…","","…"] aligned to .o ("" at the right answer), written ONLY from
+     the site's own lesson text / the question's x. Options get shuffled (🏆 game, NursinVar) or swapped in from a peer question, so the
+     reason is found by the option's VALUE in the original bank item; an option that is not in it has no reason (→ the generic line). */
+  function origQ(q) {
+    if (!q) return q;
+    if (q.src && q.src.o) return q.src;
+    try { var V0 = w.NursinVar; if (q.vq && V0 && V0.orig) { var o0 = V0.orig(q); if (o0 && o0 !== q) return o0; } } catch (e) {}
+    if (q.why && !q.vq) return q;
+    var B = w.QUIZ || [];
+    for (var i = 0; i < B.length; i++) if (B[i] && B[i].id === q.id) return B[i];
+    return q;
+  }
+  function optWhy(q, k) {
+    var o = origQ(q), v = q && q.o ? q.o[k] : null;
+    if (!o || !o.why || !o.o || v == null) return "";
+    var i = o.o.indexOf(v); if (i < 0 || i === o.a) return "";
+    var r = o.why[i]; return typeof r === "string" ? r.replace(/^\s+|\s+$/g, "") : "";
+  }
+  function fallback(q) { return "هيدا الخيار ما بينطبق هون — الصح هو: " + clip(q.o[q.a], 60); }
   function why(q, k, les) {
     var right = toks(q.o[q.a]), mine = toks(q.o[k]), stem = toks(q.q), dm = only(only(mine, right), stem), dr = only(only(right, mine), stem);
     var xs = sents(q.x), ls = les || [], wl = null, rl = null, src = "none";
@@ -68,7 +87,9 @@
     } else if (ls.length) {
       var lr = best(ls, dr); if (lr && score(lr, dr) >= Math.min(2, dr.length)) { rl = lr; src = "lesson"; }
     }
-    return { w: wl, r: rl, src: src };
+    var pw = optWhy(q, k), ws = pw ? "why" : (wl ? src : "none");
+    if (pw) wl = pw;
+    return { w: wl, r: rl, src: src, ws: ws };
   }
 
   /* ---------------- where a question lives ---------------- */
@@ -134,7 +155,7 @@
     if (typeof setTimeout === "function") setTimeout(function () { hideOld(d); }, 0);   // 29v: the box replaces the old «❌ الجواب: …» box once it is in the page
     var h = '<div class="wxb" data-wx="' + id + '" data-wxq="' + esc(q.id) + '" data-nofr>';
     h += '<p class="wxl wxw" data-wxl>❌ <b>' + T("ليش غلط؟", "Pourquoi faux ? (ليش غلط؟)") + '</b> <span dir="rtl">(' + L.charAt(k) + ") " +
-      (y.w ? esc(y.w) : esc(T("هالخيار مش هوّي الجواب — قارنو بالصح تحت 👇", "Ce choix n'est pas la réponse (مش هوّي الجواب) — compare avec la bonne 👇"))) + "</span></p>";
+      esc(y.w || fallback(q)) + "</span></p>";
     h += '<p class="wxl wxr" data-wxl>✅ <b>' + T("الصح:", "La bonne (الصح) :") + '</b> <span dir="rtl">(' + L.charAt(q.a) + ") " + esc(clip(q.o[q.a], 60)) + (y.r ? " — " + esc(y.r) : "") + "</span></p>";
     h += '<p class="wxa">' + (href ? '<a class="wxlk" href="' + esc(href) + '">📖 ' + T("ارجع للدرس", "Revoir la leçon (ارجع للدرس)") + "</a>" : "") +
       '<button type="button" class="wxsim" data-wxsim>🔁 ' + T("سؤال شبيه", "Question similaire (سؤال شبيه)") + "</button></p>";
@@ -233,5 +254,5 @@
     var s = d.createElement("style"); s.id = "wxcss"; s.textContent = c; (d.head || d.documentElement).appendChild(s);
   }
   if (d && d.addEventListener) d.addEventListener("nursin:answer", function (e) { var x = e.detail || {}; if (x.qid) seen[x.qid] = 1; });
-  w.NursinWX = { html: html, mount: mount, why: why, sents: sents, toks: toks, similar: similar, lessonOf: lessonOf, hrefOf: hrefOf, partKey: partKey, seen: seen, style: style, hideOld: hideOld, isOld: isOld };
+  w.NursinWX = { html: html, mount: mount, why: why, optWhy: optWhy, fallback: fallback, origQ: origQ, sents: sents, toks: toks, similar: similar, lessonOf: lessonOf, hrefOf: hrefOf, partKey: partKey, seen: seen, style: style, hideOld: hideOld, isOld: isOld };
 })(window, document);

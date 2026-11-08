@@ -1,4 +1,4 @@
-/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030p.
+/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030q.
    A show-style quiz built ONLY from the site's existing quiz bank (window.QUIZ, the same items the lesson quizzes use; no new content).
    • Start: pick a subject (every QSUBJ subject that has questions), «🎯 امتحاني الجاي» (the next exam date's subjects, read from
      NursinMid.EXAMS when assets/midterm.js is on the page, else the EXAMS mirror below — tests keep both equal; subjects without
@@ -28,7 +28,7 @@
      the red timer flash stays (CSS). FX: lockin, correct, wrong, buzzer (time-out), safe (Q5/Q10), lifeline, fanfare (result ≥ safe level).
    • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. No Audio (old browser / tests): silent, no throw. */
 (function (w, d) {
-  var KEY = "nursin_mil_snd", BASE = "assets/sounds/", VER = "20261030p", FADE_MS = 150;
+  var KEY = "nursin_mil_snd", BASE = "assets/sounds/", VER = "20261030q", FADE_MS = 150;
   var FILES = { bed: "mil-bed.mp3", tick: "mil-tick.mp3", lockin: "mil-lock.mp3", correct: "mil-correct.mp3", wrong: "mil-wrong.mp3",
     buzzer: "mil-timeout.mp3", safe: "mil-safe.mp3", lifeline: "mil-lifeline.mp3", fanfare: "mil-win.mp3" };
   var VOL = { bed: 0.85, tick: 1 }, el = {}, ok = {}, fading = 0, st = { running: false, paused: false, last: -1 };
@@ -210,6 +210,13 @@
     if (s.length > 160) s = s.slice(0, 157) + "…";
     return { les: t, hint: s.trim() };
   }
+  function whyLine(q, k) {   // 30q: ❓ «ليش غلط؟» for HIS option (assets/wrongx.js: the bank's per-option .why, else x, else the generic line)
+    if (k == null || k < 0 || k === q.a || !q.o[k]) return "";
+    var X = w.NursinWX, y = null, t = "";
+    try { if (X && X.why) y = X.why(q, k, []); } catch (e) {}
+    t = (y && y.w) || (X && X.fallback ? X.fallback(q) : "هيدا الخيار ما بينطبق هون — الصح هو: " + strip(q.o[q.a]));
+    return '<p class="mlwhy">❓ <b>ليش غلط؟</b> (' + AR[k] + ") " + fr(t) + "</p>";
+  }
   function lessonName(q) { var s = subjOf(q.t), L = (w.QLES || {})[s], T = w.QTOP || {}; return strip((L && q.l && L[q.l]) || T[q.t] || (subjects()[s] || "")); }
   function lessonHref(q) {
     var X = w.NursinWX, h = "";
@@ -334,7 +341,7 @@
       return;
     }
     st.miss.push(q); if (k >= 0) SND().fx("wrong");
-    $("#mlfb").innerHTML = '<p class="mlbad">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ غلط. ") + "الصح: <b>" + AR[q.a] + "</b> " + fr(q.o[q.a]) + "</p>" + (q.x ? '<p class="mlx2">💡 ' + fr(q.x) + "</p>" : "") +
+    $("#mlfb").innerHTML = '<p class="mlbad">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ غلط. ") + "الصح: <b>" + AR[q.a] + "</b> " + fr(q.o[q.a]) + "</p>" + whyLine(q, k) + (q.x ? '<p class="mlx2">💡 ' + fr(q.x) + "</p>" : "") +
       '<button type="button" class="mlnext" data-mlend="1">شوف النتيجة ⬅️</button>';
     var f = $("#mlfb"); if (f && f.scrollIntoView) try { f.scrollIntoView({ block: "nearest" }); } catch (e) {}
   }
@@ -408,7 +415,7 @@
     if (t.tagName === "A") close(true);
   }
 
-  w.NursinMil = { N: N, SECS: SECS, LADDER: LADDER, SAFE: SAFE, EXAMS: EXAMS, pick: pick, poolFor: poolFor, qsOf: qsOf, nextExam: nextExam, subsAt: subsAt, examOf: examOf, diff: diff, shuffled: shuffled, fifty: fifty, audience: audience, payout: payout, safeAt: safeAt, osman: osman, lessonName: lessonName, lessonHref: lessonHref, open: open, close: close };
+  w.NursinMil = { whyLine: whyLine, N: N, SECS: SECS, LADDER: LADDER, SAFE: SAFE, EXAMS: EXAMS, pick: pick, poolFor: poolFor, qsOf: qsOf, nextExam: nextExam, subsAt: subsAt, examOf: examOf, diff: diff, shuffled: shuffled, fifty: fifty, audience: audience, payout: payout, safeAt: safeAt, osman: osman, lessonName: lessonName, lessonHref: lessonHref, open: open, close: close };
   if (!d || !d.addEventListener) return;
   function boot() {
     var c = d.querySelector("[data-mil]"); if (c) { c.addEventListener("click", function (e) { e.preventDefault(); open(); }); var bb = c.querySelector(".gbest"); if (bb && load().best) bb.textContent = "أحسن نتيجة: " + num(load().best) + " نقطة"; }
