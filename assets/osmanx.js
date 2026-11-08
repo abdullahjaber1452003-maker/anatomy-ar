@@ -15,7 +15,7 @@
    No ad near any of it, nothing new sent to Firestore. ES5 (iOS 12). */
 (function (w, d) {
   "use strict";
-  var V = "20261030o", QK = "nursin_oxq_v1", MK = "nursin_oxmem_v1", TK = "nursin_teach_day_v1", TMAX = 10;
+  var V = "20261030p", QK = "nursin_oxq_v1", MK = "nursin_oxmem_v1", TK = "nursin_teach_day_v1", TMAX = 10;
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

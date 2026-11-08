@@ -1,4 +1,4 @@
-/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030o.
+/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030p.
    A show-style quiz built ONLY from the site's existing quiz bank (window.QUIZ, the same items the lesson quizzes use; no new content).
    • Start: pick a subject (every QSUBJ subject that has questions), «🎯 امتحاني الجاي» (the next exam date's subjects, read from
      NursinMid.EXAMS when assets/midterm.js is on the page, else the EXAMS mirror below — tests keep both equal; subjects without
@@ -14,94 +14,110 @@
    • 30 s a question, paused while a lifeline dialog is open. Lock-in: orange ~1 s, then green / red; a wrong answer shows the right one +
      the item's short explanation. Result: points, best (localStorage nursin_mil_v1), «العب مرة تانية», «📚 راجع الدروس اللي غلطت فيها».
    • Signals: every answered question → NursinSRS.record (the site's existing spaced-review entry point); the round → NursinStudy.activity
-     ("game", ≤ 15 points, same caps as the other games). Sound: see the 🔊 block above (30n, ON by default). No continuous animations. No ads in here. */
-/* 🔊 30n — the show's sound, SYNTHESIZED with Web Audio (Abdullah, Nov 8 2026 8:57 AM: «بدي يطلع صوت اللي انه عم يخلص الوقت متل الحقيقية»).
-   No audio files, no downloads: oscillators + gain envelopes only, scheduled ONE SECOND AT A TIME by the game's own timer (no audio loop).
-   • Each question: a short «sting» when it appears, then a quiet continuous suspense bed (a low pad scheduled per second, overlapping)
-     with a soft low heartbeat (sine ~60 Hz) once a second. Last 10 s: a clock tick every second, louder + higher each second,
-     the heartbeat doubles. Last 5 s: two ticks a second, rising tone. Time out: a short descending buzzer.
-   • lockin (rising chord ~1 s) · correct (major arpeggio) · wrong (low minor thud) · lifeline (shimmer) · safe (Q5/Q10 short fanfare) · fanfare (result ≥ safe level).
-   • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. The AudioContext (webkitAudioContext on iOS 12) is created /
-     resumed on the first tap. stop() cuts everything at once (answer, lifeline dialog, leaving, hidden tab). Without Web Audio: silent, no throw. */
+     ("game", ≤ 15 points, same caps as the other games). Sound: see the 🔊 block above (30p: real recordings in <audio>, ON by default). No continuous animations. No ads in here. */
+/* 🔊 30p — REAL RECORDED sound (Abdullah, Nov 8 2026 9:15 AM on his iPhone: «ما سمعت صوت»; 9:27 AM: «حط الصوت الحقيقي ب من سيربح المليون»).
+   The show's own music is copyrighted (public site with ads), so these are royalty-free RECORDINGS that sound like a TV quiz show,
+   files in assets/sounds/ (source + license of each in assets/sounds/CREDITS.txt; mono mp3, ~-16 LUFS, ~450 KB in all).
+   • Played with HTML <audio> elements (media playback), NOT Web Audio: on iPhone they play even with the ring/silent switch on, and the
+     30n 55–70 Hz synthesized drone (inaudible on phone speakers) is gone. navigator.audioSession.type = "playback" where it exists.
+   • iOS unlock: on the first tap every element is played muted + paused right away inside the gesture (then allowed to play later);
+     unlock() runs on EVERY tap in the game (it only does work for elements not unlocked yet, and restarts the bed if iOS dropped it).
+   • bed (mil-bed.mp3, a 28.8 s loop = 12 bars): starts from the top when a question appears, loops, pauses while a lifeline dialog is open
+     (resumes where it was), stops with a ~150 ms fade on answer / time-out / leaving / result screen / hidden tab / 🔇.
+   • Last 10 s: a recorded clock tick each second (pitch rising a little each second), two a second in the last 5 s — on top of the bed;
+     the red timer flash stays (CSS). FX: lockin, correct, wrong, buzzer (time-out), safe (Q5/Q10), lifeline, fanfare (result ≥ safe level).
+   • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. No Audio (old browser / tests): silent, no throw. */
 (function (w, d) {
-  var KEY = "nursin_mil_snd", ac = null, live = [], st = { running: false, paused: false, last: -1 };
+  var KEY = "nursin_mil_snd", BASE = "assets/sounds/", VER = "20261030p", FADE_MS = 150;
+  var FILES = { bed: "mil-bed.mp3", tick: "mil-tick.mp3", lockin: "mil-lock.mp3", correct: "mil-correct.mp3", wrong: "mil-wrong.mp3",
+    buzzer: "mil-timeout.mp3", safe: "mil-safe.mp3", lifeline: "mil-lifeline.mp3", fanfare: "mil-win.mp3" };
+  var VOL = { bed: 0.85, tick: 1 }, el = {}, ok = {}, fading = 0, st = { running: false, paused: false, last: -1 };
   function on() { try { return w.localStorage.getItem(KEY) !== "0"; } catch (e) { return true; } }
-  function set(v) { try { w.localStorage.setItem(KEY, v ? "1" : "0"); } catch (e) {} if (!v) stop(); return on(); }
+  function set(v) { try { w.localStorage.setItem(KEY, v ? "1" : "0"); } catch (e) {} if (!v) { stop(); hush(); } return on(); }
   function hidden() { return !!(d && d.hidden); }
-  function ctx() {
-    if (ac) return ac;
-    var C = w.AudioContext || w.webkitAudioContext; if (!C) return null;
-    try { ac = new C(); } catch (e) { ac = null; } return ac;
+  function quiet(p) { if (p && p.then) p.then(null, function () {}); return p; }   // play() promises: a refusal is not an error here
+  function mk(k) {   // one <audio> per sound, made once
+    if (el[k]) return el[k];
+    var A = w.Audio; if (!A || !FILES[k]) return null;
+    try {
+      var a = new A(); a.preload = "auto"; if (a.setAttribute) { a.setAttribute("playsinline", ""); a.setAttribute("webkit-playsinline", ""); }
+      a.src = BASE + FILES[k] + "?v=" + VER; if (k === "bed") a.loop = true; a.volume = VOL[k] || 1; el[k] = a;
+    } catch (e) { return null; }
+    return el[k];
   }
-  function unlock() {   // call from a user tap (iOS needs the context made / resumed inside a gesture)
-    if (!on()) return false;
-    var c = ctx(); if (!c) return false;
-    try { if (c.state === "suspended" && c.resume) c.resume(); var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start ? s.start(0) : s.noteOn(0); } catch (e) {}
+  function session() { try { var s = w.navigator && w.navigator.audioSession; if (s && s.type !== "playback") s.type = "playback"; } catch (e) {} }
+  function unlock() {   // from a user tap: make + unlock every element (muted play → pause inside the gesture), once each
+    if (!on()) return false; session();
+    var n = 0;
+    for (var k in FILES) {
+      var a = mk(k); if (!a) continue; n++;
+      if (ok[k]) continue; ok[k] = 1;
+      if (k === "bed" && st.running && !st.paused) continue;   // about to really play
+      try { a.muted = true; quiet(a.play()); a.pause(); a.currentTime = 0; } catch (e) {} a.muted = false;
+    }
+    if (st.running && !st.paused && el.bed && el.bed.paused && !fading) bed(false);   // iOS dropped it (call, other app) → back on the tap
+    return n > 0;
+  }
+  function bed(fromTop) {   // the question bed on (fromTop: a new question)
+    if (!st.running || st.paused || !on() || hidden()) return false;
+    var a = mk("bed"); if (!a) return false;
+    clearTimeout(fading); fading = 0;
+    try { a.muted = false; a.volume = VOL.bed; if (fromTop) a.currentTime = 0; quiet(a.play()); } catch (e) { return false; }
     return true;
   }
-  function forget(n) { var i = live.indexOf(n); if (i > -1) live.splice(i, 1); }
-  function tone(f, at, dur, vol, type, f2, tag, pad) {   // one enveloped oscillator, `at` seconds from now (pad: slow in/out so seconds overlap)
-    var c = ac; if (!c || !on() || hidden()) return;
-    try {
-      var t = c.currentTime + Math.max(0, at), o = c.createOscillator(), g = c.createGain();
-      o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
-      g.gain.setValueAtTime(0.0001, t);
-      if (pad) { g.gain.linearRampToValueAtTime(vol, t + 0.25); g.gain.setValueAtTime(vol, t + dur - 0.25); g.gain.linearRampToValueAtTime(0.0001, t + dur); }
-      else { g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + Math.min(0.02, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
-      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
-      var n = { o: o, g: g, tag: tag || "" }; live.push(n); o.onended = function () { forget(n); try { g.disconnect(); } catch (e) {} };
-    } catch (e) {}
+  function bedOff(reset) {   // ~150 ms fade, then pause (iOS ignores .volume, so there it is a clean stop after 150 ms)
+    var a = el.bed; if (!a) return; clearTimeout(fading); fading = 0;
+    if (a.paused) { if (reset) try { a.currentTime = 0; } catch (e) {} return; }
+    var steps = 5, i = 0;
+    (function step() {
+      i++; try { a.volume = Math.max(0, VOL.bed * (1 - i / steps)); } catch (e) {}
+      if (i < steps) { fading = setTimeout(step, FADE_MS / steps); return; }
+      fading = 0; try { a.pause(); if (reset) a.currentTime = 0; a.volume = VOL.bed; } catch (e) {}
+    })();
   }
-  function play(list, tag) {
-    if (ac && ac.state === "suspended" && ac.resume) try { ac.resume(); } catch (e) {}
-    (list || []).forEach(function (x) { tone(x.f, x.at, x.dur, x.g, x.type, x.f2, tag, x.k === "bed"); }); return list; }
-  function kill(only) {   // cut ringing / scheduled sounds now (only = "sus": just the suspense ones)
-    live.slice().forEach(function (n) {
-      if (only && n.tag !== only) return; forget(n);
-      try { n.g.gain.cancelScheduledValues(0); n.g.gain.value = 0; n.o.stop(0); } catch (e) {} try { n.g.disconnect(); } catch (e) {}
-    });
+  function hush(keep) {   // cut the short sounds now (keep: one name to leave ringing)
+    for (var k in el) { if (k === "bed" || k === keep) continue; try { if (!el[k].paused) el[k].pause(); el[k].currentTime = 0; } catch (e) {} }
   }
-  function stop() { st.running = false; st.paused = false; st.last = -1; kill(); }   // everything off
-  /* the per-second plan: pure, so it is unit-tested without audio */
+  function stop() { st.running = false; st.paused = false; st.last = -1; bedOff(true); hush(); }   // everything off
+  /* the per-second plan: pure, so it is unit-tested without audio. The bed is the recording; the plan is the clock ticks on top */
   function plan(s) {
     var L = [];
-    if (s <= 0) return L;
-    // the suspense bed: a low two-note pad, 1.3 s long each second (so it overlaps into one continuous drone), a semitone wobble
-    // every other second; it only exists while the question runs and is cut with everything else on the answer
-    var lo = s % 2 ? 110 : 116.5, bg = s > 10 ? 0.035 : 0.035 + 0.003 * (10 - s);
-    L.push({ k: "bed", f: lo, at: 0, dur: 1.3, g: bg, type: "triangle" }, { k: "bed", f: lo * 1.5, at: 0, dur: 1.3, g: bg * 0.6, type: "triangle" });
-    if (s > 10) { L.push({ k: "beat", f: 62, at: 0, dur: 0.22, g: 0.18 }); return L; }
-    var u = (10 - s) / 9;   // 0 at 10 s → 1 at 1 s
-    L.push({ k: "beat", f: 64, at: 0, dur: 0.18, g: 0.2 + 0.1 * u }, { k: "beat", f: 58, at: 0.26, dur: 0.18, g: 0.16 + 0.1 * u });
-    var tf = 1400 + Math.round(600 * u), tg = 0.05 + 0.13 * u;
-    L.push({ k: "tick", f: tf, at: 0, dur: 0.05, g: tg, type: "square" });
-    if (s <= 5) L.push({ k: "tick", f: tf + 200, at: 0.5, dur: 0.05, g: tg, type: "square" }, { k: "rise", f: 330 + 40 * (5 - s), f2: 380 + 40 * (5 - s), at: 0, dur: 0.9, g: 0.04 + 0.02 * (5 - s), type: "triangle" });
+    if (s <= 0 || s > 10) return L;
+    var r = Math.round((1 + 0.03 * (10 - s)) * 100) / 100;   // a little higher each second: 1.00 at 10 s → 1.27 at 1 s
+    L.push({ k: "tick", at: 0, rate: r });
+    if (s <= 5) L.push({ k: "tick", at: 0.5, rate: r });
     return L;
   }
-  function start() { stop(); st.running = true; }
-  function pause(p) { if (!st.running) return; st.paused = !!p; st.last = -1; if (p) kill("sus"); }   // lifeline dialog: suspense off, its shimmer stays
+  function tick(rate) {
+    if (!st.running || st.paused || !on() || hidden()) return;
+    var a = mk("tick"); if (!a) return;
+    try { a.preservesPitch = a.mozPreservesPitch = a.webkitPreservesPitch = false; a.playbackRate = rate; a.currentTime = 0; quiet(a.play()); } catch (e) {}
+  }
+  function start() { stop(); st.running = true; bed(true); }   // a new question: the bed from the top
+  function pause(p) {   // lifeline dialog: the bed pauses where it is (and resumes there); a ringing tick stops
+    if (!st.running) return; st.paused = !!p; st.last = -1;
+    if (p) { clearTimeout(fading); fading = 0; if (el.bed) try { el.bed.pause(); } catch (e) {} if (el.tick) try { el.tick.pause(); } catch (e) {} }
+    else bed(false);
+  }
   function second(s) {   // the game's timer calls this on every change of the whole second shown
     if (!st.running || st.paused || s === st.last) return [];
     st.last = s; if (!on() || hidden()) return [];
-    return play(plan(s), "sus");
+    var L = plan(s);
+    L.forEach(function (x) { if (x.at) setTimeout(function () { if (st.last === s) tick(x.rate); }, x.at * 1000); else tick(x.rate); });
+    return L;
   }
-  var FX = {
-    sting: [{ f: 110, f2: 55, at: 0, dur: 0.6, g: 0.25 }, { f: 440, f2: 880, at: 0, dur: 0.35, g: 0.05, type: "triangle" }, { f: 659, at: 0.08, dur: 0.5, g: 0.05, type: "triangle" }, { f: 988, at: 0.16, dur: 0.6, g: 0.04, type: "triangle" }],
-    buzzer: [{ f: 220, f2: 90, at: 0, dur: 0.7, g: 0.22, type: "sawtooth" }, { f: 165, f2: 70, at: 0, dur: 0.7, g: 0.12, type: "square" }],
-    lockin: [{ f: 220, f2: 440, at: 0, dur: 1, g: 0.08, type: "triangle" }, { f: 277, f2: 554, at: 0, dur: 1, g: 0.06, type: "triangle" }, { f: 330, f2: 659, at: 0, dur: 1, g: 0.06, type: "triangle" }],
-    correct: [{ f: 523, at: 0, dur: 0.25, g: 0.16, type: "triangle" }, { f: 659, at: 0.1, dur: 0.25, g: 0.16, type: "triangle" }, { f: 784, at: 0.2, dur: 0.3, g: 0.16, type: "triangle" }, { f: 1047, at: 0.3, dur: 0.45, g: 0.14, type: "triangle" }],
-    wrong: [{ f: 110, f2: 70, at: 0, dur: 0.6, g: 0.28 }, { f: 131, at: 0, dur: 0.5, g: 0.08, type: "triangle" }, { f: 156, at: 0, dur: 0.5, g: 0.06, type: "triangle" }],
-    lifeline: [{ f: 1568, at: 0, dur: 0.18, g: 0.06 }, { f: 1976, at: 0.06, dur: 0.18, g: 0.06 }, { f: 2349, at: 0.12, dur: 0.22, g: 0.05 }, { f: 2637, at: 0.18, dur: 0.3, g: 0.04 }],
-    safe: [{ f: 523, at: 0, dur: 0.15, g: 0.14, type: "triangle" }, { f: 523, at: 0.16, dur: 0.15, g: 0.14, type: "triangle" }, { f: 784, at: 0.32, dur: 0.5, g: 0.16, type: "triangle" }],
-    fanfare: [{ f: 392, at: 0, dur: 0.2, g: 0.14, type: "triangle" }, { f: 523, at: 0.2, dur: 0.2, g: 0.14, type: "triangle" }, { f: 659, at: 0.4, dur: 0.2, g: 0.14, type: "triangle" }, { f: 784, at: 0.6, dur: 0.7, g: 0.16, type: "triangle" }, { f: 1047, at: 0.6, dur: 0.7, g: 0.08, type: "triangle" }]
-  };
-  function fx(name) { if (!on() || hidden()) return []; ctx(); return play(FX[name]); }
+  function fx(name) {   // one short recorded clip; returns its name when it was started
+    if (!on() || hidden() || name === "bed" || name === "tick") return "";
+    var a = mk(name); if (!a) return "";
+    try { a.currentTime = 0; quiet(a.play()); } catch (e) { return ""; }
+    return name;
+  }
   if (d && d.addEventListener) d.addEventListener("visibilitychange", function () {
-    if (d.hidden) { kill(); st.last = -1; if (ac && ac.suspend) try { ac.suspend(); } catch (e) {} }
-    else if (ac && ac.resume && st.running) try { ac.resume(); } catch (e) {}
+    if (d.hidden) { st.last = -1; bedOff(false); hush(); }
+    else if (st.running && !st.paused) bed(false);
   });
-  w.NursinMilSnd = { KEY: KEY, on: on, set: set, unlock: unlock, start: start, pause: pause, stop: stop, second: second, plan: plan, fx: fx, FX: FX,
-    state: function () { return { running: st.running, paused: st.paused, last: st.last, live: live.length, ctx: !!ac }; } };
+  w.NursinMilSnd = { KEY: KEY, FILES: FILES, BASE: BASE, on: on, set: set, unlock: unlock, start: start, pause: pause, stop: stop, second: second, plan: plan, fx: fx,
+    state: function () { var b = el.bed; return { running: st.running, paused: st.paused, last: st.last, made: Object.keys(el).length, unlocked: Object.keys(ok).length, bed: !!(b && !b.paused), fading: !!fading }; } };
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
 
 (function (w, d) {
@@ -267,7 +283,7 @@
     return h + "</ol>";
   }
   function ask() {
-    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; SND().start(); SND().fx("sting");
+    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; SND().start();
     var h = '<div class="mlplay">' + ladder() +
       '<div class="mlbar"><span class="mlqn">سؤال ' + (st.i + 1) + " / " + N + ' · <b>' + num(LADDER[st.i]) + '</b></span><span class="mltm" id="mltm" aria-live="off">' + SECS + "</span></div>" +
       '<div class="mlll">' + ll("ff", "٥٠:٥٠") + ll("ph", "📞 اسأل عثمان") + ll("au", "👥 رأي الجمهور") + "</div>" +
@@ -377,9 +393,9 @@
 
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button,a"); if (!t || !ov.contains(t)) return;
+    SND().unlock();   // every tap in the game: iOS lets <audio> play only after a play() inside a gesture (30p)
     if (t.hasAttribute("data-mlx")) { if (st && !st.done && st.i > 0 && !w.confirm("تطلع من اللعبة؟ (النقاط ما بتنحفظ)")) return; close(); return; }
     if (t.hasAttribute("data-mlsnd")) { var on = SND().set(!sndOn()); paintSnd(); if (on) { SND().unlock(); SND().fx("lifeline"); if (st && !st.busy && !st.done) { SND().start(); if (st.paused) SND().pause(true); } } return; }
-    if (t.hasAttribute("data-mls")) SND().unlock();
     if (t.hasAttribute("data-mls")) { sel = t.getAttribute("data-mls"); [].forEach.call(ov.querySelectorAll("[data-mls]"), function (c) { c.classList.toggle("on", c === t); }); return; }
     if (t.hasAttribute("data-mlgo")) { begin(); return; }
     if (t.hasAttribute("data-mlhome")) { startScreen(); return; }
