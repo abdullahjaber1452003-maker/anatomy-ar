@@ -257,6 +257,79 @@
     return L[(i + 1) % L.length].id;
   }
 
+
+  /* ---------------- 🤝 31e «كأنه أنا ورفيقي عم نحكي عن الدرس» (Abdullah, Nov 8 2026 6:02–6:29 PM) ----------------
+     Every question of the script becomes a TURN of a chat between two friends, never the same kind twice in a row, least-used first:
+       😮 wow   the partner shares a lesson fact surprised → he confirms / explains → «إي والله! وكمان…»
+       🤔 oops  the partner says a WRONG version (an MCQ wrong option) → he must correct it → «آه صح! كنت ملخبط 😅» / «لا استنّى… بالدرس…»
+       💭 opin  his opinion on a list of the lesson → the partner's take = the lesson's list
+       🩺 case / 🎭 role  a patient case of the bank («أنا المريض…»)   ⚡ tf  «صح ولا غلط؟»   🧩 fill  «كمّل الجملة»   ❓ ask  sometimes
+     Phrases rotate (PH, each recorded in both voices: assets/discuss-audio/p-<kind><i>-<g>.mp3), MCQ stems rotate through the bank's own
+     wordings (q0 + v, NURSIN_QV data), light jokes now and then (never about the facts). Everything said is the lesson's own text. */
+  var PH = {"wow": ["شفت؟ ما كنت بعرف هالشي! 😮", "يا زلمة! قريت شي اليوم خلّاني إنصدم 😮", "والله؟ اسمع شو لقيت بالدرس 😮", "معقول؟ هيدي ما كنت مركّز عليها أبداً 😮", "قلّي إذا مظبوط، لأنّي انصدمت 😮"], "oops": ["سمعت شي ومش متأكّد منّو 🤔", "استنّى، أنا هيك فاهمها… صح؟ 🤔", "رفيقي قلّي هيك، شو رأيك؟ 🤔", "أنا عم بتلخبط بهيدي 😅 صحّحلي إذا غلطان"], "opin": ["شو رأيك إنت؟ 💭", "بدّي رأيك بهيدي 💭", "قلّي شو بتفكّر 💭"], "case": ["تخيّل معي هالحالة 🩺", "عندي حالة بدّي رأيك فيها 🩺", "يلّا حالة صغيرة، متل بالمستشفى 🩺"], "role": ["خلّينا نلعب: أنا المريض وإنت الممرّض 🎭", "هلّق أنا المريض 🤒 شو بتعمللي؟"], "tf": ["سؤال سريع: صح ولا غلط؟ ⚡", "بسرعة بلا ما تفكّر كتير ⚡"], "fill": ["كمّل الجملة 🧩", "يلّا كمّلّي يلّي ناقص 🧩"], "ask": ["عندي سؤال إلك 👇", "خلّيني إسألك 👇", "هيدي بدّي ياها منك 👇"], "yes": ["إي والله! 😄", "حلو هيك 👌", "بالظبط! 👏", "يا عيني عليك 😄", "مظبوط مية بالمية ✅"], "fix": ["آه صح! أنا كنت ملخبط 😅", "معك حق، شكراً إنك صحّحتلي 🙏", "إيه هيك! أنا اللي غلطت 😅"], "nope": ["لا استنّى… بالدرس مكتوب غير هيك", "لا لا مش هيك 😅", "أوف، مش هيك بالظبط"], "part": ["حلو! بس في كم شغلة ناقصين 💡", "قريب كتير! بس نسيت شي 💡", "منيح، خلّيني زيدلك 💡"], "joke": ["شو نسيتها؟ 😂 حتى أنا نسيتها مبارح", "ولا يهمّك، حتى الدكتور بيتلخبط فيها 😂", "لا تخاف، ما رح قول للأستاذ 😂", "هيدي بدها قهوة تانية ☕😂", "عادي، دماغنا كمان بدو perfusion 😂"], "more": ["وكمان بالدرس 👇", "وزيد عليها 👇"]};
+  var KINDS = ["wow", "oops", "opin", "case", "role", "tf", "fill", "ask"];
+  var KEMO = { wow: "😮", oops: "🤔", opin: "💭", case: "🩺", role: "🎭", tf: "⚡", fill: "🧩", ask: "❓" };
+  var CASE = /(مريض|مريضة|شاب|صبية|رجل|امرأة|مسن|مسنّ|ختيار|طفل|سنة|عمرو|عمرها|patient)/;
+  function kindsFor(Q) {
+    var k = ["ask"];
+    if (Q.kind === "l") { if (Q.items.length >= 2) k.push("wow", "opin"); if (Q.items.length >= 3) k.push("fill"); }
+    else {
+      if (!Q.neg) { k.push("tf"); if (Q.wrong.length && (Q.src && Q.src.why || Q.x)) k.push("oops"); if (Q.x && Q.x.length > 25) k.push("wow"); }
+      if (CASE.test(Q.src ? (Q.src.q0 || Q.src.q) : Q.q)) k.push("case", "role");
+    }
+    return k;
+  }
+  function least(st, list, key, avoid) {                  // the least-used of list (never «avoid»), counts kept in st[key]
+    var C = st[key] = st[key] || {}, best = null, bn = 1e9;
+    list.forEach(function (x, i) { if (x === avoid && list.length > 1) return; var n = (C[x] | 0) * 10 + ((hash(x + (st.rot | 0)) % 7)); if (n < bn) { bn = n; best = x; } });
+    if (best != null) C[best] = (C[best] | 0) + 1;
+    return best;
+  }
+  function phrase(kind, st) {                              // {t, i} — the least-used phrase of that kind
+    var L = PH[kind] || [""], C = (st.ph = st.ph || {}), k2 = kind, used = C[k2] = C[k2] || [], i, bi = 0, bn = 1e9;
+    for (i = 0; i < L.length; i++) { var n = (used[i] | 0) * 10 + (hash(kind + i + (st.rot | 0)) % 5); if (n < bn) { bn = n; bi = i; } }
+    used[bi] = (used[bi] | 0) + 1; return { t: L[bi], i: bi, k: kind };
+  }
+  function phSrc(ph, p) { return ph ? "assets/discuss-audio/p-" + ph.k + ph.i + "-" + p.g + ".mp3" : ""; }
+  function stems(Q) { if (Q.kind !== "m" || !Q.src) return [Q.q]; var b = Q.src, a = [b.q0 != null ? b.q0 : b.q]; (b.v || []).forEach(function (x) { if (x && x.q) a.push(x.q); }); return a; }
+  /* the turn: {kind, ph, text (html), voice: [mp3…], exp} — exp = what his reply is checked against */
+  function turnOf(id, Q, st, prev, p) {
+    p = p || partner();
+    var kind = least(st, kindsFor(Q), "tt", prev), ph = phrase(kind, st), seen = (st.seen || {})[id + "|" + Q.key] | 0;
+    var ws = stems(Q), wi = (seen + dayNum(today())) % ws.length, stem = ws[wi].replace(/\n.*/, "");
+    var T = { kind: kind, ph: ph, wi: wi, voice: [phSrc(ph, p)], text: "" };
+    var it = Q.items || [], right = Q.kind === "m" ? Q.opts[Q.a] : "";
+    if (kind === "wow") {
+      if (Q.kind === "l") { T.text = "«" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + " فيها: ⟦" + it[0] + "⟧! 😮 معقول؟ شو بتعرف كمان عنها؟"; T.kps = Q.kps.slice(1); T.give = it.slice(1); }
+      else { T.text = "⟦" + clip(Q.x, 230) + "⟧ — كنت بتعرف هالشي؟"; T.kps = Q.kps; T.give = [right]; }
+    } else if (kind === "oops") {
+      var wr = Q.wrong[hash(Q.key + seen) % Q.wrong.length];
+      T.text = "«" + stem + "» — أنا فكّرت الجواب ⟦" + (wr.opt || wr.kp.text) + "⟧… مظبوط؟"; T.bad = wr;
+    } else if (kind === "opin") {
+      T.text = "برأيك شو أهم شي ب«" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + "؟ وليش؟";
+    } else if (kind === "case") {
+      T.text = stem + (/[؟?:]\s*$/.test(stem) ? "" : "؟") + " شو رأيك؟";
+      T.voice.push(wi === 0 ? qAudio(id, Q, "q", p) : "");
+    } else if (kind === "role") {
+      T.text = "تخيّل إنّي أنا هالمريض 🤒: " + stem;
+      T.voice.push(wi === 0 ? qAudio(id, Q, "q", p) : "");
+    } else if (kind === "tf") {
+      var useRight = hash(Q.key + seen + "tf") % 2 === 0 || !Q.wrong.length, op = useRight ? right : (Q.wrong[hash(Q.key + seen) % Q.wrong.length].opt || right);
+      if (!op) { op = right; useRight = true; }
+      T.text = "«" + stem + "» ← ⟦" + op + "⟧"; T.truth = useRight; T.op = op;
+    } else if (kind === "fill") {
+      var n = Math.min(2, it.length - 1);
+      T.text = "«" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + ": " + it.slice(0, n).join("، ") + "، و… ؟"; T.kps = Q.kps.slice(n); T.give = it.slice(n);
+    } else {
+      T.text = Q.kind === "m" ? Q.q.replace(/^[^\n]*/, stem) : Q.q;
+      T.voice.push(Q.kind === "l" || wi === 0 ? qAudio(id, Q, "q", p) : "");
+    }
+    return T;
+  }
+  var YES = /^\s*(اي|إي|ايه|إيه|ايوه|اه|آه|أه|مظبوط|مزبوط|صح|صحيح|اكيد|أكيد|طبعا|طبعاً|بالظبط|نعم|yes|oui|vrai|exact|true|✅)/i;
+  var NO = /(^\s*(لا|لأ|كلا|non|no|faux|false|❌)(\s|$|[!.،,])|مش\s*(صح|مظبوط|هيك)|غلط|خطأ|ما\s*بظن|مش\s*متل|incorrect)/i;
+  function yesNo(t) { t = String(t || ""); return NO.test(t) ? "no" : YES.test(t) ? "yes" : ""; }
+
   /* ---------------- 🧠 judging his words ---------------- */
   var QW = /^(شو|ليش|ليه|كيف|كيفي|كيفو|متى|امتى|ايمتى|إيمتى|وين|مين|قديش|اديش|أديش|شقد|هل|يعني\s*شو|ما\s*هو|ما\s*هي|شو\s*يعني|what|why|how|when|where|which|who|pourquoi|comment|quand|quel|quelle|quels|quelles|qu['’]?est|est[- ]ce|c['’]?est\s*quoi|explique|اشرح|اشرحلي|فسّر|فسرلي|خبّرني|خبرني)(\s|$)/i;
   function isQuestion(s) { s = String(s || "").trim(); return /[؟?]\s*$/.test(s) || QW.test(s); }
@@ -334,7 +407,7 @@
 
   w.NursinDiscuss = { K: K, NAMES: NAMES, VOICE: VOICE, LINES: LINES, GREET: GREET, EPOCH: EPOCH, ROUND: ROUND, partner: partner, quiet: quiet, today: today, dayNum: dayNum, addDays: addDays,
     norm: norm1, toks: toks, same: same, kpOf: kpOf, kpHit: kpHit, setOf: setOf, script: script, order: order, pickLesson: pickLesson, nextLesson: nextLesson, lessonInfo: lessonInfo,
-    judge: judge, fix: fix, bestAlt: bestAlt, lev: lev, qFile: qFile, hasQA: hasQA, qAudio: qAudio, isQuestion: isQuestion, otherLesson: otherLesson, search: search, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
+    judge: judge, confused: confused, terms: terms, picks: picks, soloMic: soloMic, turnOf: turnOf, kindsFor: kindsFor, yesNo: yesNo, PH: PH, KINDS: KINDS, stems: stems, fix: fix, bestAlt: bestAlt, lev: lev, qFile: qFile, hasQA: hasQA, qAudio: qAudio, isQuestion: isQuestion, otherLesson: otherLesson, search: search, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
 
   /* ---------------- 🔊 voice: ONLY recorded mp3s in the reels voices (Abdullah 5:42 PM «بنفس صوت الreels») — no device TTS for the partner ----------------
      fixed lines: assets/discuss-audio/<key>-<f|m>.mp3 · greetings greet-<i>.mp3 · per question (Réa, Law, Management, Med-Surg first):
@@ -438,7 +511,7 @@
   function L() { return lessonInfo(S.id) || { n: "", href: "index.html" }; }
   function head() {
     var p = S.p, t = partner(addDays(S.day, 1)), Li = L();
-    $("#dshd").innerHTML = '<div class="hr"><a class="bk" href="index.html" aria-label="رجوع">›</a><span class="av" aria-hidden="true">' + p.e + '</span><div class="who"><b>' + esc(p.n) + "</b><small>نقاش · " + frWrap(clip(Li.n, 48)) + '</small></div><button type="button" class="snd' + (S.snd ? " on" : "") + '" id="dssnd" aria-pressed="' + (S.snd ? "true" : "false") + '">' + (S.snd ? "🔊 صوت" : "🔇 صوت") + "</button></div>" +
+    $("#dshd").innerHTML = '<div class="hr"><a class="bk" href="index.html" aria-label="رجوع">›</a><span class="av av2 md-' + (S.md || "talk") + '" id="dsav" aria-hidden="true">' + (w.NursinToons ? w.NursinToons.svg("nurse") : p.e) + "<i></i></span>" + '<span class="vh">' + p.e + '</span><div class="who"><b>' + esc(p.n) + "</b><small>نقاش · " + frWrap(clip(Li.n, 48)) + '</small></div><button type="button" class="snd' + (S.snd ? " on" : "") + '" id="dssnd" aria-pressed="' + (S.snd ? "true" : "false") + '">' + (S.snd ? "🔊 صوت" : "🔇 صوت") + "</button></div>" +
       '<div class="strip"><span aria-hidden="true">' + p.e + "</span> شريك اليوم: " + esc(p.n) + " <i>· بكرا: " + esc(t.n) + ' <span aria-hidden="true">' + t.e + "</span></i></div>" + prog();
     $("#dssnd").onclick = function () { S.snd = !S.snd; S.unlocked = true; var st = state(); st.snd = S.snd ? 1 : 0; save(st); if (!S.snd) stopVoice(); head(); };
   }
@@ -459,13 +532,26 @@
   function name() { try { return w.NursinName ? w.NursinName.greetName() : ""; } catch (e) { return ""; } }
   function ask() {
     if (S.pos >= S.list.length) { S.pos = 0; S.list = order(S.id, state(), S.day); }
-    var Q = S.cur = S.list[S.pos], fu = Q.fu && S.inRound > 0;
-    var html = (fu ? '<span class="tag">🔁 متابعة</span><br>' : "") + frWrap(Q.q);
-    pBubble(html, [fu && !qAudio(S.id, Q, "q", S.p) ? F("follow") : "", qAudio(S.id, Q, "q", S.p)], fu ? "fu" : "");
+    var Q = S.cur = S.list[S.pos], st = state();
+    var T = S.turn = turnOf(S.id, Q, st, S.lastKind, S.p); S.lastKind = T.kind; st.rot = (st.rot | 0) + 1; save(st);
+    var html = '<span class="tag k-' + T.kind + '">' + KEMO[T.kind] + " " + esc(T.ph.t.replace(/[\s\uD800-\uDFFF\u2600-\u27BF\uFE0F\u200d]+$/, "")) + "</span>" + scene(Q, T) + '<div class="say">' + frWrap(T.text).replace(/⟦/g, "<b>").replace(/⟧/g, "</b>") + "</div>";
+    pBubble(html, T.voice, "turn k-" + T.kind);
+    mood(T.kind === "wow" ? "wow" : T.kind === "oops" ? "think" : "talk");
     S.hint = 0;
-    qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]);
+    var qb = [{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ الجاي", f: skip }];
+    if (T.kind === "tf") qb = [{ t: "✅ صح", f: function () { send("صح ✅"); } }, { t: "❌ غلط", f: function () { send("غلط ❌"); } }].concat(qb.slice(1));
+    if (T.kind === "oops") qb = [{ t: "👍 مظبوط", f: function () { send("إي مظبوط"); } }, { t: "🙅 لا، غلط", f: function () { send("لا، غلط"); } }].concat(qb.slice(1));
+    qr(qb);
     var inp = $("#dsin"); if (inp && !S.touch) try { inp.focus(); } catch (e) {}
   }
+  /* 🎨 the partner is a cartoon: a small animated scene of the topic (assets/reels-toons.js, the reels' own drawings) + the avatar's mood */
+  function scene(Q, T) {
+    var Tn = w.NursinToons; if (!Tn || !/wow|case|role|oops|opin/.test(T.kind)) return "";
+    var id = Tn.pick({ ti: (Q.head || "") + " " + (Q.lab || "") + " " + (Q.q || ""), fr: "", ls: "", s: (S.id || "").split(":")[0], id: Q.key });
+    if (T.kind === "role" || T.kind === "case") id = /مسن|ختيار|عجوز|geri/.test(Q.q + S.id) ? "grandpa" : id;
+    return '<div class="scn" aria-hidden="true">' + Tn.svg(id) + "</div>";
+  }
+  function mood(m) { S.md = m; var a = $("#dsav"); if (a) a.className = "av av2 md-" + m; clearTimeout(S.mt); S.mt = setTimeout(function () { S.md = "talk"; var b = $("#dsav"); if (b) b.className = "av av2 md-talk"; }, 2600); }
   function hint() {
     var Q = S.cur; if (!Q) return; S.hint++;
     var t;
@@ -520,21 +606,52 @@
     }
     typing(900, ask);
   }
+  function pick(arr) { var st = state(), ph = phrase(arr, st); save(st); return ph; }
+  function lineOf(list) { return '<ul class="mini">' + list.slice(0, 3).map(function (x) { return "<li>" + frWrap(clip(x, 70)) + "</li>"; }).join("") + (list.length > 3 ? "<li>+" + (list.length - 3) + "</li>" : "") + "</ul>"; }
   function feedback(Q, r) {
-    var ok = r.hit.length, all = Q.kps.length, h = "";
-    var key = r.miss.length === 0 ? "ok" : ok ? "part" : "none";
-    h += '<div class="lb2"><span class="sc">' + ok + " من " + all + " ⭐</span></div>";
-    if (ok) h += '<div class="ok"><b>✅ ذكرت:</b><ul>' + r.hit.map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>";
-    if (r.miss.length) h += '<div class="no"><b>💡 نسيت:</b><ul>' + r.miss.map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>";
-    if (Q.kind === "m" && Q.x) h += '<div class="xp">📖 ' + frWrap(Q.x) + "</div>";
-    pBubble((key === "ok" ? LINES.ok : key === "part" ? LINES.part : LINES.none) + h, [F(key), r.miss.length ? qAudio(S.id, Q, "a", S.p) : ""], "fb");
+    var ok = r.hit.length, key = r.miss.length === 0 ? "yes" : ok ? "part" : "nope", ph = pick(key), h = "";
+    if (ok) h += '<div class="ok"><b>✅</b> ' + lineOf(r.hit) + "</div>";
+    if (r.miss.length) h += '<div class="no"><b>💡 ' + (ok ? "ونسيت:" : "بالدرس:") + "</b> " + lineOf(r.miss) + "</div>";
+    if (Q.kind === "m" && Q.x && r.miss.length) h += '<div class="xp">📖 ' + frWrap(clip(Q.x, 150)) + "</div>";
+    var jk = r.miss.length && (state().rot % 3 === 0) ? pick("joke") : null;
+    pBubble(esc(ph.t) + h + (jk ? '<div class="jk">' + esc(jk.t) + "</div>" : ""), [phSrc(ph, S.p), r.miss.length ? qAudio(S.id, Q, "a", S.p) : "", jk ? phSrc(jk, S.p) : ""], "fb");
+    mood(ok && !r.miss.length ? "yay" : ok ? "talk" : "sad");
     record(Q, r.ok);
     after();
+  }
+  /* the friend-chat replies: what his words mean depends on the turn */
+  function turnReply(Q, T, text) {
+    var yn = yesNo(text), r = judge(Q, text), right = Q.kind === "m" ? Q.opts[Q.a] : "";
+    if (T.kind === "oops") {
+      var saidWrong = T.bad && T.bad.kp.alts.some(function (al) { var A = setOf(toks(text)), m = 0; al.forEach(function (t) { if (A[t]) m++; }); return m >= Math.max(1, Math.ceil(al.length / 2)); });
+      if ((yn === "no" || r.hit.length) && !(yn === "yes" && !r.hit.length)) { var ph = pick("fix"); pBubble(esc(ph.t) + " يعني <b>" + frWrap(right) + "</b>" + (T.bad.why ? '<div class="xp">📖 ' + frWrap(T.bad.why) + "</div>" : ""), [phSrc(ph, S.p), qAudio(S.id, Q, "a", S.p)], "fb"); mood("yay"); record(Q, true); after(); return true; }
+      if (yn === "yes" || saidWrong) { var p2 = pick("nope"); pBubble(esc(p2.t) + ': <b>' + frWrap(right) + "</b>" + (T.bad.why ? '<div class="xp">📖 ' + frWrap(T.bad.why) + "</div>" : ""), [phSrc(p2, S.p), qAudio(S.id, Q, "a", S.p)], "fb bad"); mood("think"); record(Q, false); after(); return true; }
+      return false;
+    }
+    if (T.kind === "tf" && yn) {
+      var good = (yn === "yes") === !!T.truth, p3 = pick(good ? "yes" : "nope");
+      pBubble(esc(p3.t) + (T.truth ? " «" + frWrap(T.op) + "» صح ✅" : " الصح: <b>" + frWrap(right) + "</b>") + (Q.x ? '<div class="xp">📖 ' + frWrap(clip(Q.x, 150)) + "</div>" : ""), [phSrc(p3, S.p), good ? "" : qAudio(S.id, Q, "a", S.p)], good ? "fb" : "fb bad");
+      mood(good ? "yay" : "sad"); record(Q, good); after(); return true;
+    }
+    if ((T.kind === "wow" || T.kind === "fill") && T.kps) {
+      var A = setOf(toks(text)), hit = [], miss = [];
+      T.kps.forEach(function (k, i) { (kpHit(A, k) ? hit : miss).push(T.give[i] || k.text); });
+      if (!hit.length && yn !== "yes") return false;
+      var p4 = pick(hit.length ? "yes" : "yes"), more = miss.length ? pick("more") : null;
+      pBubble(esc(p4.t) + (hit.length ? '<div class="ok"><b>✅</b> ' + lineOf(hit) + "</div>" : "") + (miss.length ? '<div class="no"><b>' + esc(more.t) + "</b> " + lineOf(miss) + "</div>" : ""), [phSrc(p4, S.p), more ? phSrc(more, S.p) : "", miss.length ? qAudio(S.id, Q, "a", S.p) : ""], "fb");
+      mood("yay"); record(Q, hit.length > 0 || yn === "yes"); after(); return true;
+    }
+    if (T.kind === "opin") {
+      var p5 = pick(r.hit.length ? "yes" : "part");
+      pBubble(esc(p5.t) + (r.hit.length ? " أنا كمان بشوف <b>" + frWrap(clip(r.hit[0], 60)) + "</b> مهم." : "") + '<div class="no"><b>💭 بالدرس:</b> ' + lineOf(Q.items) + "</div>", [phSrc(p5, S.p), qAudio(S.id, Q, "a", S.p)], "fb");
+      mood("talk"); record(Q, r.hit.length > 0); after(); return true;
+    }
+    return false;
   }
   function wrongReply(Q, r) {
     var why = r.wrong.why || "";
     var h = LINES.wrong + " — " + (why ? frWrap(why) : "") + '<div class="ok"><b>✔️ الصح من الدرس:</b><ul>' + answerList(Q).map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>" + (Q.kind === "m" && Q.x ? '<div class="xp">📖 ' + frWrap(Q.x) + "</div>" : "");
-    pBubble(h, [F("wrong"), qAudio(S.id, Q, "a", S.p)], "fb bad");
+    pBubble(h, [F("wrong"), qAudio(S.id, Q, "a", S.p)], "fb bad"); mood("think");
     record(Q, false); after();
   }
   function otherReply(Q, other, text, asked) {
@@ -563,8 +680,11 @@
   function judgeAndReply(text, ms) {
     var Q = S.cur;
     typing(ms, function () {
+      if (confused(text)) { clarify(Q, S.turn); return; }
+      S.conf = 0;
       if (DUNNO.test(text)) { skip(); return; }
       if (isQuestion(text)) { questionReply(text); return; }
+      if (S.turn && turnReply(Q, S.turn, text)) return;
       var r = judge(Q, text);
       if (r.wrong) { wrongReply(Q, r); return; }
       if (!r.hit.length) { var o = otherLesson(S.id, text); if (o) { otherReply(Q, o, text, null); return; } }
@@ -612,47 +732,120 @@
     });
     return best;
   }
+  /* iOS Safari: the mic has ONE consumer — when MediaRecorder took it, webkitSpeechRecognition heard nothing (Abdullah 6:41 PM, two
+     «ما سمعتك منيح» after 9 s and 4 s answers). So on Safari / iOS only the recogniser runs (continuous + interim, every result kept
+     until ⏹️, restarted when it ends by itself while he is still talking, ar-LB → ar-SA → fr-FR when a session hears nothing) and his
+     bubble is a drawn waveform + duration; the recording to replay is only taken where both can run (Chrome / Android / desktop). */
+  function soloMic() {
+    var ua = navigator.userAgent || "";
+    return !w.SpeechRecognition || /iPhone|iPad|iPod/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Android/.test(ua)) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
   function mic() {
     var C = SR(), b = $("#dsmic"), inp = $("#dsin"); if (!b) return;
     if (!C) { b.hidden = true; b.style.display = "none"; return; }
-    var rec = null, mr = null, chunks = [], stream = null, on = false, t0 = 0, langs = ["ar-LB", "fr-FR"], li = 0, alts = [], tick = 0, done = false, ph = inp.placeholder;
+    var rec = null, mr = null, chunks = [], stream = null, on = false, t0 = 0, langs = ["ar-LB", "ar-SA", "fr-FR"], li = 0, prev = [], cur = [], tick = 0, done = false, ph = inp.placeholder, heardAny = false, sess = 0;
     function ui(x) { on = x; b.classList.toggle("on", x); b.innerHTML = x ? "⏹️" : "🎤"; inp.disabled = x; inp.placeholder = x ? "🔴 عم سجّل… كبوس ⏹️ لمّا تخلص" : ph; clearInterval(tick); if (x) tick = setInterval(function () { inp.placeholder = "🔴 عم سجّل " + fmt((Date.now() - t0) / 1000) + " … كبوس ⏹️ لمّا تخلص"; }, 500); }
+    function alts() {                                    // alternative j of everything heard (earlier sessions + this one)
+      var A = [], n = Math.max(prev.length, cur.length, 1), j;
+      for (j = 0; j < n; j++) A.push(((prev[j] || prev[0] || "") + " " + (cur[j] || cur[0] || "")).replace(/\s+/g, " ").trim());
+      return A.filter(function (x, i) { return x && A.indexOf(x) === i; });
+    }
     function finish() {
       if (done) return; done = true; ui(false);
-      var dur = (Date.now() - t0) / 1000, Q = S.cur;
+      try { if (rec) { rec.onend = null; rec.abort ? rec.abort() : rec.stop(); } } catch (e) {}
+      var dur = (Date.now() - t0) / 1000, Q = S.cur, A = alts();
       function go(url) {
         try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} stream = null;
-        var heard = alts.length ? fix(bestAlt(alts, S.id, Q), S.id, Q) : "";
-        sendVoice({ url: url, dur: dur, heard: heard, raw: alts[0] || "" });
+        var heard = A.length ? fix(bestAlt(A, S.id, Q), S.id, Q) : "";
+        sendVoice({ url: url, dur: dur, heard: heard, raw: A[0] || "" });
       }
       if (mr && mr.state !== "inactive") { mr.onstop = function () { var url = ""; try { url = chunks.length ? URL.createObjectURL(new Blob(chunks, { type: mr.mimeType || "audio/mp4" })) : ""; } catch (e) {} go(url); }; try { mr.stop(); } catch (e) { go(""); } }
       else go("");
     }
     function startRec() {
       try { rec = new C(); } catch (e) { b.style.display = "none"; return; }
-      rec.lang = langs[li]; rec.interimResults = false; rec.continuous = false; rec.maxAlternatives = 3;
+      var my = ++sess, got = false;
+      rec.lang = langs[li]; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 3;
       rec.onresult = function (e) {
-        var A = [], n = 0, i, j; for (i = 0; i < e.results.length; i++) n = Math.max(n, e.results[i].length);
-        for (j = 0; j < Math.max(1, n); j++) { var t = ""; for (i = 0; i < e.results.length; i++) { var r0 = e.results[i]; t += (r0[Math.min(j, r0.length - 1)] || {}).transcript || ""; t += " "; } A.push(t.trim()); }
-        alts = A;
+        if (my !== sess) return;
+        var n = 1, i, j, A = []; for (i = 0; i < e.results.length; i++) n = Math.max(n, e.results[i].length);
+        for (j = 0; j < n; j++) { var t = ""; for (i = 0; i < e.results.length; i++) { var r0 = e.results[i]; t += ((r0[Math.min(j, r0.length - 1)] || {}).transcript || "") + " "; } A.push(t.trim()); }
+        cur = A; if (A[0]) { got = true; heardAny = true; }
       };
       rec.onerror = function (e) {
-        if (e && (e.error === "language-not-supported" || e.error === "bad-grammar") && li === 0) { li = 1; try { rec.onend = null; } catch (x) {} startRec(); return; }
-        if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) { b.style.display = "none"; }
+        var er = e && e.error;
+        if (er === "language-not-supported" || er === "bad-grammar") { if (li < langs.length - 1) { li++; } }
+        if (er === "not-allowed" || er === "service-not-allowed") { b.style.display = "none"; on = false; finish(); }
       };
-      rec.onend = function () { if (on) finish(); };
-      try { rec.start(); } catch (e) { finish(); }
+      rec.onend = function () {
+        if (my !== sess) return;
+        if (!on) { finish(); return; }
+        if (cur.length) { prev = alts(); cur = []; }   // keep what this session heard, then listen on
+        if (!got && !heardAny && li < langs.length - 1) li++;
+        setTimeout(function () { if (on && !done) startRec(); }, 120);
+      };
+      try { rec.start(); } catch (e) { if (on) setTimeout(function () { if (on && !done) startRec(); }, 300); }
     }
     function begin() {
-      stopVoice(); done = false; alts = []; chunks = []; mr = null; t0 = Date.now(); ui(true); startRec();
-      try {                                               // his own voice, to replay in the bubble (iOS 14.3+ / Chrome / Firefox)
+      stopVoice(); done = false; prev = []; cur = []; chunks = []; mr = null; heardAny = false; t0 = Date.now(); ui(true); startRec();
+      if (soloMic()) return;
+      try {                                               // his own voice, to replay in the bubble (Chrome / Android / desktop)
         if (w.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) {
           if (done) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
           stream = st; try { mr = new MediaRecorder(st); mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); }; mr.start(); } catch (e) { mr = null; }
         }).catch(function () {});
       } catch (e) {}
     }
-    b.onclick = function () { S.unlocked = true; if (on) { try { rec && rec.stop(); } catch (e) {} setTimeout(finish, 900); } else begin(); };
+    S.micGo = function () { if (!on) begin(); };
+    b.onclick = function () { S.unlocked = true; if (on) { on = false; b.innerHTML = "⏳"; try { rec && rec.stop(); } catch (e) {} setTimeout(finish, 1200); } else begin(); };
+  }
+  /* nothing heard: the first time «جرّب كمان مرّة»; the second time no loop — 🔁 عيد / ✍️ اكتب + 3 answers to pick from */
+  function deaf() {
+    S.deaf = (S.deaf | 0) + 1;
+    if (S.deaf < 2) { pBubble("ما سمعتك منيح 🙉 جرّب كمان مرّة (قرّب التلفون شوي) أو اكتبلي ✍️", null); return; }
+    pBubble("الظاهر الصوت مش عم يوصلني منيح اليوم 🙉 ولا يهمّك — اختار جواب أو اكتبلي:", null);
+    var Q = S.cur, ch = [{ t: "🔁 عيد", f: function () { clearQr(); S.micGo && S.micGo(); } }, { t: "✍️ اكتب", f: function () { clearQr(); var i = $("#dsin"); if (i) try { i.focus(); } catch (e) {} } }];
+    picks(Q).forEach(function (o) { ch.push({ t: clip(o, 48), f: function () { send(o); } }); });
+    qr(ch);
+  }
+  function picks(Q) {                                      // 3 answers to tap: the right one + 2 of the bank's wrong ones, mixed
+    if (!Q) return [];
+    if (Q.kind === "m") { var o = [Q.opts[Q.a]]; Q.opts.forEach(function (x, i) { if (i !== Q.a && o.length < 3) o.push(x); }); return o.sort(function (x, y) { return hash(x + Q.key) % 7 - hash(y + Q.key) % 7; }); }
+    return ["ما بعرف 🤷"];
+  }
+  /* «ما فهمت» (Abdullah 6:44 PM: «ايه شو لبدك ياه ما فهمت» was graded wrong): never graded — the partner explains the question again,
+     simpler, with what to look at (the numbers / terms of the question itself, never the answer), then waits again; the 2nd time + chips */
+  var CONF = /(ما\s*(ب?)فهم(ت|تو|تها|ت السؤال)?|مش\s*فا?هم|مو\s*فاهم|ما\s*فهمتش|شو\s*(ل)?قصدك|شو\s*(ل|لـ)?بد+ك|شو\s*بدّك|وض(ّ)?ح(لي|ي|ها|و)?(\s|$|[!?؟.])|كيف\s*يعني|مش\s*واضح|pardon|comprends\s*pas|compris\s*pas|j'ai\s*pas\s*compris|explique|^\s*[?؟]+\s*$|^\s*(شو|ايش|إيش|شو يعني)\s*[?؟]*\s*$)/i;
+  function confused(t) { t = String(t || ""); return CONF.test(t) || /شو\s*(يعني|قصدك)\s*[?؟!.]*\s*$/.test(t); }
+  function terms(txt) {                                    // what to look at: numbers with their names, French/English terms of the question
+    var out = [], m, re = /([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ₀-₉0-9'’.\-]*(?:\s*[=:]?\s*\d+[.,]?\d*\s*(?:%|mmHg|mEq\/L|mg|ml|kg|°C?)?)?|\d+[.,]?\d*\s*(?:%|mmHg|mEq\/L|mg|ml|kg|°C?|سنة|سنين|ساعة|ساعات|يوم|أيام)?)/g;
+    while ((m = re.exec(txt))) { var x = m[1].trim(); if (x.length > 1 && out.indexOf(x) < 0 && !/^(et|de|la|le|les|du|des|un|une)$/i.test(x)) out.push(x); if (out.length >= 4) break; }
+    return out;
+  }
+  function clarify(Q, T) {
+    S.conf = (S.conf | 0) + 1;
+    var stem = (T && T.kind !== "ask" ? stems(Q)[T.wi || 0] : Q.q).replace(/\n[\s\S]*/, ""), tm = terms(stem), h, k = T ? T.kind : "ask";
+    var open0 = ["أوكي خلّيني وضّحلك 😄", "ولا يهمّك، بقولها بطريقة تانية 😄", "معك حق، سؤالي كان ملخبط شوي 😅"][S.conf % 3];
+    if (Q.kind === "l") {
+      var n = Q.items.length, f0 = Q.items[0] || "";
+      if (k === "fill") h = "بدّي ياك تكمّل الليستة: شو ناقص من «" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + "؟ بقيان " + (n - Math.min(2, n - 1)) + " أشياء.";
+      else if (k === "wow") h = "قلتلك شي عرفته عن «" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + " — إنت شو بتعرف كمان عنها؟ قلّي ولو شغلة وحدة.";
+      else if (k === "opin") h = "بس بدّي رأيك: من «" + Q.lab + "» تبع " + (Q.head || "الدرس") + "، شو أهم شغلة لازم الممرّض ما ينساها؟";
+      else h = "يعني عدّدلي «" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + " — بالدرس في " + n + " أشياء، قلّي يلّي بتتذكّرهن ولو مش كلّن.";
+      h += " تلميح: أوّل وحدة بتبلّش بـ «" + clip(f0.replace(/[()«»]/g, ""), 3).replace("…", "") + "…» 😉";
+    } else {
+      if (k === "oops") h = "أنا قلت إنّو جواب «" + clip(stem, 140) + "» هو «" + ((T.bad && (T.bad.opt || T.bad.kp.text)) || "") + "». إنت شو بتقول: معي حق ولا لأ؟ وإذا لأ، شو الصح؟";
+      else if (k === "tf") h = "يعني: هل «" + T.op + "» هو الجواب الصح لهالسؤال؟ كبوس ✅ صح أو ❌ غلط.";
+      else h = "خبرني بالمختصر: " + clip(stem, 170);
+      if (tm.length) h += " — ركّز على: " + tm.join("، ") + " 👀";
+    }
+    pBubble(esc(open0) + '<div class="say">' + frWrap(h) + "</div>", null, "cl");
+    mood("think");
+    var ch = [{ t: "💡 تلميح", f: hint }];
+    if (T && T.kind === "tf") ch = [{ t: "✅ صح", f: function () { send("صح ✅"); } }, { t: "❌ غلط", f: function () { send("غلط ❌"); } }];
+    else if (Q.kind === "m" && (S.conf >= 2 || !tm.length || k === "oops")) picks(Q).forEach(function (o) { ch.push({ t: clip(o, 48), f: function () { send(o); } }); });
+    ch.push({ t: "⏭️ الجاي", f: skip });
+    qr(ch);
   }
   function sendVoice(v) {
     if (!S || !S.cur) return; clearQr(); stopVoice();
@@ -660,7 +853,8 @@
       (v.url ? "" : '<small class="vn">🎤 رسالة صوتية</small>') + '<button type="button" class="heardb">شو سمعت؟</button><div class="heard" hidden>' + esc(v.raw || "—") + '</div><span class="t">' + hm() + " ✓✓</span>", "m u hv");
     var vb = x.querySelector(".vb"); if (v.url) vb.onclick = function () { if (PLAYBTN === vb) { stopVoice(); return; } playList([v.url], vb); };
     x.querySelector(".heardb").onclick = function () { var h = x.querySelector(".heard"); h.hidden = !h.hidden; };
-    if (!v.heard) { typing(600, function () { pBubble("ما سمعتك منيح 🙉 جرّب كمان مرّة، أو اكتبلي جوابك ✍️", null); }); return; }
+    if (!v.heard) { typing(600, deaf); return; }
+    S.deaf = 0;
     judgeAndReply(v.heard, 650);
   }
   function boot() {

@@ -79,3 +79,70 @@ body.dspage #main{padding:0;margin:0;max-width:none}
 .dsapp .heard{font-size:12.5px;opacity:.9;margin-top:2px}
 .dsapp .p.hv .tx{margin-top:2px}
 @media (prefers-reduced-motion:reduce){.dsapp .vb.on+.vw i{animation:none}}
+/* 🤝 31e friend-chat turns + 🎨 the partner as a cartoon (the reels' own drawings, assets/reels-toons.js; moves = transform/opacity only) */
+.dsapp .av2{background:linear-gradient(135deg,#ede9fe,#ccfbf1);overflow:visible}
+.dsapp .av2 svg{width:52px;height:52px;margin-top:-4px}
+.dsapp .av2 i{position:absolute;top:-6px;inset-inline-start:-6px;font-style:normal;font-size:16px;line-height:1;opacity:0;transition:opacity .2s}
+.dsapp .av2.md-wow i:before{content:"😮"}.dsapp .av2.md-think i:before{content:"🤔"}.dsapp .av2.md-yay i:before{content:"🎉"}.dsapp .av2.md-sad i:before{content:"😅"}
+.dsapp .av2.md-wow i,.dsapp .av2.md-think i,.dsapp .av2.md-yay i,.dsapp .av2.md-sad i{opacity:1}
+.dsapp .av2.md-wow svg{animation:dsjump .5s ease-out 2}.dsapp .av2.md-yay svg{animation:dsjump .45s ease-out 3}
+.dsapp .av2.md-think svg{animation:dstilt 1.2s ease-in-out 2}.dsapp .av2.md-sad svg{animation:dsdroop 1.4s ease-in-out 1}
+@keyframes dsjump{40%{transform:translateY(-6px) scale(1.06)}}
+@keyframes dstilt{30%{transform:rotate(-9deg)}70%{transform:rotate(7deg)}}
+@keyframes dsdroop{50%{transform:translateY(3px) rotate(4deg)}}
+.dsapp .tag.k-wow{background:#f59e0b}.dsapp .tag.k-oops{background:#ef4444}.dsapp .tag.k-opin{background:#8b5cf6}.dsapp .tag.k-case,.dsapp .tag.k-role{background:#0ea5e9}
+.dsapp .tag.k-tf{background:#eab308;color:#1f2937}.dsapp .tag.k-fill{background:#10b981}.dsapp .tag.k-ask{background:#0f766e}
+.dsapp .turn .say{margin-top:3px}
+.dsapp .scn{float:left;width:74px;height:74px;margin:2px 0 4px 8px;border-radius:16px;background:linear-gradient(160deg,#ecfeff,#f5f3ff);display:grid;place-items:center;overflow:hidden}
+.dsapp .scn svg{width:70px;height:70px}
+.dsapp .fb .mini{display:inline;list-style:none;margin:0;padding:0}.dsapp .fb .mini li{display:inline}.dsapp .fb .mini li:before{content:""}
+.dsapp .fb .mini li+li:before{content:" · ";color:#5a6e71}
+.dsapp .fb .ok,.dsapp .fb .no{padding:5px 9px;font-size:13.8px;line-height:1.55}
+.dsapp .jk{margin-top:6px;font-size:13.5px;color:#7c3aed;font-weight:700}
+.tk-bob{-webkit-animation:tkbob 2.6s ease-in-out infinite;animation:tkbob 2.6s ease-in-out infinite}
+.tk-d2{-webkit-animation-delay:-.9s;animation-delay:-.9s}
+.tk-d3{-webkit-animation-delay:-1.7s;animation-delay:-1.7s}
+.tk-eye{-webkit-animation:tkblink 4.2s steps(1) infinite;animation:tkblink 4.2s steps(1) infinite}
+.tk-beat{-webkit-animation:tkbeat 1.1s ease-in-out infinite;animation:tkbeat 1.1s ease-in-out infinite}
+.tk-breathe{-webkit-animation:tkbr 3.4s ease-in-out infinite;animation:tkbr 3.4s ease-in-out infinite}
+.tk-wig{-webkit-animation:tkwig 2.2s ease-in-out infinite;animation:tkwig 2.2s ease-in-out infinite}
+.tk-wave{-webkit-animation:tkwave 1.4s ease-in-out infinite;animation:tkwave 1.4s ease-in-out infinite}
+.tk-swing,.tk-rock,.tk-tilt{-webkit-animation:tkwig 3s ease-in-out infinite;animation:tkwig 3s ease-in-out infinite}
+.tk-squish{-webkit-animation:tksq 1.8s ease-in-out infinite;animation:tksq 1.8s ease-in-out infinite}
+.tk-merc{-webkit-animation:tkmerc 3s ease-in-out infinite;animation:tkmerc 3s ease-in-out infinite}
+.tk-drip{-webkit-animation:tkdrip 1.3s ease-in infinite;animation:tkdrip 1.3s ease-in infinite}
+.tk-scan{-webkit-animation:tkscan 2.4s linear infinite;animation:tkscan 2.4s linear infinite}
+.tk-tw,.tk-siren{-webkit-animation:tktw 1.6s ease-in-out infinite;animation:tktw 1.6s ease-in-out infinite}
+.tk-drive{-webkit-animation:tkdrv .5s ease-in-out infinite alternate;animation:tkdrv .5s ease-in-out infinite alternate}
+.tk-chk{opacity:0;-webkit-animation:tkchk 4.5s steps(1) infinite;animation:tkchk 4.5s steps(1) infinite}
+.tk-c1{-webkit-animation-delay:.6s;animation-delay:.6s}
+.tk-c2{-webkit-animation-delay:1.2s;animation-delay:1.2s}
+@-webkit-keyframes tkbob{0%,100%{-webkit-transform:translateY(0)}50%{-webkit-transform:translateY(-7px)}}
+@keyframes tkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@-webkit-keyframes tkblink{0%,92%,100%{-webkit-transform:scaleY(1)}94%,97%{-webkit-transform:scaleY(.12)}}
+@keyframes tkblink{0%,92%,100%{transform:scaleY(1)}94%,97%{transform:scaleY(.12)}}
+@-webkit-keyframes tkbeat{0%,40%,100%{-webkit-transform:scale(1)}15%{-webkit-transform:scale(1.12)}28%{-webkit-transform:scale(1.04)}}
+@keyframes tkbeat{0%,40%,100%{transform:scale(1)}15%{transform:scale(1.12)}28%{transform:scale(1.04)}}
+@-webkit-keyframes tkbr{0%,100%{-webkit-transform:scale(.95)}50%{-webkit-transform:scale(1.06)}}
+@keyframes tkbr{0%,100%{transform:scale(.95)}50%{transform:scale(1.06)}}
+@-webkit-keyframes tkwig{0%,100%{-webkit-transform:rotate(-5deg)}50%{-webkit-transform:rotate(5deg)}}
+@keyframes tkwig{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+@-webkit-keyframes tkwave{0%,100%{-webkit-transform:rotate(0)}50%{-webkit-transform:rotate(-16deg)}}
+@keyframes tkwave{0%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+@-webkit-keyframes tksq{0%,100%{-webkit-transform:scale(1,1)}50%{-webkit-transform:scale(1.05,.94)}}
+@keyframes tksq{0%,100%{transform:scale(1,1)}50%{transform:scale(1.05,.94)}}
+@-webkit-keyframes tkmerc{0%,100%{-webkit-transform:scaleY(.55)}50%{-webkit-transform:scaleY(1)}}
+@keyframes tkmerc{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+@-webkit-keyframes tkdrip{0%{-webkit-transform:translateY(0);opacity:1}100%{-webkit-transform:translateY(12px);opacity:0}}
+@keyframes tkdrip{0%{transform:translateY(0);opacity:1}100%{transform:translateY(12px);opacity:0}}
+@-webkit-keyframes tkscan{from{-webkit-transform:translateX(0)}to{-webkit-transform:translateX(102px)}}
+@keyframes tkscan{from{transform:translateX(0)}to{transform:translateX(102px)}}
+@-webkit-keyframes tktw{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes tktw{0%,100%{opacity:.2}50%{opacity:1}}
+@-webkit-keyframes tkdrv{from{-webkit-transform:translateY(0)}to{-webkit-transform:translateY(-3px)}}
+@keyframes tkdrv{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+@-webkit-keyframes tkchk{0%{opacity:0}10%,90%{opacity:1}}
+@keyframes tkchk{0%{opacity:0}10%,90%{opacity:1}}
+@-webkit-keyframes tkjump{50%{-webkit-transform:translateY(-12px) rotate(-6deg)}}
+@keyframes tkjump{50%{transform:translateY(-12px) rotate(-6deg)}}
+@media (prefers-reduced-motion:reduce){.dsapp .av2 svg,.dsapp .scn svg *,.dsapp .av2 svg *{animation:none!important}}
