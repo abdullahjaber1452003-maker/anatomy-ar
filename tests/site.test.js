@@ -8701,8 +8701,9 @@ test('#393 30x 🔄 practice-based: never practised = as written, practised on a
   const W = { record: (y, ok) => 'r' + ok }, S = { record: () => 'x', answer: () => 'y' }; L.w.Weak = W; L.w.NursinSRS = S; L.w.NURSIN_QV.patch(); L.w.NURSIN_QV.patch();
   assert.strictEqual(W.record({ id: 'q247' }, false), 'rfalse', 'Weak.record still answers'); S.record({ src: { id: 'q248' } }, false); S.answer({ id: 'q249' }, false);
   const L3 = qvLoad({ [X.key]: L.mem[X.key] }); for (const id of ['q247', 'q248', 'q249']) assert.strictEqual(L3.w.QUIZ.find(y => y.id === id).qvi, 1, id + ' heard through Weak / NursinSRS');
-  X.mark('q001', false, D1); assert.ok(!(JSON.parse(L.mem[X.key] || '{}'))['q001'], 'no store for a question without variants');
-  assert.strictEqual(X.pick('q001', L.w.QUIZ.find(y => y.id === 'q001')).q, L.w.QUIZ.find(y => y.id === 'q001').q, 'no variants → as written, no crash');
+  const nv = L.w.QUIZ.find(y => !y.v); assert.ok(nv, 'a question without variants');
+  X.mark(nv.id, false, D1); assert.ok(!(JSON.parse(L.mem[X.key] || '{}'))[nv.id], 'no store for a question without variants');
+  assert.strictEqual(X.pick(nv.id, nv).q, nv.q, 'no variants → as written, no crash');
   assert.strictEqual(X.dayNumber(new Date(2026, 2, 30)) - X.dayNumber(new Date(2026, 2, 28)), 2, 'DST-safe local days');
   L3.w.Lang.fr = true; const q9 = L3.w.QUIZ.find(y => y.id === 'q247'); assert.strictEqual(L3.w.NURSIN_QV.pick('q247', q9).q, q9.q0, '🇫🇷 keeps the original');
   for (const p of fs.readdirSync(SITE).filter(f => f.endsWith('.html'))) { const h = read(p); assert.ok(/assets\/lang\.js\?v=\w+"><\/script><script src="assets\/qv\.js\?v=\w+"><\/script>/.test(h), p + ' loads qv.js before any bank'); }
