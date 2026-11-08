@@ -736,9 +736,9 @@
   function related(list, pos, best) {                    // the not-yet-asked question of this lesson closest to what he asked (rare shared words weigh more)
     var C = common(), B = setOf(toks((best.h || "") + " " + best.t).filter(function (t) { return !C[t]; })), bj = -1, bs = 0;
     function ov(Q) { var n = 0; Object.keys(setOf(toks(Q.q + " " + (Q.x || "") + " " + (Q.items || []).join(" ") + " " + (Q.kind === "m" ? Q.opts[Q.a] : "")))).forEach(function (t) { if (B[t] && !C[t]) n += idfOf(t); }); return n; }
-    if (list[pos] && ov(list[pos]) >= 3) return pos;
+    var c0 = list[pos] ? ov(list[pos]) : 0;
     for (var i = pos + 1; i < list.length; i++) { var n = ov(list[i]); if (n > bs) { bs = n; bj = i; } }
-    return bs >= 1.5 ? bj : -1;
+    return bs >= 1.5 && bs > c0 ? bj : c0 >= 3 ? pos : -1;
   }
   /* 31g: «ما بعرف / إنت عندك فكرة؟ / معقول؟» → the partner answers its OWN question from the lesson + why, then a simple check-back */
   function idkText(Q, T) {
