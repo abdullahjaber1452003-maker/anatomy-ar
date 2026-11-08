@@ -8640,7 +8640,7 @@ test('#390 30v RTL tag with Latin parts isolated (<bdi>), only Reels lit in the 
   assert.strictEqual(bdx('pH 7.48 · PaCO₂ 48 (Gaz du sang)', 1), 'pH 7.48 · PaCO₂ 48 <bdi dir="ltr">(Gaz du sang)</bdi>', 'question text: only bracketed parts');
   const dc = read('assets/desk.css'); assert.ok(dc.includes('.hzside .dki:not(.on):hover{background:rgba(13,148,136,.06)}'), 'a hovered side item never looks like a second «on»');
   const uj = read('assets/ui.js'); assert.strictEqual((uj.match(/"reels\.html"/g) || []).length >= 1, true);
-  assert.ok(js.includes('function fit(el)') && js.includes('el.classList.add("rlsm")') && read('assets/reels.css').includes('.rlsm .rlico.rltoon{float:left'), 'a long reel moves the cartoon beside the title');
+  assert.ok(js.includes('function fit(el)') && js.includes('lv = ["rlsm", "rlxs", "rltight"]') && js.includes('c.style.visibility = "hidden"') && read('assets/reels.css').includes('.rlsm .rlico.rltoon{float:left'), 'a long reel moves the cartoon beside the title');
 });
 test('#391 30v 🆕 whats-new 30v on top, plain line, parseable', () => {
   const src = read('assets/whatsnew-data.js'), c = {}; new Function('window', src)(c);
