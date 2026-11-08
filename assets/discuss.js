@@ -733,12 +733,12 @@
     }
     backToMine("طب منرجع لفكرتي 😉");
   }
-  function related(list, pos, best) {
-    var C = common(), B = setOf(toks((best.h || "") + " " + best.t).filter(function (t) { return !C[t]; })), bj = -1, bn = 1;
-    function ov(Q) { var n = 0; Object.keys(setOf(toks(Q.q + " " + (Q.x || "") + " " + (Q.items || []).join(" ") + " " + (Q.kind === "m" ? Q.opts[Q.a] : "")))).forEach(function (t) { if (B[t] && !C[t]) n++; }); return n; }
-    if (list[pos] && ov(list[pos]) >= 2) return pos;
-    for (var i = pos + 1; i < list.length; i++) { var n = ov(list[i]); if (n > bn) { bn = n; bj = i; } }
-    return bn >= 2 ? bj : -1;
+  function related(list, pos, best) {                    // the not-yet-asked question of this lesson closest to what he asked (rare shared words weigh more)
+    var C = common(), B = setOf(toks((best.h || "") + " " + best.t).filter(function (t) { return !C[t]; })), bj = -1, bs = 0;
+    function ov(Q) { var n = 0; Object.keys(setOf(toks(Q.q + " " + (Q.x || "") + " " + (Q.items || []).join(" ") + " " + (Q.kind === "m" ? Q.opts[Q.a] : "")))).forEach(function (t) { if (B[t] && !C[t]) n += idfOf(t); }); return n; }
+    if (list[pos] && ov(list[pos]) >= 3) return pos;
+    for (var i = pos + 1; i < list.length; i++) { var n = ov(list[i]); if (n > bs) { bs = n; bj = i; } }
+    return bs >= 1.5 ? bj : -1;
   }
   /* 31g: «ما بعرف / إنت عندك فكرة؟ / معقول؟» → the partner answers its OWN question from the lesson + why, then a simple check-back */
   function idkText(Q, T) {
