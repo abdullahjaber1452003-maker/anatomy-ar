@@ -24,7 +24,7 @@
 
   /* ---------------- every page: its title, its nav tab (0 home · 1 subjects · 2 Osman · 3 حفظي · 4 «الكل»), where «back» goes ---------------- */
   var PAGES = {
-    "index.html": ["🏠", "الرئيسية", "Accueil", 0], "medsurg.html": ["🏥", "Med-Surg", "Med-Surg", 1], "cardio.html": ["🫀", "القلب", "Cardiologie", 1, "medsurg.html"],
+    "index.html": ["🏠", "الرئيسية", "Accueil", 0], "reels.html": ["🎬", "Reels", "Reels", 1], "medsurg.html": ["🏥", "Med-Surg", "Med-Surg", 1], "cardio.html": ["🫀", "القلب", "Cardiologie", 1, "medsurg.html"],
     "neuro.html": ["🧠", "الأعصاب", "Neurologie", 1, "medsurg.html"], "henderson.html": ["🧩", "Henderson", "Henderson", 1, "medsurg.html"], "rea.html": ["🚑", "الإنعاش", "Réanimation", 1],
     "pharma.html": ["💊", "الأدوية", "Pharmacologie", 1], "law.html": ["⚖️", "القانون", "Législation", 1], "mgmt.html": ["🏢", "الإدارة", "Management", 1],
     "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
@@ -34,6 +34,7 @@
     "me.html": ["👤", "أنا", "Moi", 4], "about.html": ["ℹ️", "من نحن", "À propos", 4], "privacy.html": ["🔒", "الخصوصية", "Confidentialité", 4], "credits.html": ["📜", "المصادر", "Sources", 4],
     "admin.html": ["⚙️", "لوحة الأدمن", "Admin", 4], "404.html": ["🧭", "الصفحة مش موجودة", "Page introuvable", 4]
   };
+  function navTab() { var t = info().tab; return t === 1 && page !== "reels.html" ? -1 : t; }   // 🎬 30s: slot 1 is Reels now — lesson pages light no tab
   function info(p) { var x = PAGES[p || page] || ["📄", "nursin", "nursin", 4]; return { e: x[0], ar: x[1], fr: x[2], tab: x[3], up: x[4] || "index.html" }; }
 
   /* ---------------- «الكل»: every page of the site (tests check none is missing) — [href, emoji, ar, fr, badge-key] ----------------
@@ -48,7 +49,7 @@
       ["pharma.html", "💊", "الأدوية", "Pharmaco"], ["law.html", "⚖️", "القانون", "Législation"], ["mgmt.html", "🏢", "الإدارة", "Management"],
       ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."]] },
     { k: "study", e: "🧠", ar: "أدوات التعلّم", fr: "Outils d'étude", items: [
-      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"], ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"], ["quiz.html", "⚡", "كويز", "Quiz"],
+      ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["reels.html", "🎬", "Reels", "Reels"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"], ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"], ["quiz.html", "⚡", "كويز", "Quiz"],
       ["midterm.html", "🎯", "امتحانات الفصل 14–28/11", "Examens 14–28/11"], ["exams.html", "📅", "الامتحانات", "Examens"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"],
       ["games.html", "🎮", "الألعاب", "Jeux"], ["games.html#live", "🔴", "حالة لايف", "Cas en direct", "nw"], ["games.html#room", "🏥", "غرفة الطوارئ", "Salle d'urgence", "nw"], ["games.html#mil", "🏆", "مين بدو يربح المليون؟", "Qui veut gagner des millions ?", "nw"], ["hifzi.html#caselog", "📒", "سجل حالاتي", "Carnet de cas", "nw"],
       ["quiz.html?t=review", "🔁", "مراجعة اليوم", "Révision", "due"], ["quiz.html?t=mixed", "🗓️", "الأسبوعي", "Hebdo", "wex"],
@@ -343,10 +344,10 @@
   /* ---------------- ① the floating glass nav ---------------- */
   var GRID = '<svg width="21" height="21" viewBox="0 0 22 22" fill="currentColor"><rect x="1" y="1" width="8.5" height="8.5" rx="3"/><rect x="12.5" y="1" width="8.5" height="8.5" rx="4.25"/><rect x="1" y="12.5" width="8.5" height="8.5" rx="3"/><rect x="12.5" y="12.5" width="8.5" height="8.5" rx="3"/></svg>';
   function navHtml() {
-    var tab = info().tab, cur = function (i) { return tab === i ? ' aria-current="page"' : ""; };
+    var tab = navTab(), cur = function (i) { return tab === i ? ' aria-current="page"' : ""; };
     return '<nav class="hznav" aria-label="' + T("التنقّل", "Navigation") + '"><span class="hzblob" aria-hidden="true"></span>' +
       '<a class="hzt" href="index.html" data-t="0"' + cur(0) + '><span class="g" aria-hidden="true">🏠</span><span>' + T("الرئيسية", "Accueil") + "</span></a>" +
-      '<button class="hzt" type="button" data-hz="learn" data-t="1"' + cur(1) + '><span class="g" aria-hidden="true">📚</span><span>' + T("المواد", "Matières") + "</span></button>" +
+      '<a class="hzt" href="reels.html" data-t="1"' + cur(1) + '><span class="g" aria-hidden="true">🎬</span><span>Reels</span></a>' +   // 🎬 30s: Reels in the old «المواد» slot (subjects: the home's «📚 المواد» chip / «الكل»)
       '<a class="hzmid' + (tab === 2 ? " on" : "") + '" href="tutor.html" aria-label="' + T("الأستاذ عثمان", "Professeur Osman") + '"' + cur(2) + '><span class="g" aria-hidden="true">👨‍🏫</span><span>' + T("عثمان", "Osman") + "</span></a>" +
       '<a class="hzt" href="hifzi.html" data-t="3"' + cur(3) + '><span class="g" aria-hidden="true">🔁</span><span>' + T("حفظي", "Mémoire") + "</span></a>" +
       '<button class="hzt" type="button" data-hz="all" data-t="4"' + cur(4) + '><span class="g" aria-hidden="true">' + GRID + "</span><span>" + T("الكل", "Tout") + "</span></button></nav>";
@@ -359,7 +360,7 @@
     b.style.opacity = ""; b.style.width = r.width + "px"; b.style.transform = "translateX(" + (r.left - nr.left) + "px)";
     [].forEach.call(nav.querySelectorAll(".hzt"), function (x) { x.classList.toggle("on", x === t); });
   }
-  function navCur() { if (nav) { var tab = info().tab; blobTo(tab === 2 ? null : nav.querySelector('[data-t="' + tab + '"]')); } }
+  function navCur() { if (nav) { var tab = navTab(); blobTo(tab === 2 ? null : nav.querySelector('[data-t="' + tab + '"]')); } }
   function navHome() { navCur(); }
 
   /* nav visibility: away while scrolling down, back on the way up / at the top / at the end; away in «focus» moments */

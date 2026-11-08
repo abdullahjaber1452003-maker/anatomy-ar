@@ -68,4 +68,8 @@
   .mil .mlbar{grid-area:bar}.mil .mlll{grid-area:ll}.mil .mlq{grid-area:q;font-size:19px}.mil .mlopts{grid-area:o;display:grid;grid-template-columns:1fr 1fr}.mil .mlfb{grid-area:fb}.mil .mlwalk{grid-area:wk}
   .mil .mlst{font-size:13px;padding:4px 10px;justify-content:space-between}
   .mil .mlo:hover:not(:disabled){border-color:#f5c542}
+  /* 🎬 30s Reels: a centered phone-width column beside the side navigation (no change under 1024 px) */
+  body.reels .rlapp{left:calc(50% - 116px - 215px);right:auto;width:430px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 20px 60px rgba(0,0,0,.5)}
+  html[lang="fr"] body.reels .rlapp,html[dir="ltr"] body.reels .rlapp{left:calc(50% + 116px - 215px)}
+  body.reels .rlpill:hover,body.reels .rlopt:hover:not([disabled]){border-color:#fff}
 }

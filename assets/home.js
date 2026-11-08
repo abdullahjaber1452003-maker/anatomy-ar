@@ -694,10 +694,11 @@
       '<button class="hzsrch glass" type="button" data-hz="search"><span class="e" aria-hidden="true">🔍</span><span class="ph">' + T("دوّر على درس، سؤال، دوا…", "Cherche une leçon, une question, un médicament…") + "</span></button>";
   }
   function chipsHtml() {
-    return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="all">✨ ' + T("الكل", "Tout") + "</button>" +
-      '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +   // 🗺️ mind maps next to the subjects (Nov 6 2026)
-
-      SUBJ.map(function (s) { return '<a href="' + s.p + '">' + s.e + " " + esc(T(s.ar, s.fr)) + "</a>"; }).join("") + "</nav>";
+    /* 🎬 30s (Abdullah, Nov 8 2026 1:36 PM: «بدي بدل كلمة الكل تنحط المواد يعني فوق يكون فيه بس المواد و الخرائط الذهنية وتحت بدل المواد بينحط الreels»):
+       the chip row is ONLY «📚 المواد» (opens the subjects sheet, what the old bottom-nav «المواد» did — [data-hz="learn"] in assets/ui.js) and
+       «🗺️ الخرائط الذهنية». «الكل» and the per-subject chips are gone from this row; the subjects stay one tap away under «📚 المواد». */
+    return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="learn">📚 ' + T("المواد", "Matières") + "</button>" +
+      '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a></nav>";
   }
   function subsHtml() {
     var L = []; try { L = (w.NursinRet && w.NursinRet.list) ? w.NursinRet.list() : []; } catch (e) {}
