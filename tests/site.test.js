@@ -8207,7 +8207,7 @@ test('#362 30n 🔊 sound module: loads with no Web Audio (no throw, silent), ON
   const js = read('assets/mil.js');
   assert.ok(js.includes('w.AudioContext || w.webkitAudioContext'), 'iOS 12 webkitAudioContext fallback');
   assert.ok(!/\.(mp3|ogg|wav|m4a)\b|new Audio\(/.test(js), 'synthesized only, no audio files');
-  assert.ok(/data-mlsnd[\s\S]{0,200}S\(\)\.set\(!sndOn\(\)\)/.test(js) && js.includes('S().unlock();   // the start tap'), 'toggle + unlock on the start tap');
+  assert.ok(/data-mlsnd[\s\S]{0,200}SND\(\)\.set\(!sndOn\(\)\)/.test(js) && js.includes('SND().unlock();   // the start tap'), 'toggle + unlock on the start tap');
 });
 test('#363 30n 🔊 the per-second plan: heartbeat each second, last 10 s ticks louder + higher with a double heartbeat, last 5 s two ticks/s', () => {
   const S = sndCtx().NursinMilSnd, P = S.plan;
@@ -8240,12 +8240,13 @@ test('#364 30n 🔊 scheduler state: plays once per whole second, silent while p
   assert.strictEqual(S.second(7).length, 0, 'nothing after stop');
   S.start(); S.set(false); assert.strictEqual(S.state().running, false, '🔇 → off'); S.set(true);
   const js = read('assets/mil.js');
-  assert.ok(/function answer\(k\) \{\s*if \(!st \|\| st\.busy\) return; st\.busy = true; stopT\(\); S\(\)\.stop\(\);/.test(js), 'answer stops the suspense');
-  assert.ok(/function close\(fromPop\) \{\s*stopT\(\); S\(\)\.stop\(\);/.test(js) && /function end\(how\) \{\s*stopT\(\); S\(\)\.stop\(\);/.test(js), 'leaving / result stops it');
-  assert.ok(/function pause\(on\) \{[^\n]*S\(\)\.pause\(on\)/.test(js), 'lifeline dialog pauses the suspense');
+  assert.ok(/function answer\(k\) \{\s*if \(!st \|\| st\.busy\) return; st\.busy = true; stopT\(\); SND\(\)\.stop\(\);/.test(js), 'answer stops the suspense');
+  assert.ok(/function close\(fromPop\) \{\s*stopT\(\); SND\(\)\.stop\(\);/.test(js) && /function end\(how\) \{\s*stopT\(\); SND\(\)\.stop\(\);/.test(js), 'leaving / result stops it');
+  assert.ok(/function pause\(on\) \{[^\n]*SND\(\)\.pause\(on\)/.test(js), 'lifeline dialog pauses the suspense');
   assert.ok(/visibilitychange[\s\S]{0,120}d\.hidden\) \{ kill\(\)/.test(js), 'hidden tab → cut');
   assert.ok(/\.mltm\.low\.fl\{background-color:#dc2626/.test(read('assets/mil.css')) && !/animation\s*:|@keyframes/.test(read('assets/mil.css')), 'red flash = a transition, no animation');
   assert.ok(!/setInterval\(/.test(js.slice(0, js.indexOf('var K = "nursin_mil_v1"'))), 'no audio loop: driven by the game timer');
+  assert.ok(!/\bvar SND\b|[,(]\s*SND\s*=|\bSND\s*=\s*[^=]/.test(js.replace('function SND()', '')), 'the sound helper is never shadowed by a local (30n hotfix: a local «var S» broke the start screen)');
 });
 test('#365 30n 🆕 whats-new 30n on top, plain line, parseable', () => {
   const src = read('assets/whatsnew-data.js'), c = {}; new Function('window', src)(c);
