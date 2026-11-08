@@ -10,9 +10,10 @@
        another lesson much more than this one (🔀 switch / ↩️ stay), and a QUESTION from him (؟ / شو / ليش / pourquoi…) searches every
        lesson passage and answers with the best one + «📖 افتح الدرس», or «ما لقيتها بدروسك 🤔».
    • partner of the day by date (حسين، ريم، علي، سارة، كريم، نور، زينب — 2026-11-08 = حسين), girls → the female voice, boys → the male one
-     (assets/discuss-audio/<line>-<f|m>.mp3 for the fixed lines; the rest by speechSynthesis when the device has an Arabic voice).
+     (assets/discuss-audio/: the fixed lines, and 31d each question + its answer for Réa, Law, Management, Med-Surg; the rest is text only).
    • lesson of the day: the NEXT exam's subjects (assets/midterm.js NursinMid.next), his mistakes first (nursin_weak_v1), the least
      discussed next; fixed once chosen for the day (nursin_discuss_v1.pick).
+   • 31d: his 🎤 answer is a voice bubble (his recording), the recognised words stay hidden and only feed the matching.
    • 5 questions a round, «➕ كمّل» = 5 more of the same lesson (never-asked first), then the next lesson. Answers feed NursinSRS.record,
      Weak.record, the «nursin:answer» event (retention/coverage) and NursinStudy.activity("quiz") once a round.
    • the daily nudge: home card under the chips (assets/home.js), a once-a-day banner on the other pages outside 22:00–08:00 and class
@@ -170,7 +171,7 @@
   }
   function qIndex() { if (QLID) return QLID; QLID = {}; bank().forEach(function (q) { var k = qLesson(q); if (k) (QLID[k] = QLID[k] || []).push(q); }); return QLID; }
   function dataOf(id) { var D = w.NDISC && w.NDISC.L; return (D && D[id]) || { h: [], b: [], q: [] }; }
-  var NEGQ = /(مش|ما\s|غلط|خطأ|ليس|لا\s?يعتبر|ما\s?بيعتبر|non|pas|sauf|faux|incorrect|except)/i;
+  var NEGQ = /(^|[\s(«،])(مش|ما|غلط|خطأ|ليس|ليست|مو|non|pas|sauf|faux|incorrect|except)([\s؟?:،»)]|$)/i;
   function clip(s, n) { s = String(s || "").replace(/\s+/g, " ").trim(); var a = s.split(""); return a.length > n ? a.slice(0, n - 1).join("") + "…" : s; }
   /* every question of a lesson: {key, kind:"l"|"m", g: group (follow-ups share it), q: text, kps: [kp], wrong: [{kp, why}], x, opts, a, src} */
   function script(id) {
@@ -333,25 +334,42 @@
 
   w.NursinDiscuss = { K: K, NAMES: NAMES, VOICE: VOICE, LINES: LINES, GREET: GREET, EPOCH: EPOCH, ROUND: ROUND, partner: partner, quiet: quiet, today: today, dayNum: dayNum, addDays: addDays,
     norm: norm1, toks: toks, same: same, kpOf: kpOf, kpHit: kpHit, setOf: setOf, script: script, order: order, pickLesson: pickLesson, nextLesson: nextLesson, lessonInfo: lessonInfo,
-    judge: judge, isQuestion: isQuestion, otherLesson: otherLesson, search: search, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
+    judge: judge, fix: fix, bestAlt: bestAlt, lev: lev, qFile: qFile, hasQA: hasQA, qAudio: qAudio, isQuestion: isQuestion, otherLesson: otherLesson, search: search, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
 
-  /* ---------------- 🔊 voice ---------------- */
+  /* ---------------- 🔊 voice: ONLY recorded mp3s in the reels voices (Abdullah 5:42 PM «بنفس صوت الreels») — no device TTS for the partner ----------------
+     fixed lines: assets/discuss-audio/<key>-<f|m>.mp3 · greetings greet-<i>.mp3 · per question (Réa, Law, Management, Med-Surg first):
+     <qid>-q-<g>.mp3 (the question, original wording only) + <qid>-a-<g>.mp3 (the right answer + the lesson's explanation); list questions
+     l-<subject>-<lesson>-<i>-q/a-<g>.mp3. NDISC.au lists the questions that have them; anything else stays a text bubble. */
   function audioOf(key, p) { return "assets/discuss-audio/" + (key === "greet" ? "greet-" + p.i : key + "-" + p.g) + ".mp3"; }
-  var AU = null, tVoice = null;
-  function arVoice() { if (tVoice) return tVoice; try { var vs = w.speechSynthesis ? w.speechSynthesis.getVoices() : []; for (var i = 0; i < vs.length; i++) if (/^ar/i.test(vs[i].lang || "")) { tVoice = vs[i]; break; } } catch (e) {} return tVoice; }
-  function stopVoice() { try { if (AU) { AU.pause(); AU = null; } } catch (e) {} try { if (w.speechSynthesis) w.speechSynthesis.cancel(); } catch (e) {} }
-  function sayTTS(txt) {
-    try { var v = arVoice(); if (!w.speechSynthesis || !v || !txt) return; var u = new SpeechSynthesisUtterance(String(txt).replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, " ")); u.voice = v; u.lang = v.lang; u.rate = 1; w.speechSynthesis.speak(u); } catch (e) {}
+  function qFile(id, Q) { return Q.kind === "m" ? Q.key : "l-" + id.replace(":", "-") + "-" + Q.key.slice(1); }
+  function hasQA(id, Q) { var A = w.NDISC && w.NDISC.au; return !!(A && A.indexOf(qFile(id, Q)) > -1); }
+  function qAudio(id, Q, part, p) {                       // "" when there is no recording (or the question is shown in a reworded form today)
+    if (!hasQA(id, Q)) return "";
+    if (part === "q" && Q.kind === "m" && Q.src && Q.src.qvi) return "";
+    return "assets/discuss-audio/" + qFile(id, Q) + "-" + part + "-" + p.g + ".mp3";
   }
-  function speak(key, p, rest) {                           // fixed line (recorded) → then the rest by speechSynthesis
-    stopVoice();
-    if (!key) { sayTTS(rest); return; }
-    try {
-      var a = new Audio(audioOf(key, p)); AU = a;
-      a.onended = function () { if (AU === a) { AU = null; sayTTS(rest); } };
-      a.onerror = function () { if (AU === a) { AU = null; sayTTS((key === "greet" ? GREET(p) : LINES[key] || "") + " " + (rest || "")); } };
-      var pr = a.play(); if (pr && pr.catch) pr.catch(function () { if (AU === a) { AU = null; sayTTS(rest); } });
-    } catch (e) { sayTTS(rest); }
+  var AU = null, PLAYQ = [], PLAYBTN = null;
+  function stopVoice() { PLAYQ = []; try { if (AU) { AU.pause(); AU.onended = null; } } catch (e) {} AU = null; if (PLAYBTN) { PLAYBTN.classList.remove("on"); PLAYBTN.innerHTML = "▶️"; PLAYBTN = null; } }
+  function playList(srcs, btn) {
+    stopVoice(); PLAYQ = (srcs || []).filter(Boolean).slice(); if (!PLAYQ.length) return;
+    PLAYBTN = btn || null; if (btn) { btn.classList.add("on"); btn.innerHTML = "⏸️"; }
+    (function nx() {
+      var src = PLAYQ.shift(); if (!src) { stopVoice(); return; }
+      try { var a = new Audio(src); AU = a; a.onended = function () { if (AU === a) nx(); }; a.onerror = function () { if (AU === a) nx(); };
+        var pr = a.play(); if (pr && pr.catch) pr.catch(function () { if (AU === a) stopVoice(); }); } catch (e) { stopVoice(); }
+    })();
+  }
+  function bars(seed, n) { var r = seeded(hash(seed)), h = ""; for (var i = 0; i < n; i++) h += '<i style="height:' + (5 + Math.round(r() * 15)) + 'px"></i>'; return h; }
+  function fmt(sec) { sec = Math.max(1, Math.round(sec || 0)); return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2); }
+  /* a WhatsApp-like voice row: ▶️ + waveform + duration (read from the files' metadata) */
+  function voiceRow(srcs, seed) {
+    return '<div class="vrow"><button type="button" class="vb" aria-label="اسمع">▶️</button><span class="vw" aria-hidden="true">' + bars(seed || srcs.join(), 26) + '</span><span class="vd" data-src="' + esc(srcs.join("|")) + '">0:0…</span></div>';
+  }
+  function wireVoice(el, srcs) {
+    var b = el.querySelector(".vb"), dEl = el.querySelector(".vd"); if (!b) return;
+    b.onclick = function () { if (S) S.unlocked = true; if (PLAYBTN === b) { stopVoice(); return; } playList(srcs, b); };
+    var tot = 0, left = srcs.length;
+    srcs.forEach(function (src) { try { var a = new Audio(); a.preload = "metadata"; a.onloadedmetadata = function () { tot += isFinite(a.duration) ? a.duration : 0; if (--left === 0 && dEl) dEl.textContent = fmt(tot); }; a.onerror = function () { if (--left === 0 && dEl) dEl.textContent = tot ? fmt(tot) : "🔊"; }; a.src = src; } catch (e) {} });
   }
 
   /* ---------------- 🏠 home card + the daily nudge ---------------- */
@@ -402,12 +420,13 @@
   function chat() { return $("#dsch"); }
   function scroll() { var c = chat(); if (c) setTimeout(function () { c.scrollTop = c.scrollHeight; }, 30); }
   function add(html, cls) { var c = chat(), x = d.createElement("div"); x.className = cls; x.innerHTML = html; c.appendChild(x); scroll(); return x; }
-  function pBubble(html, key, rest, extraCls) {
-    var p = S.p, x = add('<div class="lb">' + esc(p.n) + ' <button type="button" class="pl" aria-label="اسمع">🔊</button></div>' + html, "m p" + (extraCls ? " " + extraCls : ""));
-    x.querySelector(".pl").onclick = function () { S.unlocked = true; speak(key, p, rest); };
-    if (S.snd && S.unlocked) speak(key, p, rest);
+  function pBubble(html, srcs, extraCls) {               // srcs: recorded mp3s (fixed line, question, answer); none → a text bubble only
+    var p = S.p; srcs = (srcs || []).filter(Boolean);
+    var x = add('<div class="lb">' + esc(p.n) + "</div>" + (srcs.length ? voiceRow(srcs, html) : "") + '<div class="tx">' + html + "</div>", "m p" + (srcs.length ? " hv" : "") + (extraCls ? " " + extraCls : ""));
+    if (srcs.length) { wireVoice(x, srcs); if (S.snd && S.unlocked) playList(srcs, x.querySelector(".vb")); }
     return x;
   }
+  function F(key) { return audioOf(key, S.p); }
   function typing(ms, fn) { var t = add("<i></i><i></i><i></i>", "ty"); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); fn(); }, ms); }
   function qr(list) {
     var old = chat().querySelectorAll(".qr"); for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
@@ -431,10 +450,10 @@
   function start(id, greet) {
     var st = state(); S.id = id; S.list = order(id, st, S.day); S.pos = 0; S.inRound = 0; S.okIn = []; S.round = 1; S.cur = null;
     head();
-    if (!S.list.length) { pBubble("هالدرس ما فيه أسئلة للنقاش بعد 🙏 خلّينا ناخد درس تاني", null, ""); qr([{ t: "📚 الدرس الجاي", f: function () { start(nextLesson(id), false); } }]); return; }
+    if (!S.list.length) { pBubble("هالدرس ما فيه أسئلة للنقاش بعد 🙏 خلّينا ناخد درس تاني", null); qr([{ t: "📚 الدرس الجاي", f: function () { start(nextLesson(id), false); } }]); return; }
     var Li = L(), nm = esc(name());
-    if (greet) pBubble("أهلين" + (nm ? " " + nm : "") + " 👋 أنا " + esc(S.p.n) + "، اليوم منتناقش بدرس <b>" + frWrap(Li.n) + "</b> 💬<br>جاوبني كتابة أو احكي 🎤، وفيك تسألني أي شي من دروسك.", "greet", Li.n);
-    else pBubble("تمام! هلّق منتناقش بدرس <b>" + frWrap(Li.n) + "</b> 💬", null, Li.n);
+    if (greet) pBubble("أهلين" + (nm ? " " + nm : "") + " 👋 أنا " + esc(S.p.n) + "، اليوم منتناقش بدرس <b>" + frWrap(Li.n) + "</b> 💬<br>جاوبني كتابة أو احكي 🎤، وفيك تسألني أي شي من دروسك.", [audioOf("greet", S.p)]);
+    else pBubble("تمام! هلّق منتناقش بدرس <b>" + frWrap(Li.n) + "</b> 💬", null);
     typing(700, ask);
   }
   function name() { try { return w.NursinName ? w.NursinName.greetName() : ""; } catch (e) { return ""; } }
@@ -442,7 +461,7 @@
     if (S.pos >= S.list.length) { S.pos = 0; S.list = order(S.id, state(), S.day); }
     var Q = S.cur = S.list[S.pos], fu = Q.fu && S.inRound > 0;
     var html = (fu ? '<span class="tag">🔁 متابعة</span><br>' : "") + frWrap(Q.q);
-    pBubble(html, fu ? "follow" : null, Q.q.replace(/\n.*/, ""), fu ? "fu" : "");
+    pBubble(html, [fu && !qAudio(S.id, Q, "q", S.p) ? F("follow") : "", qAudio(S.id, Q, "q", S.p)], fu ? "fu" : "");
     S.hint = 0;
     qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]);
     var inp = $("#dsin"); if (inp && !S.touch) try { inp.focus(); } catch (e) {}
@@ -453,13 +472,13 @@
     if (Q.kind === "m" && !Q.neg) t = "الجواب واحد من هول: " + Q.opts.map(function (o) { return "«" + o + "»"; }).join(" · ");
     else if (Q.kind === "m") t = "فكّر بيلّي ما بيخصّ هالموضوع 😉";
     else t = "في " + Q.items.length + " نقاط. أوّلها بيبلّش بـ «" + clip(Q.items[0], 18).split(" ").slice(0, 2).join(" ") + "…»";
-    pBubble(frWrap(t), "hint", t);
+    pBubble(frWrap(t), [F("hint")]);
     qr([{ t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]);
   }
   function answerList(Q) { return Q.kind === "m" ? [Q.opts[Q.a]] : Q.items; }
   function skip() {
     var Q = S.cur; if (!Q) return;
-    pBubble('<div class="no"><b>💡 الجواب:</b><ul>' + answerList(Q).map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>" + (Q.x ? '<div class="xp">📖 ' + frWrap(Q.x) + "</div>" : ""), "skip", answerList(Q).join("، "), "fb");
+    pBubble('<div class="no"><b>💡 الجواب:</b><ul>' + answerList(Q).map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>" + (Q.x ? '<div class="xp">📖 ' + frWrap(Q.x) + "</div>" : ""), [F("skip"), qAudio(S.id, Q, "a", S.p)], "fb");
     record(Q, false, true); after();
   }
   function record(Q, ok, skipped) {
@@ -483,7 +502,7 @@
       var good = S.okIn.filter(Boolean).length;
       try { if (w.NursinStudy && w.NursinStudy.activity) w.NursinStudy.activity("quiz", Math.min(10, good * 2), "💬 نقاش مع " + S.p.n); } catch (e) {}
       typing(800, function () {
-        pBubble("برافو! خلصنا خمس أسئلة 👏 جاوبت منيح على <b>" + good + " من " + ROUND + "</b>.<br>بدّك نكمّل؟", "done", "");
+        pBubble("برافو! خلصنا خمس أسئلة 👏 جاوبت منيح على <b>" + good + " من " + ROUND + "</b>.<br>بدّك نكمّل؟", [F("done")]);
         var more = S.list.length - S.pos;
         var btns = [{ t: "➕ كمّل", f: function () { S.inRound = 0; S.okIn = []; S.round++; head(); typing(500, ask); } }];
         if (more <= 0 || S.round >= 2) btns.push({ t: "📚 الدرس الجاي", f: function () { start(nextLesson(S.id), false); } });
@@ -494,7 +513,7 @@
     }
     if (S.pos >= S.list.length) {
       typing(700, function () {
-        pBubble("خلصنا كل أسئلة هالدرس 🎉 منكمّل بالدرس الجاي؟", null, "");
+        pBubble("خلصنا كل أسئلة هالدرس 🎉 منكمّل بالدرس الجاي؟", null);
         qr([{ t: "📚 الدرس الجاي", f: function () { start(nextLesson(S.id), false); } }, { t: "🔁 منعيد هالدرس", f: function () { S.pos = 0; S.list = order(S.id, state(), S.day); ask(); } }]);
       });
       return;
@@ -508,39 +527,42 @@
     if (ok) h += '<div class="ok"><b>✅ ذكرت:</b><ul>' + r.hit.map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>";
     if (r.miss.length) h += '<div class="no"><b>💡 نسيت:</b><ul>' + r.miss.map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>";
     if (Q.kind === "m" && Q.x) h += '<div class="xp">📖 ' + frWrap(Q.x) + "</div>";
-    pBubble((key === "ok" ? LINES.ok : key === "part" ? LINES.part : LINES.none) + h, key, r.miss.length ? "نسيت: " + r.miss.join("، ") : "", "fb");
+    pBubble((key === "ok" ? LINES.ok : key === "part" ? LINES.part : LINES.none) + h, [F(key), r.miss.length ? qAudio(S.id, Q, "a", S.p) : ""], "fb");
     record(Q, r.ok);
     after();
   }
   function wrongReply(Q, r) {
     var why = r.wrong.why || "";
     var h = LINES.wrong + " — " + (why ? frWrap(why) : "") + '<div class="ok"><b>✔️ الصح من الدرس:</b><ul>' + answerList(Q).map(function (x) { return "<li>" + frWrap(x) + "</li>"; }).join("") + "</ul></div>" + (Q.kind === "m" && Q.x ? '<div class="xp">📖 ' + frWrap(Q.x) + "</div>" : "");
-    pBubble(h, "wrong", why, "fb bad");
+    pBubble(h, [F("wrong"), qAudio(S.id, Q, "a", S.p)], "fb bad");
     record(Q, false); after();
   }
   function otherReply(Q, other, text, asked) {
     var Lo = lessonInfo(other), Lc = L();
-    pBubble("هيدا من درس <b>" + frWrap(Lo.n) + "</b> مش من درس <b>" + frWrap(Lc.n) + "</b> 👀" + (asked ? '<div class="xp">📖 ' + frWrap(clip(asked.t, 320)) + "</div>" : ""), "other", "", "fb oth");
-    qr([{ t: "🔀 خلّينا نناقش درس " + esc(clip(Lo.n, 26)), f: function () { start(other, false); } }, { t: "↩️ منكفّي بدرسنا", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), "back", Q.q); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }]);
+    pBubble("هيدا من درس <b>" + frWrap(Lo.n) + "</b> مش من درس <b>" + frWrap(Lc.n) + "</b> 👀" + (asked ? '<div class="xp">📖 ' + frWrap(clip(asked.t, 320)) + "</div>" : ""), [F("other")], "fb oth");
+    qr([{ t: "🔀 خلّينا نناقش درس " + esc(clip(Lo.n, 26)), f: function () { start(other, false); } }, { t: "↩️ منكفّي بدرسنا", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }]);
   }
   function questionReply(text) {
     var Q = S.cur, o = otherLesson(S.id, text), best = (o && search(S.id, text, o)) || search(S.id, text);
     if (!best) {
-      pBubble(LINES.nf + "<br><small>جرّب تسأل بكلمات من الدرس، أو افتح الدرس 📖</small>", "nf", "");
-      qr([{ t: "📖 افتح الدرس", href: L().href }, { t: "↩️ منرجع لسؤالي", f: function () { pBubble(frWrap(Q.q), "back", Q.q); } }]);
+      pBubble(LINES.nf + "<br><small>جرّب تسأل بكلمات من الدرس، أو افتح الدرس 📖</small>", [F("nf")]);
+      qr([{ t: "📖 افتح الدرس", href: L().href }, { t: "↩️ منرجع لسؤالي", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); } }]);
       return;
     }
     if (best.id !== S.id && o === best.id) { otherReply(Q, best.id, text, best); return; }
     var Lb = lessonInfo(best.id) || L();
-    pBubble(LINES.found + '<div class="xp">' + (best.h ? "<b>" + frWrap(clip(best.h, 70)) + "</b><br>" : "") + frWrap(clip(best.t, 360)) + '</div><a class="cite" href="' + esc(Lb.href) + '">📖 افتح الدرس: ' + frWrap(clip(Lb.n, 40)) + "</a>", "found", clip(best.t, 360), "fb");
-    qr([{ t: "↩️ منرجع لسؤالي", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), "back", Q.q); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }, { t: "⏭️ السؤال الجاي", f: skip }]);
+    pBubble(LINES.found + '<div class="xp">' + (best.h ? "<b>" + frWrap(clip(best.h, 70)) + "</b><br>" : "") + frWrap(clip(best.t, 360)) + '</div><a class="cite" href="' + esc(Lb.href) + '">📖 افتح الدرس: ' + frWrap(clip(Lb.n, 40)) + "</a>", [F("found")], "fb");
+    qr([{ t: "↩️ منرجع لسؤالي", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }, { t: "⏭️ السؤال الجاي", f: skip }]);
   }
   function send(text) {
     text = String(text || "").trim(); if (!text || !S || !S.cur) return;
     clearQr(); stopVoice();
     add(frWrap(text) + '<span class="t">' + hm() + " ✓✓</span>", "m u");
+    judgeAndReply(text, 650 + Math.min(900, text.length * 12));
+  }
+  function judgeAndReply(text, ms) {
     var Q = S.cur;
-    typing(650 + Math.min(900, text.length * 12), function () {
+    typing(ms, function () {
       if (DUNNO.test(text)) { skip(); return; }
       if (isQuestion(text)) { questionReply(text); return; }
       var r = judge(Q, text);
@@ -549,34 +571,109 @@
       feedback(Q, r);
     });
   }
-  /* 🎤 the browser's speech-to-text (Chrome / Safari 14.5+); hidden where there is none (iOS 12) */
+  /* 🎤 31d (Abdullah 5:40 PM «ما في داعي إنه الشي اللي بحكيه بالصوت ينكتب كتابة»): tap 🎤 → he talks → tap again (or he stops talking) →
+     his answer lands in the chat as a VOICE bubble (▶️ + waveform + duration, his own recording via MediaRecorder where the browser has it,
+     else «🎤 رسالة صوتية»). The words are NOT shown (only behind the tiny «شو سمعت؟»): the browser's speech-to-text runs silently
+     (ar-LB, fr-FR when Arabic is not offered; 3 alternatives → the one that fits this question best; words close to the lesson's
+     keywords are corrected to them) and only feeds the matching. Hidden where there is no speech-to-text (iOS 12). */
   function SR() { return w.SpeechRecognition || w.webkitSpeechRecognition || null; }
+  function lev(a, b, max) {                              // edit distance, stops early past max
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    var prev = [], cur, i, j; for (j = 0; j <= b.length; j++) prev[j] = j;
+    for (i = 1; i <= a.length; i++) { cur = [i]; var lo = cur[0]; for (j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1)); if (cur[j] < lo) lo = cur[j]; } if (lo > max) return max + 1; prev = cur; }
+    return prev[b.length];
+  }
+  function pool(id, Q) {                                  // stem → [the word to write, weight]: this question's key points + wrong options, the lesson, the synonym list
+    var P = {}, V = vocab().V[id] || {};
+    function put(t, wd, wt) { if (t && t.charAt(0) !== "§" && (!P[t] || P[t][1] < wt)) P[t] = [wd, wt]; }
+    if (Q) { Q.kps.forEach(function (k) { k.alts.forEach(function (a) { a.forEach(function (t) { put(t, t, 3); }); }); }); Q.wrong.forEach(function (w0) { w0.kp.alts.forEach(function (a) { a.forEach(function (t) { put(t, t, 3); }); }); }); }
+    Object.keys(V).forEach(function (t) { put(t, t, 2); });
+    Object.keys(synMap()).forEach(function (k) { put(stem(k), k, 1); });
+    return P;
+  }
+  /* «fuzzy-correct near lesson keywords»: a heard word that is not a lesson word but is 1–2 letters away from one becomes that word */
+  function fix(text, id, Q) {
+    var P = pool(id, Q), M = synMap(), ks = Object.keys(P);
+    return norm1(text).replace(/[^a-z0-9\u0621-\u064a]+/g, " ").split(" ").map(function (x) {
+      if (!x || STOP[x] || NEG[x] || x.length < 4) return x;
+      var t = stem(x); if (P[t] || M[t] || M[x]) return x;
+      var max = t.length >= 7 ? 2 : 1, best = "", bd = max + 1, bw = 0;
+      for (var i = 0; i < ks.length; i++) { var k = ks[i]; if (k.length < 4) continue; var dd = lev(t, k, max); if (dd < bd || (dd === bd && P[k][1] > bw)) { bd = dd; best = k; bw = P[k][1]; } }
+      return best && bd <= max ? P[best][0] : x;
+    }).join(" ");
+  }
+  /* of the recogniser's alternatives, the one that fits this question best (more key points heard, lesson words), never a «wrong» by noise */
+  function bestAlt(alts, id, Q) {
+    var V = vocab().V[id] || {}, best = alts[0] || "", bs = -1;
+    alts.forEach(function (a, i) {
+      if (!a) return; var r = Q ? judge(Q, a) : { hit: [], wrong: null }, n = 0; toks(a).forEach(function (t) { if (V[t]) n++; });
+      var sc = r.hit.length * 3 + n * 0.5 - (r.wrong ? 0.5 : 0) - i * 0.1;
+      if (sc > bs) { bs = sc; best = a; }
+    });
+    return best;
+  }
   function mic() {
     var C = SR(), b = $("#dsmic"), inp = $("#dsin"); if (!b) return;
     if (!C) { b.hidden = true; b.style.display = "none"; return; }
-    var rec = null, on = false, langs = ["ar-LB", "fr-FR"], li = 0, base = "";
-    function stop() { on = false; b.classList.remove("on"); try { rec && rec.stop(); } catch (e) {} }
-    function go() {
-      try { rec = new C(); } catch (e) { b.style.display = "none"; return; }
-      rec.lang = langs[li]; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-      base = inp.value ? inp.value + " " : "";
-      rec.onresult = function (e) { var t = ""; for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; inp.value = base + t; };
-      rec.onerror = function (e) { if (e && (e.error === "language-not-supported" || e.error === "bad-grammar") && li === 0) { li = 1; on = false; go(); return; } if (e && e.error === "not-allowed") { b.style.display = "none"; } stop(); };
-      rec.onend = function () { var was = on; stop(); if (was && inp.value.trim()) { var v = inp.value; inp.value = ""; send(v); } };
-      try { rec.start(); on = true; b.classList.add("on"); } catch (e) { stop(); }
+    var rec = null, mr = null, chunks = [], stream = null, on = false, t0 = 0, langs = ["ar-LB", "fr-FR"], li = 0, alts = [], tick = 0, done = false, ph = inp.placeholder;
+    function ui(x) { on = x; b.classList.toggle("on", x); b.innerHTML = x ? "⏹️" : "🎤"; inp.disabled = x; inp.placeholder = x ? "🔴 عم سجّل… كبوس ⏹️ لمّا تخلص" : ph; clearInterval(tick); if (x) tick = setInterval(function () { inp.placeholder = "🔴 عم سجّل " + fmt((Date.now() - t0) / 1000) + " … كبوس ⏹️ لمّا تخلص"; }, 500); }
+    function finish() {
+      if (done) return; done = true; ui(false);
+      var dur = (Date.now() - t0) / 1000, Q = S.cur;
+      function go(url) {
+        try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} stream = null;
+        var heard = alts.length ? fix(bestAlt(alts, S.id, Q), S.id, Q) : "";
+        sendVoice({ url: url, dur: dur, heard: heard, raw: alts[0] || "" });
+      }
+      if (mr && mr.state !== "inactive") { mr.onstop = function () { var url = ""; try { url = chunks.length ? URL.createObjectURL(new Blob(chunks, { type: mr.mimeType || "audio/mp4" })) : ""; } catch (e) {} go(url); }; try { mr.stop(); } catch (e) { go(""); } }
+      else go("");
     }
-    b.onclick = function () { S.unlocked = true; stopVoice(); if (on) stop(); else go(); };
+    function startRec() {
+      try { rec = new C(); } catch (e) { b.style.display = "none"; return; }
+      rec.lang = langs[li]; rec.interimResults = false; rec.continuous = false; rec.maxAlternatives = 3;
+      rec.onresult = function (e) {
+        var A = [], n = 0, i, j; for (i = 0; i < e.results.length; i++) n = Math.max(n, e.results[i].length);
+        for (j = 0; j < Math.max(1, n); j++) { var t = ""; for (i = 0; i < e.results.length; i++) { var r0 = e.results[i]; t += (r0[Math.min(j, r0.length - 1)] || {}).transcript || ""; t += " "; } A.push(t.trim()); }
+        alts = A;
+      };
+      rec.onerror = function (e) {
+        if (e && (e.error === "language-not-supported" || e.error === "bad-grammar") && li === 0) { li = 1; try { rec.onend = null; } catch (x) {} startRec(); return; }
+        if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) { b.style.display = "none"; }
+      };
+      rec.onend = function () { if (on) finish(); };
+      try { rec.start(); } catch (e) { finish(); }
+    }
+    function begin() {
+      stopVoice(); done = false; alts = []; chunks = []; mr = null; t0 = Date.now(); ui(true); startRec();
+      try {                                               // his own voice, to replay in the bubble (iOS 14.3+ / Chrome / Firefox)
+        if (w.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) {
+          if (done) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+          stream = st; try { mr = new MediaRecorder(st); mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); }; mr.start(); } catch (e) { mr = null; }
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    b.onclick = function () { S.unlocked = true; if (on) { try { rec && rec.stop(); } catch (e) {} setTimeout(finish, 900); } else begin(); };
+  }
+  function sendVoice(v) {
+    if (!S || !S.cur) return; clearQr(); stopVoice();
+    var x = add('<div class="vrow"><button type="button" class="vb"' + (v.url ? "" : " disabled") + ' aria-label="اسمع">' + (v.url ? "▶️" : "🎤") + '</button><span class="vw" aria-hidden="true">' + bars(String(v.dur) + v.raw, 24) + '</span><span class="vd">' + fmt(v.dur) + "</span></div>" +
+      (v.url ? "" : '<small class="vn">🎤 رسالة صوتية</small>') + '<button type="button" class="heardb">شو سمعت؟</button><div class="heard" hidden>' + esc(v.raw || "—") + '</div><span class="t">' + hm() + " ✓✓</span>", "m u hv");
+    var vb = x.querySelector(".vb"); if (v.url) vb.onclick = function () { if (PLAYBTN === vb) { stopVoice(); return; } playList([v.url], vb); };
+    x.querySelector(".heardb").onclick = function () { var h = x.querySelector(".heard"); h.hidden = !h.hidden; };
+    if (!v.heard) { typing(600, function () { pBubble("ما سمعتك منيح 🙉 جرّب كمان مرّة، أو اكتبلي جوابك ✍️", null); }); return; }
+    judgeAndReply(v.heard, 650);
   }
   function boot() {
     var root = app(); if (!root) return;
     var day = today(), st = state();
-    S = { day: day, p: partner(day), snd: st.snd === 1, unlocked: false, okAll: 0, touch: "ontouchstart" in w };
+    S = { day: day, p: partner(day), snd: st.snd !== 0, unlocked: false, okAll: 0, touch: "ontouchstart" in w };
     var id = (location.hash.match(/l=([a-z]+:[a-z0-9]+)/) || [])[1];
     if (!id || !lessonInfo(id)) id = pickLesson(day, st, true);
     root.innerHTML = '<div class="dsapp"><div class="hd" id="dshd"></div><div class="ch" id="dsch" aria-live="polite"><div class="dv">اليوم · ' + hm() + '</div></div>' +
       '<form class="ib" id="dsform" autocomplete="off"><button type="button" class="mic" id="dsmic" aria-label="احكي">🎤</button><input class="in" id="dsin" type="text" dir="auto" placeholder="اكتب جوابك أو احكي 🎤…" aria-label="جوابك" enterkeyhint="send"><button class="go" type="submit" aria-label="ابعت">↑</button></form></div>';
     $("#dsform").onsubmit = function (e) { e.preventDefault(); S.unlocked = true; var i = $("#dsin"), v = i.value; i.value = ""; send(v); };
     mic();
+    var un = function () { S.unlocked = true; }; d.addEventListener("touchend", un, true); d.addEventListener("click", un, true); d.addEventListener("keydown", un, true);
     start(id, true);
     if (!st.visited) { st.visited = day; save(st); }
     cloud();

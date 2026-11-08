@@ -63,3 +63,19 @@ body.dspage #main{padding:0;margin:0;max-width:none}
 @keyframes dsmic{50%{box-shadow:0 0 0 8px rgba(220,38,38,.18)}}
 .dsapp .go{background:linear-gradient(135deg,#5fb0a8,#0f766e);color:#fff;font-size:20px;font-weight:900;box-shadow:0 6px 14px rgba(15,118,110,.30)}
 @media (prefers-reduced-motion:reduce){.dsapp .m,.dsapp .ty i,.dsapp .mic.on{animation:none}}
+/* 🔊 31d voice bubbles (WhatsApp-like): ▶️ + waveform + duration — the partner's recorded lines, and his own 🎤 answer (no words shown) */
+.dsapp .vrow{display:flex;align-items:center;gap:8px;min-width:190px;margin:2px 0 4px;direction:ltr}
+.dsapp .vb{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;font-size:15px;cursor:pointer;background:#0f766e;color:#fff;box-shadow:0 3px 8px rgba(15,118,110,.25)}
+.dsapp .vb[disabled]{opacity:.8;cursor:default}
+.dsapp .vw{flex:1;display:flex;align-items:center;gap:2px;height:22px;overflow:hidden}
+.dsapp .vw i{display:block;width:3px;flex:0 0 3px;border-radius:2px;background:rgba(15,118,110,.55)}
+.dsapp .vb.on+.vw i{animation:dswv 1s ease-in-out infinite;background:#0f766e}
+.dsapp .vb.on+.vw i:nth-child(3n){animation-delay:.2s}.dsapp .vb.on+.vw i:nth-child(3n+1){animation-delay:.4s}
+@keyframes dswv{50%{transform:scaleY(.45)}}
+.dsapp .vd{flex:0 0 auto;font-size:12px;font-weight:800;color:#5a6e71;font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.dsapp .u .vb{background:#fff;color:#0f766e}.dsapp .u .vw i{background:rgba(255,255,255,.7)}.dsapp .u .vb.on+.vw i{background:#fff}.dsapp .u .vd{color:#d9fffa}
+.dsapp .u .vn{display:block;font-size:12px;opacity:.85}
+.dsapp .heardb{display:inline-block;border:0;background:none;color:rgba(255,255,255,.65);font:700 10.5px/1 Cairo,system-ui,sans-serif;padding:2px 0;cursor:pointer;text-decoration:underline}
+.dsapp .heard{font-size:12.5px;opacity:.9;margin-top:2px}
+.dsapp .p.hv .tx{margin-top:2px}
+@media (prefers-reduced-motion:reduce){.dsapp .vb.on+.vw i{animation:none}}
