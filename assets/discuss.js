@@ -88,7 +88,11 @@
     ["عمليه", "جراحه", "جراحي", "chirurgie", "operation", "intervention"], ["noradrenaline", "نورادرينالين", "نورادرنالين", "نوراد"], ["adrenaline", "ادرينالين", "ادرنالين"], ["atropine", "اتروبين", "تروبين"], ["dopamine", "دوبامين"], ["mannitol", "مانيتول"],
     ["heparine", "هيبارين", "هبارين"], ["morphine", "مورفين"], ["troponine", "تروبونين"], ["digoxine", "ديجوكسين", "ديغوكسين"], ["aspirine", "اسبرين", "اسبيرين"], ["insuline", "انسولين"],
     ["furosemide", "lasix", "لازكس", "لازيكس"], ["intubation", "تنبيب"], ["ventilation", "تهويه"], ["glasgow", "غلاسكو", "جلاسكو"], ["ecg", "تخطيط"], ["sonde", "سوند"],
-    ["سبب", "اسباب", "cause", "causes", "etiologie"], ["علامات", "عوارض", "اعراض", "signes", "symptomes"]
+    ["سبب", "اسباب", "cause", "causes", "etiologie"], ["علامات", "عوارض", "اعراض", "signes", "symptomes"],
+    /* 31g: more of his Lebanese / French mixes */
+    ["كلي", "كليه", "كليتين", "الكلي", "rein", "reins", "renal", "renale"], ["رئه", "ريه", "رئتين", "رئتان", "رييه", "poumon", "poumons", "pulmonaire"],
+    ["حماض", "حموضه", "acidose"], ["قلاء", "قلويه", "alcalose"], ["سعال", "سعله", "كحه", "قحه", "toux", "tousser"], ["عميق", "عميقه", "بعمق", "profond", "profonde"],
+    ["وضعيه", "position", "installation"], ["مجري", "مجاري", "voie", "voies"], ["تعويض", "يعوض", "بيعوض", "بتعوض", "compensation", "compense"]
   ];
   var SYNMAP = null;
   function synMap() { if (SYNMAP) return SYNMAP; SYNMAP = {}; SYN.forEach(function (g) { var c = "§" + norm1(g[0]); g.forEach(function (x) { SYNMAP[norm1(x)] = c; }); }); return SYNMAP; }
@@ -124,8 +128,10 @@
     if (a === b) return true;
     if (a.charAt(0) === "§" || b.charAt(0) === "§") return false;
     var la = /^[a-z]/.test(a), lb = /^[a-z]/.test(b); if (la !== lb) return false;
-    if (la) return a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5);
-    return a.length >= 4 && b.length >= 4 && Math.abs(a.length - b.length) <= 2 && a.slice(0, 4) === b.slice(0, 4);
+    if (la) return a.length >= 5 && b.length >= 5 && (a.slice(0, 5) === b.slice(0, 5) || lev(a, b, 2) <= 2);   // 31g: a typo / a voice slip (≤2 letters) still counts
+    if (a.length >= 4 && b.length >= 4 && Math.abs(a.length - b.length) <= 2 && a.slice(0, 4) === b.slice(0, 4)) return true;
+    var mx = Math.min(a.length, b.length) >= 7 ? 2 : 1;
+    return a.length >= 5 && b.length >= 5 && lev(a, b, mx) <= mx;
   }
   function has(set, t) { if (set[t]) return true; for (var k in set) if (same(k, t)) return true; return false; }
   function setOf(arr) { var o = {}; arr.forEach(function (t) { o[t] = 1; }); return o; }
@@ -333,7 +339,13 @@
   /* ---------------- 🧠 judging his words ---------------- */
   var QW = /^(شو|ليش|ليه|كيف|كيفي|كيفو|متى|امتى|ايمتى|إيمتى|وين|مين|قديش|اديش|أديش|شقد|هل|يعني\s*شو|ما\s*هو|ما\s*هي|شو\s*يعني|what|why|how|when|where|which|who|pourquoi|comment|quand|quel|quelle|quels|quelles|qu['’]?est|est[- ]ce|c['’]?est\s*quoi|explique|اشرح|اشرحلي|فسّر|فسرلي|خبّرني|خبرني)(\s|$)/i;
   function isQuestion(s) { s = String(s || "").trim(); return /[؟?]\s*$/.test(s) || QW.test(s); }
-  var DUNNO = /^(ما\s*ب?عرف|مش\s*عارف|ما\s*بتذكر|ما\s*بتزكر|نسيت|لا\s*اعرف|ما\s*عرفت|je\s*(ne\s*)?sais\s*pas|aucune\s*id[eé]e|pas\s*s[uû]r|idk)/i;
+  /* 31g (Abdullah 9:11 PM: «قلتلو ماني عارف، معقول هيك؟ إنت عندك شي فكرة؟ قام قلّي هاي من درس تاني»): «I don't know / you tell me /
+     really?» is never graded and never «another lesson» — the partner answers its OWN question, friendly, then checks back */
+  var UNSURE = /(ما\s*ب?عرف|ماني\s*عارف|مانا\s*عارف|ماني\s*متاكد|مش\s*عارف|مش\s*متاكد|مش\s*اكيد|مدري|مندري|ما\s*بدري|ما\s*بتذكر|ما\s*بتزكر|ما\s*عرفت|نسيت|ما\s*عندي\s*(شي\s*|اي\s*)?فكر|عندك\s*(شي\s*|اي\s*)?فكر|شو\s*رايك|شو\s*بتقول\s*انت|شو\s*بتعرف\s*انت|قلي\s*انت|قلي\s*الجواب|خبرني\s*انت|قول\s*انت|جاوب\s*انت|انت\s*جاوب|لا\s*اعرف|je\s*(ne\s*)?sais\s*pas|j['’]?\s*sais\s*pas|chais\s*pas|aucune\s*id[eé]e|pas\s*s[uû]re?|j['’]?en\s*sais\s*rien|et\s*toi\s*[?؟]|t['’]?en\s*penses\s*quoi|idk|no\s*idea|i\s*don['’]?t\s*know)/i;
+  var REALLY = /(^|[\s،,.])معقول\s*(هيك|هالشي|هيدا|هيدي|يعني)?\s*([?؟!.…]|$)/;
+  function soft(t) { return String(t || "").replace(/[\u064B-\u065F\u0670\u0640]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/\s+/g, " ").toLowerCase(); }
+  function unsure(t) { t = soft(t); return UNSURE.test(t) || (REALLY.test(t) && toks(t.replace(/معقول|هيك|هالشي|يعني|انت|عندك|فكره|شي/g, " ")).length <= 2); }
+  var DUNNO = { test: unsure };
   function judge(Q, ans) {
     var T = toks(ans), A = setOf(T);
     var hit = [], miss = [];
@@ -373,15 +385,30 @@
     Object.keys(V).forEach(function (id) { var s = 0; Object.keys(u).forEach(function (t) { if (V[id][t]) s += idfOf(t); }); out[id] = s; });
     return out;
   }
-  /* «his words belong to ANOTHER lesson much more than to this one» → that lesson's id, else "" */
-  function otherLesson(cur, text) {
-    var T = toks(text); if (T.length < 1) return "";
-    var S = lessonScores(T), best = "", bs = 0;
-    Object.keys(S).forEach(function (id) { if (S[id] > bs) { bs = S[id]; best = id; } });
-    var cs = S[cur] || 0, V = vocab().V[best] || {}, m = 0, lat = 0;
-    Object.keys(setOf(T)).forEach(function (t) { if (V[t]) { m++; if (/^[a-z§]/.test(t) && t.replace("§", "").length >= 5) lat++; } });
-    if (!best || best === cur || bs < 3.2 || bs < cs * 1.8 + 0.6 || (m < 2 && !lat)) return "";
-    return best;
+  /* «his words belong to ANOTHER lesson» → that lesson's id, else "".  31g: only a real statement (never a question, never «ما بعرف»),
+     ≥4 content words once the words every lesson shares are left out, ≥2 words that are distinctive of the other lesson (rare across his
+     lessons), and ~nothing in common with this lesson or with what the partner just said (ctx) */
+  var COMMON = null;
+  function common() {
+    if (COMMON) return COMMON; COMMON = {};
+    toks("مريض ممرضه ممرض علاج دم قلب ضغط تنفس نفس حاله جسم مستشفي طبيب دكتور دوا وجع عمل اعمل بعمل منعمل لازم كتير مهم شغله شغلات حدا ناس وقت مرض امراض نبض حراره سوايل اكسجين مراقبه اعطاء نقص ارتفاع انخفاض " +
+      "patient malade infirmier infirmiere soin soins traitement sang coeur tension respiration prise charge cas maladie important surveillance douleur risque normal normale signe signes").forEach(function (t) { COMMON[t] = 1; });
+    return COMMON;
+  }
+  function otherLesson(cur, text, ctx) {
+    if (isQuestion(text) || unsure(text) || confused(text)) return "";
+    var C = common(), u = Object.keys(setOf(toks(text))).filter(function (t) { return !C[t]; });
+    if (u.length < 4) return "";
+    var VV = vocab().V, Vc = VV[cur] || {}, X = ctx ? setOf(toks(ctx)) : {}, curHit = 0;
+    u.forEach(function (t) { if (Vc[t] || has(X, t)) curHit++; });
+    if (curHit > (u.length >= 8 ? 1 : 0)) return "";
+    var best = "", bs = 0, bn = 0, n = vocab().n, rare = Math.log(1 + n / Math.max(2, n / 12));
+    Object.keys(VV).forEach(function (id) {
+      if (id === cur) return; var V = VV[id], sc = 0, k = 0;
+      u.forEach(function (t) { if (V[t]) { var f = idfOf(t); sc += f; if (f >= rare) k++; } });
+      if (k >= 2 && sc > bs) { bs = sc; best = id; bn = k; }
+    });
+    return best && bs >= 4 ? best : "";
   }
   /* a question from him → the best passage of his lessons (this lesson counts a bit more), or null */
   function search(cur, text, only) {
@@ -407,7 +434,7 @@
 
   w.NursinDiscuss = { K: K, NAMES: NAMES, VOICE: VOICE, LINES: LINES, GREET: GREET, EPOCH: EPOCH, ROUND: ROUND, partner: partner, quiet: quiet, today: today, dayNum: dayNum, addDays: addDays,
     norm: norm1, toks: toks, same: same, kpOf: kpOf, kpHit: kpHit, setOf: setOf, script: script, order: order, pickLesson: pickLesson, nextLesson: nextLesson, lessonInfo: lessonInfo,
-    judge: judge, confused: confused, terms: terms, picks: picks, soloMic: soloMic, turnOf: turnOf, kindsFor: kindsFor, yesNo: yesNo, PH: PH, KINDS: KINDS, stems: stems, fix: fix, bestAlt: bestAlt, lev: lev, qFile: qFile, hasQA: hasQA, qAudio: qAudio, isQuestion: isQuestion, otherLesson: otherLesson, search: search, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
+    judge: judge, confused: confused, terms: terms, picks: picks, soloMic: soloMic, turnOf: turnOf, kindsFor: kindsFor, yesNo: yesNo, PH: PH, KINDS: KINDS, stems: stems, fix: fix, bestAlt: bestAlt, lev: lev, qFile: qFile, hasQA: hasQA, qAudio: qAudio, isQuestion: isQuestion, otherLesson: otherLesson, search: search, unsure: unsure, route: route, idkText: idkText, discussLine: discussLine, langsFor: langsFor, dbg: dbg, related: related, state: state, save: save, qLesson: qLesson, examSubs: examSubs, homeHtml: homeHtml, nudgeHtml: nudgeHtml, audioOf: audioOf, sizeOf: sizeOf, _reset: function () { QLID = null; VOC = null; } };
 
   /* ---------------- 🔊 voice: ONLY recorded mp3s in the reels voices (Abdullah 5:42 PM «بنفس صوت الreels») — no device TTS for the partner ----------------
      fixed lines: assets/discuss-audio/<key>-<f|m>.mp3 · greetings greet-<i>.mp3 · per question (Réa, Law, Management, Med-Surg first):
@@ -533,7 +560,7 @@
   function name() { try { return w.NursinName ? w.NursinName.greetName() : ""; } catch (e) { return ""; } }
   function ask() {
     if (S.pos >= S.list.length) { S.pos = 0; S.list = order(S.id, state(), S.day); }
-    var Q = S.cur = S.list[S.pos], st = state();
+    S.back = null; var Q = S.cur = S.list[S.pos], st = state();
     var T = S.turn = turnOf(S.id, Q, st, S.lastKind, S.p); S.lastKind = T.kind; st.rot = (st.rot | 0) + 1; save(st);
     var html = '<span class="tag k-' + T.kind + '">' + KEMO[T.kind] + " " + esc(T.ph.t.replace(/[\s\uD800-\uDFFF\u2600-\u27BF\uFE0F\u200d]+$/, "")) + "</span>" + scene(Q, T) + '<div class="say">' + frWrap(T.text).replace(/⟦/g, "<b>").replace(/⟧/g, "</b>") + "</div>";
     pBubble(html, T.voice, "turn k-" + T.kind);
@@ -575,7 +602,7 @@
     var dk = Object.keys(st.days).sort(); while (dk.length > 60) delete st.days[dk.shift()];
     var sk = Object.keys(st.seen); if (sk.length > 3000) st.seen = {};
     save(st); cloud();
-    S.okIn.push(!!ok); S.inRound++; S.okAll += ok ? 1 : 0;
+    S.qMoved = 0; S.okIn.push(!!ok); S.inRound++; S.okAll += ok ? 1 : 0;
     if (Q.kind === "m" && Q.src) {
       try { if (w.NursinSRS && w.NursinSRS.record) w.NursinSRS.record(Q.src, !!ok); } catch (e) {}
       try { if (w.Weak && w.Weak.record) w.Weak.record(Q.src, !!ok); } catch (e) {}
@@ -618,7 +645,20 @@
     pBubble(esc(ph.t) + h + (jk ? '<div class="jk">' + esc(jk.t) + "</div>" : ""), [phSrc(ph, S.p), r.miss.length ? qAudio(S.id, Q, "a", S.p) : "", jk ? phSrc(jk, S.p) : ""], "fb");
     mood(ok && !r.miss.length ? "yay" : ok ? "talk" : "sad");
     record(Q, r.ok);
+    if (ok && r.miss.length) { discuss(Q, r); return; }
     after();
+  }
+  /* 31g «ناقش معي الفكرة»: a partial answer → what he got is quoted ✅ (above), the missing key point in one simple line, then
+     «ليش برأيك…؟ / طب إذا…؟» — his answer to that is talked about (never graded) before the next question */
+  function discussLine(Q, r, i) {
+    var m = clip(r.miss[0], 70), why = Q.kind === "m" && Q.x ? clip(Q.x, 160) : "";
+    var fq = i % 2 ? "طب إذا نسينا «" + m + "»، شو بيصير برأيك؟ 🤔" : "ليش برأيك «" + m + "» مهمّة هون؟ 🤔";
+    return { line: why ? "" : "💡 أهم شي ناقص: «" + m + "»", q: fq };
+  }
+  function discuss(Q, r) {
+    var st = state(), x = discussLine(Q, r, st.rot | 0);
+    S.back = { kind: "why", kp: r.miss[0], q: x.q, btns: [{ t: "⏭️ منكمّل", f: nextFromBack }, { t: "📖 افتح الدرس", href: L().href }] };
+    typing(1000, function () { pBubble((x.line ? frWrap(x.line) + "<br>" : "") + esc(x.q), null); mood("think"); qr(S.back.btns); });
   }
   /* the friend-chat replies: what his words mean depends on the turn */
   function turnReply(Q, T, text) {
@@ -655,22 +695,82 @@
     pBubble(h, [F("wrong"), qAudio(S.id, Q, "a", S.p)], "fb bad"); mood("think");
     record(Q, false); after();
   }
-  function otherReply(Q, other, text, asked) {
-    var Lo = lessonInfo(other), Lc = L();
-    pBubble("هيدا من درس <b>" + frWrap(Lo.n) + "</b> مش من درس <b>" + frWrap(Lc.n) + "</b> 👀" + (asked ? '<div class="xp">📖 ' + frWrap(clip(asked.t, 320)) + "</div>" : ""), [F("other")], "fb oth");
-    qr([{ t: "🔀 خلّينا نناقش درس " + esc(clip(Lo.n, 26)), f: function () { start(other, false); } }, { t: "↩️ منكفّي بدرسنا", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }]);
+  function bq(T, Q) { return frWrap((T && T.text) || Q.q).replace(/⟦/g, "<b>").replace(/⟧/g, "</b>"); }
+  function backBtns() { return [{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]; }
+  function backToMine(lead) {
+    var Q = S.cur; if (!Q) return;
+    if (S.back) { pBubble((lead || LINES.back) + " 👇<br>" + esc(S.back.q), [F("back")]); qr(S.back.btns); return; }
+    pBubble((lead || LINES.back) + " 👇<br>" + bq(S.turn, Q), [F("back")]); qr(backBtns());
   }
+  /* 31g: «it is from another lesson» — FIRST his point is discussed (what HIS lessons say about it), then only a soft
+     «(بالمناسبة هيدي أكتر من درس X، بدك ننتقل؟)» with 🔀 / ↩️ */
+  function otherReply(Q, other, text, asked) {
+    var Lo = lessonInfo(other), Lc = L(); asked = asked || search(S.id, text, other);
+    pBubble("فهمت عليك 👌 هيدا اللي بتحكي عنّو، بدروسك مكتوب:" + (asked ? '<div class="xp">' + (asked.h ? "<b>" + frWrap(clip(asked.h, 70)) + "</b><br>" : "") + frWrap(clip(asked.t, 300)) + "</div>" : "") +
+      '<div class="soft">(بالمناسبة هيدي أكتر من درس <b>' + frWrap(Lo.n) + "</b>، مش من درس <b>" + frWrap(Lc.n) + "</b>، بدّك ننتقل؟)</div>", [F("found")], "fb oth");
+    qr([{ t: "🔀 خلّينا نناقش درس " + esc(clip(Lo.n, 26)), f: function () { start(other, false); } }, { t: "↩️ منكفّي بدرسنا", f: function () { backToMine(); } }]);
+  }
+  /* 31g: his question is ALWAYS answered first (all his lessons, this one counts a bit more), never graded, then a related follow-up */
   function questionReply(text) {
-    var Q = S.cur, o = otherLesson(S.id, text), best = (o && search(S.id, text, o)) || search(S.id, text);
+    var Q = S.cur, best = search(S.id, text);
     if (!best) {
       pBubble(LINES.nf + "<br><small>جرّب تسأل بكلمات من الدرس، أو افتح الدرس 📖</small>", [F("nf")]);
-      qr([{ t: "📖 افتح الدرس", href: L().href }, { t: "↩️ منرجع لسؤالي", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); } }]);
+      typing(900, function () { backToMine(); });
       return;
     }
-    if (best.id !== S.id && o === best.id) { otherReply(Q, best.id, text, best); return; }
     var Lb = lessonInfo(best.id) || L();
     pBubble(LINES.found + '<div class="xp">' + (best.h ? "<b>" + frWrap(clip(best.h, 70)) + "</b><br>" : "") + frWrap(clip(best.t, 360)) + '</div><a class="cite" href="' + esc(Lb.href) + '">📖 افتح الدرس: ' + frWrap(clip(Lb.n, 40)) + "</a>", [F("found")], "fb");
-    qr([{ t: "↩️ منرجع لسؤالي", f: function () { pBubble(LINES.back + " 👇<br>" + frWrap(Q.q), [F("back"), qAudio(S.id, Q, "q", S.p)]); qr([{ t: "💡 تلميح", f: hint }, { t: "📖 افتح الدرس", href: L().href }, { t: "⏭️ السؤال الجاي", f: skip }]); } }, { t: "⏭️ السؤال الجاي", f: skip }]);
+    typing(1100, function () { followUp(best); });
+  }
+  /* after his question: a question of this lesson about the same thing (moved to now), else back to mine */
+  function followUp(best) {
+    var Q = S.cur; if (!Q) return;
+    if (S.back) { backToMine("طب منرجع لسؤالي 😉"); return; }
+    var j = related(S.list, S.pos, best);
+    if (j > S.pos && !S.qMoved) {
+      var Qn = S.list.splice(j, 1)[0]; S.list.splice(S.pos, 0, Qn); S.qMoved = 1;
+      pBubble("طب بما إنّك سألت عن هالشي، خلّيني إسألك عليه 😉", null); typing(700, ask); return;
+    }
+    backToMine("طب منرجع لفكرتي 😉");
+  }
+  function related(list, pos, best) {
+    var C = common(), B = setOf(toks((best.h || "") + " " + best.t).filter(function (t) { return !C[t]; })), bj = -1, bn = 1;
+    function ov(Q) { var n = 0; Object.keys(setOf(toks(Q.q + " " + (Q.x || "") + " " + (Q.items || []).join(" ") + " " + (Q.kind === "m" ? Q.opts[Q.a] : "")))).forEach(function (t) { if (B[t] && !C[t]) n++; }); return n; }
+    if (list[pos] && ov(list[pos]) >= 2) return pos;
+    for (var i = pos + 1; i < list.length; i++) { var n = ov(list[i]); if (n > bn) { bn = n; bj = i; } }
+    return bn >= 2 ? bj : -1;
+  }
+  /* 31g: «ما بعرف / إنت عندك فكرة؟ / معقول؟» → the partner answers its OWN question from the lesson + why, then a simple check-back */
+  function idkText(Q, T) {
+    var right = Q.kind === "m" ? Q.opts[Q.a] : "", k = T ? T.kind : "ask", key, why = "", chk;
+    if (k === "oops" && T.bad) { key = "لا، مش متل ما قلت أنا 😅 الصح: ⟦" + right + "⟧"; why = T.bad.why || Q.x || ""; }
+    else if (k === "tf" && T.op) { key = T.truth ? "إيه، صح: ⟦" + T.op + "⟧ ✅" : "لا، مش صح. الصح: ⟦" + right + "⟧"; why = Q.x || ""; }
+    else if (Q.kind === "l") { key = "«" + Q.lab + "»" + (Q.head ? " تبع " + Q.head : "") + ": ⟦" + Q.items.slice(0, 3).join(" · ") + "⟧" + (Q.items.length > 3 ? " …" : ""); }
+    else { key = "⟦" + right + "⟧"; why = Q.x || ""; }
+    if (why && why.indexOf(right) === 0 && why.length - right.length < 15) why = "";
+    if (Q.kind === "l") chk = "سهلة هلّق 😉 قلّي وحدة منهن بكلماتك؟";
+    else { var st0 = (stems(Q)[0] || Q.q).replace(/\n[\s\S]*/, ""); chk = "يعني إذا حدا سألك هلّق «" + clip(st0, 110) + "»، شو بتقلّو؟ 😉"; }
+    return { open: "ولا يهمّك، خلّيني قلّك 😄", key: key, why: why ? "ليش؟ " + clip(why, 230) : "", check: chk };
+  }
+  function idkReply(Q, T) {
+    var x = idkText(Q, T);
+    pBubble(esc(x.open) + '<div class="ok">' + frWrap(x.key).replace(/⟦/g, "<b>").replace(/⟧/g, "</b>") + "</div>" + (x.why ? '<div class="xp">📖 ' + frWrap(x.why) + "</div>" : ""), [qAudio(S.id, Q, "a", S.p)], "fb");
+    mood("talk"); record(Q, false, true);
+    S.back = { kind: "check", q: x.check, btns: [{ t: "👍 فهمت، الجاي", f: nextFromBack }, { t: "📖 افتح الدرس", href: L().href }] };
+    typing(1000, function () { pBubble(esc(x.check), null); qr(S.back.btns); });
+  }
+  function nextFromBack() { clearQr(); S.back = null; after(); }
+  /* the answer to a check-back / «ليش برأيك…؟»: never graded — agreed with, completed, then on */
+  function backReply(Q, text) {
+    var B = S.back; S.back = null;
+    var r = judge(Q, text), A = setOf(toks(text)), xs = setOf(toks((Q.x || "") + " " + (B.kp || ""))), n = 0;
+    Object.keys(A).forEach(function (t) { if (has(xs, t)) n++; });
+    var good = r.hit.length > 0 || n >= 2 || (B.kind === "check" && yesNo(text) === "yes" && Q.kind !== "l");
+    var ph = pick(good ? "yes" : "part"), add2 = "";
+    if (unsure(text)) add2 = '<div class="xp">📖 ' + frWrap(clip(Q.x || B.kp || answerList(Q).join(" · "), 220)) + "</div>";
+    else if (!good) add2 = '<div class="xp">💡 ' + (B.kind === "check" ? "الجواب: <b>" + frWrap(clip(answerList(Q).join(" · "), 160)) + "</b>" : "فكرتك حلوة 👌 وبالدرس: " + frWrap(clip(Q.x || B.kp, 200))) + "</div>";
+    pBubble(esc(unsure(text) ? "ولا يهمّك 😄" : ph.t) + add2, [unsure(text) ? "" : phSrc(ph, S.p)], "fb");
+    mood(good ? "yay" : "talk"); after();
   }
   function send(text) {
     text = String(text || "").trim(); if (!text || !S || !S.cur) return;
@@ -678,17 +778,26 @@
     add(frWrap(text) + '<span class="t">' + hm() + " ✓✓</span>", "m u");
     judgeAndReply(text, 650 + Math.min(900, text.length * 12));
   }
+  function route(text, Q, T, cur, back) {                  // what his words are, before anything is graded
+    if (confused(text)) return "confused";
+    if (unsure(text) && !(Q && judge(Q, text).hit.length)) return back ? "back" : "idk";
+    if (isQuestion(text)) return "question";
+    if (back) return "back";
+    return "answer";
+  }
   function judgeAndReply(text, ms) {
     var Q = S.cur;
     typing(ms, function () {
-      if (confused(text)) { clarify(Q, S.turn); return; }
+      var k = route(text, Q, S.turn, S.id, !!S.back);
+      if (k === "confused") { if (S.back) { pBubble("أوكي ببساطة 😄 " + esc(S.back.q), null); qr(S.back.btns); return; } clarify(Q, S.turn); return; }
       S.conf = 0;
-      if (DUNNO.test(text)) { skip(); return; }
-      if (isQuestion(text)) { questionReply(text); return; }
+      if (k === "back") { backReply(Q, text); return; }
+      if (k === "idk") { idkReply(Q, S.turn); return; }
+      if (k === "question") { questionReply(text); return; }
       if (S.turn && turnReply(Q, S.turn, text)) return;
       var r = judge(Q, text);
       if (r.wrong) { wrongReply(Q, r); return; }
-      if (!r.hit.length) { var o = otherLesson(S.id, text); if (o) { otherReply(Q, o, text, null); return; } }
+      if (!r.hit.length) { var o = otherLesson(S.id, text, (S.turn ? S.turn.text : "") + " " + Q.q + " " + (Q.x || "") + " " + answerList(Q).join(" ")); if (o) { otherReply(Q, o, text, null); return; } }
       feedback(Q, r);
     });
   }
@@ -737,6 +846,16 @@
      «ما سمعتك منيح» after 9 s and 4 s answers). So on Safari / iOS only the recogniser runs (continuous + interim, every result kept
      until ⏹️, restarted when it ends by itself while he is still talking, ar-LB → ar-SA → fr-FR when a session hears nothing) and his
      bubble is a drawn waveform + duration; the recording to replay is only taken where both can run (Chrome / Android / desktop). */
+  /* 31g (Abdullah 9:04 PM «مرات بقلّي ما سمعت منيح»): on iPhone / Safari ar-LB is often not offered (silent failure) → ar-SA first, then fr-FR */
+  function langsFor(ua, solo) {
+    ua = String(ua || "");
+    return solo || /iPhone|iPad|iPod/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Android/.test(ua)) ? ["ar-SA", "fr-FR"] : ["ar-LB", "ar-SA", "fr-FR"];
+  }
+  /* the last 20 voice outcomes (language, how much was heard, the error) — no UI, to ask him about later */
+  function dbg(o) {
+    var a = lsGet("nursin_discuss_dbg"); if (!a || !a.push) a = [];
+    o.at = new Date().toISOString().slice(0, 16); a.push(o); while (a.length > 20) a.shift(); lsSet("nursin_discuss_dbg", a);
+  }
   function soloMic() {
     var ua = navigator.userAgent || "";
     return !w.SpeechRecognition || /iPhone|iPad|iPod/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Android/.test(ua)) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -744,7 +863,7 @@
   function mic() {
     var C = SR(), b = $("#dsmic"), inp = $("#dsin"); if (!b) return;
     if (!C) { b.hidden = true; b.style.display = "none"; return; }
-    var rec = null, mr = null, chunks = [], stream = null, on = false, t0 = 0, langs = ["ar-LB", "ar-SA", "fr-FR"], li = 0, prev = [], cur = [], tick = 0, done = false, ph = inp.placeholder, heardAny = false, sess = 0;
+    var rec = null, mr = null, chunks = [], stream = null, on = false, t0 = 0, langs = langsFor(navigator.userAgent || "", soloMic()), li = 0, prev = [], cur = [], tick = 0, done = false, ph = inp.placeholder, heardAny = false, sess = 0, empties = 0, lastErr = "", stopping = false;
     function ui(x) { on = x; b.classList.toggle("on", x); b.innerHTML = x ? "⏹️" : "🎤"; inp.disabled = x; inp.placeholder = x ? "🔴 عم سجّل… كبوس ⏹️ لمّا تخلص" : ph; clearInterval(tick); if (x) tick = setInterval(function () { inp.placeholder = "🔴 عم سجّل " + fmt((Date.now() - t0) / 1000) + " … كبوس ⏹️ لمّا تخلص"; }, 500); }
     function alts() {                                    // alternative j of everything heard (earlier sessions + this one)
       var A = [], n = Math.max(prev.length, cur.length, 1), j;
@@ -757,7 +876,9 @@
       var dur = (Date.now() - t0) / 1000, Q = S.cur, A = alts();
       function go(url) {
         try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} stream = null;
-        var heard = A.length ? fix(bestAlt(A, S.id, Q), S.id, Q) : "";
+        var raw = A.length ? bestAlt(A, S.id, Q) : "", heard = raw ? fix(raw, S.id, Q).replace(/\s+/g, " ").trim() : "";
+        if (!heard && raw) heard = raw.trim();                    // 31g: ANY non-empty result counts (interim, low confidence)
+        dbg({ lang: langs[li], len: heard.length, err: lastErr, s: sess, d: Math.round(dur) });
         sendVoice({ url: url, dur: dur, heard: heard, raw: A[0] || "" });
       }
       if (mr && mr.state !== "inactive") { mr.onstop = function () { var url = ""; try { url = chunks.length ? URL.createObjectURL(new Blob(chunks, { type: mr.mimeType || "audio/mp4" })) : ""; } catch (e) {} go(url); }; try { mr.stop(); } catch (e) { go(""); } }
@@ -774,7 +895,7 @@
         cur = A; if (A[0]) { got = true; heardAny = true; }
       };
       rec.onerror = function (e) {
-        var er = e && e.error;
+        var er = e && e.error; lastErr = er || "";
         if (er === "language-not-supported" || er === "bad-grammar") { if (li < langs.length - 1) { li++; } }
         if (er === "not-allowed" || er === "service-not-allowed") { b.style.display = "none"; on = false; finish(); }
       };
@@ -782,13 +903,14 @@
         if (my !== sess) return;
         if (!on) { finish(); return; }
         if (cur.length) { prev = alts(); cur = []; }   // keep what this session heard, then listen on
-        if (!got && !heardAny && li < langs.length - 1) li++;
+        if (!got) empties++; else empties = 0;
+        if (!got && !heardAny && empties >= 2 && li < langs.length - 1) { li++; empties = 0; }   // 31g: a language is dropped only after 2 silent sessions
         setTimeout(function () { if (on && !done) startRec(); }, 120);
       };
       try { rec.start(); } catch (e) { if (on) setTimeout(function () { if (on && !done) startRec(); }, 300); }
     }
     function begin() {
-      stopVoice(); done = false; prev = []; cur = []; chunks = []; mr = null; heardAny = false; t0 = Date.now(); ui(true); startRec();
+      stopVoice(); done = false; stopping = false; prev = []; cur = []; chunks = []; mr = null; heardAny = false; empties = 0; lastErr = ""; t0 = Date.now(); ui(true); startRec();
       if (soloMic()) return;
       try {                                               // his own voice, to replay in the bubble (Chrome / Android / desktop)
         if (w.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) {
@@ -798,7 +920,13 @@
       } catch (e) {}
     }
     S.micGo = function () { if (!on) begin(); };
-    b.onclick = function () { S.unlocked = true; if (on) { on = false; b.innerHTML = "⏳"; try { rec && rec.stop(); } catch (e) {} setTimeout(finish, 1200); } else begin(); };
+    /* 31g: ⏹️ keeps listening ~1.2 s (the end of his sentence, the recogniser's last words), then stops and waits for its last result */
+    b.onclick = function () {
+      S.unlocked = true;
+      if (stopping) return;
+      if (on) { stopping = true; b.innerHTML = "⏳"; setTimeout(function () { on = false; try { rec && rec.stop(); } catch (e) {} setTimeout(finish, 1500); stopping = false; }, 1200); }
+      else begin();
+    };
   }
   /* nothing heard: the first time «جرّب كمان مرّة»; the second time no loop — 🔁 عيد / ✍️ اكتب + 3 answers to pick from */
   function deaf() {
