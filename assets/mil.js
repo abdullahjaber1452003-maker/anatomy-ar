@@ -1,4 +1,4 @@
-/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030n.
+/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030o.
    A show-style quiz built ONLY from the site's existing quiz bank (window.QUIZ, the same items the lesson quizzes use; no new content).
    • Start: pick a subject (every QSUBJ subject that has questions), «🎯 امتحاني الجاي» (the next exam date's subjects, read from
      NursinMid.EXAMS when assets/midterm.js is on the page, else the EXAMS mirror below — tests keep both equal; subjects without

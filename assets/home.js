@@ -726,6 +726,7 @@
       T("➕ إضافة · ✏️ تعديل · 🐞 مشكلة — منقرا كل اقتراح ومنردّ عليك", "➕ Ajout · ✏️ Modif · 🐞 Bug — on lit tout et on te répond") + '</small></span><span class="hzsuga" aria-hidden="true">' + T("◀", "▶") + "</span></a>";
   }
   var parts = null;
+  function rsmHtml() { var X = w.NursinResume; try { return X && X.html ? X.html() : ""; } catch (e) { return ""; } }
   function remHtml() { var R = w.NursinRem; try { return R && R.homeHtml ? R.homeHtml() : ""; } catch (e) { return ""; } }
   function draw() {
     if (!root) return;
@@ -737,7 +738,7 @@
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
-    parts.top.innerHTML = headHtml() + chipsHtml();
+    parts.top.innerHTML = headHtml() + chipsHtml() + rsmHtml();   // 📖 30o: «كمّل من وين وقفت» under the chips, above the 🏥 strip (assets/lessons.js NursinResume)
     parts.pin.innerHTML = pathHtml(p) + remHtml();   // 🧭 29k: the path comes first again (Abdullah 7:42 AM Nov 6: the 📌 card had pushed it off the screen); 📌 compact card right under it
     parts.foot.innerHTML = footHtml();
     parts.sug.innerHTML = sugHtml();

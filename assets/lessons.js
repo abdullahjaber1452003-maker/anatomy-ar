@@ -380,3 +380,149 @@
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
 if (typeof window !== "undefined" && window.Lang) { Lang.fix("NLESSONS"); }   // 🇫🇷 Français seulement (assets/lang.js)
+/* 📖 30o «كمّل من وين وقفت» (Abdullah, Nov 8 2026 8:58 AM: «بدي ب راس الصفحة يبين وين كنت عم بدرس ل ارجع كفي إذا طلعت»).
+   TRACK — on any page that holds lessons of the registry (NursinLessons.parts: cardio, neuro, henderson, medsurg, law, mgmt, quality, pharma,
+   rea, geri, community…; home, games, quiz, admin, hifzi… hold none, so nothing is recorded there): the part on screen, the heading he is
+   under (h2–h4 of that part), his offset from it and scrollY → localStorage nursin_resume_v1, ~1 s after scrolling stops and on
+   pagehide / tab hidden (only once he scrolled on this page). Done = ≥ 95 % of the part seen → the bar offers the next part of the subject.
+   ☁️ also users/{uid}.resume (rules v22 allow the owner to merge any field on his own doc, the same way lessonsRead / onb sync); the newer wins.
+   HOME — assets/home.js puts NursinResume.html() under the chips (above the 🏥 strip): hidden with nothing saved, after 14 days, or after ✕
+   (✕ hides THIS lesson until he opens another one). RESTORE — the tap sets sessionStorage nursin_resume_go; the lesson page opens the part,
+   scrolls to the heading, then fine-adjusts by the stored offset (fallback: stored scrollY), re-applied for ~1.5 s for late content. */
+(function (w, d) {
+  if (!w || w.NursinResume) return;
+  var KEY = "nursin_resume_v1", XKEY = "nursin_resume_x_v1", GO = "nursin_resume_go", MAXAGE = 14 * 864e5, HS = "h2,h3,h4";
+  function ls(k, v) { try { if (v === undefined) return JSON.parse(w.localStorage.getItem(k) || "null"); if (v === null) w.localStorage.removeItem(k); else w.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} return null; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function clip(s, n) { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function L() { return w.NursinLessons || null; }
+  function pageOf(u) { return String(u || "").split("#")[0].split("?")[0].split("/").pop() || "index.html"; }
+  function path() { try { return pageOf(w.location.pathname); } catch (e) { return "index.html"; } }
+  function partsOn(pg) { var N = L(); return N && N.parts ? N.parts.filter(function (x) { return x.href.indexOf("#") > 0 && pageOf(x.href) === pg; }) : []; }
+  function pageLes(pg) {                                      // a lesson page with no anchors (henderson.html): the whole <main> is one record
+    var N = L(), P = N && N.parts ? N.parts : [], i;
+    for (i = 0; i < P.length; i++) if (P[i].href === pg) { var S = (N.subjects || {})[P[i].s]; return [{ s: P[i].s, href: pg, n: S ? S.ar : P[i].n, whole: 1 }]; }
+    return [];
+  }
+  function onPage(pg) { var a = partsOn(pg); return a.length ? a : pageLes(pg); }
+  function isLessonPage(pg) { return onPage(pg || path()).length > 0; }
+  function title(x) { if (x.whole) return x.n; var N = L(); try { return N && N.label ? N.label(x) : x.n; } catch (e) { return x.n; } }
+  function nextOf(href) {                                     // the next part / lesson of the same subject (registry order), or null
+    var N = L(), P = N && N.parts ? N.parts : [], i, at = -1;
+    for (i = 0; i < P.length; i++) if (P[i].href === href) { at = i; break; }
+    if (at < 0) return null;
+    for (i = at + 1; i < P.length; i++) if (P[i].s === P[at].s) return { u: P[i].href, t: title(P[i]) };
+    return null;
+  }
+  function make(x, o) {                                       // the record kept for the bar; o = { h, hi, off, y, pct, ts }
+    var done = (o.pct || 0) >= 0.95;
+    return { u: x.href, s: x.s, t: clip(title(x), 70), h: clip(o.h || "", 50), hi: o.hi == null ? -1 : o.hi, off: Math.round(o.off || 0), y: Math.max(0, Math.round(o.y || 0)), pct: Math.round(Math.min(1, Math.max(0, o.pct || 0)) * 100) / 100, done: done, nx: done ? nextOf(x.href) : null, ts: o.ts || Date.now() };
+  }
+  function get() { var r = ls(KEY); return r && typeof r === "object" && r.u && r.t ? r : null; }
+  function live(r, now) { return !!(r && r.ts && (now || Date.now()) - r.ts <= MAXAGE && r.ts <= (now || Date.now()) + 6e4); }
+  function FR() { return !!(w.Lang && w.Lang.fr); }
+  function html(now, r, x) {                                  // '' = no bar
+    r = r === undefined ? get() : r; x = x === undefined ? ls(XKEY) : x;
+    if (!live(r, now) || (x && x === r.u)) return "";
+    var subj = (L() && L().subjects && L().subjects[r.s]) || null, fr = FR(), href, txt;
+    if (r.done) {
+      href = r.nx ? r.nx.u : (subj ? subj.page : pageOf(r.u));
+      txt = '<b>✅ ' + (fr ? "Terminé" : "خلّصت") + '</b> <bdi>' + esc(r.t) + '</bdi> · ' + (r.nx ? (fr ? "Suivant : " : "ابدأ الجاي: ") + '<bdi>' + esc(r.nx.t) + '</bdi>' : (fr ? "🎉 toute la matière" : "🎉 خلّصت كل دروس المادة"));
+    } else {
+      href = r.u;
+      txt = '<b>📖 ' + (fr ? "Reprends :" : "كمّل من وين وقفت:") + '</b> <bdi>' + esc(r.t) + '</bdi>' + (r.h ? ' · <bdi>' + esc(r.h) + '</bdi>' : "");
+    }
+    return '<div class="rsm glass' + (r.done ? " done" : "") + '" data-rsmbar><a class="rsma" href="' + esc(href) + '"' + (r.done ? "" : " data-rsmgo") + '><span class="rsmt">' + txt + '</span></a>' +
+      '<button type="button" class="rsmx" data-rsmx aria-label="' + (fr ? "Masquer" : "سكّر") + '">✕</button></div>';
+  }
+  function hide() { var r = get(); if (r) ls(XKEY, r.u); }
+  function targetY(r, el) {                                   // where to scroll on a lesson page; el = the part element (or null)
+    if (!el || !el.getBoundingClientRect) return r.y;
+    var sy = w.pageYOffset || 0, hs = el.querySelectorAll ? [].slice.call(el.querySelectorAll(HS)) : [], h = null, i;
+    if (r.hi >= 0) { h = hs[r.hi] && clip(hs[r.hi].textContent, 50) === r.h ? hs[r.hi] : null; for (i = 0; !h && r.h && i < hs.length; i++) if (clip(hs[i].textContent, 50) === r.h) h = hs[i]; }
+    var ref = h || el; return Math.max(0, Math.round(ref.getBoundingClientRect().top + sy + (h || r.hi < 0 ? r.off : 0)));
+  }
+  var api = w.NursinResume = { KEY: KEY, XKEY: XKEY, GO: GO, MAXAGE: MAXAGE, get: get, live: live, make: make, nextOf: nextOf, html: html, hide: hide, isLessonPage: isLessonPage, targetY: targetY, pageOf: pageOf };
+  if (!d || !d.addEventListener) return;
+
+  /* ☁️ account copy */
+  var pT = 0, lastPush = 0;
+  function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db ? A : null; }
+  function push(now) {
+    clearTimeout(pT);
+    var go = function () { var A = fbA(), r = get(); if (!A || !r) return; lastPush = Date.now(); try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { resume: r }, { merge: true }).catch(function () {}); } catch (e) {} };
+    if (now || Date.now() - lastPush > 20000) go(); else pT = setTimeout(go, 20000);
+  }
+  function paintHome() {                                      // swap the bar in place on home (after a pull)
+    var top = d.querySelector("#hz .hztop"); if (!top) return;
+    var old = top.querySelector("[data-rsmbar]"), h = html(), box = d.createElement("div"); box.innerHTML = h;
+    if (old) old.parentNode.removeChild(old);
+    if (box.firstChild) top.appendChild(box.firstChild);
+  }
+  d.addEventListener("nursin:auth", function (e) {
+    if (!(e.detail && e.detail.signedIn)) return;
+    setTimeout(function () {
+      var A = fbA(); if (!A) return;
+      try { A.fs.getDoc(A.fs.doc(A.db, "users", A.user.uid)).then(function (s) {
+        var c = s && s.exists && s.exists() ? s.data().resume : null, r = get();
+        if (c && c.u && c.t && typeof c.ts === "number" && (!r || c.ts > r.ts)) { ls(KEY, c); paintHome(); }
+        else if (r && (!c || r.ts > c.ts)) push(true);
+      }, function () {}); } catch (x) {}
+    }, 1800);
+  });
+
+  /* home: ✕ and the tap */
+  d.addEventListener("click", function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var b = t.closest("[data-rsmx]");
+    if (b) { e.preventDefault(); hide(); var bar = b.closest("[data-rsmbar]"); if (bar && bar.parentNode) bar.parentNode.removeChild(bar); return; }
+    if (t.closest("[data-rsmgo]")) { var r = get(); try { if (r) w.sessionStorage.setItem(GO, JSON.stringify({ u: r.u, ts: Date.now() })); } catch (x) {} }
+  });
+
+  var mine = onPage(path()); if (!mine.length) return;          // not a lesson page: nothing is tracked here
+
+  /* restore after the tap */
+  var restoring = false;
+  (function () {
+    var g = null; try { g = JSON.parse(w.sessionStorage.getItem(GO) || "null"); w.sessionStorage.removeItem(GO); } catch (x) {}
+    var r = get(); if (!g || !r || g.u !== r.u || Date.now() - g.ts > 60000 || pageOf(r.u) !== path()) return;
+    restoring = true;
+    var a = r.u.split("#")[1], t0 = Date.now(), stop = false, quit = function () { stop = true; };
+    ["touchstart", "wheel", "keydown"].forEach(function (ev) { w.addEventListener(ev, quit, { passive: true, once: true }); });
+    (function step() {
+      if (stop) { restoring = false; return; }
+      var el = a ? d.getElementById(a) : d.getElementById("main");
+      if (el && el.tagName === "DETAILS" && !el.open) el.open = true;
+      try { w.scrollTo(0, targetY(r, el)); } catch (x) {}
+      if (Date.now() - t0 < 1500) setTimeout(step, 120); else restoring = false;
+    })();
+  })();
+
+  /* track */
+  var moved = false, sT = 0;
+  function cur() {
+    var H = w.innerHeight || 700, probe = Math.min(160, H * 0.3), best = null, i;
+    for (i = 0; i < mine.length; i++) {
+      var el = mine[i].whole ? d.getElementById("main") : d.getElementById(mine[i].href.split("#")[1]); if (!el || (el.tagName === "DETAILS" && !el.open)) continue;
+      var rc = el.getBoundingClientRect(); if (rc.height < 40) continue;
+      if (rc.top <= probe && rc.bottom > probe) return { x: mine[i], el: el, rc: rc };
+      if (!best && rc.top > probe && rc.top < H * 0.6) best = { x: mine[i], el: el, rc: rc };
+    }
+    return best;
+  }
+  function save() {
+    if (restoring) return;
+    var c = cur(); if (!c) return;
+    var H = w.innerHeight || 700, sy = w.pageYOffset || 0, hs = [].slice.call(c.el.querySelectorAll(HS)), hi = -1, i;
+    for (i = 0; i < hs.length; i++) { var t = hs[i].getBoundingClientRect().top; if (t <= 110) hi = i; else break; }
+    var ref = hi >= 0 ? hs[hi] : c.el, off = sy - (ref.getBoundingClientRect().top + sy);
+    var pct = (H - c.rc.top) / c.rc.height, old = get();
+    if (old && old.u === c.x.href && old.done && pct < 0.95) pct = Math.max(pct, 0.95);   // finished stays finished while he re-reads it
+    var r = make(c.x, { h: hi >= 0 ? hs[hi].textContent : "", hi: hi, off: off, y: sy, pct: pct });
+    ls(KEY, r); if (old && old.u !== r.u) ls(XKEY, null);   // ✕ lasts until he opens another lesson
+    push(false);
+  }
+  w.addEventListener("scroll", function () { moved = true; if (sT) return; sT = setTimeout(function () { sT = 0; save(); }, 1000); }, { passive: true });
+  w.addEventListener("pagehide", function () { if (moved) { save(); push(true); } });
+  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "hidden" && moved) { save(); push(true); } });
+})(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
