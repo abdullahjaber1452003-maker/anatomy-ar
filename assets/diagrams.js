@@ -26,7 +26,7 @@ window.NURSIN_DIAGRAMS = [
 ];
 
 (function (w, d) {
-  var V = "20261030q", DG = w.NURSIN_DIAGRAMS || [];
+  var V = "20261030r", DG = w.NURSIN_DIAGRAMS || [];
   var page = (location.pathname.split("/").pop() || "index.html");
   var INJ = ".nlrow,.rtrow,.xtrk,.glk-card,.lqz,.lsk,.prq,.ndg,[class*='adx'],ins,script,style";
   function FR() { return !!(w.Lang && w.Lang.fr); }
