@@ -488,14 +488,15 @@ if (typeof window !== "undefined" && window.Lang) { Lang.fix("NLESSONS"); }   //
     var g = null; try { g = JSON.parse(w.sessionStorage.getItem(GO) || "null"); w.sessionStorage.removeItem(GO); } catch (x) {}
     var r = get(); if (!g || !r || g.u !== r.u || Date.now() - g.ts > 60000 || pageOf(r.u) !== path()) return;
     restoring = true;
-    var a = r.u.split("#")[1], t0 = Date.now(), stop = false, quit = function () { stop = true; };
+    var a = r.u.split("#")[1], t0 = Date.now(), stop = false, last = -1, calm = t0, quit = function () { stop = true; };
     ["touchstart", "wheel", "keydown"].forEach(function (ev) { w.addEventListener(ev, quit, { passive: true, once: true }); });
-    (function step() {
+    (function step() {                                        // re-applied every 120 ms: at least 1.5 s, then until the page holds still 0.7 s (max 5 s)
       if (stop) { restoring = false; return; }
-      var el = a ? d.getElementById(a) : d.getElementById("main");
+      var el = a ? d.getElementById(a) : d.getElementById("main"), now = Date.now();
       if (el && el.tagName === "DETAILS" && !el.open) el.open = true;
-      try { w.scrollTo(0, targetY(r, el)); } catch (x) {}
-      if (Date.now() - t0 < 1500) setTimeout(step, 120); else restoring = false;
+      var y = targetY(r, el); if (Math.abs(y - last) > 2) { last = y; calm = now; }
+      try { if (Math.abs((w.pageYOffset || 0) - y) > 2) w.scrollTo(0, y); } catch (x) {}
+      if (now - t0 < 1500 || (now - calm < 700 && now - t0 < 5000)) setTimeout(step, 120); else restoring = false;
     })();
   })();
 
