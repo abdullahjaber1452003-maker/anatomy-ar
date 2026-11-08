@@ -8329,6 +8329,7 @@ test('#368 30o ↩️ restore: heading + stored offset, fallback to the part / s
   assert.strictEqual(R.targetY(rec, rsmEl(500, 2000, [])), 500, 'heading gone → the part top');
   assert.strictEqual(R.targetY(Object.assign({}, rec, { hi: -1, h: '' }), el), 530, 'no heading → part top + offset');
   assert.strictEqual(R.targetY(rec, null), 900, 'part not drawn → stored scrollY');
+  assert.strictEqual(R.targetY(rec, Object.assign(rsmEl(500, 0, [{ t: 'VNI', top: 0 }]), { open: false })), 500, 'part still closed (locked for a guest) → its title, never a bogus 0');
   const lj = read('assets/lessons.js');
   assert.ok(/sessionStorage\.setItem\(GO/.test(lj) && /sessionStorage\.removeItem\(GO\)/.test(lj), 'one-shot flag set on tap, consumed on arrival');
   assert.ok(/Date\.now\(\) - t0 < 1500\) setTimeout\(step, 120\)/.test(lj) && /el\.open = true/.test(lj), 'opens the part and re-applies for 1.5 s (late content)');
