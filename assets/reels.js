@@ -23,6 +23,16 @@
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function TN() { return w.NursinToons || null; }       // 🎨 30v cartoons + daily look (assets/reels-toons.js); the emoji stays as the fallback
+  var look = null;
+  function bdx(s, br) {                        // 30v: Latin runs (and a bracketed Latin part like «(Les chocs)») isolated so RTL keeps the brackets in place; br = brackets only
+    s = String(s == null ? "" : s); var out = "", last = 0, m, re = br ? /\([^()\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()\u0600-\u06FF]*\)/g : /\([^()\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()\u0600-\u06FF]*\)|[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9\u00B2\u00B3\u2070-\u209F'\u2019.\-\/&+ ]*[A-Za-z\u00C0-\u024F0-9\u00B2\u00B3\u2070-\u209F.)]|[A-Za-z\u00C0-\u024F]/g;
+    while ((m = re.exec(s))) { out += esc(s.slice(last, m.index)) + '<bdi dir="ltr">' + esc(m[0]) + "</bdi>"; last = re.lastIndex; }
+    return out + esc(s.slice(last));
+  }
+  function bgOf(it) { var t = TN(); if (t && look) return t.grad(look, it.k === "q" ? "q" : it.r.s); return it.k === "q" ? "linear-gradient(160deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)" : S(it.r.s)[4]; }
+  function toonHtml(r, s) { var t = TN(); return t ? '<span class="rlico rltoon" aria-hidden="true" data-toon="' + t.pick(r) + '">' + t.svg(t.pick(r)) + "</span>" : '<span class="rlico" aria-hidden="true">' + esc(r.e || s[0]) + "</span>"; }
+  function mascotHtml() { var t = TN(); return t ? '<span class="rlmas" aria-hidden="true">' + t.svg("nurse") + '<span class="rlmb"></span></span>' : ""; }
   function load() { var o = null; try { o = JSON.parse(localStorage.getItem(K) || "null"); } catch (e) {} o = o && typeof o === "object" ? o : {}; o.seen = o.seen && typeof o.seen === "object" ? o.seen : {}; o.saved = o.saved instanceof Array ? o.saved : []; return o; }
   function save(o) { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} }
   function shuffle(a, rnd) { rnd = rnd || Math.random; a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -113,25 +123,33 @@
     var top = '<div class="rlpgw"><div class="rlprog"><i></i></div></div>';
     if (it.k === "q") {
       var q = it.q, m = S(it.s);
-      return top + '<div class="rlbody rlo' + q.o.length + '"><span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + esc(T(m[1], m[2])) + "</span>" +
-        '<div class="rlq">' + esc(q.q) + "</div>" +
+      return top + '<div class="rlbody rlo' + q.o.length + '">' + mascotHtml() + '<span class="rltag">❓ ' + T("سؤال سريع", "Question rapide") + " · " + bdx(T(m[1], m[2])) + "</span>" +
+        '<div class="rlq">' + bdx(q.q, 1) + "</div>" +
         q.o.map(function (o, k) { return '<button type="button" class="rlopt" data-k="' + k + '">' + esc(o) + "</button>"; }).join("") + '<div class="rlqout"></div></div>';
     }
     var r = it.r, s = S(r.s), on = st.saved.indexOf(r.id) > -1;
     return top + (i === 0 && !unlocked && voice ? '<button type="button" class="rltap" data-rs="1">🔊 ' + T("اكبس لتشغيل الصوت", "Touche pour activer le son") + "</button>" : "") +
-      '<div class="rlbody"><span class="rltag">' + s[0] + " " + esc(T(s[1], s[2])) + (r.ls ? " · " + esc(r.ls) : "") + "</span>" +
-      '<span class="rlico" aria-hidden="true">' + esc(r.e || s[0]) + "</span>" +
-      "<h2>" + esc(r.ti) + "</h2>" +
+      '<div class="rlbody"><span class="rltag">' + s[0] + " " + bdx(T(s[1], s[2])) + (r.ls ? " · " + bdx(r.ls) : "") + "</span>" +
+      toonHtml(r, s) +
+      "<h2>" + bdx(r.ti) + "</h2>" +
       (r.fr ? '<div class="rlfr"><span lang="fr">' + esc(r.fr) + "</span> = <bdi>" + esc(r.ar) + "</bdi></div>" : "") +
       r.ln.map(function (l) { return '<div class="rlln wait" data-t="' + esc(l) + '"></div>'; }).join("") + "</div>" +
-      '<a class="rlsrc" href="' + esc(r.h) + '">📖 ' + T("من درس: ", "Leçon : ") + "<u>" + esc(r.ls || s[1]) + "</u></a>" +
+      '<a class="rlsrc" href="' + esc(r.h) + '">📖 ' + T("من درس: ", "Leçon : ") + "<u>" + bdx(r.ls || s[1]) + "</u></a>" +
       '<div class="rlside"><button type="button" data-ra="save"' + (on ? ' class="on"' : "") + ' aria-pressed="' + on + '"><span class="c">' + (on ? "❤️" : "🤍") + "</span>" + T("حفظ", "Sauver") + "</button>" +
       '<a href="' + esc(r.h) + '" data-ra="open"><span class="c">📖</span>' + T("الدرس", "Leçon") + "</a>" +
       '<button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
       (i === 0 ? '<div class="rlhint">⌃ ' + T("قلّب لفوق", "Glisse vers le haut") + "</div>" : "");
   }
   function sec(i) { return fd.children[i]; }
-  function draw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") === "1") return; el.innerHTML = reelHtml(items[i], i); el.setAttribute("data-on", "1"); }
+  function draw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") === "1") return; el.innerHTML = reelHtml(items[i], i); el.setAttribute("data-on", "1"); fit(el); }
+  function fit(el) {                           // 🎨 30v phone: a long reel moves its cartoon beside the title (then smaller) so nothing is cut
+    var b = el.querySelector(".rlbody"), tn = el.querySelector(".rltoon"); if (!b || !tn || wide() || !el.clientHeight) return;
+    var ls = el.querySelectorAll(".rlln.wait"), cs = w.getComputedStyle ? w.getComputedStyle(el) : null;
+    [].forEach.call(ls, function (x) { x.textContent = x.getAttribute("data-t") || ""; });
+    var room = el.clientHeight - (cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 270) - 4;
+    if (b.offsetHeight > room) { el.classList.add("rlsm"); if (b.offsetHeight > room) el.classList.add("rlxs"); if (b.offsetHeight > room) el.classList.add("rltight"); }
+    [].forEach.call(ls, function (x) { if (x.classList.contains("wait")) x.textContent = ""; });
+  }
   function undraw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") !== "1") return; el.innerHTML = ""; el.setAttribute("data-on", "0"); }
   function typeIn(el, it) {
     var ls = el.querySelectorAll(".rlln"), n = 0, total = 0;
@@ -140,6 +158,10 @@
     if (pg) { pg.classList.remove("run"); void pg.offsetWidth; var bar = pg.querySelector("i"); if (bar) { bar.style.webkitAnimationDuration = dur + "s"; bar.style.animationDuration = dur + "s"; } pg.classList.add("run"); }
     if (it.k === "q") { speak(it.q.q); return; }
     speak(it.r.ti + ". " + it.r.ln.join(". "));
+    if (look && look.anim !== "type") {        // 🎨 30v: today's look brings the lines in with a fade-up or a slide instead of the typewriter
+      [].forEach.call(ls, function (x, k) { x.textContent = x.getAttribute("data-t") || ""; x.classList.remove("wait"); x.style.webkitAnimationDelay = x.style.animationDelay = (0.25 + k * 0.45) + "s"; x.classList.add("rlin"); });
+      return;
+    }
     function line() {
       if (n >= ls.length) return; var x = ls[n], txt = x.getAttribute("data-t") || "", c = 0, step = Math.max(1, Math.round(txt.length / 60));
       x.classList.remove("wait"); x.classList.add("rlcur");
@@ -148,7 +170,7 @@
     }
     timers.push(setTimeout(line, 350));
   }
-  function finishTyping(el) { [].forEach.call(el.querySelectorAll(".rlln"), function (x) { x.classList.remove("wait", "rlcur"); x.textContent = x.getAttribute("data-t") || ""; }); }
+  function finishTyping(el) { [].forEach.call(el.querySelectorAll(".rlln"), function (x) { x.classList.remove("wait", "rlcur", "rlin"); x.textContent = x.getAttribute("data-t") || ""; }); }
   function activate(i) {
     if (i === cur || i < 0 || i >= items.length) return;
     if (cur > -1 && sec(cur)) finishTyping(sec(cur));
@@ -166,7 +188,7 @@
     var add = feed(filter, st).filter(function (it) { return it.k === "q" || !have[it.r.id]; });
     if (!add.filter(function (it) { return it.k === "r"; }).length) add = feed(filter, { seen: {}, saved: st.saved });   // every reel is already in the feed: a fresh round
     if (!add.length) return;
-    add.forEach(function (it) { items.push(it); var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = it.k === "q" ? "linear-gradient(160deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)" : S(it.r.s)[4]; fd.appendChild(s); });
+    add.forEach(function (it) { items.push(it); var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = bgOf(it); fd.appendChild(s); });
   }
   function build(first) {
     clearTimers(); hush(); cur = -1; fd.innerHTML = ""; fd.scrollTop = 0;
@@ -179,7 +201,7 @@
         (filter === "saved" ? T("كبوس ❤️ على أي ريل بيعجبك وبيطلع هون", "Touche ❤️ sur un reel pour le garder ici") : "") + "</p></section>";
       return;
     }
-    items.forEach(function (it) { var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = it.k === "q" ? "linear-gradient(160deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)" : S(it.r.s)[4]; fd.appendChild(s); });
+    items.forEach(function (it) { var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = bgOf(it); fd.appendChild(s); });
     activate(0);
   }
   function onScroll() {
@@ -200,6 +222,7 @@
     if (!ok) { var why = d.createElement("div"); why.className = "rlwhy"; why.innerHTML = "<b>" + T("❓ ليش غلط؟", "❓ Pourquoi c'est faux ?") + "</b> " + esc(whyOf(q, k)); b.parentNode.insertBefore(why, b.nextSibling); }
     if (q.x) out = '<div class="rlwhy ok"><b>✅ ' + (ok ? T("صح!", "Juste !") : T("الصح:", "La bonne :")) + "</b> " + esc(String(q.x).length > 170 ? String(q.x).slice(0, 168) + "…" : q.x) + "</div>";
     var o2 = el.querySelector(".rlqout"); if (o2) o2.innerHTML = out;
+    var ms = el.querySelector(".rlmas"); if (ms) { ms.classList.add(ok ? "yay" : "sad"); var mb = ms.querySelector(".rlmb"); if (mb) mb.textContent = ok ? "✅" : "❌"; }   // 🎨 30v mascot
     speak(ok ? "صح" : whyOf(q, k));
   }
   function share(r) {
@@ -267,6 +290,14 @@
     app.innerHTML = '<div class="rlfeed" role="feed" aria-label="Reels"></div>' +
       '<div class="rlchrome"><div class="rlbar"><a class="rlback" href="index.html" aria-label="' + T("رجوع", "Retour") + '">→</a><div class="rlpills" role="tablist">' + pillsHtml() + '</div><button type="button" class="rlsnd" aria-label="' + T("الصوت", "Son") + '">🔇</button></div></div>';
     host.appendChild(app); fd = app.querySelector(".rlfeed");
+    var tn = TN(); look = tn ? tn.themeFor(new Date()) : null;      // 🎨 30v: today's look (by the local date — same for everyone today, new tomorrow)
+    if (look) {
+      app.className += " lk-" + look.card + " pt-" + look.pat + " ft-" + look.font + " an-" + look.anim + " th-" + look.id + " rllooking";
+      app.style.setProperty("--rlacc", look.acc);
+      var chip = d.createElement("div"); chip.className = "rllook"; chip.setAttribute("role", "status");
+      chip.textContent = "🎨 " + T("لوك اليوم: ", "Look du jour : ") + look.e + " " + T(look.ar, look.fr); app.appendChild(chip);
+      setTimeout(function () { if (chip.parentNode) chip.parentNode.removeChild(chip); app.classList.remove("rllooking"); }, 2100);
+    }
     fd.addEventListener("scroll", onScroll, { passive: true });
     app.addEventListener("click", click);
     app.addEventListener("wheel", wheel, { passive: false });
@@ -276,6 +307,6 @@
     pickVoice(); try { if (w.speechSynthesis && "onvoiceschanged" in w.speechSynthesis) w.speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
     build(first);
   }
-  API.boot = boot; API.cur = function () { return cur; }; API.items = function () { return items; }; API.filter = function () { return filter; };
+  API.boot = boot; API.cur = function () { return cur; }; API.items = function () { return items; }; API.filter = function () { return filter; }; API.look = function () { return look; };
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(window, typeof document !== "undefined" ? document : null);

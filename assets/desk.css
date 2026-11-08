@@ -81,7 +81,7 @@
   body.reels .rlapp .rlpill{font-size:15px;padding:8px 16px}
   body.reels .rlapp .rlback,body.reels .rlapp .rlsnd{width:42px;height:42px;font-size:19px}
   body.reels .rlapp .rlv{padding:118px 64px 96px 150px;justify-content:center}
-  body.reels .rlapp .rlv:not(.rlvq) .rlbody{display:grid;grid-template-columns:minmax(150px,230px) minmax(0,900px);-webkit-column-gap:56px;column-gap:56px;-webkit-box-align:center;align-items:center;justify-content:center;width:100%;margin:auto}
+  body.reels .rlapp .rlv:not(.rlvq) .rlbody{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,900px);-webkit-column-gap:56px;column-gap:56px;-webkit-box-align:center;align-items:center;justify-content:center;width:100%;margin:auto}
   body.reels .rlapp .rlv:not(.rlvq) .rltag{grid-column:1;grid-row:1;justify-self:center;align-self:end;white-space:normal;text-align:center;font-size:16px;padding:6px 16px;margin-bottom:18px;line-height:1.5}
   body.reels .rlapp .rlv:not(.rlvq) .rlico{grid-column:1;grid-row:2/span 6;justify-self:center;align-self:start;display:inline-block;font-size:clamp(96px,9vw,150px);margin:0}
   body.reels .rlapp .rlv:not(.rlvq) h2,body.reels .rlapp .rlv:not(.rlvq) .rlfr,body.reels .rlapp .rlv:not(.rlvq) .rlln{grid-column:2}
@@ -113,4 +113,13 @@
   body.reels .rlside a,body.reels .rlside button,body.reels .rlsnd,body.reels .rlback,body.reels .rlpill,body.reels .rlopt:not([disabled]){cursor:pointer}
   body.reels .rlpills{cursor:ew-resize}
   body.reels .rlpills .rlpill{cursor:pointer}
+  /* 🎨 30v: the cartoon in the side column (220–280 px), the daily-look card around the whole wide reel; the MCQ mascot a bit bigger;
+     only the current page is lit in the side nav — a hovered item gets a lighter tint so it never looks like a second «on» */
+  body.reels .rlapp .rlv:not(.rlvq) .rlico.rltoon{width:clamp(220px,18vw,280px);height:clamp(220px,18vw,280px);font-size:0;margin:0}
+  body.reels .rlapp[class*="lk-"] .rlv:not(.rlvq) .rlbody{padding:32px 36px 22px}
+  body.reels .rlapp[class*="lk-"] .rlvq .rlbody{padding:26px 28px 18px}
+  body.reels .rlapp .rlmas{width:86px;height:86px;top:-30px;left:10px}
+  body.reels .rlapp .rlvq .rltag{max-width:calc(100% - 110px)}
+  body.reels .rlapp .rllook{top:78px;font-size:15px}
+  .hzside .dki:not(.on):hover{background:rgba(13,148,136,.06)}
 }

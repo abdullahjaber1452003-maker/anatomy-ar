@@ -70,3 +70,108 @@ body.reels #main{padding:0;margin:0;max-width:none}
 @media (max-width:350px){.rlv{padding-right:66px}.rlv h2{font-size:23px}.rlln{font-size:15px}}
 @media (prefers-reduced-motion:reduce){.rlico,.rlhint{-webkit-animation:none;animation:none}}
 body.reels .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0}
+/* 🎨 30v (Abdullah, Nov 8 2026 2:43 PM «رسومات كرتونية… كل يوم يغير»): the reel's cartoon (assets/reels-toons.js) above the title, the MCQ
+   mascot, and the daily look (.lk-<theme> on .rlapp: card style, title accent, pattern, how the lines come in). transform/opacity only. */
+.rlico.rltoon{display:block;align-self:center;width:128px;height:128px;font-size:0;margin:0 auto 8px;-webkit-animation:none;animation:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.3))}
+.rltoon svg,.rlmas svg{display:block;width:100%;height:100%;overflow:visible}
+@media (max-height:760px){.rlico.rltoon{width:108px;height:108px;margin-bottom:6px}}
+@media (max-height:620px){.rlico.rltoon{display:block;width:76px;height:76px}}
+.rlsm .rlbody{display:block}
+.rlsm .rlico.rltoon{float:left;width:92px;height:92px;margin:0 0 4px 6px}
+.rlxs .rlico.rltoon{width:64px;height:64px}
+.rlapp[class*="lk-"] .rlxs .rlbody{padding:8px 10px 1px}
+.rlxs .rlln{margin-bottom:6px;padding-top:5px;padding-bottom:5px}
+.rlxs .rlfr{margin-bottom:8px}
+.rltight .rlsrc{display:none}
+.rltight h2{font-size:20px}
+.rltight .rlln{font-size:14.5px;line-height:1.5}
+.rlsm .rltag{display:inline-block;max-width:calc(100% - 92px)}
+.rlsm .rlfr,.rlsm .rlln{overflow:hidden}
+.tk-bob{-webkit-animation:tkbob 2.6s ease-in-out infinite;animation:tkbob 2.6s ease-in-out infinite}
+.tk-d2{-webkit-animation-delay:-.9s;animation-delay:-.9s}.tk-d3{-webkit-animation-delay:-1.7s;animation-delay:-1.7s}
+@-webkit-keyframes tkbob{0%,100%{-webkit-transform:translateY(0)}50%{-webkit-transform:translateY(-7px)}}
+@keyframes tkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.tk-eye{-webkit-animation:tkblink 4.2s steps(1) infinite;animation:tkblink 4.2s steps(1) infinite}
+@-webkit-keyframes tkblink{0%,92%,100%{-webkit-transform:scaleY(1)}94%,97%{-webkit-transform:scaleY(.12)}}
+@keyframes tkblink{0%,92%,100%{transform:scaleY(1)}94%,97%{transform:scaleY(.12)}}
+.tk-beat{-webkit-animation:tkbeat 1.1s ease-in-out infinite;animation:tkbeat 1.1s ease-in-out infinite}
+@-webkit-keyframes tkbeat{0%,40%,100%{-webkit-transform:scale(1)}15%{-webkit-transform:scale(1.12)}28%{-webkit-transform:scale(1.04)}}
+@keyframes tkbeat{0%,40%,100%{transform:scale(1)}15%{transform:scale(1.12)}28%{transform:scale(1.04)}}
+.tk-breathe{-webkit-animation:tkbr 3.4s ease-in-out infinite;animation:tkbr 3.4s ease-in-out infinite}
+@-webkit-keyframes tkbr{0%,100%{-webkit-transform:scale(.95)}50%{-webkit-transform:scale(1.06)}}
+@keyframes tkbr{0%,100%{transform:scale(.95)}50%{transform:scale(1.06)}}
+.tk-wig{-webkit-animation:tkwig 2.2s ease-in-out infinite;animation:tkwig 2.2s ease-in-out infinite}
+@-webkit-keyframes tkwig{0%,100%{-webkit-transform:rotate(-5deg)}50%{-webkit-transform:rotate(5deg)}}
+@keyframes tkwig{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.tk-wave{-webkit-animation:tkwave 1.4s ease-in-out infinite;animation:tkwave 1.4s ease-in-out infinite}
+@-webkit-keyframes tkwave{0%,100%{-webkit-transform:rotate(0)}50%{-webkit-transform:rotate(-16deg)}}
+@keyframes tkwave{0%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+.tk-swing,.tk-rock,.tk-tilt{-webkit-animation:tkwig 3s ease-in-out infinite;animation:tkwig 3s ease-in-out infinite}
+.tk-squish{-webkit-animation:tksq 1.8s ease-in-out infinite;animation:tksq 1.8s ease-in-out infinite}
+@-webkit-keyframes tksq{0%,100%{-webkit-transform:scale(1,1)}50%{-webkit-transform:scale(1.05,.94)}}
+@keyframes tksq{0%,100%{transform:scale(1,1)}50%{transform:scale(1.05,.94)}}
+.tk-merc{-webkit-animation:tkmerc 3s ease-in-out infinite;animation:tkmerc 3s ease-in-out infinite}
+@-webkit-keyframes tkmerc{0%,100%{-webkit-transform:scaleY(.55)}50%{-webkit-transform:scaleY(1)}}
+@keyframes tkmerc{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+.tk-drip{-webkit-animation:tkdrip 1.3s ease-in infinite;animation:tkdrip 1.3s ease-in infinite}
+@-webkit-keyframes tkdrip{0%{-webkit-transform:translateY(0);opacity:1}100%{-webkit-transform:translateY(12px);opacity:0}}
+@keyframes tkdrip{0%{transform:translateY(0);opacity:1}100%{transform:translateY(12px);opacity:0}}
+.tk-scan{-webkit-animation:tkscan 2.4s linear infinite;animation:tkscan 2.4s linear infinite}
+@-webkit-keyframes tkscan{from{-webkit-transform:translateX(0)}to{-webkit-transform:translateX(102px)}}
+@keyframes tkscan{from{transform:translateX(0)}to{transform:translateX(102px)}}
+.tk-tw,.tk-siren{-webkit-animation:tktw 1.6s ease-in-out infinite;animation:tktw 1.6s ease-in-out infinite}
+@-webkit-keyframes tktw{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes tktw{0%,100%{opacity:.2}50%{opacity:1}}
+.tk-drive{-webkit-animation:tkdrv .5s ease-in-out infinite alternate;animation:tkdrv .5s ease-in-out infinite alternate}
+@-webkit-keyframes tkdrv{from{-webkit-transform:translateY(0)}to{-webkit-transform:translateY(-3px)}}
+@keyframes tkdrv{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+.tk-chk{opacity:0;-webkit-animation:tkchk 4.5s steps(1) infinite;animation:tkchk 4.5s steps(1) infinite}
+.tk-c1{-webkit-animation-delay:.6s;animation-delay:.6s}.tk-c2{-webkit-animation-delay:1.2s;animation-delay:1.2s}
+@-webkit-keyframes tkchk{0%{opacity:0}10%,90%{opacity:1}}
+@keyframes tkchk{0%{opacity:0}10%,90%{opacity:1}}
+/* the MCQ mascot: a small nurse that cheers ✅ or looks sad ❌ after an answer */
+.rlvq .rlbody{padding-top:4px}
+.rlmas{position:absolute;top:-6px;left:0;width:62px;height:62px;pointer-events:none;z-index:2}
+.rlmas .rlmb{position:absolute;top:-8px;right:-8px;font-size:22px;line-height:1;opacity:0}
+.rlmas.yay .rlmb,.rlmas.sad .rlmb{opacity:1;-webkit-animation:rlpop .4s ease;animation:rlpop .4s ease}
+.rlmas.yay svg{-webkit-animation:tkjump .5s ease-in-out 3;animation:tkjump .5s ease-in-out 3}
+@-webkit-keyframes tkjump{50%{-webkit-transform:translateY(-12px) rotate(-6deg)}}
+@keyframes tkjump{50%{transform:translateY(-12px) rotate(-6deg)}}
+.rlmas.sad svg{-webkit-transform:rotate(8deg) translateY(4px);transform:rotate(8deg) translateY(4px);-webkit-transition:transform .4s;transition:transform .4s}
+.rlmas.sad .tk-eye~path:not(.tk-ms):not(.tk-tear){opacity:0}
+.rlmas.sad .tk-ms,.rlmas.sad .tk-tear{opacity:1}
+.rlmas.sad .tk-tear{-webkit-animation:tkdrip 1.4s ease-in infinite;animation:tkdrip 1.4s ease-in infinite}
+.rlmas.yay .tk-wave{-webkit-animation-duration:.45s;animation-duration:.45s}
+.rlvq .rltag{max-width:calc(100% - 70px)}
+/* the daily look */
+.rllook{position:absolute;top:calc(64px + env(safe-area-inset-top));left:50%;z-index:25;-webkit-transform:translateX(-50%);transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:800;color:#fff;background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:999px;pointer-events:none;-webkit-animation:rllook 2s ease forwards;animation:rllook 2s ease forwards}
+@-webkit-keyframes rllook{0%{opacity:0}12%,80%{opacity:1}100%{opacity:0}}
+@keyframes rllook{0%{opacity:0;transform:translate(-50%,-6px)}12%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+.rlapp.rllooking .rltap{opacity:0}
+.rlapp[class*="lk-"] .rlbody{border-radius:22px;padding:14px 14px 6px}
+.rlapp.lk-glass .rlbody{background:rgba(8,10,28,.42);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22)}
+.rlapp.lk-solid .rlbody{background:rgba(10,14,32,.72);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.rlapp.lk-outline .rlbody{background:rgba(0,0,0,.4);border:2px solid var(--rlacc,#fff)}
+.rlapp.lk-outline .rlln{background:none;border-right-color:var(--rlacc,#fff)}
+.rlapp[class*="lk-"] .rlfr span[lang]{color:var(--rlacc,#fff)}
+.rlapp[class*="lk-"] .rlsrc{background:rgba(0,0,0,.42);padding:4px 10px;border-radius:999px}
+.rlapp[class*="lk-"] .rlside button,.rlapp[class*="lk-"] .rlside a,.rlapp[class*="lk-"] .rlhint{text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.rlapp.ft-round .rlv h2{letter-spacing:0;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+.rlapp.ft-soft .rlv h2{font-weight:800;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.rlapp.ft-glow .rlv h2{text-shadow:0 0 10px var(--rlacc,#fff),0 0 2px rgba(0,0,0,.9)}
+.rlapp.ft-comic .rlv h2{text-shadow:2px 2px 0 #000,-1px -1px 0 rgba(0,0,0,.6)}
+.rlapp[class*="ft-"] .rlv h2:after{content:"";display:block;width:56px;height:4px;border-radius:4px;margin-top:6px;background:var(--rlacc,#fff)}
+.rlapp.pt-dots .rlv:before{background:radial-gradient(rgba(255,255,255,.16) 1.6px,transparent 2px) 0 0/22px 22px,radial-gradient(circle at 10% 90%,rgba(0,0,0,.35),transparent 55%)}
+.rlapp.pt-waves .rlv:before{background:repeating-radial-gradient(circle at 100% 100%,transparent 0,transparent 18px,rgba(255,255,255,.08) 19px,rgba(255,255,255,.08) 22px),radial-gradient(circle at 80% 15%,rgba(255,255,255,.14),transparent 45%)}
+.rlapp.pt-grid .rlv:before{background:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px) 0 0/28px 28px,radial-gradient(circle at 80% 15%,rgba(240,171,252,.18),transparent 45%)}
+.rlapp.pt-confetti .rlv:before{background:radial-gradient(circle,rgba(253,224,71,.5) 2.5px,transparent 3px) 0 0/58px 64px,radial-gradient(circle,rgba(244,114,182,.5) 2.5px,transparent 3px) 23px 31px/62px 58px,radial-gradient(circle,rgba(125,211,252,.5) 2px,transparent 2.5px) 41px 12px/50px 70px,radial-gradient(circle at 10% 90%,rgba(0,0,0,.3),transparent 55%)}
+.rlapp.pt-stars .rlv:before{background:radial-gradient(circle,rgba(255,255,255,.75) 1px,transparent 1.6px) 0 0/47px 53px,radial-gradient(circle,rgba(255,255,255,.45) 1px,transparent 1.5px) 19px 27px/71px 61px,radial-gradient(circle at 80% 12%,rgba(199,210,254,.22),transparent 40%)}
+.rlapp.pt-petals .rlv:before{background:radial-gradient(ellipse 5px 3px,rgba(251,207,232,.45) 60%,transparent 70%) 0 0/66px 58px,radial-gradient(ellipse 3px 5px,rgba(187,247,208,.4) 60%,transparent 70%) 31px 27px/54px 66px,radial-gradient(circle at 80% 15%,rgba(255,255,255,.14),transparent 45%)}
+.rlapp.pt-halftone .rlv:before{background:radial-gradient(rgba(0,0,0,.22) 2.2px,transparent 2.6px) 0 0/12px 12px,radial-gradient(circle at 80% 15%,rgba(254,240,138,.22),transparent 45%)}
+.rlin{-webkit-animation:rlfadeup .6s ease both;animation:rlfadeup .6s ease both}
+.an-slide .rlin{-webkit-animation-name:rlslide;animation-name:rlslide}
+@-webkit-keyframes rlfadeup{from{opacity:0;-webkit-transform:translateY(16px)}to{opacity:1;-webkit-transform:none}}
+@keyframes rlfadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@-webkit-keyframes rlslide{from{opacity:0;-webkit-transform:translateX(40px)}to{opacity:1;-webkit-transform:none}}
+@keyframes rlslide{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rltoon *,.rlmas *,.rlmas svg,.rlin,.rllook{-webkit-animation:none!important;animation:none!important}.rllook{opacity:1}}
