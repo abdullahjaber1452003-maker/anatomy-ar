@@ -201,8 +201,8 @@
   function save(o) { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} }
 
   /* ---- sound: window.NursinMilSnd (above) ---- */
-  function S() { return w.NursinMilSnd || { on: function () { return false; }, set: function () { return false; }, unlock: function () {}, start: function () {}, pause: function () {}, stop: function () {}, second: function () { return []; }, fx: function () { return []; } }; }
-  function sndOn() { return S().on(); }
+  function SND() { return w.NursinMilSnd || { on: function () { return false; }, set: function () { return false; }, unlock: function () {}, start: function () {}, pause: function () {}, stop: function () {}, second: function () { return []; }, fx: function () { return []; } }; }
+  function sndOn() { return SND().on(); }
 
   /* ---- UI ---- */
   var ov = null, st = null, tick = 0, sel = "exam";
@@ -223,14 +223,14 @@
     startScreen();
   }
   function close(fromPop) {
-    stopT(); S().stop(); if (!ov) return; ov.hidden = true; d.documentElement.classList.remove("mil-open"); st = null;
+    stopT(); SND().stop(); if (!ov) return; ov.hidden = true; d.documentElement.classList.remove("mil-open"); st = null;
     if (!fromPop && location.hash === "#mil") { try { if (history.state && history.state.mil) history.back(); else history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
   }
   function body(h) { var b = $("#mlbody"); b.innerHTML = h; b.scrollTop = 0; }
 
   function examLabel(x) { if (!x) return ""; var p = x.d.split("-"), S = subjects(); return " · " + (+p[2]) + "/" + (+p[1]) + ": " + x.subs.map(function (s) { return S[s]; }).join(" + "); }
   function startScreen() {
-    stopT(); S().stop(); st = null;
+    stopT(); SND().stop(); st = null;
     var S = subjects(), x = nextExam(), b = load(), h = "";
     if (sel === "exam" && !x) sel = "all";
     h += '<p class="mlintro">١٥ سؤال من دروسك، كل ما تطلع بيصعب 📈 · ٣ مساعدات · ٣٠ ثانية للسؤال · 🔒 نقاط أمان عند السؤال ٥ و١٠</p>';
@@ -245,7 +245,7 @@
     body(h);
   }
   function begin() {
-    S().unlock();   // the start tap = the gesture iOS needs for audio
+    SND().unlock();   // the start tap = the gesture iOS needs for audio
     var qs = pick(sel);
     if (qs.short) { body('<p class="mlintro">😕 ما في أسئلة كفاية بهالمادة بعد (' + qs.have + " من " + N + ').</p><p class="small">جرّب «🔀 كل المواد» أو مادة تانية.</p><button type="button" class="mlgo" data-mlhome="1">رجوع</button>'); return; }
     st = { qs: qs.map(function (q) { return shuffled(q); }), i: 0, k: 0, used: {}, rm: [], left: SECS * 1000, at: 0, busy: false, miss: [], done: false };
@@ -260,7 +260,7 @@
     return h + "</ol>";
   }
   function ask() {
-    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; S().start();
+    var q = st.qs[st.i]; st.rm = []; st.busy = false; st.left = SECS * 1000; st.ls = -1; SND().start();
     var h = '<div class="mlplay">' + ladder() +
       '<div class="mlbar"><span class="mlqn">سؤال ' + (st.i + 1) + " / " + N + ' · <b>' + num(LADDER[st.i]) + '</b></span><span class="mltm" id="mltm" aria-live="off">' + SECS + "</span></div>" +
       '<div class="mlll">' + ll("ff", "٥٠:٥٠") + ll("ph", "📞 اسأل عثمان") + ll("au", "👥 رأي الجمهور") + "</div>" +
@@ -281,14 +281,14 @@
     var e = ov && $("#mltm"); if (!e || !st) return; var s = Math.max(0, Math.ceil(st.left / 1000));
     e.textContent = s; e.className = "mltm" + (s <= 10 ? " low" : "") + (s <= 5 ? " vlow" : "");
     if (s !== st.ls) {   // a new whole second: its sound + (last 10 s) one red flash, faded by a CSS transition — no animation loop
-      st.ls = s; if (!st.busy && !st.paused) S().second(s);
+      st.ls = s; if (!st.busy && !st.paused) SND().second(s);
       if (s <= 10 && s > 0) { e.classList.add("fl"); setTimeout(function () { e.classList.remove("fl"); }, s <= 5 ? 220 : 320); }
     }
   }
-  function pause(on) { if (!st) return; if (!on) { st.at = Date.now(); st.ls = -1; } st.paused = on; S().pause(on); }
+  function pause(on) { if (!st) return; if (!on) { st.at = Date.now(); st.ls = -1; } st.paused = on; SND().pause(on); }
 
   function answer(k) {
-    if (!st || st.busy) return; st.busy = true; stopT(); S().stop(); S().fx(k >= 0 ? "lockin" : "buzzer");
+    if (!st || st.busy) return; st.busy = true; stopT(); SND().stop(); SND().fx(k >= 0 ? "lockin" : "buzzer");
     var q = st.qs[st.i], B = ov.querySelectorAll("[data-mlo]");
     [].forEach.call(ov.querySelectorAll("[data-mlll],[data-mlwalk]"), function (b) { b.disabled = true; });
     [].forEach.call(B, function (b) { b.disabled = true; });
@@ -302,15 +302,15 @@
     if (k >= 0 && B[k]) B[k].classList.remove("lock");
     if (B[q.a]) B[q.a].classList.add("ok"); if (!good && k >= 0 && B[k]) B[k].classList.add("bad");
     try { if (w.NursinSRS && w.NursinSRS.record) w.NursinSRS.record(q.src, good); } catch (e) {}
-    if (k >= 0) S().stop();   // cuts the lock-in chord (a time-out keeps its buzzer)
+    if (k >= 0) SND().stop();   // cuts the lock-in chord (a time-out keeps its buzzer)
     if (good) {
-      st.k++; var lvl = st.k; S().fx(SAFE.indexOf(lvl) > -1 ? "safe" : "correct");
+      st.k++; var lvl = st.k; SND().fx(SAFE.indexOf(lvl) > -1 ? "safe" : "correct");
       if (lvl >= N) { $("#mlfb").innerHTML = '<p class="mlok">✅ صح!</p>'; return setTimeout(function () { end("win"); }, 1200); }
       var sf = SAFE.indexOf(lvl) > -1;
       $("#mlfb").innerHTML = '<p class="mlok">✅ صح! معك ' + num(LADDER[lvl - 1]) + (sf ? " · 🔒 ضمنتهن!" : "") + '</p><button type="button" class="mlnext" data-mlnext="1">السؤال الجاي ⬅️</button>';
       return;
     }
-    st.miss.push(q); if (k >= 0) S().fx("wrong");
+    st.miss.push(q); if (k >= 0) SND().fx("wrong");
     $("#mlfb").innerHTML = '<p class="mlbad">' + (k < 0 ? "⏰ خلص الوقت! " : "❌ غلط. ") + "الصح: <b>" + AR[q.a] + "</b> " + fr(q.o[q.a]) + "</p>" + (q.x ? '<p class="mlx2">💡 ' + fr(q.x) + "</p>" : "") +
       '<button type="button" class="mlnext" data-mlend="1">شوف النتيجة ⬅️</button>';
     var f = $("#mlfb"); if (f && f.scrollIntoView) try { f.scrollIntoView({ block: "nearest" }); } catch (e) {}
@@ -321,7 +321,7 @@
     if (!st || st.busy || st.used[k]) return;
     var q = st.qs[st.i]; st.used[k] = 1;
     var b = ov.querySelector('[data-mlll="' + k + '"]'); if (b) { b.classList.add("used"); b.disabled = true; }
-    S().fx("lifeline");
+    SND().fx("lifeline");
     if (k === "ff") {
       st.rm = fifty(q.o.length, q.a);
       st.rm.forEach(function (i) { var o = ov.querySelector('[data-mlo="' + i + '"]'); if (o) { o.classList.add("gone"); o.disabled = true; } });
@@ -342,9 +342,9 @@
   function closeDlg() { var x = $(".mldlg"); if (x) x.parentNode.removeChild(x); pause(false); }
 
   function end(how) {
-    stopT(); S().stop(); if (!st || st.done) return; st.done = true;
+    stopT(); SND().stop(); if (!st || st.done) return; st.done = true;
     var pts = payout(st.k, how), b = load(), nb = pts > (b.best | 0);
-    if (pts >= LADDER[SAFE[0] - 1]) setTimeout(function () { if (ov && !ov.hidden && st && st.done) S().fx("fanfare"); }, 150);
+    if (pts >= LADDER[SAFE[0] - 1]) setTimeout(function () { if (ov && !ov.hidden && st && st.done) SND().fx("fanfare"); }, 150);
     b.n = (b.n | 0) + 1; if (nb) b.best = pts;
     var mm = st.miss.map(function (q) { return { id: q.id, t: q.t, l: q.l || "" }; }).concat(b.miss || []), seen = {};
     b.miss = mm.filter(function (m) { var kk = m.t + ":" + m.l; if (seen[kk]) return false; seen[kk] = 1; return true; }).slice(0, 8);
@@ -371,8 +371,8 @@
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button,a"); if (!t || !ov.contains(t)) return;
     if (t.hasAttribute("data-mlx")) { if (st && !st.done && st.i > 0 && !w.confirm("تطلع من اللعبة؟ (النقاط ما بتنحفظ)")) return; close(); return; }
-    if (t.hasAttribute("data-mlsnd")) { var on = S().set(!sndOn()); paintSnd(); if (on) { S().unlock(); S().fx("lifeline"); if (st && !st.busy && !st.done) { S().start(); if (st.paused) S().pause(true); } } return; }
-    if (t.hasAttribute("data-mls")) S().unlock();
+    if (t.hasAttribute("data-mlsnd")) { var on = SND().set(!sndOn()); paintSnd(); if (on) { SND().unlock(); SND().fx("lifeline"); if (st && !st.busy && !st.done) { SND().start(); if (st.paused) SND().pause(true); } } return; }
+    if (t.hasAttribute("data-mls")) SND().unlock();
     if (t.hasAttribute("data-mls")) { sel = t.getAttribute("data-mls"); [].forEach.call(ov.querySelectorAll("[data-mls]"), function (c) { c.classList.toggle("on", c === t); }); return; }
     if (t.hasAttribute("data-mlgo")) { begin(); return; }
     if (t.hasAttribute("data-mlhome")) { startScreen(); return; }
