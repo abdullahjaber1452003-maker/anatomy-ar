@@ -1,4 +1,4 @@
-/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030x.
+/* 🏆 «مين بدو يربح المليون؟» (Abdullah, Nov 8 2026 8:37 AM: «شو رأيك نعمل شي متل من سيربح المليون») — 20261030y.
    A show-style quiz built ONLY from the site's existing quiz bank (window.QUIZ, the same items the lesson quizzes use; no new content).
    • Start: pick a subject (every QSUBJ subject that has questions), «🎯 امتحاني الجاي» (the next exam date's subjects, read from
      NursinMid.EXAMS when assets/midterm.js is on the page, else the EXAMS mirror below — tests keep both equal; subjects without
@@ -28,7 +28,7 @@
      the red timer flash stays (CSS). FX: lockin, correct, wrong, buzzer (time-out), safe (Q5/Q10), lifeline, fanfare (result ≥ safe level).
    • ON by default (key nursin_mil_snd: "0" = off), 🔊/🔇 in the game header. No Audio (old browser / tests): silent, no throw. */
 (function (w, d) {
-  var KEY = "nursin_mil_snd", BASE = "assets/sounds/", VER = "20261030x", FADE_MS = 150;
+  var KEY = "nursin_mil_snd", BASE = "assets/sounds/", VER = "20261030y", FADE_MS = 150;
   var FILES = { bed: "mil-bed.mp3", tick: "mil-tick.mp3", lockin: "mil-lock.mp3", correct: "mil-correct.mp3", wrong: "mil-wrong.mp3",
     buzzer: "mil-timeout.mp3", safe: "mil-safe.mp3", lifeline: "mil-lifeline.mp3", fanfare: "mil-win.mp3" };
   var VOL = { bed: 0.85, tick: 1 }, el = {}, ok = {}, fading = 0, st = { running: false, paused: false, last: -1 };
