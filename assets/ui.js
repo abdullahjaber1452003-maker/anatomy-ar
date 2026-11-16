@@ -542,8 +542,25 @@
     [900, 2500, 5000].forEach(function (t) { setTimeout(lessonList, t); });
   }
   w.NursinDesk = { wide: dkWide, side: sideNav, lessons: lessonList, opts: dkOpts, key: dkKey };
+  function syncSubjects() {
+    var LS = (w.NLESSONS && w.NLESSONS.subjects) || {}, grp = ALL[0] && ALL[0].items;
+    if (!grp) return;
+    var has = {};
+    grp.forEach(function (it) { has[String(it[0]).split("#")[0]] = 1; });
+    Object.keys(LS).forEach(function (k) {
+      var s = LS[k];
+      if (!s || !s.href) return;
+      var href = String(s.href).split("#")[0];
+      if (!PAGES[href]) PAGES[href] = [s.e || "📘", s.ar || k, s.fr || s.ar || k, 1];
+      if (!has[href]) {
+        has[href] = 1;
+        grp.push([href, s.e || "📘", s.ar || k, s.fr || s.ar || k]);
+      }
+    });
+  }
   function init() {
     if (!d.body || !d.body.classList.contains("ui")) return;              // only pages that load the shell (body.ui)
+    syncSubjects();
     d.documentElement.classList.add("uion");
     header();
     var h1 = page !== "index.html" && d.querySelector("main h1");

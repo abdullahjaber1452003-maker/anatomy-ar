@@ -636,8 +636,10 @@
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
     var line = all ? T("🎉 خلصت مسار اليوم! برافو عليك، بكرا منكمّل 💪", "🎉 Parcours du jour terminé ! Bravo, on continue demain 💪")
       : T("خلصت " + dn + " من " + tot, dn + " sur " + tot + " terminé(s)") + (near ? T(" • قرّبت تخلص 🔥", " • Presque fini 🔥") : dn === 0 ? T(" • يلا نبلّش 💪", " • On commence 💪") : T(" • كمّل هيك 👏", " • Continue comme ça 👏"));
+    var qbtn = !all && cur >= 0 ? '<button type="button" class="btn pri" data-hzquick style="width:100%;margin:8px 0 6px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + "</button>" : "";
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
+      qbtn +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
@@ -708,8 +710,15 @@
   function dsCard() { try { return w.NursinDiscuss ? w.NursinDiscuss.homeHtml() : ""; } catch (e) { return ""; } }
   function subsHtml() {
     var L = []; try { L = (w.NursinRet && w.NursinRet.list) ? w.NursinRet.list() : []; } catch (e) {}
-    return '<div class="hzsh"><h2>' + T("📚 موادي", "📚 Mes matières") + '</h2><a class="hzmmb" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + '</a><button type="button" data-hz="learn">' + T("الكل", "Tout") + " (" + (SUBJ.length - 1) + ")</button></div><div class=\"hzsubs\">" +
-      SUBJ.map(function (s) {
+    var subj = SUBJ.slice(), seen = {}, LS = (w.NLESSONS && w.NLESSONS.subjects) || {};
+    subj.forEach(function (x) { seen[x.k] = 1; (x.s || []).forEach(function (y) { seen[y] = 1; }); });
+    Object.keys(LS).forEach(function (k) {
+      if (seen[k] || !LS[k] || !LS[k].href) return;
+      seen[k] = 1;
+      subj.push({ k: k, p: LS[k].href, e: LS[k].e || "📘", ar: LS[k].ar || k, fr: LS[k].fr || LS[k].ar || k, s: [k], g: LS[k].g || "linear-gradient(160deg,#14b8a6,#0f766e)" });
+    });
+    return '<div class="hzsh"><h2>' + T("📚 موادي", "📚 Mes matières") + '</h2><a class="hzmmb" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + '</a><button type="button" data-hz="learn">' + T("الكل", "Tout") + " (" + (subj.length - 1) + ")</button></div><div class=\"hzsubs\">" +
+      subj.map(function (s) {
         var xs = L.filter(function (l) { return s.s.indexOf(l.s) > -1 && l.score != null; }), pc = xs.length ? Math.round(xs.reduce(function (a, l) { return a + l.score; }, 0) / xs.length) : null;
         return '<a class="hzsc" href="' + s.p + '" style="background:' + s.g + '"><span class="art" aria-hidden="true"><i></i><i></i><span>' + s.e + "</span></span><b>" + esc(T(s.ar, s.fr)) + "</b><small>" +
           (pc == null ? T("ابدأ ◀", "Commencer ▶") : T("حفظك ", "Mémoire ") + pc + "%") + "</small></a>";
@@ -760,6 +769,12 @@
   function stepClick(e) {
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
+    if ((b = t.closest("[data-hzquick]"))) {
+      var nowEl = root && root.querySelector(".hzst.now a[data-step], .hzst.now button[data-step], .hzst.now .go");
+      if (nowEl) { nowEl.click(); return; }
+      var firstOsm = root && root.querySelector('.hzst.now .hzqo button[data-hzq]');
+      if (firstOsm) { firstOsm.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" }); return; }
+    }
     if ((b = t.closest("[data-hzmood]"))) { lsSet(MK, { d: today(), m: b.getAttribute("data-hzmood"), t: Date.now() }); draw(); return; }
     if ((b = t.closest("[data-hzrest]")) || t.closest("[data-hzskip]")) {
       var sk = !b; lsSet("nursin_brk_v1", sk ? { at: Date.now(), s: 1 } : { at: Date.now() });

@@ -30,4 +30,76 @@
   }
   if (w.NursinLessons && w.NursinLessons.splitPage) w.NursinLessons.splitPage();   // ✂️ long lessons → «الجزء 1 / 2 …» (assets/lessons.js)
   if (location.hash) { var el = d.getElementById(location.hash.slice(1)); if (el && el.tagName === "DETAILS") { el.open = true; } }
+
+  /* 🌙 «مراجعة ليلة الامتحان» + ⚡ «خلاصة ٣٠ ثانية» — تلقائياً لكل مادة ودرس */
+  function pageSubj() {
+    var box = d.querySelector(".sublessons[data-t]");
+    if (box) return box.getAttribute("data-t");
+    var pg = (location.pathname.split("/").pop() || "").toLowerCase(), S = (w.NLESSONS && w.NLESSONS.subjects) || {};
+    for (var k in S) if (S[k].page === pg) return k;
+    return "";
+  }
+  function subjQ(t) {
+    var G = (w.QGROUPS && w.QGROUPS[t]) || [t];
+    return (w.QUIZ || []).filter(function (q) { return G.indexOf(q.t) >= 0; });
+  }
+  function cramOpen(t, from) {
+    var U = w.NursinUI; if (!U || !U.openSheet) return;
+    var NL = w.NLESSONS || {}, S = (NL.subjects && NL.subjects[t]) || {}, fr = FR();
+    var allQ = subjQ(t), wkMap = (w.Weak && w.Weak.items) ? w.Weak.items() : {};
+    var wkQs = allQ.filter(function (q) { return !!wkMap[q.id]; });
+    var hls = (w.NursinHL && w.NursinHL.all) ? w.NursinHL.all().filter(function (x) { return x.sj === t || x.pg === (S.page || ""); }) : [];
+    var TR = w.TRICKS || {}, tKeys = Object.keys(TR).filter(function (k) { return k.indexOf(t + ":") === 0; });
+    var h = '<div class="cram">';
+    h += '<p class="small">' + esc(T("كل ما تحتاجه لمراجعة سريعة قبل الامتحان:", "Tout ce qu'il faut pour réviser vite avant l'examen :")) + '</p>';
+    h += '<div class="cram-acts" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px">';
+    if (wkQs.length) h += '<a class="btn pri" href="quiz.html?t=weak">🎯 ' + esc(T("تدرّب عأخطائك (" + wkQs.length + ")", "Tes erreurs (" + wkQs.length + ")")) + '</a>';
+    h += '<a class="btn' + (wkQs.length ? "" : " pri") + '" href="quiz.html?t=' + encodeURIComponent(t) + '">⚡ ' + esc(T("كويز شامل (" + allQ.length + " سؤال)", "Quiz complet (" + allQ.length + " q)")) + '</a>';
+    h += '</div>';
+    if (wkQs.length) {
+      h += '<h3>🎯 ' + esc(T("نقاط ضعفك بهالمادة", "Tes points faibles")) + '</h3><ul>' + wkQs.slice(0, 6).map(function (q) { return '<li><b>' + esc(q.q) + '</b><br><small>✅ ' + esc(q.o[q.a]) + '</small></li>'; }).join("") + '</ul>';
+    }
+    if (hls.length) {
+      h += '<h3>🖍️ ' + esc(T("تعليماتك بالقلم (" + hls.length + ")", "Tes surlignages (" + hls.length + ")")) + '</h3><ul>' + hls.slice(0, 8).map(function (x) { return '<li><mark class="hlm hl-' + esc(x.c || "y") + '">' + esc(x.q) + '</mark></li>'; }).join("") + '</ul>';
+    }
+    if (tKeys.length) {
+      h += '<h3>🧠 ' + esc(T("حِيَل الحفظ السريعة", "Astuces mémo")) + '</h3>';
+      tKeys.forEach(function (lk) { (TR[lk] || []).forEach(function (tr) { var s = fr && tr.fr ? tr.fr : tr; h += '<div class="qcard" style="margin:8px 0;padding:10px"><b>' + esc(s.t) + '</b><p class="small" style="margin:4px 0">' + esc(s.m) + '</p></div>'; }); });
+    }
+    if (!wkQs.length && !hls.length && !tKeys.length) {
+      h += '<p class="small">' + esc(T("ابدأ بحلّ الكويز أو تعليم الكلمات المهمة بالقلم لتتجمع خلاصتك هنا تلقائياً.", "Commence par le quiz ou surligne des mots clés pour voir ton résumé ici.")) + '</p>';
+    }
+    h += '</div>';
+    U.openSheet("cramsh", "🌙 " + T("مراجعة ليلة الامتحان", "Révision express") + " · " + T(S.ar || t, S.fr || t), h, from);
+  }
+  function addCramBtn() {
+    var t = pageSubj(); if (!t) return;
+    var tabs = d.querySelector(".lawtabs");
+    if (tabs && !tabs.querySelector("[data-cram]")) {
+      var b = d.createElement("button"); b.type = "button"; b.className = "chip"; b.setAttribute("data-cram", t);
+      b.textContent = T("🌙 مراجعة ليلة الامتحان", "🌙 Révision express");
+      b.addEventListener("click", function () { cramOpen(t, b); });
+      tabs.appendChild(b);
+    }
+    // ⚡ خلاصة ٣٠ ثانية تلقائية بآخر كل درس (إذا توفرت حيل حفظ أو نقاط بارزة)
+    var TR = w.TRICKS || {};
+    [].slice.call(d.querySelectorAll("details.topic[id]")).forEach(function (det) {
+      var bd = det.querySelector(".tbody"); if (!bd || bd.querySelector(".cram30")) return;
+      var baseId = t + ":" + det.id.replace(/-p\d+$/, ""), ts = TR[baseId] || [];
+      var pts = [];
+      if (ts.length) ts.forEach(function (tr) { var s = FR() && tr.fr ? tr.fr : tr; pts.push("<b>" + esc(s.t) + ":</b> " + esc(s.m)); });
+      else {
+        [].slice.call(bd.querySelectorAll("li > b")).slice(0, 5).forEach(function (bEl) {
+          var txt = (bEl.parentElement && bEl.parentElement.textContent || "").trim();
+          if (txt.length > 8 && txt.length < 180) pts.push(esc(txt));
+        });
+      }
+      if (!pts.length) return;
+      var box = d.createElement("div"); box.className = "cram30 qcard"; box.style.marginTop = "12px";
+      box.innerHTML = '<b>⚡ ' + esc(T("خلاصة ٣٠ ثانية", "Résumé en 30 sec")) + '</b><ul class="mlist" style="margin:6px 0 0">' + pts.slice(0, 5).map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ul>";
+      bd.appendChild(box);
+    });
+  }
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(addCramBtn, 120); });
+  else setTimeout(addCramBtn, 120);
 })(window, document);
