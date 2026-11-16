@@ -126,7 +126,7 @@
   /* ======================== the page ======================== */
   if (!d || !d.addEventListener) { w.NursinOX = api(); return; }
   var page = ((w.location && w.location.pathname) || "").split("/").pop() || "index.html";
-  if (!/^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|geri|community|medsurg)\.html$/.test(page)) { w.NursinOX = api(); return; }
+  if (!/^(cardio|neuro|henderson|law|mgmt|quality|pharma|rea|geri|community|preventive|medsurg)\.html$/.test(page)) { w.NursinOX = api(); return; }
   function style() {
     if (d.getElementById("oxcss")) return;
     var s = d.createElement("style"); s.id = "oxcss";

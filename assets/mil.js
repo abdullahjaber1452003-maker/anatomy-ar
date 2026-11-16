@@ -127,7 +127,7 @@
     { d: "2026-11-14", subs: ["prev", "rea"] }, { d: "2026-11-16", subs: ["*"] },
     { d: "2026-11-21", subs: ["psych", "geri", "quality"] }, { d: "2026-11-28", subs: ["comm", "pharma"] }
   ];
-  var PAGE = { cardio: "cardio.html", neuro: "neuro.html", henderson: "henderson.html", law: "law.html", mgmt: "mgmt.html", quality: "quality.html", pharma: "pharma.html", rea: "rea.html", geri: "geri.html", comm: "community.html", medsurg: "medsurg.html" };
+  var PAGE = { cardio: "cardio.html", neuro: "neuro.html", henderson: "henderson.html", law: "law.html", mgmt: "mgmt.html", quality: "quality.html", pharma: "pharma.html", rea: "rea.html", geri: "geri.html", comm: "community.html", prev: "preventive.html", medsurg: "medsurg.html" };
   var AR = ["أ", "ب", "ج", "د", "هـ"];
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

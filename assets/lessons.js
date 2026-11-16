@@ -30,7 +30,8 @@
       rea: { ar: "الإنعاش", fr: "R\u00e9animation", page: "rea.html" },
       geri: { ar: "الشيخوخة (Gériatrie)", fr: "G\u00e9riatrie", page: "geri.html", e: "👴" },
       comm: { ar: "صحة المجتمع", fr: "Sant\u00e9 communautaire", page: "community.html", e: "🏘️" },
-      medsurg: { ar: "Med-Surg (طبّي-جراحي)", fr: "M\u00e9dico-chirurgical (Med-Surg)", page: "medsurg.html", e: "🏥" }
+      medsurg: { ar: "Med-Surg (طبّي-جراحي)", fr: "M\u00e9dico-chirurgical (Med-Surg)", page: "medsurg.html", e: "🏥" },
+      prev: { ar: "الصحة الوقائية", fr: "Sant\u00e9 pr\u00e9ventive", page: "preventive.html", e: "🛡️" }
     },
     /* 🏥 Oct 30 2026 (Abdullah): «Med-Surg» is ONE مادة on the screen that groups القلب / الأعصاب / Henderson (their pages, anchors,
        lesson ids «cardio:infarctus»…, progress, quiz history, retention, notes and tournament ids are untouched — the group is only a
@@ -40,6 +41,9 @@
       medsurg: { ar: "Med-Surg (طبّي-جراحي)", fr: "M\u00e9dico-chirurgical (Med-Surg)", page: "medsurg.html", e: "🏥", subs: ["cardio", "neuro", "henderson", "medsurg"] }
     },
     list: [
+    { s: "prev", t: "prev", l: "p1", n: "تعريف الطب الوقائي وأهدافه، مستويات الوقاية، وخدمات الرعاية الصحية", href: "preventive.html#p1", added: "2026-11-16" },
+    { s: "prev", t: "prev", l: "p2", n: "الأمراض المنقولة جنسياً البكتيرية والطفيلية والفطرية", href: "preventive.html#p2", added: "2026-11-16" },
+    { s: "prev", t: "prev", l: "p3", n: "الأمراض المنقولة جنسياً الفيروسية", href: "preventive.html#p3", added: "2026-11-16" },
     { s: "cardio", t: "heart", n: "القلب: التشريح", href: "cardio.html#heart" },
     { s: "cardio", t: "infarctus", n: "Infarctus (جلطة قلبية)", href: "cardio.html#infarctus" },
     { s: "cardio", t: "angor", n: "Angor (ذبحة)", href: "cardio.html#angor" },
@@ -197,7 +201,7 @@
      Saturday = community health, 💊 pharma, gerontology, psych, ✅ quality. Only the lessons Abdullah pins as «📌 هالأسبوع»
      on admin.html count (Firestore config/weekLessons {subj:{s:[lesson keys]}}, public read, admin write — rules v11); a subject
      with nothing pinned gives no lesson goal. How they are spread: the 🗓️ study windows below. */
-  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6 };   // Oct 30: + 🏥 medsurg (Fri), 👴 geri + 🏘️ comm (Sat)       // Thu 4 · Fri 5 · Sat 6
+  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6, prev: 6 };   // Oct 30: + 🏥 medsurg (Fri), 👴 geri + 🏘️ comm (Sat)       // Thu 4 · Fri 5 · Sat 6
   var DAYN = { 4: ["الخميس", "jeudi"], 5: ["الجمعة", "vendredi"], 6: ["السبت", "samedi"] }, WK = "nursin_weekles_v1";
   function dow(day) { return new Date(Date.parse(day + "T12:00:00Z")).getUTCDay(); }
   function cleanAsg(a) {                                      // {s:[keys]} → only known subjects + real lesson keys

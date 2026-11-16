@@ -20,7 +20,7 @@
      with a 5th value need an account: signed out they show 🔒 (as the home tiles did). */
   var G = [
     { k: "home", e: "🏠", n: "الرئيسية", href: "index.html", pages: ["index.html"] },
-    { k: "learn", e: "📚", n: "المواد", pages: ["medsurg.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "mindmap.html", "3d.html", "hifzi.html", "notes.html", "highlights.html", "tutor.html"], items: [
+    { k: "learn", e: "📚", n: "المواد", pages: ["medsurg.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "preventive.html", "mindmap.html", "3d.html", "hifzi.html", "notes.html", "highlights.html", "tutor.html"], items: [
       ["#search", "🔎", "دوّر على درس", "اكتب أي كلمة بالعربي أو بالفرنسي"],
       ["medsurg.html", "🏥", "Med-Surg (طبّي-جراحي)", "القلب · الأعصاب · Henderson · 💉 التسريب الوريدي"],
       ["cardio.html", "❤️", "القلب", "↳ Med-Surg · 12 درس: الجلطة، ECG، القصور، الصدمة"],
@@ -33,6 +33,7 @@
       ["rea.html", "🚑", "الإنعاش", "غازات الدم، المحاليل الوريدية، الصدمات"],
       ["geri.html", "👴", "الشيخوخة (Gériatrie)", "10 دروس: تقييم المسن، السقوط، السلس، قرحة الفراش، الأدوية"],
       ["community.html", "🏘️", "صحة المجتمع", "8 دروس: الرعاية الأولية، الوقاية، الأوبئة، السرطان، اللقاحات"],
+      ["preventive.html", "🛡️", "الصحة الوقائية (Santé préventive)", "3 دروس: الطب الوقائي والأمراض المنقولة جنسياً"],
       ["mindmap.html", "🗺️", "الخرائط الذهنية", "خريطة لكل درس: المادة ← الدرس ← فروعو"],
       ["3d.html", "🧊", "المجسّمات 3D + الدورة الدموية", "قلب، دماغ، عمود قطني، مسار الدم"],
       ["hifzi.html", "🗺️", "حفظي", "الحفظ، نقاط ضعفك والأخطاء الشائعة"],
@@ -58,7 +59,7 @@
       ["chat.html", "💬", "المحادثات", "رسائل لحالك أو بمجموعة", 1]] },
     { k: "me", e: "👤", n: "أنا", href: "me.html", pages: ["me.html"] }
   ];
-  var LESSON = { "cardio.html": "❤️ القلب", "neuro.html": "🧠 الأعصاب", "henderson.html": "📋 Henderson", "law.html": "⚖️ القانون", "mgmt.html": "🏢 الإدارة", "quality.html": "✅ الجودة والاعتماد", "pharma.html": "💊 الأدوية", "rea.html": "🚑 الإنعاش", "geri.html": "👴 الشيخوخة", "community.html": "🏘️ صحة المجتمع", "medsurg.html": "🏥 Med-Surg", "3d.html": "🧊 المجسّمات 3D" };
+  var LESSON = { "cardio.html": "❤️ القلب", "neuro.html": "🧠 الأعصاب", "henderson.html": "📋 Henderson", "law.html": "⚖️ القانون", "mgmt.html": "🏢 الإدارة", "quality.html": "✅ الجودة والاعتماد", "pharma.html": "💊 الأدوية", "rea.html": "🚑 الإنعاش", "geri.html": "👴 الشيخوخة", "community.html": "🏘️ صحة المجتمع", "preventive.html": "🛡️ الصحة الوقائية", "medsurg.html": "🏥 Med-Surg", "3d.html": "🧊 المجسّمات 3D" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -219,7 +220,7 @@
   }
 
   /* ---------------- 3) 👋 welcome card ---------------- */
-  var OB_PAGES = ["index.html", "hifzi.html", "me.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "medsurg.html", "3d.html", "quiz.html", "exams.html", "live.html", "classes.html", "tutor.html", "games.html"];
+  var OB_PAGES = ["index.html", "hifzi.html", "me.html", "cardio.html", "neuro.html", "henderson.html", "law.html", "mgmt.html", "quality.html", "pharma.html", "rea.html", "geri.html", "community.html", "preventive.html", "medsurg.html", "3d.html", "quiz.html", "exams.html", "live.html", "classes.html", "tutor.html", "games.html"];
   var GSVG = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
   var card = null;
   function signedIn() { var A = w.NursinFB; if (A && A.user !== undefined && w.__nursinAuthSeen) return !!A.user; return !!(w.Nursin && w.Nursin.me); }

@@ -40,6 +40,7 @@
     { k: "rea", p: "rea.html", e: "🚑", ar: "الإنعاش", fr: "Réa", s: ["rea"], g: "linear-gradient(160deg,#f87171,#991b1b)" },
     { k: "geri", p: "geri.html", e: "👴", ar: "الشيخوخة", fr: "Gériatrie", s: ["geri"], g: "linear-gradient(160deg,#a3e635,#3f6212)" },
     { k: "comm", p: "community.html", e: "🏘️", ar: "صحة المجتمع", fr: "Santé comm.", s: ["comm"], g: "linear-gradient(160deg,#38bdf8,#075985)" },
+    { k: "prev", p: "preventive.html", e: "🛡️", ar: "الصحة الوقائية", fr: "Santé préventive", s: ["prev"], g: "linear-gradient(160deg,#14b8a6,#115e59)" },
     { k: "law", p: "law.html", e: "⚖️", ar: "القانون", fr: "Législation", s: ["law"], g: "linear-gradient(160deg,#c4b5fd,#5b21b6)" },
     { k: "mgmt", p: "mgmt.html", e: "🏢", ar: "الإدارة", fr: "Management", s: ["mgmt"], g: "linear-gradient(160deg,#fdba74,#c2410c)" },
     { k: "quality", p: "quality.html", e: "✅", ar: "الجودة", fr: "Qualité", s: ["quality"], g: "linear-gradient(160deg,#6ee7b7,#047857)" },
@@ -65,7 +66,7 @@
      Kept in localStorage nursin_path_v1 {v, d, at, steps, done:{key:ts}, vis:{key:ts}, ans:{qid:pick}, cls}; signed in, a copy rides
      on the student's own profile users/{uid}.dayPath (the published rules already let the owner merge a field there), so the phone
      and the laptop share one path for the day. HomePath.build is pure (tests). */
-  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6 };   // = assets/lessons.js
+  var CLASSDAY = { law: 4, mgmt: 4, rea: 4, cardio: 5, neuro: 5, henderson: 5, medsurg: 5, pharma: 6, quality: 6, geri: 6, comm: 6, prev: 6 };   // = assets/lessons.js
   var BACK = 14 * 60 + 30, MAXS = 7, MINS = 5;                     // back from the institute 2:30 PM (Beirut) · 5–7 steps
   // 29f (Abdullah, Nov 4 2026 12:15 PM «انت دمجن مع بعضن»): ONE list — the day's tasks first (📖 درس اليوم, 🏫 the class lesson, 🔁 the
   // pinned reviews, 📌 homework, ⭐ exams, 🎯, ⚔️, 🏁), then the rest of the path (🧑‍🏫 Osman, 💪, 🎮…); more than 7 → «+N كمان» (p.more)
