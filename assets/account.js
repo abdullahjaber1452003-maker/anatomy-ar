@@ -185,7 +185,7 @@
   function readMe(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
   N.me=readMe();
   N.queue=N.queue||[];
-  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||'',weekKey:me.weekKey||'',weekPoints:me.weekPoints|0}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
+  N.setMe=function(me){N.me=me;try{if(me)localStorage.setItem(KEY,JSON.stringify({uid:me.uid||(N.me&&N.me.uid)||'',name:me.name,photo:me.photo||'',points:me.points|0,powerups:me.powerups|0,puDay:me.puDay||'',streak:me.streak|0,sDay:me.sDay||'',weekKey:me.weekKey||'',weekPoints:me.weekPoints|0}));else localStorage.removeItem(KEY);}catch(e){}N.badge();try{document.dispatchEvent(new CustomEvent('nursin:me'));}catch(e){}};
   N.avatar=function(photo,name,cls){return photo?'<img class="'+(cls||'av')+'" src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" loading="lazy">':'<span class="'+(cls||'av')+' avx" aria-hidden="true">'+esc(Array.from(name||'?')[0])+'</span>';};
   // 🧑‍⚕️ Oct 31 2026: the picture this student chose on this device (assets/home.js picker): a cartoon avatar (assets/avatars/a01–a12)
   // or his own photo (a small data URL); else his Google photo. Used by the header badge, 👤 أنا and the home page.

@@ -350,7 +350,7 @@ async function openClass(el, cid) {
   C.mine = results.find(r => r.uid === me && r.wk === wk) || null;
   // keep my name/level fresh on the member list
   const pb = profileBits(), m0 = members.find(x => x.uid === me);
-  if (m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
+  if (A.profile && !A.profile._offline && m0 && (m0.level !== pb.level || m0.name !== pb.name || m0.photo !== pb.photo)) { F.updateDoc(F.doc(A.db, "classes", cid, "members", me), pb).catch(() => {}); Object.assign(m0, pb); }
   el.innerHTML = '<nav class="small"><a href="classes.html">← صفوفي</a></nav>' +
     '<section class="qcard chead"><h2>🏫 <bdi>' + esc(cls.name) + '</bdi></h2><p class="small">' + members.length + (members.length === 1 ? ' طالب' : ' طلاب') + ' · صاحب الصف: <bdi>' + esc(N.cleanName(ownerNow(members, cls))) + '</bdi></p><div id="ccode"></div></section>' +
     '<section class="qcard duel" id="cduel"><h2>⚔️ تحدي اليوم</h2><p class="small">⏳ …</p></section>' +

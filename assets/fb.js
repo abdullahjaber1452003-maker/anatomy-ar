@@ -73,18 +73,22 @@ async function ensureProfile(u) {
   const snap = await getDoc(ref);
   const d = snap.exists() ? snap.data() : {};
   const code = d.friendCode || await claimCode(u.uid);
-  const points = N.addPoints(d.points || 0, 0);
+  const localPts = (N.me && N.me.uid === u.uid && (N.me.points | 0) > 0) ? (N.me.points | 0) : 0;
+  const rawPts = snap.exists() && d.points != null ? d.points : localPts;
+  const points = N.addPoints(rawPts || 0, 0);
   // 🧑‍⚕️ Oct 31 2026: a cartoon avatar chosen on the home page (users/{uid}.av = "a01"…"a12") is the photo friends / ranking / classes see
   const av = /^a(0[1-9]|1[0-2])$/.test(d.av || "") ? d.av : "";
   // ✏️ Oct 31 2026: the name he chose (users/{uid}.nick, assets/name.js) is THE name everywhere; "" / none = his Google name
   const NM = window.NursinName, pk = NM ? NM.pick(d, u.uid) : { nick: typeof d.nick === "string" && d.nick.length <= 20 ? d.nick : "", write: false };
-  const prof = { name: pk.nick ? pk.nick : N.cleanName(u.displayName), photo: av ? "https://nursin.store/assets/avatars/" + av + ".webp" : String(u.photoURL || "").slice(0, 500), points, level: N.level(points), friendCode: code };
-  if (!snap.exists() || pk.write || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || d.level !== prof.level || d.points !== points)
-    await setDoc(ref, { ...prof, ...(pk.write ? { nick: pk.nick } : {}), updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
+  const level = N.level(points);
+  const prof = { name: pk.nick ? pk.nick : N.cleanName(u.displayName), photo: av ? "https://nursin.store/assets/avatars/" + av + ".webp" : String(u.photoURL || "").slice(0, 500), friendCode: code };
+  const writePts = !snap.exists() || d.points == null || d.level !== level;
+  if (!snap.exists() || pk.write || d.name !== prof.name || d.photo !== prof.photo || d.friendCode !== code || writePts)
+    await setDoc(ref, { ...prof, ...(writePts ? { points, level } : {}), ...(pk.write ? { nick: pk.nick } : {}), updatedAt: serverTimestamp(), ...(snap.exists() ? {} : { createdAt: serverTimestamp() }) }, { merge: true });
   if (pk.write && NM) { const l = NM.local(); if (l && l.n === pk.nick) try { localStorage.setItem(NM.KEY, JSON.stringify({ ...l, uid: u.uid, p: 0 })); } catch (e) {} }
   if (!snap.exists() || LOGIN_PING === "all") pingAdmin(u, !snap.exists());
   else catchupPing(u, d);
-  profile = { uid: u.uid, ...prof, nick: pk.nick || "", av: typeof d.av === "string" ? d.av : "", powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
+  profile = { uid: u.uid, ...prof, points, level, nick: pk.nick || "", av: typeof d.av === "string" ? d.av : "", powerups: d.powerups | 0, puDay: d.puDay || "", monthKey: d.monthKey || "", monthPoints: d.monthPoints | 0, weekKey: d.weekKey || "", weekPoints: d.weekPoints | 0, ...actFields(d) };
   N.setMe(profile);
 }
 
@@ -579,7 +583,7 @@ onAuthStateChanged(auth, async u => {
   } catch (e) {
     console.warn("nursin: profile", e && e.code);
     const ln = window.NursinName && window.NursinName.local();   // ✏️ offline: the name he chose on this device for this account
-    profile = { uid: u.uid, name: ln && ln.uid === u.uid && window.NursinName.validate(ln.n).ok ? ln.n : N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "" };
+    profile = { uid: u.uid, name: ln && ln.uid === u.uid && window.NursinName.validate(ln.n).ok ? ln.n : N.cleanName(u.displayName), photo: u.photoURL || "", points: (N.me && N.me.points) | 0, friendCode: "", _offline: true };
     const box = root || document.getElementById("chat-app") || document.getElementById("live-app") || document.getElementById("exams-app") || document.getElementById("classes-app");
     if (box) { box.innerHTML = '<div class="qcard"><p>⚠️ ما قدرنا نجيب حسابك هلّق. تأكّد من الإنترنت وجرّب بعد شوي.</p><button class="btn" id="fout" type="button">تسجيل الخروج</button></div>'; document.getElementById("fout").addEventListener("click", () => signOut(auth)); }
     ready = true; return;
