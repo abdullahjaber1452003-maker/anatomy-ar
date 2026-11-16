@@ -12,6 +12,34 @@ self.addEventListener("push", e => {
   }));
 });
 
+let brkT = 0, brkDone = null;
+self.addEventListener("message", e => {
+  const m = e.data;
+  if (!m || typeof m !== "object") return;
+  if (m.type === "nursin-break-cancel") {
+    clearTimeout(brkT); brkT = 0;
+    if (brkDone) { brkDone(); brkDone = null; }
+    e.waitUntil(self.registration.getNotifications({ tag: "nursin-break" }).then(ns => ns.forEach(n => n.close())).catch(() => {}));
+    return;
+  }
+  if (m.type === "nursin-break" && m.end) {
+    clearTimeout(brkT);
+    if (brkDone) { brkDone(); brkDone = null; }
+    const ms = Math.max(1000, Math.min(10 * 60e3, (+m.end || 0) - Date.now()));
+    e.waitUntil(new Promise(res => {
+      brkDone = res;
+      brkT = setTimeout(() => {
+        brkT = 0; brkDone = null;
+        self.registration.showNotification(String(m.title || "⏰ خلص البريك! يلا فوت ارجع ادرس 💪"), {
+          body: String(m.body || "كمّل الخطوة الجاية بمسار اليوم على nursin"),
+          icon: "/assets/icon-192.png", badge: "/assets/badge-96.png",
+          tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" }
+        }).catch(() => {}).finally(res);
+      }, ms);
+    }));
+  }
+});
+
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   const dt = e.notification.data || {}, c = dt.c;

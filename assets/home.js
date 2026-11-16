@@ -942,17 +942,32 @@
     }
     return "";
   }
+  function brkSW(msg) {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(function (reg) {
+          var sw = (reg && reg.active) || navigator.serviceWorker.controller;
+          if (sw && sw.postMessage) sw.postMessage(msg);
+          if (msg.type === "nursin-break" && w.TimestampTrigger && reg && reg.showNotification) {
+            reg.showNotification(msg.title, { body: msg.body, tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" }, showTrigger: new w.TimestampTrigger(msg.end) }).catch(function () {});
+          }
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
   function brkAct(act) {
     var st = brkGet();
-    if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); draw(); return; }
+    if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); draw(); return; }
     if (act === "go") {
-      st.offer = false; st.end = 0; st.notified = false; brkSet(st); draw();
+      st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); draw();
       var q = root && root.querySelector("[data-hzquick]"); if (q) q.click();
       return;
     }
-    var mins = (+act || 5);
+    var mins = (+act || 5), ttl = T("⏰ خلص البريك! يلا فوت ارجع ادرس 💪", "⏰ Pause terminée ! Reviens étudier 💪"), body = T("خلصت الـ " + mins + " دقايق راحة — كمّل الخطوة الجاية بمسار اليوم على nursin", "Tes " + mins + " min de pause sont finies — continue ton parcours sur nursin");
     try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().catch(function () {}); } catch (e) {}
-    st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st); draw();
+    st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st);
+    brkSW({ type: "nursin-break", end: st.end, mins: mins, title: ttl, body: body });
+    draw();
   }
   function brkTick() {
     var st = brkGet(); if (!st.end) return;
