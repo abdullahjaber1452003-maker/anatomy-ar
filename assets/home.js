@@ -942,6 +942,17 @@
     }
     return "";
   }
+  var WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev";
+  function brkPush(payload) {
+    try {
+      var A = fbA(); if (!A || !A.user || !A.user.getIdToken) return;
+      A.user.getIdToken().then(function (t) {
+        var data = { t: t }, k;
+        for (k in payload) if (Object.prototype.hasOwnProperty.call(payload, k)) data[k] = payload[k];
+        return fetch(WORKER + "/break", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      }).catch(function () {});
+    } catch (e) {}
+  }
   function brkSW(msg) {
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
@@ -957,9 +968,9 @@
   }
   function brkAct(act) {
     var st = brkGet();
-    if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); draw(); return; }
+    if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); brkPush({ cancel: true }); draw(); return; }
     if (act === "go") {
-      st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); draw();
+      st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); brkPush({ cancel: true }); draw();
       var q = root && root.querySelector("[data-hzquick]"); if (q) q.click();
       return;
     }
@@ -967,6 +978,7 @@
     try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().catch(function () {}); } catch (e) {}
     st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st);
     brkSW({ type: "nursin-break", end: st.end, mins: mins, title: ttl, body: body });
+    brkPush({ end: st.end, mins: mins, title: ttl, body: body, url: "/#path" });
     draw();
   }
   function brkTick() {
