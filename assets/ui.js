@@ -27,7 +27,7 @@
     "index.html": ["🏠", "الرئيسية", "Accueil", 0], "reels.html": ["🎬", "Reels", "Reels", 1], "medsurg.html": ["🏥", "Med-Surg", "Med-Surg", 1], "cardio.html": ["🫀", "القلب", "Cardiologie", 1, "medsurg.html"],
     "neuro.html": ["🧠", "الأعصاب", "Neurologie", 1, "medsurg.html"], "henderson.html": ["🧩", "Henderson", "Henderson", 1, "medsurg.html"], "rea.html": ["🚑", "الإنعاش", "Réanimation", 1],
     "pharma.html": ["💊", "الأدوية", "Pharmacologie", 1], "law.html": ["⚖️", "القانون", "Législation", 1], "mgmt.html": ["🏢", "الإدارة", "Management", 1],
-    "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
+    "quality.html": ["✅", "الجودة", "Qualité", 1], "geri.html": ["👴", "الشيخوخة", "Gériatrie", 1], "preventive.html": ["🛡️", "الصحة الوقائية", "Santé préventive", 1], "community.html": ["🏘️", "صحة المجتمع", "Santé communautaire", 1],
     "3d.html": ["🧊", "التشريح 3D", "Anatomie 3D", 1], "mindmap.html": ["🗺️", "الخرائط الذهنية", "Cartes mentales", 1], "discuss.html": ["💬", "نقاش", "Discussion", 1], "learn.html": ["📖", "وضع التعلّم", "Mode apprentissage", 1], "tutor.html": ["👨‍🏫", "الأستاذ عثمان", "Professeur Osman", 2], "hifzi.html": ["🗺️", "حفظي", "Ma mémoire", 3],
     "quiz.html": ["⚡", "الكويز", "Quiz", 4], "exams.html": ["📅", "الامتحانات", "Examens", 4], "midterm.html": ["🎯", "امتحان الفصل", "Examen de mi-semestre", 4], "games.html": ["🎮", "الألعاب", "Jeux", 4], "live.html": ["🔴", "تحدّي لايف", "Défi live", 4],
     "friends.html": ["👥", "أصحابي", "Amis", 4], "chat.html": ["💬", "المحادثات", "Messages", 4], "classes.html": ["🏫", "صفّي", "Ma classe", 4], "notes.html": ["📒", "ملاحظاتي", "Mes notes", 4], "highlights.html": ["🖍️", "تعليماتي", "Mes surlignages", 4], "suggest.html": ["🛠️", "اقتراحاتك", "Tes idées", 4], "homework.html": ["📌", "الوظائف", "Devoirs", 4],
@@ -47,7 +47,7 @@
       ["medsurg.html", "🏥", "Med-Surg", "Med-Surg"], ["cardio.html", "🫀", "القلب", "Cardio"], ["neuro.html", "🧠", "الأعصاب", "Neuro"],
       ["henderson.html", "🧩", "Henderson", "Henderson"], ["medsurg.html#iv", "💉", "التسريب", "Perfusion"], ["rea.html", "🚑", "الإنعاش", "Réa"],
       ["pharma.html", "💊", "الأدوية", "Pharmaco"], ["law.html", "⚖️", "القانون", "Législation"], ["mgmt.html", "🏢", "الإدارة", "Management"],
-      ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."]] },
+      ["quality.html", "✅", "الجودة", "Qualité"], ["geri.html", "👴", "الشيخوخة", "Gériatrie"], ["preventive.html", "🛡️", "الصحة الوقائية", "Préventive"], ["community.html", "🏘️", "صحة المجتمع", "Santé comm."]] },
     { k: "study", e: "🧠", ar: "أدوات التعلّم", fr: "Outils d'étude", items: [
       ["tutor.html", "👨‍🏫", "الأستاذ عثمان", "Prof. Osman"], ["reels.html", "🎬", "Reels", "Reels"], ["mindmap.html", "🗺️", "الخرائط الذهنية", "Cartes mentales"], ["discuss.html", "💬", "نقاش", "Discussion"], ["learn.html", "📖", "وضع التعلّم", "Mode apprentissage"], ["3d.html", "🧊", "التشريح 3D", "Anatomie 3D"], ["quiz.html", "⚡", "كويز", "Quiz"],
       ["midterm.html", "🎯", "امتحانات الفصل 14–28/11", "Examens 14–28/11"], ["exams.html", "📅", "الامتحانات", "Examens"], ["homework.html", "📌", "الوظائف", "Devoirs", "hw"],

@@ -54,7 +54,7 @@
   /* ---------------- where am I ---------------- */
   function emb() { try { if (!w.location) return false; return /[?&]embed=1(&|$)/.test(w.location.search) || (w.name === "nzsheet" && w.parent && w.parent !== w) || String(d.documentElement.className).indexOf("nzemb") > -1; } catch (e) { return false; } }
   function page() { try { var p = (w.location.pathname.split("/").pop() || "index.html").toLowerCase(); return p === "" ? "index.html" : p; } catch (e) { return "index.html"; } }
-  var LPAGES = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "mgmt.html": 1, "quality.html": 1, "pharma.html": 1, "rea.html": 1, "geri.html": 1, "community.html": 1, "medsurg.html": 1 };
+  var LPAGES = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "mgmt.html": 1, "quality.html": 1, "pharma.html": 1, "rea.html": 1, "geri.html": 1, "preventive.html": 1, "community.html": 1, "medsurg.html": 1 };
 
   /* ---------------- the tours (Lebanese Arabic, short) ---------------- */
   var TOURS = {

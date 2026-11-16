@@ -160,7 +160,7 @@
     P.forEach(function (x) { if (lid(x) !== id || x.href.split("#")[0] !== page) return; var a = x.href.split("#")[1], e = a && d.getElementById(a); if (e) el = e; });
     if (!el) return null; return el.tagName === "DETAILS" ? (el.querySelector(":scope > .tbody") || el) : el;
   }
-  var LPAGES = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "mgmt.html": 1, "quality.html": 1, "pharma.html": 1, "rea.html": 1, "geri.html": 1, "community.html": 1, "medsurg.html": 1 };
+  var LPAGES = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "mgmt.html": 1, "quality.html": 1, "pharma.html": 1, "rea.html": 1, "geri.html": 1, "preventive.html": 1, "community.html": 1, "medsurg.html": 1 };
   function mountTricks(final) {
     if (!w.TRICKS || !LPAGES[page]) return;
     var done = {};
@@ -193,7 +193,7 @@
     });
   }
   /* 🗺️ حفظي → «🧠 حِيَل الحفظ»: every trick, by مادة → درس */
-  var SUBJ = [["cardio", "🫀"], ["neuro", "🧠"], ["henderson", "🧩"], ["medsurg", "🏥"], ["rea", "🚑"], ["pharma", "💊"], ["geri", "👴"], ["comm", "🏘️"], ["law", "⚖️"], ["mgmt", "🏢"], ["quality", "✅"]];
+  var SUBJ = [["cardio", "🫀"], ["neuro", "🧠"], ["henderson", "🧩"], ["medsurg", "🏥"], ["rea", "🚑"], ["pharma", "💊"], ["geri", "👴"], ["prev", "🛡️"], ["comm", "🏘️"], ["law", "⚖️"], ["mgmt", "🏢"], ["quality", "✅"]];
   var tsel = "";
   function subjName(s) { var S = (w.NLESSONS && w.NLESSONS.subjects) || {}, x = S[s]; return x ? T(x.ar, x.fr) : s; }
   function trickPage() {

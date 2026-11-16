@@ -17,7 +17,7 @@
   var COLORS = [["y", "أصفر", "Jaune"], ["g", "أخضر", "Vert"], ["p", "زهر", "Rose"], ["b", "أزرق", "Bleu"], ["o", "برتقالي", "Orange"]];
   var CK = COLORS.map(function (c) { return c[0]; });
   var LPAGES = { "cardio.html": 1, "neuro.html": 1, "henderson.html": 1, "law.html": 1, "mgmt.html": 1, "quality.html": 1, "pharma.html": 1, "rea.html": 1,
-    "geri.html": 1, "community.html": 1, "medsurg.html": 1, "3d.html": 1 };
+    "geri.html": 1, "preventive.html": 1, "community.html": 1, "medsurg.html": 1, "3d.html": 1 };
   /* inside a lesson body, never these (buttons, the 📝 row, quiz links, the pill itself, third-party frames) */
   var EXCL = "button,input,select,textarea,script,style,noscript,svg,iframe,canvas,.nlrow,.nbtn,.hlpill,.lqz,.glk-card,[data-nohl],[contenteditable]";
   function FR() { return !!(w.Lang && w.Lang.fr); }
