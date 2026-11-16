@@ -636,10 +636,11 @@
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
     var line = all ? T("🎉 خلصت مسار اليوم! برافو عليك، بكرا منكمّل 💪", "🎉 Parcours du jour terminé ! Bravo, on continue demain 💪")
       : T("خلصت " + dn + " من " + tot, dn + " sur " + tot + " terminé(s)") + (near ? T(" • قرّبت تخلص 🔥", " • Presque fini 🔥") : dn === 0 ? T(" • يلا نبلّش 💪", " • On commence 💪") : T(" • كمّل هيك 👏", " • Continue comme ça 👏"));
-    var qbtn = !all && cur >= 0 ? '<button type="button" class="btn pri" data-hzquick style="width:100%;margin:8px 0 6px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + "</button>" : "";
+    var brkH = brkHtml(dn, all, cur);
+    var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:8px;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:12px 14px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
-      qbtn +
+      qbtn + brkH +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
@@ -769,6 +770,7 @@
   function stepClick(e) {
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
+    if ((b = t.closest("[data-hzqbrk]"))) { brkAct(b.getAttribute("data-hzqbrk")); return; }
     if ((b = t.closest("[data-hzquick]"))) {
       var nowEl = root && root.querySelector(".hzst.now a[data-step], .hzst.now button[data-step], .hzst.now .go");
       if (nowEl) { nowEl.click(); return; }
@@ -885,10 +887,84 @@
     });
     w.addEventListener("keydown", function (e) { if (sh && (e.key === "Escape" || e.key === "Esc")) shBack(); });
   }
+  /* ---------------- ☕ Smart Break Timer between study steps (5–6 min TikTok/rest + notification) ---------------- */
+  var QBK = "nursin_qbrk_v1";
+  function brkGet() { var o = lsGet(QBK), dk = today(); return o && o.d === dk ? o : { d: dk, seenDn: 0, offer: false, end: 0, mins: 5, notified: false }; }
+  function brkSet(o) { o.d = today(); lsSet(QBK, o); }
+  function brkFmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)), m = Math.floor(s / 60); s %= 60; return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s; }
+  function brkBeep() {
+    try { if (navigator.vibrate) navigator.vibrate([250, 120, 250, 120, 250]); } catch (e) {}
+    try {
+      var C = w.AudioContext || w.webkitAudioContext; if (!C) return; var c = new C();
+      [587, 880, 1046].forEach(function (f, i) { var o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + i * 0.22; o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.14, t0 + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 0.3); });
+      setTimeout(function () { try { c.close(); } catch (e) {} }, 1200);
+    } catch (e) {}
+  }
+  function brkNotify(mins) {
+    var ttl = T("⏰ خلص البريك! يلا فوت ارجع ادرس 💪", "⏰ Pause terminée ! Reviens étudier 💪");
+    var body = T("خلصت الـ " + (mins || 5) + " دقايق راحة — كمّل الخطوة الجاية بمسار اليوم على nursin", "Tes " + (mins || 5) + " min de pause sont finies — continue ton parcours sur nursin");
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(function (reg) { if (reg && reg.showNotification) reg.showNotification(ttl, { body: body, tag: "nursin-break", renotify: true }); }).catch(function () {});
+      }
+      if (w.Notification && Notification.permission === "granted") new Notification(ttl, { body: body, tag: "nursin-break" });
+    } catch (e) {}
+  }
+  function brkHtml(dn, all, cur) {
+    if (all || cur < 0) return "";
+    var st = brkGet(), ch = false;
+    if (dn > (st.seenDn | 0)) { st.seenDn = dn; if (!st.end) st.offer = true; ch = true; }
+    if (ch) brkSet(st);
+    var now = Date.now();
+    if (st.end && now < st.end) {
+      return '<div class="bx" id="hzqbrkc" style="margin:6px 0 8px;padding:12px 14px;border-radius:16px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.35)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
+        '<div><b>☕ ' + T("وقت البريك (تيك توك / راحة)", "Temps de pause") + ' — <span id="hzqbrk-tm" dir="ltr">' + brkFmt(st.end - now) + '</span></b>' +
+        '<small style="display:block;opacity:.85">' + T("اطلع خد راحتك، وبس يخلص الوقت بيوصلك إشعار ترجع عالدرس 🔔", "Détends-toi, une notif te rappellera quand reprendre 🔔") + '</small></div>' +
+        '<button type="button" class="btn sm" data-hzqbrk="stop">▶ ' + T("كمّل دراسة هلق", "Reprendre maintenant") + '</button></div></div>';
+    }
+    if (st.end && now >= st.end) {
+      if (!st.notified) { st.notified = true; brkSet(st); brkBeep(); brkNotify(st.mins); }
+      return '<div class="bx" id="hzqbrkc" style="margin:6px 0 8px;padding:12px 14px;border-radius:16px;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.45)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
+        '<div><b>⏰ ' + T("خلص البريك! يلا فوت ارجع ادرس 💪", "Pause terminée ! C'est reparti 💪") + '</b>' +
+        '<small style="display:block;opacity:.85">' + T("جاهز للخطوة الجاية بمسار اليوم", "Prêt(e) pour la prochaine étape") + '</small></div>' +
+        '<button type="button" class="btn sm pri" data-hzqbrk="go">▶ ' + T("ابدأ الخطوة الجاية", "Étape suivante") + '</button></div></div>';
+    }
+    if (st.offer) {
+      return '<div class="bx" id="hzqbrkc" style="margin:6px 0 8px;padding:12px 14px;border-radius:16px;background:rgba(56,189,248,.11);border:1px solid rgba(56,189,248,.32)">' +
+        '<b>☕ ' + T("برافو! خلّصت خطوة — خود بريك قبل اللي بعدها؟", "Bravo ! Étape terminée — petite pause ?") + '</b>' +
+        '<small style="display:block;margin:3px 0 8px;opacity:.85">' + T("افتح تيك توك، اشرب مي أو ارتاح ٥–٦ دقايق، وبيرنّلك إشعار ترجع تدرس 🔔", "Regarde TikTok ou repose-toi 5–6 min, une notif te rappellera 🔔") + '</small>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button type="button" class="btn sm pri" data-hzqbrk="5">▶️ ' + T("بريك ٥ دقايق", "Pause 5 min") + '</button>' +
+        '<button type="button" class="btn sm" data-hzqbrk="6">▶️ ' + T("٦ دقايق", "6 min") + '</button>' +
+        '<button type="button" class="btn sm" data-hzqbrk="skip">⏭️ ' + T("كمّل دغري", "Continuer") + '</button></div></div>';
+    }
+    return "";
+  }
+  function brkAct(act) {
+    var st = brkGet();
+    if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); draw(); return; }
+    if (act === "go") {
+      st.offer = false; st.end = 0; st.notified = false; brkSet(st); draw();
+      var q = root && root.querySelector("[data-hzquick]"); if (q) q.click();
+      return;
+    }
+    var mins = (+act || 5);
+    try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().catch(function () {}); } catch (e) {}
+    st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st); draw();
+  }
+  function brkTick() {
+    var st = brkGet(); if (!st.end) return;
+    var left = st.end - Date.now(), tm = d.getElementById("hzqbrk-tm");
+    if (left > 0) { if (tm) tm.textContent = brkFmt(left); return; }
+    if (!st.notified) { draw(); }
+  }
   function init() {
     root = d.getElementById("hz"); if (!root) return;
     d.body.classList.add("hzon");
     draw();
+    setInterval(brkTick, 1000);
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
     ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem"].forEach(function (ev) { d.addEventListener(ev, redraw); });
