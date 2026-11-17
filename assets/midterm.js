@@ -18,7 +18,9 @@
   var EXAMS = [
     { d: "2026-11-14", subs: ["prev", "rea"], ar: "وقائية + Réa", fr: "Prévention + Réa" },
     { d: "2026-11-16", subs: ["*"], ar: "الباقي: Law، Management، Med-Surg وغيرن", sh: "الباقي", fr: "le reste : Législation, Management, Med-Surg…", fsh: "le reste" },
+    { d: "2026-11-20", subs: ["cardio"], ar: "القلب + دراسة حالة", sh: "القلب + دراسة حالة", fr: "Cardio + Cas clinique", caseStudy: true },
     { d: "2026-11-21", subs: ["psych", "geri", "quality"], ar: "عقلية + Géria + Qualité", fr: "Psychiatrie + Gériatrie + Qualité" },
+    { d: "2026-11-25", subs: ["neuro"], ar: "الأعصاب", sh: "الأعصاب", fr: "Neurologie" },
     { d: "2026-11-28", subs: ["comm", "pharma"], ar: "صحة جماعية + Pharmaco", fr: "Santé communautaire + Pharmaco" }
   ];
   var XSUB = { prev: ["الرعاية الوقائية", "Soins préventifs", "🛡️"], psych: ["الصحة العقلية (عقلية)", "Santé mentale (psychiatrie)", "🧩"] };
@@ -30,6 +32,11 @@
   }
   function examAt(day) { for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d === day) return EXAMS[i]; return null; }
   function next(day) { day = day || today(); for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d >= day) return EXAMS[i]; return null; }   // today's exam counts until the day ends
+  function focus(day) {
+    day = day || today(); var E = next(day); if (!E) return null;
+    var left = dayDiff(day, E.d); if (left < 0 || left > 4) return null;
+    return { d: E.d, subs: E.subs.slice(), ar: exLabel(E, 1), fr: E.fr || E.ar, left: left, caseStudy: !!E.caseStudy };
+  }
   function exLabel(E, short) { return E ? T(short && E.sh || E.ar, short && E.fsh || E.fr) : ""; }
   function dmOf(day) { var p = String(day).split("-"); return (+p[2]) + "/" + (+p[1]); }
   var MINQ = 20, MAXQ = 30;
@@ -437,7 +444,7 @@
     return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/cases-data.js?v=" + V; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); setTimeout(res, 6000); });
   }
 
-  w.NursinMid = { V: V, hub: hub, examsHtml: examsHtml, cdHtml: cdHtml, EXAM: EXAM, EXAMS: EXAMS, FIRST: FIRST, LAST: LAST, XSUB: XSUB, examOf: examOf, examAt: examAt, next: next, daysTo: daysTo, exLabel: exLabel, dmOf: dmOf, isEve: isEve, tsOf: tsOf, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
+  w.NursinMid = { V: V, hub: hub, examsHtml: examsHtml, cdHtml: cdHtml, EXAM: EXAM, EXAMS: EXAMS, FIRST: FIRST, LAST: LAST, XSUB: XSUB, examOf: examOf, examAt: examAt, next: next, focus: focus, daysTo: daysTo, exLabel: exLabel, dmOf: dmOf, isEve: isEve, tsOf: tsOf, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
     subjects: subjList, lessonsOf: lessonsOf, subjName: subjName, size: size, sizeOf: sizeOf, pools: pools, build: build, seeded: seeded, result: result, weakOf: weakOf,
     weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls,
     merge: merge, pull: pull, load: load, loadCases: loadCases, EMO: EMO, KEY: K };

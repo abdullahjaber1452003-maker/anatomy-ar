@@ -612,10 +612,48 @@
   // right under the hospital card. What did not fit in 7 waits behind «+N كمان» (p.more) — nothing from either list is lost.
   // 30f (Abdullah, Nov 7 2026 12:46 PM «هيدي +6 كمان ما بدي ياها، خليهم دغري يكونو موجودين»): no «+N كمان» any more — every step
   // of the day (p.steps + p.more) is shown at once, in the path's own order (↩️ carried first, then ORDER; ties keep their place).
+  function midFocus() {
+    try {
+      var M = w.NursinMid; if (!M || !M.focus) return null;
+      var off = lsGet("nursin_exfocus_off_v1"); if (off && off.d === today()) return null;
+      return M.focus(today());
+    } catch (e) { return null; }
+  }
+  function midFocusRaw() {
+    try { var M = w.NursinMid; return M && M.focus ? M.focus(today()) : null; } catch (e) { return null; }
+  }
+  function focusCaseStep(fx) {
+    var sub = fx && fx.subs && fx.subs[0] ? fx.subs[0] : "cardio";
+    var ids = (w.Retain && w.Retain.CASE_IDS) || [], cid = "";
+    for (var i = 0; i < ids.length; i++) if (String(ids[i]).indexOf(sub + ":") === 0) { cid = ids[i]; break; }
+    if (!cid && sub === "cardio") cid = "cardio:infarctus";
+    if (!cid) return null;
+    var pg = sub === "cardio" ? "cardio.html" : sub === "neuro" ? "neuro.html" : "index.html";
+    return { k: "case", e: "🩺", id: cid, n: T("دراسة حالة: " + (sub === "cardio" ? "القلب" : sub), "Cas clinique : " + sub), href: pg + "?case=" + encodeURIComponent(cid) };
+  }
   function allSteps(p) {
     var a = (p.steps || []).concat(p.more || []).filter(function (s) { return s && s.k; }), i;
+    var fx = midFocus();
+    if (fx && fx.subs && fx.subs.length && fx.subs[0] !== "*") {
+      if (fx.caseStudy && !a.some(function (s) { return s.k === "case" && s.id && fx.subs.indexOf(String(s.id).split(":")[0]) > -1; })) {
+        var cs = focusCaseStep(fx); if (cs) a.unshift(cs);
+      }
+      a = a.filter(function (s) {
+        if (s.k === "game" || s.k === "xtra" || s.k === "hl" || s.k === "pomo" || s.k === "again") return false;
+        if (s.k === "use" && s.f !== "cases" && s.f !== "quiz" && s.f !== "cards") return false;
+        if (/^(cvn|cvw|weak|fade|quiz|case)$/.test(s.k) && s.id && fx.subs.indexOf(String(s.id).split(":")[0]) < 0) return false;
+        return true;
+      });
+    }
+    function fxRank(s) {
+      if (!fx) return rank(s);
+      if (s.k === "mid") return -0.3;
+      if (s.k === "case" && fx.caseStudy) return -0.25;
+      if (s.id && fx.subs.indexOf(String(s.id).split(":")[0]) > -1) return -0.2;
+      return rank(s);
+    }
     var ix = a.map(function (s, j) { return { s: s, j: j }; });
-    ix.sort(function (x, y) { return rank(x.s) - rank(y.s) || x.j - y.j; });
+    ix.sort(function (x, y) { return fxRank(x.s) - fxRank(y.s) || x.j - y.j; });
     for (i = 0; i < ix.length; i++) a[i] = ix[i].s;
     return a;
   }
@@ -636,11 +674,22 @@
     try { var sa = lsGet("nursin_stact_v1"); mn = sa && sa.d === today() ? Math.floor(Math.max(sa.s | 0, sa.r | 0) / 60) : 0; } catch (e) {}
     var line = all ? T("🎉 خلصت مسار اليوم! برافو عليك، بكرا منكمّل 💪", "🎉 Parcours du jour terminé ! Bravo, on continue demain 💪")
       : T("خلصت " + dn + " من " + tot, dn + " sur " + tot + " terminé(s)") + (near ? T(" • قرّبت تخلص 🔥", " • Presque fini 🔥") : dn === 0 ? T(" • يلا نبلّش 💪", " • On commence 💪") : T(" • كمّل هيك 👏", " • Continue comme ça 👏"));
+    var fx = midFocus(), fxRaw = fx || midFocusRaw(), fxH = "";
+    if (fx) {
+      var dlTxt = fx.left === 0 ? T("اليوم!", "Aujourd'hui !") : fx.left === 1 ? T("بكرا!", "Demain !") : T("باقي " + fx.left + " أيام", "J-" + fx.left);
+      var fcs = fx.caseStudy ? focusCaseStep(fx) : null;
+      fxH = '<div class="bx" style="margin:6px 0 8px;padding:10px 13px;border-radius:14px;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.38);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
+        '<div><b>🎯 ' + T("وضع التركيز: امتحان ", "Mode examen : ") + esc(fx.ar) + " (" + dlTxt + ')</b><small style="display:block;opacity:.85">' + T("المسار مركّز على الامتحان ومخفّف الخطوات التانية", "Parcours centré sur l'examen") + '</small></div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (fcs ? '<a class="btn sm pri" href="' + esc(fcs.href) + '">' + T("🩺 دراسة حالة قلب", "🩺 Cas clinique") + '</a>' : "") +
+        '<button type="button" class="btn sm" data-hzexfocus="off">' + T("إظهار الكل", "Tout voir") + "</button></div></div>";
+    } else if (fxRaw) {
+      fxH = '<div style="margin:4px 0 6px;text-align:start"><button type="button" class="btn sm" data-hzexfocus="on">🎯 ' + T("تفعيل وضع التركيز للامتحان", "Activer le mode examen") + "</button></div>";
+    }
     var brkH = brkHtml(dn, all, cur);
     var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:8px;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:12px 14px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
-      qbtn + brkH +
+      fxH + qbtn + brkH +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
@@ -770,6 +819,7 @@
   function stepClick(e) {
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
+    if ((b = t.closest("[data-hzexfocus]"))) { lsSet("nursin_exfocus_off_v1", b.getAttribute("data-hzexfocus") === "off" ? { d: today() } : null); draw(); return; }
     if ((b = t.closest("[data-hzqbrk]"))) { brkAct(b.getAttribute("data-hzqbrk")); return; }
     if ((b = t.closest("[data-hzquick]"))) {
       var nowEl = root && root.querySelector(".hzst.now a[data-step], .hzst.now button[data-step], .hzst.now .go");
