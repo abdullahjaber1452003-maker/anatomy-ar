@@ -444,12 +444,12 @@
   function fbA() { var A = w.NursinFB; return A && A.user && A.fs && A.db ? A : null; }
   function push(p) {
     if (!fbA() || !p) return; clearTimeout(pushT);
-    pushT = setTimeout(function () { var A = fbA(); if (!A) return; try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { dayPath: { d: p.d, at: p.at, v: p.v, steps: p.steps, more: (p.more || []).slice(0, 12), done: p.done || {}, ans: p.ans || {}, cls: p.cls | 0 } }, { merge: true }).catch(function () {}); } catch (e) {} }, 2500);
+    pushT = setTimeout(function () { var A = fbA(); if (!A) return; try { A.fs.setDoc(A.fs.doc(A.db, "users", A.user.uid), { dayPath: { d: p.d, at: p.at, v: p.v, steps: p.steps, more: (p.more || []).slice(0, 12), done: p.done || {}, ans: p.ans || {}, cls: p.cls | 0, cv: p.cv | 0 } }, { merge: true }).catch(function () {}); } catch (e) {} }, 2500);
   }
   function merge(p, r) {                                 // pure (tests): local plan p + the account's copy r → the day's plan
     if (!r || typeof r !== "object" || r.d !== (p && p.d) || r.v !== V || !Array.isArray(r.steps) || !r.steps.length) return { p: p, ch: false };
     var ch = false, out = p;
-    if (!p || (+r.at || 0) < (+p.at || 0)) { out = { v: V, d: r.d, at: +r.at || Date.now(), steps: r.steps.slice(0, MAXS), more: Array.isArray(r.more) ? r.more.slice(0, 12) : (p && p.more) || [], done: {}, vis: (p && p.vis) || {}, ans: {}, cls: r.cls | 0 }; ch = true; var k; if (p) { for (k in p.done || {}) out.done[k] = p.done[k]; for (k in p.ans || {}) out.ans[k] = p.ans[k]; } }
+    if (!p || (+r.at || 0) < (+p.at || 0)) { out = { v: V, d: r.d, at: +r.at || Date.now(), steps: r.steps.slice(0, MAXS), more: Array.isArray(r.more) ? r.more.slice(0, 12) : (p && p.more) || [], done: {}, vis: (p && p.vis) || {}, ans: {}, cls: r.cls | 0, cv: r.cv | 0 }; ch = true; var k; if (p) { for (k in p.done || {}) out.done[k] = p.done[k]; for (k in p.ans || {}) out.ans[k] = p.ans[k]; } }
     var keys = {}; out.steps.concat(out.more || []).forEach(function (s) { keys[skey(s)] = 1; });
     var d2 = r.done || {}, a2 = r.ans || {}, j;
     out.done = out.done || {}; out.ans = out.ans || {};
@@ -631,6 +631,15 @@
     var pg = sub === "cardio" ? "cardio.html" : sub === "neuro" ? "neuro.html" : "index.html";
     return { k: "case", e: "🩺", id: cid, n: T("دراسة حالة: " + (sub === "cardio" ? "القلب" : sub), "Cas clinique : " + sub), href: pg + "?case=" + encodeURIComponent(cid) };
   }
+  function cramRead(l, rm) {
+    var LS = w.NursinLessons; rm = rm || (LS && LS.readMap ? LS.readMap() : {});
+    if (rm[l.id]) return true;
+    if (LS && LS.parts) {
+      var ps = LS.parts.filter(function (x) { return LS.base(x) === l.id; });
+      if (ps.length) return ps.every(function (x) { return LS.isRead(x, rm); });
+    }
+    return false;
+  }
   function allSteps(p) {
     var a = (p.steps || []).concat(p.more || []).filter(function (s) { return s && s.k; }), i;
     var fx = midFocus();
@@ -641,7 +650,11 @@
       a = a.filter(function (s) {
         if (s.k === "game" || s.k === "xtra" || s.k === "hl" || s.k === "pomo" || s.k === "again") return false;
         if (s.k === "use" && s.f !== "cases" && s.f !== "quiz" && s.f !== "cards") return false;
-        if (/^(cvn|cvw|weak|fade|quiz|case)$/.test(s.k) && s.id && fx.subs.indexOf(String(s.id).split(":")[0]) < 0) return false;
+        if (/^(cvn|cvw|weak|fade|quiz|case|today|cont|new|cls)$/.test(s.k) && s.id) {
+          var sp = String(s.id).split(":");
+          if (fx.subs.indexOf(sp[0]) < 0) return false;
+          if (fx.lessons && fx.lessons[sp[0]] && fx.lessons[sp[0]].indexOf(sp[1]) < 0) return false;
+        }
         return true;
       });
     }
@@ -678,10 +691,21 @@
     if (fx) {
       var dlTxt = fx.left === 0 ? T("اليوم!", "Aujourd'hui !") : fx.left === 1 ? T("بكرا!", "Demain !") : T("باقي " + fx.left + " أيام", "J-" + fx.left);
       var fcs = fx.caseStudy ? focusCaseStep(fx) : null;
+      var cramLs = (fx.cram && w.NursinMid && w.NursinMid.lessonsOf) ? w.NursinMid.lessonsOf("cram") : [];
+      var rm = w.NursinLessons && w.NursinLessons.readMap ? w.NursinLessons.readMap() : {};
+      var cramDn = cramLs.filter(function (l) { return cramRead(l, rm); }).length;
+      var cramListH = cramLs.length ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(245,158,11,.28);width:100%">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;flex-wrap:wrap"><small style="font-weight:700">' + T("📚 مرّ على كل الدروس فقرة فقرة للحفظ السريع:", "📚 Passe chaque leçon paragraphe par paragraphe :") + '</small><small style="font-weight:700">' + cramDn + '/' + cramLs.length + ' ✅</small></div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + cramLs.map(function (l) {
+          var ok = cramRead(l, rm);
+          return '<button type="button" class="btn sm" data-hzcramles="' + esc(l.href) + '" data-hzcramttl="' + esc(l.n) + '" style="text-align:start;max-width:100%;white-space:normal;line-height:1.3;padding:6px 10px;' + (ok ? 'opacity:.72;background:rgba(16,185,129,.16);border-color:rgba(16,185,129,.4)' : '') + '">' + (ok ? "✅ " : "📖 ") + esc(l.n) + "</button>";
+        }).join("") + "</div></div>" : "";
       fxH = '<div class="bx" style="margin:6px 0 8px;padding:10px 13px;border-radius:14px;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.38);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
         '<div><b>🎯 ' + T("وضع التركيز: امتحان ", "Mode examen : ") + esc(fx.ar) + " (" + dlTxt + ')</b><small style="display:block;opacity:.85">' + T("المسار مركّز على الامتحان ومخفّف الخطوات التانية", "Parcours centré sur l'examen") + '</small></div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (fcs ? '<a class="btn sm pri" href="' + esc(fcs.href) + '">' + T("🩺 دراسة حالة قلب", "🩺 Cas clinique") + '</a>' : "") +
-        '<button type="button" class="btn sm" data-hzexfocus="off">' + T("إظهار الكل", "Tout voir") + "</button></div></div>";
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        (fx.cram ? '<button type="button" class="btn sm pri" data-hzcramqz>⚡ ' + T("كويز شامل لامتحان بكرا", "Quiz complet de l'examen") + "</button>" : "") +
+        (fcs ? '<a class="btn sm pri" href="' + esc(fcs.href) + '">' + T("🩺 دراسة حالة قلب", "🩺 Cas clinique") + '</a>' : "") +
+        '<button type="button" class="btn sm" data-hzexfocus="off">' + T("إظهار الكل", "Tout voir") + "</button></div>" + cramListH + "</div>";
     } else if (fxRaw) {
       fxH = '<div style="margin:4px 0 6px;text-align:start"><button type="button" class="btn sm" data-hzexfocus="on">🎯 ' + T("تفعيل وضع التركيز للامتحان", "Activer le mode examen") + "</button></div>";
     }
@@ -820,6 +844,8 @@
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
     if ((b = t.closest("[data-hzexfocus]"))) { lsSet("nursin_exfocus_off_v1", b.getAttribute("data-hzexfocus") === "off" ? { d: today() } : null); draw(); return; }
+    if ((b = t.closest("[data-hzcramqz]"))) { openSheet("quiz.html?t=mid&s=cram", "mid:" + today(), T("⚡ كويز شامل لامتحان بكرا", "⚡ Quiz complet de l'examen")); return; }
+    if ((b = t.closest("[data-hzcramles]"))) { var hr = b.getAttribute("data-hzcramles") || "", tt = b.getAttribute("data-hzcramttl") || ""; openSheet("learn.html?u=" + encodeURIComponent(hr), "cram:" + hr, "📖 " + esc(tt)); return; }
     if ((b = t.closest("[data-hzqbrk]"))) { brkAct(b.getAttribute("data-hzqbrk")); return; }
     if ((b = t.closest("[data-hzquick]"))) {
       var nowEl = root && root.querySelector(".hzst.now a[data-step], .hzst.now button[data-step], .hzst.now .go");

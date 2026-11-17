@@ -18,6 +18,7 @@
   var EXAMS = [
     { d: "2026-11-14", subs: ["prev", "rea"], ar: "وقائية + Réa", fr: "Prévention + Réa" },
     { d: "2026-11-16", subs: ["*"], ar: "الباقي: Law، Management، Med-Surg وغيرن", sh: "الباقي", fr: "le reste : Législation, Management, Med-Surg…", fsh: "le reste" },
+    { d: "2026-11-18", subs: ["mgmt", "quality"], lessons: { quality: ["q1", "q2", "q3"] }, ar: "الإدارة (كلها) + الجودة (١–٣)", sh: "الإدارة + الجودة (١–٣)", fr: "Gestion (tout) + Qualité (1–3)", cram: true },
     { d: "2026-11-20", subs: ["cardio"], ar: "القلب + دراسة حالة", sh: "القلب + دراسة حالة", fr: "Cardio + Cas clinique", caseStudy: true },
     { d: "2026-11-21", subs: ["psych", "geri", "quality"], ar: "عقلية + Géria + Qualité", fr: "Psychiatrie + Gériatrie + Qualité" },
     { d: "2026-11-25", subs: ["neuro"], ar: "الأعصاب", sh: "الأعصاب", fr: "Neurologie" },
@@ -35,7 +36,7 @@
   function focus(day) {
     day = day || today(); var E = next(day); if (!E) return null;
     var left = dayDiff(day, E.d); if (left < 0 || left > 4) return null;
-    return { d: E.d, subs: E.subs.slice(), ar: exLabel(E, 1), fr: E.fr || E.ar, left: left, caseStudy: !!E.caseStudy };
+    return { d: E.d, subs: E.subs.slice(), lessons: E.lessons || null, cram: !!E.cram, ar: exLabel(E, 1), fr: E.fr || E.ar, left: left, caseStudy: !!E.caseStudy };
   }
   function exLabel(E, short) { return E ? T(short && E.sh || E.ar, short && E.fsh || E.fr) : ""; }
   function dmOf(day) { var p = String(day).split("-"); return (+p[2]) + "/" + (+p[1]); }
@@ -73,7 +74,17 @@
   function NL() { return w.NLESSONS || {}; }
   function lid(l) { return l.s + ":" + (l.l || l.t); }
   function lessonsOf(s) {
-    var L = NL().list || [], subs = s === "msall" ? ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"] : [s];
+    var L = NL().list || [];
+    if (s === "cram") {
+      var E = next(today()); if (!E) return [];
+      var lm = E.lessons || {};
+      return L.filter(function (l) {
+        if (E.subs.indexOf(l.s) < 0) return false;
+        var allow = lm[l.s];
+        return !allow || allow.indexOf(l.l || l.t) > -1;
+      }).map(function (l) { return { id: lid(l), s: l.s, t: l.t, l: l.l || "", n: l.n, href: l.href }; });
+    }
+    var subs = s === "msall" ? ((NL().groups || {}).medsurg || {}).subs || ["cardio", "neuro", "henderson", "medsurg"] : [s];
     return L.filter(function (l) { return subs.indexOf(l.s) > -1; }).map(function (l) { return { id: lid(l), s: l.s, t: l.t, l: l.l || "", n: l.n, href: l.href }; });
   }
   function subjList() {                                    // every subject that has lessons on the site, in the site's order
@@ -82,13 +93,14 @@
     return out;
   }
   function subjName(s) {
+    if (s === "cram") { var E = next(today()); return E ? exLabel(E, 1) : T("امتحان بكرا", "Examen de demain"); }
     if (s === "msall") return T("Med-Surg كلّو", "Med-Surg complet");
     if (s === "weak") return T("أضعف دروسك", "Tes leçons faibles");
     if (XSUB[s]) return T(XSUB[s][0], XSUB[s][1]);
     if (s === "medsurg") { var ml = lessonsOf("medsurg"); if (ml.length === 1) return T("التسريب الوريدي", "Perfusion IV"); }
     var x = (NL().subjects || {})[s] || {}; return T(x.ar || s, x.fr || x.ar || s);
   }
-  var EMO = { cardio: "🫀", neuro: "🧠", henderson: "🧩", medsurg: "💉", rea: "🚑", pharma: "💊", law: "⚖️", mgmt: "🏢", quality: "✅", geri: "👴", comm: "🏘️", msall: "🏥", weak: "💪" };
+  var EMO = { cardio: "🫀", neuro: "🧠", henderson: "🧩", medsurg: "💉", rea: "🚑", pharma: "💊", law: "⚖️", mgmt: "🏢", quality: "✅", geri: "👴", comm: "🏘️", msall: "🏥", weak: "💪", cram: "⚡" };
   function size(nLes) { var per = Math.max(1, Math.ceil(MINQ / Math.max(1, nLes))); return Math.min(MAXQ, Math.max(MINQ, per * nLes)); }
   function sizeOf(s) { return s === "weak" ? 10 : size(lessonsOf(s).length); }
 
