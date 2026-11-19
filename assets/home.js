@@ -1069,7 +1069,7 @@
     setInterval(brkTick, 1000);
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });

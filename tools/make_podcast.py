@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-توليد ملفات MP3 مجانية 100% بأصوات عربية لبنانية طبيعية (عثمان وسارة)
+توليد ملفات MP3 مجانية 100% بأصوات عربية لبنانية ناعمة وطبيعية (سارة وعثمان)
 عبر مكتبة edge-tts من مايكروسوفت بدون أي مفتاح API أو كلفة.
 
 الاستخدام على الماك:
@@ -14,6 +14,10 @@ import re
 
 VOICE_OSMAN = "ar-LB-RamiNeural"
 VOICE_SARA = "ar-LB-LaylaNeural"
+RATE_SARA = "-6%"
+PITCH_SARA = "-2Hz"
+RATE_OSMAN = "-5%"
+PITCH_OSMAN = "-3Hz"
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_JS = os.path.join(ROOT, "assets", "podcast-data.js")
@@ -39,8 +43,13 @@ async def synth_episode(ep, edge_tts):
     print(f"🎙️ جاري توليد {ep['id']}: {ep['title']} ...")
     chunks = []
     for line in ep["lines"]:
-        voice = VOICE_SARA if line["sp"] == "سارة" else VOICE_OSMAN
-        comm = edge_tts.Communicate(line["tx"], voice, rate="+5%")
+        is_sara = line["sp"] == "سارة"
+        comm = edge_tts.Communicate(
+            line["tx"],
+            VOICE_SARA if is_sara else VOICE_OSMAN,
+            rate=RATE_SARA if is_sara else RATE_OSMAN,
+            pitch=PITCH_SARA if is_sara else PITCH_OSMAN,
+        )
         async for msg in comm.stream():
             if msg["type"] == "audio":
                 chunks.append(msg["data"])

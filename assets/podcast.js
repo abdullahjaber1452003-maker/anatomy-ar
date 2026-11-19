@@ -63,11 +63,13 @@
     if (keys.length > 12) keys.slice(12).forEach(function (k) { delete st[k]; });
     lsSet(AIK, st);
   }
+  var dailyEps = [];
   function staticEps() { return Array.isArray(w.NPODCAST) ? w.NPODCAST : []; }
   function allEps() {
     var st = aiStore(), out = [], seen = {};
+    dailyEps.forEach(function (e) { if (e && e.id && !seen[e.id]) { out.push(e); seen[e.id] = 1; } });
     Object.keys(st).sort(function (a, b) { return (st[b].ts || 0) - (st[a].ts || 0); }).forEach(function (k) {
-      if (st[k] && st[k].id) { out.push(st[k]); seen[st[k].id] = 1; }
+      if (st[k] && st[k].id && !seen[st[k].id]) { out.push(st[k]); seen[st[k].id] = 1; }
     });
     staticEps().forEach(function (e) { if (!seen[e.id]) out.push(e); });
     return out;
@@ -78,7 +80,10 @@
     return Math.max(1, Math.round(words / 125));
   }
   function todayEp() {
-    var dk = today(), st = aiStore(), id = "ai-" + dk;
+    var dk = today();
+    for (var i = 0; i < dailyEps.length; i++) if (dailyEps[i] && dailyEps[i].day === dk) return dailyEps[i];
+    if (dailyEps.length && dailyEps[0] && dailyEps[0].audio) return dailyEps[0];
+    var st = aiStore(), id = "ai-" + dk;
     if (st[id]) return st[id];
     var les = pickDailyLesson(dk);
     if (les) {
@@ -532,21 +537,35 @@
     if ((b = t.closest("[data-podep]"))) { selectEp(b.getAttribute("data-podep")); return; }
   }
 
+  function loadDaily() {
+    if (!w.fetch) return Promise.resolve();
+    return fetch("assets/podcasts/daily.json?d=" + today())
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (arr) {
+        if (Array.isArray(arr) && arr.length) {
+          dailyEps = arr;
+          try { d.dispatchEvent(new CustomEvent("nursin:podcast")); } catch (e) {}
+        }
+      }, function () {});
+  }
   function init() {
-    root = d.getElementById("pod-app"); if (!root) return;
-    if (w.speechSynthesis && w.speechSynthesis.onvoiceschanged !== undefined) {
-      w.speechSynthesis.onvoiceschanged = function () { arVoice = pickVoice(); };
-    }
-    arVoice = pickVoice();
-    render();
-    root.addEventListener("click", onClick);
-    w.addEventListener("pagehide", stopAll);
-    if (curEp && curEp.ai && (curEp.chaptersDone | 0) < CHAPTERS.length && !(w.navigator && w.navigator.onLine === false)) {
-      generateEpisode(curEp);
-    }
+    loadDaily().then(function () {
+      root = d.getElementById("pod-app"); if (!root) return;
+      if (w.speechSynthesis && w.speechSynthesis.onvoiceschanged !== undefined) {
+        w.speechSynthesis.onvoiceschanged = function () { arVoice = pickVoice(); };
+      }
+      arVoice = pickVoice();
+      curEp = null;
+      render();
+      root.addEventListener("click", onClick);
+      w.addEventListener("pagehide", stopAll);
+      if (curEp && curEp.ai && !curEp.audio && (curEp.chaptersDone | 0) < CHAPTERS.length && !(w.navigator && w.navigator.onLine === false)) {
+        generateEpisode(curEp);
+      }
+    });
   }
 
-  w.NursinPodcast = { todayEp: todayEp, homeHtml: homeHtml, state: state, pickDailyLesson: pickDailyLesson };
+  w.NursinPodcast = { todayEp: todayEp, homeHtml: homeHtml, state: state, pickDailyLesson: pickDailyLesson, loadDaily: loadDaily };
   if (d && d.addEventListener) {
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", init);
     else init();
