@@ -81,23 +81,16 @@
   }
   function todayEp() {
     var dk = today();
-    for (var i = 0; i < dailyEps.length; i++) if (dailyEps[i] && dailyEps[i].day === dk) return dailyEps[i];
+    for (var i = 0; i < dailyEps.length; i++) if (dailyEps[i] && dailyEps[i].day === dk && dailyEps[i].audio) return dailyEps[i];
     if (dailyEps.length && dailyEps[0] && dailyEps[0].audio) return dailyEps[0];
+    var list = staticEps();
+    if (list.length) {
+      var base = Date.parse("2026-11-19T12:00:00Z"), now = Date.parse(dk + "T12:00:00Z");
+      return list[Math.max(0, Math.round((now - base) / 864e5)) % list.length];
+    }
     var st = aiStore(), id = "ai-" + dk;
     if (st[id]) return st[id];
-    var les = pickDailyLesson(dk);
-    if (les) {
-      var si = subjInfo(les.s);
-      return {
-        id: id, ai: true, pending: true, day: dk, s: les.s, subj: si.ar, e: si.e,
-        title: "بودكاست اليوم: " + les.n,
-        lessonName: les.n, lessonT: les.t, lessonL: les.l || "",
-        dur: "١٥–٢٠ د", href: les.href, audio: "", lines: [], chaptersDone: 0
-      };
-    }
-    var list = staticEps(); if (!list.length) return null;
-    var base = Date.parse("2026-11-19T12:00:00Z"), now = Date.parse(dk + "T12:00:00Z");
-    return list[Math.max(0, Math.round((now - base) / 864e5)) % list.length];
+    return null;
   }
   function state() {
     var o = lsGet(PK);
@@ -337,8 +330,17 @@
     if (au) { try { au.pause(); } catch (e) {} }
     au = new Audio(ep.audio);
     au.playbackRate = rate;
-    au.addEventListener("timeupdate", updateUI);
-    au.addEventListener("ended", function () { playing = false; markDone(ep.id); updateUI(); });
+    var savedSec = getPos("t:" + ep.id);
+    if (savedSec > 3) {
+      au.addEventListener("loadedmetadata", function () {
+        if (au.duration && savedSec < au.duration - 5) au.currentTime = savedSec;
+      }, { once: true });
+    }
+    au.addEventListener("timeupdate", function () {
+      if (au && au.currentTime > 1) setPos("t:" + ep.id, Math.floor(au.currentTime));
+      updateUI();
+    });
+    au.addEventListener("ended", function () { playing = false; setPos("t:" + ep.id, 0); markDone(ep.id); updateUI(); });
     au.addEventListener("error", function () {
       mode = "tts";
       var md = root && root.querySelector(".podmode");
