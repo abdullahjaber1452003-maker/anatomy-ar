@@ -93,7 +93,7 @@ html.dark .podctrl {
   flex-direction: column;
   gap: 8px;
   margin-top: 14px;
-  max-height: 360px;
+  max-height: 420px;
   overflow-y: auto;
   padding-inline-end: 4px;
 }
@@ -232,4 +232,59 @@ html.dark .podsp.sara {
   display: block;
   font-size: 0.82rem;
   opacity: 0.84;
+}
+.podgen {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  background: rgba(15, 118, 110, 0.1);
+  border: 1px solid rgba(15, 118, 110, 0.25);
+}
+.poderr {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.podchap {
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+  margin-top: 6px;
+}
+html.dark .podchap {
+  background: rgba(45, 212, 191, 0.14);
+  color: #5eead4;
+}
+.podmake {
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.24));
+}
+.podmake h2 {
+  font-size: 1.02rem;
+  margin: 0 0 10px;
+}
+.podmakerow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.podmakerow select {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.35));
+  background: var(--bg, #f8fafc);
+  color: inherit;
+  font: inherit;
 }
