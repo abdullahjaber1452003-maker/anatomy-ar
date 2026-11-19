@@ -1,0 +1,235 @@
+.podhero {
+  background: var(--card, #fff);
+  border: 1px solid var(--line, rgba(15, 118, 110, 0.16));
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+}
+.podtop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.podbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+html.dark .podbadge {
+  background: rgba(45, 212, 191, 0.16);
+  color: #5eead4;
+}
+.podmode {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+.podhero h1 {
+  font-size: 1.32rem;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.podsub {
+  font-size: 0.9rem;
+  opacity: 0.82;
+  margin: 0 0 14px;
+}
+.podctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+html.dark .podctrl {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.podplay {
+  min-width: 126px;
+  font-weight: 700;
+}
+.podprog {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.podbar {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+  cursor: pointer;
+}
+.podbar > i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #14b8a6, #0f766e);
+  transition: width 0.2s ease;
+}
+.podtm {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.82;
+}
+.podlines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-inline-end: 4px;
+}
+.podline {
+  text-align: start;
+  padding: 10px 13px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: rgba(148, 163, 184, 0.08);
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  color: inherit;
+  font: inherit;
+}
+.podline:hover {
+  background: rgba(15, 118, 110, 0.09);
+}
+.podline.on {
+  background: rgba(15, 118, 110, 0.14);
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 2px 10px rgba(15, 118, 110, 0.12);
+}
+.podsp {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: #0f766e;
+}
+html.dark .podsp {
+  color: #5eead4;
+}
+.podsp.sara {
+  color: #b45309;
+}
+html.dark .podsp.sara {
+  color: #fcd34d;
+}
+.podtx {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.podquiz {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+.podquiz h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.podqopts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.podqopt {
+  text-align: start;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.3));
+  background: var(--card, #fff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.podqopt.ok {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #10b981;
+  font-weight: 700;
+}
+.podqopt.bad {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: #ef4444;
+}
+.podarch {
+  margin-top: 18px;
+}
+.podchips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0 12px;
+}
+.podlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+.poditem {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px;
+  border-radius: 16px;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.22));
+  cursor: pointer;
+  text-align: start;
+  color: inherit;
+  font: inherit;
+}
+.poditem.cur {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+}
+.poditem small {
+  opacity: 0.78;
+}
+.podcard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0 10px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(20, 184, 166, 0.08));
+  border: 1px solid rgba(15, 118, 110, 0.28);
+}
+.podcard b {
+  display: block;
+  font-size: 0.95rem;
+}
+.podcard small {
+  display: block;
+  font-size: 0.82rem;
+  opacity: 0.84;
+}

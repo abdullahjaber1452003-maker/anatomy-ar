@@ -776,12 +776,11 @@
        «🗺️ الخرائط الذهنية». «الكل» and the per-subject chips are gone from this row; the subjects stay one tap away under «📚 المواد». */
     return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="learn">📚 ' + T("المواد", "Matières") + "</button>" +
       '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +
-      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + dsCard();
+      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + podCard();
   }
-  /* 💬 31c «نقاش» (Abdullah, Nov 8 2026 4:34 PM): the chip after «🗺️ الخرائط الذهنية» (badge «جديد» until he opens it, at most until Nov 22) and,
-     right under the chips, the compact glass card «حسين بدو يناقشك اليوم 💬 · درس … · يلّا» (assets/discuss.js NursinDiscuss.homeHtml). */
+  /* 💬 31c «نقاش»: يبقى الزر فوق بدون إشعار تحته، ومكانه تحت الأزرار وفوق المستشفى/المسار بتنحط بطاقة 🎙️ بودكاست اليوم. */
   function dsNew() { var s = null; try { s = JSON.parse(localStorage.getItem("nursin_discuss_v1") || "null"); } catch (e) {} return !(s && s.visited) && Date.now() < Date.parse("2026-11-22T00:00:00Z"); }
-  function dsCard() { try { return w.NursinDiscuss ? w.NursinDiscuss.homeHtml() : ""; } catch (e) { return ""; } }
+  function podCard() { try { return w.NursinPodcast ? w.NursinPodcast.homeHtml() : ""; } catch (e) { return ""; } }
   function subsHtml() {
     var L = []; try { L = (w.NursinRet && w.NursinRet.list) ? w.NursinRet.list() : []; } catch (e) {}
     var subj = SUBJ.slice(), seen = {}, LS = (w.NLESSONS && w.NLESSONS.subjects) || {};
