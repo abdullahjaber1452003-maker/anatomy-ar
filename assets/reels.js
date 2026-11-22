@@ -18,7 +18,7 @@
   var K = "nursin_reels_v1", MCQ_EVERY = 5, WIN = 1;
   var MS = ["medsurg", "cardio", "neuro", "henderson"];
   var FILTERS = [
-    ["next", "🎯", "امتحاني الجاي", "Mon prochain examen"], ["rand", "🎲", "عشوائي", "Aléatoire"],
+    ["next", "🎯", "امتحاني الجاي", "Mon prochain examen"], ["stories", "🎥", "أفلام الدروس", "Films"], ["rand", "🎲", "عشوائي", "Aléatoire"],
     ["rea", "🚑", "Réa", "Réa"], ["law", "⚖️", "القانون", "Législation"], ["mgmt", "🏢", "الإدارة", "Management"], ["ms", "🏥", "Med-Surg", "Med-Surg"],
     ["cardio", "🫀", "القلب", "Cardio"], ["neuro", "🧠", "الأعصاب", "Neuro"], ["henderson", "🧩", "Henderson", "Henderson"],
     ["quality", "✅", "الجودة", "Qualité"], ["geri", "👴", "الشيخوخة", "Gériatrie"], ["pharma", "💊", "الأدوية", "Pharmaco"], ["comm", "🏘️", "صحة المجتمع", "Santé comm."],
@@ -58,12 +58,13 @@
   }
   function subsOf(f, day) {
     if (f === "next") return nextSubs(day);
-    if (f === "rand" || f === "saved") return allSubs();
+    if (f === "rand" || f === "saved" || f === "stories") return allSubs();
     if (f === "ms") return MS.slice();
     return allSubs().indexOf(f) > -1 ? [f] : allSubs();
   }
   function poolOf(f, st, day) {
     var R = D().r || [], subs = subsOf(f, day);
+    if (f === "stories") return R.filter(function (r) { return !!r.story; });
     if (f === "saved") { var sv = (st || load()).saved; return R.filter(function (r) { return sv.indexOf(r.id) > -1; }); }
     return R.filter(function (r) { return subs.indexOf(r.s) > -1; });
   }
@@ -74,6 +75,12 @@
       var unseen = pool.filter(function (r) { return !st.seen[r.id]; });
       if (!unseen.length && pool.length) { pool.forEach(function (r) { delete st.seen[r.id]; }); unseen = pool; save(st); }
       pool = unseen;
+    }
+    if (f === "stories") return pool.slice();
+    var stLead = [];
+    if (f === "neuro" || f === "next") {
+      stLead = pool.filter(function (r) { return !!r.story; });
+      if (stLead.length) pool = pool.filter(function (r) { return !r.story; });
     }
     if (f === "rand" || f === "next" || f === "ms") {              // round-robin over the subjects, each shuffled
       var by = {}, keys = [];
@@ -89,11 +96,11 @@
           var r0 = takeV(by[left[at]], want); out.push(r0); left.splice(at, 1);
         }
       }
-      return out;
+      return stLead.concat(out);
     }
     var sh = shuffle(pool, rnd), o2 = [];
     while (sh.length) o2.push(takeV(sh, slotV(o2.length)));
-    return o2;
+    return stLead.concat(o2);
   }
   function qvToday(q) { var X = w.NURSIN_QV; try { return X && q && q.id ? X.pick(q.id, q) : q; } catch (e) { return q; } }   // 🔄 30w: the day's wording (assets/qv.js)
   function qPool(f, day) { var Q = D().q || {}, out = []; subsOf(f, day).forEach(function (s) { (Q[s] || []).forEach(function (q) { out.push({ s: s, q: q }); }); }); return out; }
@@ -146,7 +153,12 @@
   }
   function slotV(n) { var pos = n + Math.floor(n / (MCQ_EVERY - 1)); return pos % 2 ? "b" : "a"; }   // the n-th reel's place in the feed (an MCQ after every 4) → its voice
   function takeV(arr, want) { for (var i = 0; i < arr.length; i++) if (voiceOf({ k: "r", r: arr[i] }) === want) return arr.splice(i, 1)[0]; return arr.shift(); }
-  function narrTxt(it) { return it ? (it.k === "q" ? it.q.q : it.r.ti + ". " + it.r.ln.join(". ")) : ""; }
+  function narrTxt(it) {
+    if (!it) return "";
+    if (it.k === "q") return it.q.q;
+    if (it.r && it.r.story && it.r.scenes) { var tx = []; it.r.scenes.forEach(function (sc) { (sc.lines || []).forEach(function (l) { tx.push(l.tx); }); }); return tx.join(". "); }
+    return it.r.ti + ". " + it.r.ln.join(". ");
+  }
   var API = { voiceOf: voiceOf, audioOf: audioOf, alt: alt, AUD: AUD, order: order, feed: feed, subsOf: subsOf, nextSubs: nextSubs, poolOf: poolOf, whyOf: whyOf, FILTERS: FILTERS, MCQ_EVERY: MCQ_EVERY, KEY: K, load: load };
   w.NursinReels = API;
   if (!d || !d.getElementById) return;
@@ -202,6 +214,22 @@
         q.o.map(function (o, k) { return '<button type="button" class="rlopt" data-k="' + k + '">' + esc(o) + "</button>"; }).join("") + '<div class="rlqout"></div></div>';
     }
     var r = it.r, s = S(r.s), on = st.saved.indexOf(r.id) > -1;
+    if (r.story && r.scenes && r.scenes.length) {
+      var segs = r.scenes.map(function () { return '<span class="rlseg"><i></i></span>'; }).join("");
+      var imgs = r.scenes.map(function (sc, si) {
+        return '<div class="rlsc' + (si === 0 ? " on" : "") + " ken-" + esc(sc.ken || "zin") + '" data-si="' + si + '"><img src="' + esc(sc.img) + '" alt="" loading="' + (si === 0 ? "eager" : "lazy") + '" onerror="this.parentNode.classList.add(\'noimg\')"></div>';
+      }).join("");
+      return '<div class="rlpgw"><div class="rlsegs">' + segs + '</div></div>' +
+        (i === 0 && !unlocked && (voice || canAud) ? '<button type="button" class="rltap" data-rs="1">🔊 ' + T("اكبس لتشغيل الصوت", "Touche pour activer le son") + "</button>" : "") +
+        '<div class="rlstage">' + imgs + '</div><div class="rlscrim"></div>' +
+        '<div class="rlsthead"><span class="rltag">🎥 ' + T("فيلم سريع", "Mini-film") + " · " + s[0] + " " + bdx(T(s[1], s[2])) + '</span><h2 class="rlstti">' + bdx(r.ti) + "</h2></div>" +
+        '<div class="rlsub"><div class="rlsp sp-s"><span class="rlspic">👩‍⚕️</span><b class="rlspnm">سارة</b><span class="rlscnum">1/' + r.scenes.length + '</span></div><div class="rlsubtx"></div></div>' +
+        '<a class="rlsrc" href="' + esc(r.h) + '">📖 ' + T("من درس: ", "Leçon : ") + "<u>" + bdx(r.ls || s[1]) + "</u></a>" +
+        '<div class="rlside"><button type="button" data-ra="save"' + (on ? ' class="on"' : "") + ' aria-pressed="' + on + '"><span class="c">' + (on ? "❤️" : "🤍") + "</span>" + T("حفظ", "Sauver") + "</button>" +
+        '<a href="' + esc(r.h) + '" data-ra="open"><span class="c">📖</span>' + T("الدرس", "Leçon") + "</a>" +
+        '<button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
+        (i === 0 ? '<div class="rlhint">⌃ ' + T("قلّب لفوق", "Glisse vers le haut") + "</div>" : "");
+    }
     return top + (i === 0 && !unlocked && (voice || canAud) ? '<button type="button" class="rltap" data-rs="1">🔊 ' + T("اكبس لتشغيل الصوت", "Touche pour activer le son") + "</button>" : "") +
       '<div class="rlbody"><span class="rltag">' + s[0] + " " + bdx(T(s[1], s[2])) + (r.ls ? " · " + bdx(r.ls) : "") + "</span>" +
       toonHtml(r, s) +
@@ -228,7 +256,39 @@
   }
 
   function undraw(i) { var el = sec(i); if (!el || el.getAttribute("data-on") !== "1") return; el.innerHTML = ""; el.setAttribute("data-on", "0"); }
+  function startStory(el, r) {
+    var scs = r.scenes || [], tot = scs.length ? (scs[scs.length - 1].t1 || 60) : 60;
+    var t0 = Date.now(), lastSi = -1, lastTx = "";
+    var scEls = el.querySelectorAll(".rlsc"), segEls = el.querySelectorAll(".rlseg i");
+    var spEl = el.querySelector(".rlsp"), icEl = el.querySelector(".rlspic"), nmEl = el.querySelector(".rlspnm"), numEl = el.querySelector(".rlscnum"), txEl = el.querySelector(".rlsubtx");
+    function tick() {
+      var useAud = aud && audFor === cur && !aud.paused && aud.currentTime > 0;
+      var t = useAud ? aud.currentTime : (((Date.now() - t0) / 1000) % tot);
+      var si = 0;
+      for (var k = 0; k < scs.length; k++) { if (t >= scs[k].t0) si = k; }
+      if (si !== lastSi) {
+        lastSi = si;
+        [].forEach.call(scEls, function (x, idx) { x.classList.toggle("on", idx === si); });
+        if (numEl) numEl.textContent = (si + 1) + "/" + scs.length;
+      }
+      var sc = scs[si], dur = Math.max(0.5, (sc.t1 || 10) - (sc.t0 || 0)), pct = Math.max(0, Math.min(100, ((t - (sc.t0 || 0)) / dur) * 100));
+      [].forEach.call(segEls, function (b, idx) { b.style.width = (idx < si ? 100 : idx > si ? 0 : pct) + "%"; });
+      var lines = sc.lines || [], act = lines[0];
+      for (var j = 0; j < lines.length; j++) { if (t >= lines[j].t0) act = lines[j]; }
+      if (act && act.tx !== lastTx) {
+        lastTx = act.tx;
+        var isS = act.sp === "s";
+        if (spEl) { spEl.classList.toggle("sp-s", isS); spEl.classList.toggle("sp-o", !isS); }
+        if (icEl) icEl.textContent = isS ? "👩‍⚕️" : "👨‍🏫";
+        if (nmEl) nmEl.textContent = isS ? "سارة" : "الأستاذ عثمان";
+        if (txEl) txEl.innerHTML = bdx(act.tx);
+      }
+    }
+    tick();
+    timers.push(setInterval(tick, 120));
+  }
   function typeIn(el, it) {
+    if (it.k === "r" && it.r.story && it.r.scenes && it.r.scenes.length) { narrate(cur); startStory(el, it.r); return; }
     var ls = el.querySelectorAll(".rlln"), n = 0, total = 0;
     [].forEach.call(ls, function (x) { total += (x.getAttribute("data-t") || "").length; });
     var dur = Math.max(6, Math.min(20, 2.5 + total * 0.05)), pg = el.querySelector(".rlprog");
@@ -266,7 +326,7 @@
     if (!add.filter(function (it) { return it.k === "r"; }).length) add = feed(filter, { seen: {}, saved: st.saved });   // every reel is already in the feed: a fresh round
     if (!add.length) return;
     alt(add, voiceOf(items[items.length - 1]));
-    add.forEach(function (it) { items.push(it); var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = bgOf(it); fd.appendChild(s); });
+    add.forEach(function (it) { items.push(it); var s = d.createElement("section"); s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : (it.r && it.r.story ? "rlv rlvst" : "rlv"); s.style.background = bgOf(it); fd.appendChild(s); });
   }
   function build(first) {
     clearTimers(); hush(); stopAud(); cur = -1; fd.innerHTML = ""; fd.scrollTop = 0;
@@ -279,7 +339,7 @@
         (filter === "saved" ? T("كبوس ❤️ على أي ريل بيعجبك وبيطلع هون", "Touche ❤️ sur un reel pour le garder ici") : "") + "</p></section>";
       return;
     }
-    items.forEach(function (it) { var s = d.createElement("section"); s.className = "rlv"; s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : "rlv"; s.style.background = bgOf(it); fd.appendChild(s); });
+    items.forEach(function (it) { var s = d.createElement("section"); s.setAttribute("data-on", "0"); s.className = it.k === "q" ? "rlv rlvq" : (it.r && it.r.story ? "rlv rlvst" : "rlv"); s.style.background = bgOf(it); fd.appendChild(s); });
     activate(0);
   }
   function onScroll() {
