@@ -27,15 +27,12 @@
   var XSUB = { prev: ["الرعاية الوقائية", "Soins préventifs", "🛡️"], psych: ["الصحة العقلية (عقلية)", "Santé mentale (psychiatrie)", "🧩"] };
   function tsOf(day) { var p = String(day).split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2], 6, 0, 0); }   // 08:00 Asia/Beirut (UTC+2 in November)
   var EXAM = "2026-11-16", START = "2026-11-01", FIRST = EXAMS[0].d, LAST = EXAMS[EXAMS.length - 1].d, EXAM_TS = tsOf(EXAM);
-  function examOf(s) {                                     // the date of THIS subject's exam (msall / weak / anything unlisted → 16/11)
-    for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].subs.indexOf(s) > -1) return EXAMS[i].d;
-    return EXAM;
-  }
+  function examOf(s){var td=today(),fb=null;for(var i=0;i<EXAMS.length;i++)if(EXAMS[i].subs.indexOf(s)>-1){if(EXAMS[i].d>=td)return EXAMS[i].d;fb=EXAMS[i].d;}return fb||EXAM;}
   function examAt(day) { for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d === day) return EXAMS[i]; return null; }
   function next(day) { day = day || today(); for (var i = 0; i < EXAMS.length; i++) if (EXAMS[i].d >= day) return EXAMS[i]; return null; }   // today's exam counts until the day ends
   function focus(day) {
     day = day || today(); var E = next(day); if (!E) return null;
-    var left = dayDiff(day, E.d); if (left < 0 || left > 4) return null;
+    var left = dayDiff(day, E.d); if (left < 0 || left > 7) return null;
     return { d: E.d, subs: E.subs.slice(), lessons: E.lessons || null, cram: !!E.cram, ar: exLabel(E, 1), fr: E.fr || E.ar, left: left, caseStudy: !!E.caseStudy };
   }
   function exLabel(E, short) { return E ? T(short && E.sh || E.ar, short && E.fsh || E.fr) : ""; }
@@ -56,7 +53,7 @@
   function dayDiff(a, b) { return Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5); }
   function daysLeft(day) { var E = next(day); return E ? Math.max(0, dayDiff(day || today(), E.d)) : 0; }   // to the NEXT exam
   function daysTo(s, day) { return Math.max(0, dayDiff(day || today(), examOf(s))); }                       // to THIS subject's exam
-  function active(day) { return (day || today()) < LAST; }
+  function active(day) { return !!next(day || today()); }
   function countdown(now) {                                // {d,h,m,s,over,ex} to the next exam still ahead (before its 08:00 Beirut)
     // 30k: d = calendar days in Beirut (the same dayDiff as «باقي X يوم» on the rows / headline / home chip — no more 6 vs 7);
     // h:m:s = what is left of today (to Beirut midnight), or on the exam's own morning what is left until 08:00
@@ -456,7 +453,8 @@
     return new Promise(function (res) { var s = d.createElement("script"); s.src = "assets/cases-data.js?v=" + V; s.onload = s.onerror = function () { res(); }; d.head.appendChild(s); setTimeout(res, 6000); });
   }
 
-  w.NursinMid = { V: V, hub: hub, examsHtml: examsHtml, cdHtml: cdHtml, EXAM: EXAM, EXAMS: EXAMS, FIRST: FIRST, LAST: LAST, XSUB: XSUB, examOf: examOf, examAt: examAt, next: next, focus: focus, daysTo: daysTo, exLabel: exLabel, dmOf: dmOf, isEve: isEve, tsOf: tsOf, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
+  var EK="nursin_exams_cfg_v1",EC="nursin_exams_ss_v1",EP="projects/nursin-5aaa0/databases/(default)/documents",EAPI="https://firestore.googleapis.com/v1/"+EP+":batchGet?key=AIzaSyARPvtXJ_STkWrP8dpZcE9BqwMxEOW1WQs";function normExams(a){if(!Array.isArray(a)||!a.length)return null;var o=a.filter(function(e){return e&&/^\d{4}-\d\d-\d\d$/.test(e.d)&&Array.isArray(e.subs)&&e.subs.length;}).map(function(e){var r={d:e.d,subs:e.subs.slice(),ar:String(e.ar||""),fr:String(e.fr||e.ar||"")};if(e.sh)r.sh=String(e.sh);if(e.lessons&&typeof e.lessons==="object")r.lessons=e.lessons;if(e.cram)r.cram=true;if(e.caseStudy)r.caseStudy=true;return r;});if(!o.length)return null;o.sort(function(x,y){return x.d<y.d?-1:x.d>y.d?1:0;});return o;}function applyExams(a,si){var cl=normExams(a);if(!cl)return false;EXAMS.length=0;cl.forEach(function(e){EXAMS.push(e);});FIRST=EXAMS[0].d;LAST=EXAMS[EXAMS.length-1].d;if(w.NursinMid){w.NursinMid.FIRST=FIRST;w.NursinMid.LAST=LAST;}if(!si){draw();try{d.dispatchEvent(new CustomEvent("nursin:mid"));}catch(e){}}return true;}try{var ce=lsGet(EK);if(ce&&ce.list)applyExams(ce.list,true);}catch(e){}function fetchExams(f){try{var ss=JSON.parse(sessionStorage.getItem(EC)||"null");if(!f&&ss&&Date.now()-ss.t<180000)return;}catch(e){}if(!w.fetch)return;fetch(EAPI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({documents:[EP+"/config/exams",EP+"/config/weekLessons"]})}).then(function(r){return r.ok?r.json():Promise.reject(r.status);}).then(function(j){var raw="";(j||[]).forEach(function(it){var fl=it&&it.found&&it.found.fields;if(!raw&&fl&&fl.examsJson&&fl.examsJson.stringValue)raw=fl.examsJson.stringValue;});try{sessionStorage.setItem(EC,JSON.stringify({t:Date.now()}));}catch(e){}if(!raw)return;var li=normExams(JSON.parse(raw));if(!li)return;var pv=JSON.stringify(EXAMS),cu=JSON.stringify(li);lsSet(EK,{list:li,at:Date.now()});if(pv!==cu)applyExams(li,false);}).catch(function(){});}setTimeout(function(){fetchExams(false);},60);
+  w.NursinMid = { V: V, applyExams: applyExams, fetchExams: fetchExams, hub: hub, examsHtml: examsHtml, cdHtml: cdHtml, EXAM: EXAM, EXAMS: EXAMS, FIRST: FIRST, LAST: LAST, XSUB: XSUB, examOf: examOf, examAt: examAt, next: next, focus: focus, daysTo: daysTo, exLabel: exLabel, dmOf: dmOf, isEve: isEve, tsOf: tsOf, START: START, EXAM_TS: EXAM_TS, MINQ: MINQ, MAXQ: MAXQ, today: today, daysLeft: daysLeft, active: active, countdown: countdown,
     subjects: subjList, lessonsOf: lessonsOf, subjName: subjName, size: size, sizeOf: sizeOf, pools: pools, build: build, seeded: seeded, result: result, weakOf: weakOf,
     weakLessons: weakLessons, lessonInfo: lessonInfo, plan: plan, planDay: planDay, planMark: planMark, planDone: planDone, step: step, stepDone: stepDone, smart: smart, readiness: readiness, credits: credits, taskDone: taskDone, tick: tick, credit: credit, missed: missed, isCls: isCls,
     merge: merge, pull: pull, load: load, loadCases: loadCases, EMO: EMO, KEY: K };
