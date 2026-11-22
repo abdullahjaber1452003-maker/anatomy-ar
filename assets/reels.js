@@ -135,9 +135,10 @@
   }
   function voiceOf(it) { var m = vIndex(); if (!it) return "a"; return (it.k === "q" ? m.q[it.q && it.q.id] : m.r[it.r && it.r.id]) || "a"; }
   function isOrigQ(it) { var b = it.b || it.q; return !!(b && it.q && !(it.q.qvi > 0) && it.q.q === (b.q0 != null ? b.q0 : b.q)); }
-  function audioOf(it) {                       // the reel's mp3, or "" (a reworded MCQ stem has no recording → speechSynthesis)
+  function audioOf(it) {                       // the reel's mp3/m4a, or "" (a reworded MCQ stem has no recording → speechSynthesis)
     if (!it) return "";
     if (it.k === "q") return it.q && it.q.id && isOrigQ(it) ? AUD + it.q.id + ".mp3" : "";
+    if (it.r && it.r.aud) return it.r.aud;
     return it.r && it.r.id ? AUD + it.r.id + ".mp3" : "";
   }
   function alt(list, prev, keep0) {             // voices take turns: swap a text reel with a near one of the other voice (MCQ slots stay put;
