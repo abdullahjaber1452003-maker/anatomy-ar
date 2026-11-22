@@ -703,7 +703,7 @@
       fxH = '<div class="bx" style="margin:6px 0 8px;padding:10px 13px;border-radius:14px;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.38);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
         '<div><b>🎯 ' + T("وضع التركيز: امتحان ", "Mode examen : ") + esc(fx.ar) + " (" + dlTxt + ')</b><small style="display:block;opacity:.85">' + T("المسار مركّز على الامتحان ومخفّف الخطوات التانية", "Parcours centré sur l'examen") + '</small></div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
-        (fx.cram ? '<button type="button" class="btn sm pri" data-hzcramqz>⚡ ' + T("كويز شامل لامتحان بكرا", "Quiz complet de l'examen") + "</button>" : "") +
+        (fx.cram ? '<button type="button" class="btn sm pri" data-hzcramqz>⚡ ' + T("كويز شامل للامتحان", "Quiz complet de l'examen") + "</button>" : "") +
         (fcs ? '<a class="btn sm pri" href="' + esc(fcs.href) + '">' + T("🩺 دراسة حالة قلب", "🩺 Cas clinique") + '</a>' : "") +
         '<button type="button" class="btn sm" data-hzexfocus="off">' + T("إظهار الكل", "Tout voir") + "</button></div>" + cramListH + "</div>";
     } else if (fxRaw) {
@@ -843,7 +843,7 @@
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
     if ((b = t.closest("[data-hzexfocus]"))) { lsSet("nursin_exfocus_off_v1", b.getAttribute("data-hzexfocus") === "off" ? { d: today() } : null); draw(); return; }
-    if ((b = t.closest("[data-hzcramqz]"))) { openSheet("quiz.html?t=mid&s=cram", "mid:" + today(), T("⚡ كويز شامل لامتحان بكرا", "⚡ Quiz complet de l'examen")); return; }
+    if ((b = t.closest("[data-hzcramqz]"))) { openSheet("quiz.html?t=mid&s=cram", "mid:" + today(), T("⚡ كويز شامل للامتحان", "⚡ Quiz complet de l'examen")); return; }
     if ((b = t.closest("[data-hzcramles]"))) { var hr = b.getAttribute("data-hzcramles") || "", tt = b.getAttribute("data-hzcramttl") || ""; openSheet("learn.html?u=" + encodeURIComponent(hr), "cram:" + hr, "📖 " + esc(tt)); return; }
     if ((b = t.closest("[data-hzqbrk]"))) { brkAct(b.getAttribute("data-hzqbrk")); return; }
     if ((b = t.closest("[data-hzquick]"))) {
