@@ -385,13 +385,13 @@
       } else if (pr) pr.remove();
     });
   }
-  function openPart(x, again) {
+  function openPart(x, again, rq) {
     var k = pkey(x), id = base(x), bd = shell("rpq", "📝 " + T("كويز هالجزء", "Quiz de cette partie"));
     bd.innerHTML = '<p class="small">⏳</p>';
     var mine = box;
     Promise.all([loadQuiz(), pqLoad()]).then(function () {
       if (box !== mine) return;
-      var qs = pqQs(k), n = qs.length, i = 0, ok = 0, L = "abc", miss = [];
+      var qs = rq ? rq.slice() : pqQs(k), n = qs.length, i = 0, ok = 0, L = "abc", miss = [];
       if (!n) { bd.innerHTML = '<p class="small">' + esc(T("ما في أسئلة لهالجزء بعد.", "Pas encore de questions pour cette partie.")) + "</p>"; return; }
       if (again) for (var j = n - 1; j > 0; j--) { var r = Math.floor(Math.random() * (j + 1)), tq = qs[j]; qs[j] = qs[r]; qs[r] = tq; }
       if (n > PQMAX) {                                   // a part with many bank questions: 6 a round, the ones he never answered first
@@ -433,11 +433,11 @@
           esc(pct === 100 ? T("كلّو صح! هالجزء صار بجيبتك ✓", "Tout juste ! Cette partie est acquise ✓") : pct >= 50 ? T("منيح! راجع يلّي غلطت فيه وعيد.", "Bien ! Revois tes erreurs et refais-le.") : T("رجاع اقرا هالجزء مرّة تانية، وبعدين عيد الكويز.", "Relis cette partie, puis refais le quiz.")) + "</p>" +
           (miss.length ? '<ul class="rpqmiss">' + miss.map(function (q) { return "<li>❌ " + esc(clip(q.q, 90)) + " <b>" + esc(T("الصح: ", "Juste : ")) + "</b>" + esc(q.o[q.a]) + "</li>"; }).join("") + "</ul>" : "") +
           '<p class="small">' + esc(T("🔁 كل أجوبتك انحطّت بالتكرار المتباعد، وانعلّم هالجزء ✓.", "🔁 Toutes tes réponses sont dans la révision espacée, et cette partie est cochée ✓.")) + "</p>" +
-          '<div class="fcact"><button class="btn" type="button" data-pqagain>' + esc(T("🔁 عيد", "🔁 Refaire")) + "</button>" +
+          '<div class="fcact">'+(miss.length?'<button class="btn pri" type="button" data-pqretry>🔒 أعد الغلط ('+miss.length+')</button> ':'')+'<button class="btn" type="button" data-pqagain>' + esc(T("🔁 عيد", "🔁 Refaire")) + "</button>" +
           (nx ? '<button class="btn pri" type="button" data-pqgo>' + esc(T("➡️ الجزء الجاي", "➡️ Partie suivante")) + "</button>" : '<button class="btn pri" type="button" data-pqfin>' + esc(T("✅ خلصت", "✅ Terminé")) + "</button>") + "</div>" +
           (nx ? '<p class="small rpqnx">➡️ ' + esc(plabel(nx)) + "</p>" : "") + "</div>";
         bd.querySelector("[data-pqagain]").addEventListener("click", function () { openPart(x, true); });
-        var g = bd.querySelector("[data-pqgo]"); if (g) g.addEventListener("click", function () { close(); setTimeout(function () { goPart(nx); }, 60); });
+        var rtb=bd.querySelector("[data-pqretry]");if(rtb)rtb.addEventListener("click",function(){openPart(x,false,miss);});var g=bd.querySelector("[data-pqgo]"); if (g) g.addEventListener("click", function () { close(); setTimeout(function () { goPart(nx); }, 60); });
         var f = bd.querySelector("[data-pqfin]"); if (f) f.addEventListener("click", close);
         try { box.querySelector(".fcbd").scrollTop = 0; } catch (e6) {}
       }
