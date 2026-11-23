@@ -278,10 +278,10 @@
       featBanner +
       "<p class='small' style='margin:0 0 6px'>كل طالب بيقدر يجرّب ميزات Pro <b>٣ أيام مجاناً</b>، وبعدها الاشتراك <b>$4/شهر</b>:</p>" +
       "<ul>" +
-      "<li>📖 <b>وضع التعلّم + 🔒 قفل الإتقان</b> فقرة فقرة لكل المواد</li>" +
-      "<li>👨‍🏫 <b>خطة عثمان اليومية</b> بتقسملك كل المواد والدروس الجديدة يوم بيوم</li>" +
-      "<li>🧑‍🏫 <b>بسّطلي هالفقرة</b> + 🩺 <b>محاكي المريض الحيّ (/10)</b></li>" +
-      "<li>📅 <b>خطة ليلة الامتحان</b> + ✍️ <b>مصحّح الكتابي الرسمي (/20)</b></li>" +
+      "<li>📖 <b>وضع التعلّم + 🔒 قفل الإتقان</b> + 👨‍🏫 <b>خطة عثمان اليومية</b></li>" +
+      "<li>🎬 <b>الريلز التعليمية</b> + 🎙️ <b>البودكاست الصوتي</b></li>" +
+      "<li>🗺️ <b>الخرائط الذهنية</b> + 🧊 <b>التشريح 3D</b> + 🎯 <b>محاكاة امتحان الفصل</b></li>" +
+      "<li>👨‍🏫 <b>شات عثمان بلا حدود</b> + 🧑‍🏫 <b>بسّطلي</b> + 🩺 <b>محاكي المريض (/10)</b> + ✍️ <b>مصحّح الكتابي (/20)</b></li>" +
       "</ul>" +
       (st.mode === "pro"
         ? "<p><b>✅ اشتراكك Pro مفعّل حالياً (باقي " + st.daysLeft + " يوم)!</b></p>"
@@ -334,10 +334,31 @@
     };
   }
 
+  var PRO_PAGES = {
+    "reels.html": { title: "🎬 الريلز التعليمية (PRO)", desc: "فيديوهات قصيرة بالصوت اللبناني بتثبّت أهم أفكار التمريض بـ ٦٠ ثانية." },
+    "podcast.html": { title: "🎙️ البودكاست الصوتي (PRO)", desc: "حلقات صوتية بتسمعها عالطريق أو قبل النوم لتراجع المواد بدون تعب." },
+    "mindmap.html": { title: "🗺️ الخرائط الذهنية (PRO)", desc: "خرائط ذهنية لكل مادة بتلخّصلك الدروس بنظرة وحدة قبل الامتحان." },
+    "3d.html": { title: "🧊 التشريح ثلاثي الأبعاد 3D (PRO)", desc: "مجسمات تشريح 3D تفاعلية للقلب والأعصاب لتفهم المادة بعمق." },
+    "midterm.html": { title: "🎯 محاكاة امتحان الفصل (PRO)", desc: "امتحانات فصلية كاملة بوقت حقيقي وتقييم لكل درس." }
+  };
+  function gatePage() {
+    var pg = ((w.location && w.location.pathname) || "").split("/").pop() || "";
+    var cfg = PRO_PAGES[pg];
+    var old = d.getElementById("propagegate");
+    if (!cfg || canUse()) { if (old && old.parentNode) old.parentNode.removeChild(old); return; }
+    if (old) return;
+    var g = d.createElement("div"); g.id = "propagegate";
+    g.style.cssText = "position:fixed;inset:0;z-index:92;background:rgba(15,23,42,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px";
+    g.innerHTML = "<div class='prob' style='text-align:center'><h3>🔒 " + esc(cfg.title) + "</h3><p class='small'>" + esc(cfg.desc) + "</p><p class='small'>خلصت فترة التجربة المجانية (٣ أيام). فعّل اشتراك Pro بـ <b>$4 / شهر</b> عبر Whish Money لتفتح كل ميزات الموقع.</p><div style='display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px'><button type='button' class='btn pri' id='propgbtn'>⭐ فعّل Pro ($4/شهر)</button><a class='btn' href='index.html'>🏠 رجوع للرئيسية</a></div></div>";
+    d.body.appendChild(g);
+    var b = d.getElementById("propgbtn");
+    if (b) b.onclick = function () { open(cfg.title); };
+  }
   function paint() {
     css();
     var old = d.getElementById("prohome");
     if (d.getElementById("hz") && old && old.parentNode) old.parentNode.removeChild(old);
+    gatePage();
   }
 
   d.addEventListener("click", function (e) {

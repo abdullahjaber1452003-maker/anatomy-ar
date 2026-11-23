@@ -135,7 +135,13 @@
     function save(){if(HW){hist=trim(hist,K.HMAX);HW.s.hist=hist.slice();K.save(HW.s);return;}hist=trim(hist);try{sessionStorage.setItem(HKEY,JSON.stringify(hist));}catch(e){}}
     function lsafe(){try{return w.localStorage;}catch(e){return {getItem:function(){return null;},setItem:function(){}};}}
     function showLeft(){
-      var q=quota(lsafe(),today());left.setAttribute('data-nofr','');left.textContent=w.Lang&&w.Lang.fr?'· il te reste '+q.left+' question'+(q.left>1?'s':'')+' aujourd’hui':'· باقيلك '+q.left+' سؤال اليوم';
+      var st=lsafe(),day=today(),q=quota(st,day);left.setAttribute('data-nofr','');
+      if(w.NursinPro&&!w.NursinPro.canUse()){
+        var fl=Math.max(0,3-q.used);
+        left.textContent=w.Lang&&w.Lang.fr?'· '+fl+'/3 questions gratuites (Pro = illimité)':'· باقيلك '+fl+' من 3 أسئلة مجانية اليوم (Pro بلا حدود)';
+        return;
+      }
+      left.textContent=w.Lang&&w.Lang.fr?'· il te reste '+q.left+' question'+(q.left>1?'s':'')+' aujourd’hui':'· باقيلك '+q.left+' سؤال اليوم';
       if(!q.left&&q.canUnlock){var b=document.createElement('button');b.type='button';b.className='tlink tadbtn';b.textContent=AD_LABEL;b.addEventListener('click',function(){adScreen(null);});left.appendChild(document.createTextNode(' '));left.appendChild(b);}
     }
     /* شاشة الإعلان: نفس شكل شاشة صفحة الـ 3D (gate3d)، وحدة Adsterra 300x250 بـ iframe لحالها، عدّ 15 ثانية، «كمّل» = +5 */
@@ -357,6 +363,10 @@
       if(!signedIn()){var lc=document.querySelector('#main .glk-card');if(lc)lc.scrollIntoView({block:'center'});return;}   // 🔒 tutor locked while signed out (assets/gate.js)
       var st=lsafe(),day=today();
       var q=quota(st,day);
+      if(w.NursinPro&&!w.NursinPro.canUse()&&q.used>=3){
+        w.NursinPro.open('شات الأستاذ عثمان بلا حدود');
+        return;
+      }
       if(!q.left){
         log.querySelectorAll('.tlimit').forEach(function(x){x.remove();});
         var m=bubble('assistant','',{noVoice:true,cls:'terr tlimit'});
