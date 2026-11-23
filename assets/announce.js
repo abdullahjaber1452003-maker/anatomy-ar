@@ -99,7 +99,7 @@
     if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) try { navigator.vibrate([120, 80, 120]); } catch (e) {}
   }
   function check() {
-    if (document.hidden || roomOpen()) return; var now = Date.now(), F = fr();
+    if (document.hidden || roomOpen() || !/games\.html/.test(location.pathname)) return; var now = Date.now(), F = fr();
     var a = NursinAmb.fresh(now);
     if (a && ls(SEENK) !== a.id) { ls(SEENK, a.id);
       toast("nhamb", "🚑", F ? "🚑 Une ambulance arrive à l'hôpital !" : "🚑 وصلت سيارة إسعاف عالمستشفى!", F ? "Un nouveau patient attend à l'entrée des urgences — le premier infirmier le reçoit" : "مريض جديد ناطر عباب الطوارئ — أوّل ممرّض بيستقبلو", F ? "🏃 Le recevoir" : "🏃 روح استقبلو"); return; }

@@ -922,21 +922,16 @@ var LiveDept = (function (C) {
      the whole hospital is one tap away (games.html#live). ---- */
   function homeCard(st) {
     var box = d.querySelector("#hz .hzlivew"); if (!box || !st) return;
-    var Hh = hospital() || {}; st = Hh.er || st; var ended = st.end, F = FR(), crit = 0;
-    ["er", "k", "n", "r", "s", "g", "p", "m", "x"].forEach(function (k) { var S = k === "er" ? st : Hh[k]; if (!S || !S.P || S.end) return;
-      S.P.forEach(function (x) { if (x && !x.ghost && !x.over && x.st === "crit") crit++; }); });
-    if (Hh.wait && !ended) Hh.wait.forEach(function (o) { if (o && o.p && LiveDept.prio(o.p).pr === 1) crit++; });   // + the red ones still waiting for triage
-    // 👥 how many students are in the hospital right now (assets/livepres.js; only when the case is shared — before rules v22 nothing shows)
-    var PR = W.LivePresRoom, ppl = mode === "shared" && PR ? PR.homeCount(function () { homeCard(state()); }) : -1, wt = Hh.wait && !ended ? Hh.wait.length : 0;
-    var bits = [F ? "🏥 L'hôpital maintenant" : "🏥 المستشفى الآن"];
-    if (ended) bits.push((F ? "🏁 Cas terminé" : "🏁 انتهت الحالة") + " · " + nextWords(st.t1 - Date.now()));
-    else bits.push(crit ? "🔴 " + crit + (F ? " critique(s)" : crit === 1 ? " حالة حرجة" : " حالات حرجة") : (F ? "🟢 Aucun cas critique" : "🟢 ما في حالة حرجة"));
-    if (wt) bits.push("🪑 " + wt + (F ? " en attente" : " ناطرين"));
-    if (ppl > 0) bits.push("👥 " + ppl + (F ? " étudiant(s)" : ppl === 1 ? " طالب" : " طلاب"));
-    var soon = mode === "preview" && why === "rules" ? ' title="' + esc(F ? "🔴 Le cas partagé arrive bientôt — essaie-le maintenant" : "🔴 الحالة اللايف رح تشتغل قريباً — جرّبها هلّق") + '"' : "";
+    var Hh = hospital() || {}; st = Hh.er || st; var ended = st.end, F = FR();
+    var title = st.cs && st.cs.t ? T(st.cs.t) : (F ? "Cas clinique du jour" : "حالة اليوم السريرية");
+    var p0 = st.P && st.P[0], prog = p0 ? (p0.n + "/" + p0.tot) : "";
+    var bits = [F ? "🩺 Cas clinique du jour" : "🩺 حالة اليوم السريرية", title];
+    if (ended) bits.push(F ? "✅ Terminé" : "✅ انتهت اليوم");
+    else if (prog) bits.push(prog);
+    var soon = mode === "preview" && why === "rules" ? ' title="' + esc(F ? "Cas partagé du jour" : "حالة اليوم المشتركة") + '"' : "";
     var h = '<a class="hzlive hzhosp hzmini' + (ended ? " end" : "") + '" href="games.html#live" data-nofr' + soon + '>' +
       '<span class="hzlvh"><b>' + esc(bits.join(" · ")) + "</b></span>" +
-      '<span class="hzlvgo">' + (ended ? (F ? "📋 Voir les bonnes étapes ←" : "📋 شوف الخطوات الصح ←") : (F ? "🏥 Entre et soigne ←" : "🏥 فوت ساعد ←")) + "</span></a>";
+      '<span class="hzlvgo">' + (ended ? (F ? "📋 Voir les étapes ←" : "📋 شوف الخطوات ←") : (F ? "🩺 Participer ←" : "🩺 فوت ساعد ←")) + "</span></a>";
     if (box.innerHTML !== h) box.innerHTML = h;
   }
   function fmtHM(t) { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(t)); } catch (e) { return ""; } }

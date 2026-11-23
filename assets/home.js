@@ -641,7 +641,12 @@
     return false;
   }
   function allSteps(p) {
-    var a = (p.steps || []).concat(p.more || []).filter(function (s) { return s && s.k; }), i;
+    var a = (p.steps || []).concat(p.more || []).filter(function (s) {
+      if (!s || !s.k) return false;
+      if (s.k === "game" || s.k === "pomo" || s.k === "hl" || s.k === "xtra" || s.k === "duel") return false;
+      if (s.k === "use" && (s.f === "games" || s.f === "highlights" || s.f === "notes")) return false;
+      return true;
+    }), i;
     var fx = midFocus();
     if (fx && fx.subs && fx.subs.length && fx.subs[0] !== "*") {
       if (fx.caseStudy && !a.some(function (s) { return s.k === "case" && s.id && fx.subs.indexOf(String(s.id).split(":")[0]) > -1; })) {
@@ -813,7 +818,7 @@
     var pb = (w.NursinPro && w.NursinPro.barHtml) ? w.NursinPro.barHtml() : "";
     return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="learn">📚 ' + T("المواد", "Matières") + "</button>" +
       '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +
-      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + pb + podCard();
+      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + pb;
   }
   /* 💬 31c «نقاش»: يبقى الزر فوق بدون إشعار تحته، ومكانه تحت الأزرار وفوق المستشفى/المسار بتنحط بطاقة 🎙️ بودكاست اليوم. */
   function dsNew() { var s = null; try { s = JSON.parse(localStorage.getItem("nursin_discuss_v1") || "null"); } catch (e) {} return !(s && s.visited) && Date.now() < Date.parse("2026-11-22T00:00:00Z"); }
@@ -857,15 +862,16 @@
   function draw() {
     if (!root) return;
     if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      // 🏥 29t (Abdullah, Nov 6 2026 8:50 PM «بدي المستشفى تكون فوق المسار»): the compact 🏥 strip right under the greeting, then «🧭 مسار اليوم» (📌 card inside it)
-      root.innerHTML = '<div class="hztop"></div><div class="hzlivew"></div><section class="hzpath" id="path" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
-        '<div class="hzfoot"></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
-      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
+      // Study-first layout: «🧭 مسار اليوم» right at the top, followed by «☕ استراحة وتدريب إضافي» (daily clinical case, podcast, tournament, memory)
+      root.innerHTML = '<div class="hztop"></div><section class="hzpath" id="path" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
+        '<div class="hzextra" style="margin-top:14px"><h3 style="margin:0 0 8px;font-size:15px;opacity:.85">☕ ' + T("استراحة وتدريب إضافي", "Pause et entraînement") + '</h3><div class="hzlivew"></div><div class="hzpodw"></div><div class="hzfoot"></div></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
+      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), pod: root.querySelector(".hzpodw"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
-    parts.top.innerHTML = headHtml() + chipsHtml() + rsmHtml();   // 📖 30o: «كمّل من وين وقفت» under the chips, above the 🏥 strip (assets/lessons.js NursinResume)
-    parts.pin.innerHTML = pathHtml(p) + remHtml();   // 🧭 29k: the path comes first again (Abdullah 7:42 AM Nov 6: the 📌 card had pushed it off the screen); 📌 compact card right under it
+    parts.top.innerHTML = headHtml() + chipsHtml();
+    parts.pin.innerHTML = pathHtml(p) + remHtml();
+    if (parts.pod) parts.pod.innerHTML = podCard();
     parts.foot.innerHTML = footHtml();
     parts.sug.innerHTML = sugHtml();
     parts.subs.innerHTML = subsHtml();
