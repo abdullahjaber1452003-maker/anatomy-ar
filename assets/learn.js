@@ -230,7 +230,7 @@
     return out;
   }
 
-  /* ---------------- where he stopped ---------------- */
+  function mapQsMulti(paras,bank,TH){TH=TH==null?0.9:TH;var W=idf(paras),out=paras.map(function(){return[];});(bank||[]).forEach(function(q){if(!q||!q.o||q.a==null)return;var bi=-1,bs=0;paras.forEach(function(p,pi){var sc=score(q,p,W);if(sc>bs){bs=sc;bi=pi;}});if(bi>=0&&bs>=TH&&out[bi].length<5)out[bi].push(q);});return out;}function planMulti(paras,bank,key){var m=mapQsMulti(paras,bank);return paras.map(function(p,i){var list=m[i].slice(),tg=Math.min(4,Math.max(2,Math.ceil((p.text||"").length/180))),seen={};list.forEach(function(q){seen[norm(q.q)]=1;if(q.o&&q.o[q.a])seen[norm(q.o[q.a])]=1;});for(var k=0;list.length<tg&&k<12;k++){var g=gen(paras,i,(posOf(key,i)+list.length)%3,k,key);if(!g)break;if(g.form==="tf"&&list.length>0)continue;var ak=norm(g.o[g.a]||""),qk=norm(g.q||"");if(seen[qk]||(ak&&seen[ak]))continue;seen[qk]=1;if(ak)seen[ak]=1;list.push(g);}if(!list.length)list.push(gen(paras,i,posOf(key,i),0,key));return list;});}function finalSetMulti(qSets,paras,key){var out=[],r,i,mx=Math.max(paras.length,12);for(r=0;out.length<mx&&r<4;r++){for(i=0;i<qSets.length&&out.length<mx;i++){if(qSets[i][r]){var v=variant(qSets[i][r],paras,i,key+":"+r);v._p=i;v._qi=r;out.push(v);}}}out.sort(function(a,b){return hash(key+a._p+":"+a._qi)-hash(key+b._p+":"+b._qi);});return out;} /* ---------------- where he stopped ---------------- */
   function st(u, all) { all = all || lsGet(K) || {}; var s = all[u]; return s && typeof s === "object" ? s : { i: 0, ph: "p", ans: {}, fin: {}, ts: 0 }; }
   function put(u, s, all) {
     all = all || lsGet(K) || {}; s.ts = Date.now(); all[u] = s;
@@ -267,7 +267,7 @@
   function hrefFor(u) { return "learn.html?u=" + encodeURIComponent(u); }
 
   if (!d || !d.getElementById) return;
-  var root = null, S = null, U = "", X = null, paras = [], qs = [], fin = [], ctxKey = "";
+  var root = null, S = null, U = "", X = null, paras = [], qs = [], qSets = [], fin = [], ctxKey = "";
 
   /* ---------------- the lesson text: the page itself, in a hidden frame ---------------- */
   function loadPart(x, cb) {
@@ -362,23 +362,7 @@
       if (done) { var xk = lsGet(R.XKEY); if (xk && xk === r.u) w.localStorage.removeItem(R.XKEY); }
     } catch (e) {}
   }
-  function draw() {
-    if (!root) return; var n = paras.length, h = head();
-    if (S.ph === "fin") h += finHtml(); else if (S.ph === "done") h += endHtml();
-    else {
-      var p = paras[S.i], q = qs[S.i], k = (S.ans || {})[S.i];
-      if (S.ph === "p") h += paraHtml(p) + '<div class="lnnav"><button type="button" class="btn pri" data-ln="toq">' + T("✅ قريتها · سؤال ←", "✅ Lu · Question ←") + "</button></div>";
-      else {
-        h += '<details class="lnpeek"' + (k != null && k !== q.a ? " open" : "") + '><summary>👀 ' + T("الفقرة", "Le paragraphe (الفقرة)") + "</summary>" + paraHtml(p) + "</details>";
-        h += '<div class="qcard lnq" data-qid="' + esc(q.id) + '"><p class="qnum">❓ ' + T("سؤال عالفقرة " + (S.i + 1), "Question sur le paragraphe " + (S.i + 1)) + '</p><p class="qq">' + q.q + "</p>" + optsHtml(q, k) +
-          '<div class="lnfb" aria-live="polite">' + (k != null ? fbHtml(q, k) : "") + "</div>" +
-          '<div class="qnav"><span></span>' + (k != null ? '<button type="button" class="btn pri" data-ln="next">' + (S.i + 1 < n ? T("التالي ←", "Suivant ←") : "🏁 " + T("الكويز الشامل ←", "Quiz final ←")) + "</button>" : "") + "</div></div>";
-      }
-    }
-    root.innerHTML = h;
-    if (S.ph === "a" || S.ph === "q") { var k2 = (S.ans || {})[S.i]; if (k2 != null && k2 !== qs[S.i].a) { var pe = root.querySelector(".lnpeek .lnpara"); mark(pe, hitWords(qs[S.i], paras[S.i])); } }
-  }
-  function finHtml() {
+  function lnCss(){if(d.getElementById("lndotcss"))return;var st0=d.createElement("style");st0.id="lndotcss";st0.textContent=".lnqdots{display:flex;gap:4px;margin:0 0 10px}.lnqdots i{flex:1;height:4px;border-radius:99px;background:rgba(0,0,0,.1);display:block}.lnqdots i.cur{background:#0f766e}.lnqdots i.ok{background:#16a34a}.lnqdots i.bad{background:#dc2626}";(d.head||d.documentElement).appendChild(st0);}function draw(){if(!root)return;lnCss();var n=paras.length,h=head();if(S.ph==="fin")h+=finHtml();else if(S.ph==="done")h+=endHtml();else{var p=paras[S.i],qL=qSets[S.i]||[qs[S.i]],qi=Math.max(0,Math.min(qL.length-1,S.qi|0)),q=qL[qi],ak=S.i+":"+qi,k=(S.ans||{})[ak];if(S.ph==="p")h+=paraHtml(p)+"<div class='lnnav'><button type='button' class='btn pri' data-ln='toq'>"+(qL.length>1?T("✅ قريتها · أسئلة الفقرة ("+qL.length+") ←","✅ Lu · Questions ("+qL.length+") ←"):T("✅ قريتها · سؤال ←","✅ Lu · Question ←"))+"</button></div>";else{var dots=qL.length>1?"<div class='lnqdots' aria-hidden='true'>"+qL.map(function(qq,t){var av=(S.ans||{})[S.i+":"+t],c=av!=null?(av===qq.a?"ok":"bad"):(t===qi?"cur":"");return "<i class='"+c+"'></i>";}).join("")+"</div>":"";var qLab=qL.length>1?T("سؤال "+(qi+1)+" من "+qL.length+" عالفقرة "+(S.i+1),"Question "+(qi+1)+" sur "+qL.length+" · paragraphe "+(S.i+1)):T("سؤال عالفقرة "+(S.i+1),"Question sur le paragraphe "+(S.i+1));var nb=qi+1<qL.length?"<button type='button' class='btn pri' data-ln='qnext'>"+T("السؤال الجاي ("+(qi+2)+"/"+qL.length+") ←","Question suivante ("+(qi+2)+"/"+qL.length+") ←")+"</button>":"<button type='button' class='btn pri' data-ln='next'>"+(S.i+1<n?T("الفقرة الجاية ←","Paragraphe suivant ←"):"🏁 "+T("الكويز الشامل ←","Quiz final ←"))+"</button>";h+="<details class='lnpeek'"+(k!=null&&k!==q.a?" open":"")+"><summary>👀 "+T("الفقرة","Le paragraphe (الفقرة)")+"</summary>"+paraHtml(p)+"</details><div class='qcard lnq' data-qid='"+esc(q.id)+"'><p class='qnum'>❓ "+qLab+"</p>"+dots+"<p class='qq'>"+q.q+"</p>"+optsHtml(q,k)+"<div class='lnfb' aria-live='polite'>"+(k!=null?fbHtml(q,k):"")+"</div><div class='qnav'><span></span>"+(k!=null?nb:"")+"</div></div>";}}root.innerHTML=h;if(S.ph==="a"||S.ph==="q"){var qL2=qSets[S.i]||[qs[S.i]],qi2=Math.max(0,Math.min(qL2.length-1,S.qi|0)),q2=qL2[qi2],k2=(S.ans||{})[S.i+":"+qi2];if(k2!=null&&k2!==q2.a){var pe=root.querySelector(".lnpeek .lnpara");mark(pe,hitWords(q2,paras[S.i]));}}} function finHtml() {
     var at = Math.min(S.fj | 0, fin.length - 1), q = fin[at], k = (S.fin || {})[at];
     return '<div class="lnfint">🏁 ' + T("كويز شامل على كل الفقرات", "Quiz final sur tous les paragraphes") + " · " + (at + 1) + " / " + fin.length + "</div>" +
       '<div class="qcard lnq" data-qid="' + esc(q.id) + '"><p class="qq">' + q.q + "</p>" + optsHtml(q, k) + '<div class="lnfb" aria-live="polite">' + (k != null ? fbHtml(q, k, 1) : "") + "</div>" +
@@ -404,25 +388,7 @@
     progress();
     try { d.dispatchEvent(new CustomEvent("nursin:goal-done", { detail: { k: "learn", u: U } })); } catch (e) {}
   }
-  function onClick(e) {
-    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
-    var b = t.closest("[data-ln]"), o = t.closest(".opt[data-lk]");
-    if (o && !o.disabled) {
-      var k = +o.getAttribute("data-lk");
-      if (S.ph === "fin") { var at = S.fj | 0, fq = fin[at]; if ((S.fin || {})[at] != null) return; S.fin = S.fin || {}; S.fin[at] = k; var ok2 = k === fq.a; snd(ok2); record(fq, ok2, fq._p); save(); if (Object.keys(S.fin).length >= fin.length) finish(1); draw(); return; }
-      var q = qs[S.i]; S.ans = S.ans || {}; if (S.ans[S.i] != null) return;
-      S.ans[S.i] = k; S.ph = "a"; var ok = k === q.a; snd(ok); if (!ok) { S.wr = S.wr || []; if (S.wr.indexOf(S.i) < 0) S.wr.push(S.i); }
-      if (ok && !q.gen) record(q, ok, S.i); else if (!ok) record(q, ok, S.i);
-      try { if (!q.gen && w.NURSIN_QV && w.NURSIN_QV.mark && !w.NursinSRS) w.NURSIN_QV.mark(q.id, ok); } catch (x) {}
-      save(); draw(); return;
-    }
-    if (!b) return; var a = b.getAttribute("data-ln");
-    if (a === "toq") { S.ph = "q"; save(); draw(); top(); return; }
-    if (a === "next") { if (S.i + 1 < paras.length) { S.i++; S.ph = "p"; } else { S.ph = "fin"; S.fj = 0; S.fin = {}; } save(); draw(); top(); return; }
-    if (a === "fnext") { if ((S.fj | 0) + 1 < fin.length) { S.fj = (S.fj | 0) + 1; save(); } else finish(); draw(); top(); return; }
-    if (a === "again") { S = { i: 0, ph: "p", ans: {}, fin: {}, ts: 0, fd: 1 }; save(); draw(); top(); return; }
-  }
-  function top() { try { root.scrollIntoView({ block: "start" }); w.scrollTo(0, 0); } catch (e) {} }
+  function onClick(e){var t=e.target&&e.target.closest?e.target:null;if(!t)return;var b=t.closest("[data-ln]"),o=t.closest(".opt[data-lk]");if(o&&!o.disabled){var k=+o.getAttribute("data-lk");if(S.ph==="fin"){var at=S.fj|0,fq=fin[at];if((S.fin||{})[at]!=null)return;S.fin=S.fin||{};S.fin[at]=k;var ok2=k===fq.a;snd(ok2);record(fq,ok2,fq._p);save();if(Object.keys(S.fin).length>=fin.length)finish(1);draw();return;}var qL=qSets[S.i]||[qs[S.i]],qi=Math.max(0,Math.min(qL.length-1,S.qi|0)),q=qL[qi],ak=S.i+":"+qi;S.ans=S.ans||{};if(S.ans[ak]!=null)return;S.ans[ak]=k;S.ph="a";var ok=k===q.a;snd(ok);if(!ok){S.wr=S.wr||[];if(S.wr.indexOf(ak)<0)S.wr.push(ak);}if(ok&&!q.gen)record(q,ok,S.i);else if(!ok)record(q,ok,S.i);try{if(!q.gen&&w.NURSIN_QV&&w.NURSIN_QV.mark&&!w.NursinSRS)w.NURSIN_QV.mark(q.id,ok);}catch(x){}save();draw();return;}if(!b)return;var a=b.getAttribute("data-ln");if(a==="toq"){S.ph="q";S.qi=0;save();draw();top();return;}if(a==="qnext"){S.qi=(S.qi|0)+1;S.ph="q";save();draw();top();return;}if(a==="next"){if(S.i+1<paras.length){S.i++;S.qi=0;S.ph="p";}else{S.ph="fin";S.fj=0;S.fin={};}save();draw();top();return;}if(a==="fnext"){if((S.fj|0)+1<fin.length){S.fj=(S.fj|0)+1;save();}else finish();draw();top();return;}if(a==="again"){S={i:0,qi:0,ph:"p",ans:{},fin:{},ts:0,fd:1};save();draw();top();return;}} function top() { try { root.scrollIntoView({ block: "start" }); w.scrollTo(0, 0); } catch (e) {} }
   function locked() { var c = String(d.documentElement.className); if (c.indexOf("gl-out") < 0) return false; try { var m = JSON.parse(w.sessionStorage.getItem("nursin_adunlock_v1") || "{}") || {}; return !(+m[X.href.split("#")[0]] > Date.now()); } catch (e) { return true; } }
   function lockHtml() { return head() + '<div class="lnend"><p>🔒 ' + T("وضع التعلّم بس للي عندن حساب — سجّل دخول بغوغل (ببلاش) وبيفتحلك.", "Le mode apprentissage demande un compte (gratuit).") + '</p><p><a class="btn pri" href="' + esc(X.href) + '" target="_top">📄 ' + T("افتح الدرس", "Ouvrir la leçon") + "</a></p></div>"; }
   /* learn.html with no lesson: where he stopped first, then every part by subject */
@@ -449,8 +415,8 @@
     loadPart(X, function (html) {
       paras = chunk(blocks(String(html || "").replace(/\s?\bglk-(x|tz)\b/g, "")));   // the sign-in blur classes of the lesson page, not the text
       if (!paras.length) { root.innerHTML = head() + '<p class="lnerr">' + T("ما قدرت حمّل الدرس هلّق 😕", "Impossible de charger la leçon") + ' — <a href="' + esc(X.href) + '" target="_top">📄 ' + T("افتح الدرس كامل", "Leçon complète") + "</a></p>"; return; }
-      qs = plan(paras, bankOf(X), ctxKey); fin = finalSet(qs, paras, ctxKey);
-      var r = resumeAt(S, paras.length); S.i = Math.min(r.i, paras.length - 1); if (r.ph === "done") { S.ph = "done"; S.i = paras.length - 1; } else if (r.ph === "fin") S.ph = "fin"; else S.ph = r.ph;
+      qSets = planMulti(paras, bankOf(X), ctxKey); qs = qSets.map(function(a){return a[0];}); fin = finalSetMulti(qSets, paras, ctxKey);
+      var r = resumeAt(S, paras.length); S.i = Math.min(r.i, paras.length - 1); if (r.ph === "done") { S.ph = "done"; S.i = paras.length - 1; } else if (r.ph === "fin") S.ph = "fin"; else{S.ph=r.ph;var ql0=qSets[S.i]||[];S.qi=Math.max(0,Math.min(ql0.length-1,S.qi|0));if((S.ans||{})[S.i+":"+S.qi]!=null)S.ph="a";}
       if (S.ph === "fin" && (S.fj | 0) >= fin.length) S.fj = 0;
       if (S.ph === "fin" && (S.fin || {})[S.fj | 0] == null) { /* resume on the unanswered one */ }
       put(U, S); progress(); draw();
