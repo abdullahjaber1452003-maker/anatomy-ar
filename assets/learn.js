@@ -402,7 +402,7 @@
     ord.forEach(function (k) { var sb = SB[k] || {}; h += '<details class="lnpeek lnpick"><summary>' + esc((sb.e || "📚") + " " + T(sb.ar || k, sb.fr || sb.ar || k)) + " · " + by[k].length + "</summary><ul>" + by[k].map(function (x) { return '<li><a href="' + esc(hrefFor(x.href)) + '">' + esc(lab(x)) + "</a></li>"; }).join("") + "</ul></details>"; });
     return h;
   }
-  function boot() {
+  function boot(){try{
     root = d.getElementById("ln-app"); if (!root) return;
     var m = /[?&]u=([^&#]+)/.exec(w.location.search); U = m ? decodeURIComponent(m[1]) : "";
     if (!U) { root.innerHTML = pickHtml(); return; }
@@ -423,5 +423,5 @@
       try { d.documentElement.classList.add("lnready"); } catch (e) {}
     });
   }
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
+  }catch(err){if(root)root.innerHTML='<p class=lnerr>⚠️ '+err.message+'</p>';}}if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
