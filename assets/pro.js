@@ -3,7 +3,7 @@
   var K = "nursin_pro_v1", TK = "nursin_pro_trial_v1", PK = "nursin_pro_preview_v1";
   var OWNER = "abdullahjaber1452003@gmail.com";
   var TRIAL_DAYS = 3, TRIAL_MS = TRIAL_DAYS * 864e5;
-  var WHISH_NUM = "71 906 604", WHISH_RAW = "71906604", WA_NUM = "96171906604";
+  var WHISH_NUM = "79 117 048", WHISH_RAW = "79117048", WA_NUM = "96179117048";
 
   function lsGet(k) { try { return JSON.parse(w.localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v) { try { w.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
