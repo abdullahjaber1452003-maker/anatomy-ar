@@ -63,8 +63,8 @@
     return allSubs().indexOf(f) > -1 ? [f] : allSubs();
   }
   function poolOf(f, st, day) {
-    var R = D().r || [], subs = subsOf(f, day);
-    if (f === "stories") return R.filter(function (r) { return !!r.story; });
+    var R = (D().r || []).filter(function (r) { return !!r.story; }), subs = subsOf(f, day);
+    if (f === "stories" || f === "next" || f === "rand") return R;
     if (f === "saved") { var sv = (st || load()).saved; return R.filter(function (r) { return sv.indexOf(r.id) > -1; }); }
     return R.filter(function (r) { return subs.indexOf(r.s) > -1; });
   }
@@ -204,7 +204,13 @@
     preload(i + 1);
   }
   function pillsHtml() {
-    return FILTERS.map(function (f) { return '<button type="button" class="rlpill' + (f[0] === filter ? " on" : "") + '" data-rf="' + f[0] + '">' + f[1] + " " + esc(T(f[2], f[3])) + "</button>"; }).join("");
+    var stSubs = {}; (D().r || []).forEach(function (r) { if (r && r.story) stSubs[r.s] = 1; });
+    return FILTERS.filter(function (f) {
+      var k = f[0];
+      if (k === "stories" || k === "saved") return true;
+      if (k === "next" || k === "rand" || k === "ms") return false;
+      return !!stSubs[k];
+    }).map(function (f) { return '<button type="button" class="rlpill' + (f[0] === filter ? " on" : "") + '" data-rf="' + f[0] + '">' + f[1] + " " + esc(T(f[2], f[3])) + "</button>"; }).join("");
   }
   function reelHtml(it, i) {
     var top = '<div class="rlpgw"><div class="rlprog"><i></i></div></div>';
@@ -278,10 +284,10 @@
       for (var j = 0; j < lines.length; j++) { if (t >= lines[j].t0) act = lines[j]; }
       if (act && act.tx !== lastTx) {
         lastTx = act.tx;
-        var isS = act.sp === "s";
-        if (spEl) { spEl.classList.toggle("sp-s", isS); spEl.classList.toggle("sp-o", !isS); }
-        if (icEl) icEl.textContent = isS ? "👩‍⚕️" : "👨‍🏫";
-        if (nmEl) nmEl.textContent = isS ? "سارة" : "الأستاذ عثمان";
+        var sp = act.sp || "o", isS = sp === "s", isK = sp === "k";
+        if (spEl) { spEl.classList.toggle("sp-s", isS); spEl.classList.toggle("sp-o", !isS && !isK); spEl.classList.toggle("sp-k", isK); }
+        if (icEl) icEl.textContent = isS ? "👩‍⚕️" : isK ? "🧑‍⚕️" : "👨‍🏫";
+        if (nmEl) nmEl.textContent = isS ? "سارة" : isK ? "كريم" : "الأستاذ عثمان";
         if (txEl) txEl.innerHTML = bdx(act.tx);
       }
     }
@@ -425,7 +431,7 @@
   }
   function boot() {
     var host = d.getElementById("reels"); if (!host || app) return;
-    st = load(); filter = "next"; sndOn = st.snd !== 0;
+    st = load(); filter = "stories"; sndOn = st.snd !== 0;
     var m = /[#&]r=([\w-]+)/.exec(location.hash || ""), first = m ? m[1] : null;
     app = d.createElement("div"); app.className = "rlapp"; app.setAttribute("data-noswipe", "1");
     app.innerHTML = '<div class="rlfeed" role="feed" aria-label="Reels"></div>' +
