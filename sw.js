@@ -1,3 +1,4 @@
+// 20261123i
 // nursin service worker: 🔔 notifications only (chat messages + 📢 news from admin.html). No fetch handler and no cache, so the site is always fresh from the network.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
