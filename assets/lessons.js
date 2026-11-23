@@ -367,7 +367,7 @@
       return o && o.d === dk() ? Math.floor(Math.max(o.s | 0, o.r | 0) / 60) : 0; } catch (e) { return 0; }
   }
   function homeWeek() {
-    var el = d.getElementById("wkles"); if (!el) return;
+    var el = d.getElementById("wkles"); if (!el) return;if(!d.getElementById("exprephome")){var ep=d.createElement("p");ep.id="exprephome";ep.style.margin="8px 0";ep.innerHTML="<a class='btn pri' style='width:100%;text-align:center' href='exam-prep.html'>📅 خطة ليلة الامتحان ومصحّح الكتابي (/20) ✍️</a>";el.parentNode.insertBefore(ep,el.nextSibling);} 
     var w = weekLes(), m = readMap(), rows = [], s;
     for (s in w) (w[s] || []).forEach(function (k) { var x = R.list.find(function (y) { return base(y) === k; }); if (x) rows.push(x); });
     var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
