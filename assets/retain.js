@@ -344,7 +344,7 @@
      html.rton), one question at a time; after a right answer «✅ كنت متأكد / 🤔 حزرت»; every answer → NursinSRS (same id) + NursinRet + Weak.
      End: score, «🔁 عيد», «➡️ الجزء الجاي». Done parts: localStorage nursin_partq_v1 {key: {s best, l last, n, t}} → ✓ on the button and on
      the part's title, «📝 2/5» (parts done / parts) on the lesson's first title. Reading the quiz to its end also marks the part read. */
-  var PQK = "nursin_partq_v1", PQMAX = 6;
+  var PQK = "nursin_partq_v1", PQMAX = 20;
   function pqLoad() { return loadScript("assets/partq-data.js?v=" + V, function () { return !!w.PARTQ; }); }
   function pqDone() { var o = lsGet(PQK); return o && typeof o === "object" ? o : {}; }
   function pqSave(k, s, n) {
