@@ -97,11 +97,7 @@
     return "الطالب ما فهم هالجملة من درس «" + lesson + "» (بسّطلي):\n«" + sent + "»\n\nنص الجزء من الموقع (اشرح منو بس، وما تزيد ولا معلومة من برّا):\n" + String(partText || "").slice(0, 1600) +
       "\n\nاشرحلو ياها بكلام أبسط بالعربي اللبناني، ٣ أسطر قصار بالكتير، كل مصطلح فرنسي حدّو معناه بالعربي بين قوسين، ومثال صغير من نفس النص إذا بيساعد. بلا نجوم وبلا مقدمة.";
   }
-  function casePrompt(q, said) {
-    return "حالة صغيرة من الدرس (🩺): «" + q.q + "»\nالجواب الصح من الموقع: «" + q.o[q.a] + "»\nالشرح من الموقع: " + String(q.x || "") + "\n\nجواب الطالب (شو بيعمل): «" + said + "»\n\n" +
-      "قارن بس مع الجواب والشرح (ولا معلومة من برّا). جاوب بالعربي اللبناني، قصير كتير (٣ أسطر)، بهالشكل بالظبط، بلا نجوم:\n✅ صح: …\n❌ ناقصك: …\n💡 نصيحة: …";
-  }
-  function oText(t) { return esc(t).split(/\n+/).map(function (l) { l = l.trim(); return l ? "<p>" + l + "</p>" : ""; }).join(""); }
+  function casePrompt(q,said){return "إنت الأستاذ عثمان (مشرف تمريض بالطوارئ). حالة سريرية للطالب:\n«"+q.q+"»\nالجواب الصح من الدرس: «"+q.o[q.a]+"»\nالشرح من الدرس: "+String(q.x||"")+"\n\nجواب الطالب: «"+said+"»\n\nقيّم جواب الطالب على سلم الامتحان الرسمي من 10 اعتماداً فقط على الجواب والشرح (ولا معلومة من برّا). جاوب بالعربي اللبناني قصير وواضح بهالشكل بالظبط بلا نجوم:\n📊 العلامة: X/10\n✅ صح: (شو ذكر صح وأخد عليه علامة)\n❌ ناقصك: (أهم خطوة أو مراقبة أو حاجة Henderson نسيها)\n🏆 الجواب النموذجي: (جملة وحدة مختصرة بتاخد 10/10)";} function oText(t) { return esc(t).split(/\n+/).map(function (l) { l = l.trim(); return l ? "<p>" + l + "</p>" : ""; }).join(""); }
 
   /* ---------------- the part text / summary (fallback of «بسّطلي») ---------------- */
   function partOf(el) {                                 // the <details> part around el → {k, x, el}
@@ -181,32 +177,7 @@
     var b = d.createElement("button"); b.className = "btn sm"; b.type = "button"; b.setAttribute("data-oxcase", row.getAttribute("data-k")); b.textContent = T("🩺 حالة صغيرة", "🩺 Mini-cas");
     row.appendChild(b);
   }
-  function openCase(row, k) {
-    var nx = row.nextElementSibling, old = null;
-    while (nx && /(^|\s)(oxq|oxcase|exbox)(\s|$)/.test(nx.className || "")) { if (/(^|\s)oxcase(\s|$)/.test(nx.className)) old = nx; nx = nx.nextElementSibling; }
-    if (old) { old.parentNode.removeChild(old); return; }
-    style();
-    var box = d.createElement("div"); box.className = "oxcase"; box.innerHTML = "<p>⏳ …</p>"; row.parentNode.insertBefore(box, row.nextSibling);
-    needData().then(function () {
-      var qs = partQs(k), st = lsGet(QK) || {}, q = caseQ(qs, (st["c:" + k] | 0) + hash(k)); st["c:" + k] = (st["c:" + k] | 0) + 1; lsSet(QK, st);
-      if (!q) { box.innerHTML = "<p>" + esc(T("ما في حالة لهالجزء بعد.", "Pas encore de cas pour cette partie.")) + "</p>"; return; }
-      box.innerHTML = '<p class="oxh">🩺 ' + esc(T("حالة صغيرة", "Mini-cas")) + " · 👨‍🏫 " + esc(name()) + '</p><p class="oxtxt">' + esc(q.q.replace(/[؟?]\s*$/, "")) + '</p><p><b>' + esc(T("شو بتعمل؟", "Que fais-tu ?")) + "</b></p>" +
-        '<textarea rows="3" placeholder="' + esc(T("اكتب شو بتعمل بكلامك…", "Écris ce que tu fais…")) + '"></textarea><div class="oxact"><button class="btn sm pri" type="button" data-oxgr="1">' + esc(T("صحّحلي", "Corrige-moi")) + '</button></div><div class="oxre" aria-live="polite"></div>';
-      box.querySelector("[data-oxgr]").addEventListener("click", function () {
-        var said = box.querySelector("textarea").value.trim(), re = box.querySelector(".oxre"); if (said.length < 3) { re.innerHTML = "<p>✍️ " + esc(T("اكتب جوابك أوّل", "Écris d'abord ta réponse")) + "</p>"; return; }
-        this.disabled = true; re.innerHTML = "<p>⏳ " + esc(T("عثمان عم يقرا…", "Osman lit…")) + "</p>";
-        var E = w.NursinEx, got = function (keys) {
-          var res = caseGrade(q, said, keys), C = w.NursinCov; if (res && C && C.record) C.record(base(k), res.score >= 50);
-          var tail = '<p class="oxtxt">✅ ' + esc(T("الجواب من الدرس: ", "La réponse de la leçon : ")) + esc(q.o[q.a]) + "</p>" + (q.x ? '<p class="oxtxt small">📖 ' + esc(firstSent(q.x)) + "</p>" : "");
-          var loc = res ? '<p class="oxtxt">' + (res.score >= 75 ? "🌟 " : res.score >= 50 ? "👍 " : "📖 ") + esc(T("علامتك: ", "Score : ")) + res.score + "٪" + (res.got.length ? " · ✅ " + res.got.slice(0, 3).map(esc).join(" · ") : "") + (res.miss.length ? " · ❌ " + esc(T("نسيت: ", "oublié : ")) + res.miss.slice(0, 3).map(esc).join(" · ") : "") + "</p>" : "";
-          var fin = function (os) { re.innerHTML = (os ? '<div class="oxtxt">' + oText(os) + "</div>" : loc) + tail + '<div class="oxact">' + sayBtn() + "</div>"; re.setAttribute("data-say", (os || "") + " " + q.o[q.a]); };
-          if (online()) ask(casePrompt(q, said)).then(fin, function () { fin(null); }); else fin(null);
-        };
-        if (E && E.partSection) E.partSection(k, function (sec) { got(sec ? sec.keys : []); }); else got([]);
-      });
-    });
-  }
-  /* 2) 🧑‍🏫 «بسّطلي» */
+  function openCase(row,k,force){var nx=row.nextElementSibling,old=null;while(nx&&/(^|\s)(oxq|oxcase|exbox)(\s|$)/.test(nx.className||"")){if(/(^|\s)oxcase(\s|$)/.test(nx.className))old=nx;nx=nx.nextElementSibling;}if(old){old.parentNode.removeChild(old);if(!force)return;}style();var box=d.createElement("div");box.className="oxcase";box.innerHTML="<p>⏳ …</p>";row.parentNode.insertBefore(box,row.nextSibling);needData().then(function(){var qs=partQs(k),st=lsGet(QK)||{},q=caseQ(qs,(st["c:"+k]|0)+hash(k));st["c:"+k]=(st["c:"+k]|0)+1;lsSet(QK,st);if(!q){box.innerHTML="<p>ما في حالة لهالجزء بعد.</p>";return;}var E=w.NursinEx,mh=E&&E.micHtml?E.micHtml():"";box.innerHTML="<p class='oxh'>🩺 محاكي المريض الحيّ · 👨‍🏫 "+esc(name())+"</p><p class='oxtxt'>"+esc(q.q.replace(/[؟?]\s*$/,""))+"</p><p><b>شو أول خطوة بتعملها، شو المراقبة (Surveillance)، وأي حاجة عند Henderson متأثرة؟</b></p><textarea rows='3' placeholder='اكتب أو احكي بصوتك شو بتعمل…'></textarea>"+mh+"<div class='oxact'><button class='btn sm pri' type='button' data-oxgr='1'>📊 صحّحلي (من 10)</button><button class='btn sm' type='button' data-oxmore='1'>🔄 حالة تانية</button></div><div class='oxre' aria-live='polite'></div>";var ta=box.querySelector("textarea"),mw=E&&E.micWire?E.micWire(box,ta):null;box.querySelector("[data-oxmore]").addEventListener("click",function(){if(mw&&mw.stop)mw.stop();openCase(row,k,1);});box.querySelector("[data-oxgr]").addEventListener("click",function(){if(mw&&mw.stop)mw.stop();var said=ta.value.trim(),re=box.querySelector(".oxre");if(said.length<3){re.innerHTML="<p>✍️ اكتب أو سجّل جوابك أوّل</p>";return;}this.disabled=true;re.innerHTML="<p>⏳ الأستاذ عثمان عم يقيّمك على سلّم الامتحان…</p>";var got=function(keys){var res=caseGrade(q,said,keys),C=w.NursinCov;if(res&&C&&C.record)C.record(base(k),res.score>=50);var sc10=res?Math.round(res.score/10):0;var tail="<p class='oxtxt'>✅ الجواب من الدرس: "+esc(q.o[q.a])+"</p>"+(q.x?"<p class='oxtxt small'>📖 "+esc(firstSent(q.x))+"</p>":"");var loc=res?"<p class='oxtxt'><b>📊 العلامة (تقييم تلقائي): "+sc10+"/10</b>"+(res.got.length?" · ✅ "+res.got.slice(0,3).map(esc).join(" · "):"")+(res.miss.length?" · ❌ نسيت: "+res.miss.slice(0,3).map(esc).join(" · "):"")+"</p>":"";var fin=function(os){re.innerHTML=(os?"<div class='oxtxt'>"+oText(os)+"</div>":loc)+tail+"<div class='oxact'>"+sayBtn()+"<button class='btn sm' type='button' data-oxmore2='1'>🔄 حالة تانية</button></div>";re.setAttribute("data-say",(os||"")+" "+q.o[q.a]);var m2=re.querySelector("[data-oxmore2]");if(m2)m2.addEventListener("click",function(){openCase(row,k,1);});};if(online())ask(casePrompt(q,said)).then(fin,function(){fin(null);});else fin(null);};if(E&&E.partSection)E.partSection(k,function(sec){got(sec?sec.keys:[]);});else got([]);});});} /* 2) 🧑‍🏫 «بسّطلي» */
   var chip = null, chipTm = 0;
   function dropChip() { clearTimeout(chipTm); if (chip && chip.parentNode) chip.parentNode.removeChild(chip); chip = null; }
   function sheet(html) {
