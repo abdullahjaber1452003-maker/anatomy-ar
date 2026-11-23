@@ -412,7 +412,7 @@
           var kk = +b.getAttribute("data-k"), good = kk === q.a; if (good) ok++; else miss.push(q);
           [].forEach.call(el.querySelectorAll(".opt"), function (o) { var k2 = +o.getAttribute("data-k"); o.disabled = true; if (k2 === q.a) o.classList.add("ok"); else if (k2 === kk) o.classList.add("bad"); });
           var rx = el.querySelector(".rcx");
-          rx.innerHTML = '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>" +
+          rx.innerHTML = (!good ? '<p style="margin:0 0 6px;padding:6px 9px;border-radius:9px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.35);font-size:13px;font-weight:700">🔒 ' + esc(T("قفل الإتقان: انحفظ هالغلط لتعيدو بآخر الكويز وتثبّتو.", "Verrou : cette erreur sera à refaire à la fin.")) + '</p>' : '') + '<div class="expl' + (good ? "" : " w") + '">' + (good ? T("✅ صح! ", "✅ Juste ! ") : T("❌ الجواب: ", "❌ Réponse : ") + L[q.a] + " — ") + esc(q.x) + "</div>" +
             (!good && w.NursinWX ? w.NursinWX.html(q, kk, { skip: qs.map(function (z) { return z.id; }) }) : "");   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
           ret(id, good ? "ok" : "bad");
           try { var W = w.Weak; if (W && W.record) W.record(q, good); } catch (e1) {}

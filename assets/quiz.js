@@ -150,7 +150,7 @@
     try{document.dispatchEvent(new CustomEvent('nursin:answer',{detail:{qid:q.id,ok:ok,set:s.sel}}));}catch(e){}   // ⚠️ class + site counters (assets/qstats.js)
     refresh();
     var O=window.Osman,om=O?(ok?O.right():O.wrong()):'';   // 👨‍🏫 الأستاذ عثمان (assets/osman.js)
-    $('#fb').innerHTML='<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
+    $('#fb').innerHTML=(!ok&&!s.exam&&!s.challenge&&!s.cq?'<p style="margin:0 0 6px;padding:6px 9px;border-radius:9px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.35);font-size:13px;font-weight:700">🔒 قفل الإتقان: انضاف هالغلط لتعيدو بآخر الكويز وتثبّتو.</p>':'')+'<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
       (S&&sres&&S.tagHtml?S.tagHtml(sres):'');
     if(!ok&&window.NursinWX){var ex0=$('#fb .expl');if(ex0)ex0.insertAdjacentHTML('afterend',NursinWX.html(q,k,{skip:s.qs.map(function(z){return z.id;})}));}   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
     var whyOn=false;
@@ -244,6 +244,7 @@
     root.innerHTML=h;
     try{if(s.sel==='weak'&&W&&W.ran)W.ran();}catch(e){}
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:s.les||null,challenge:s.challenge||null,exam:s.exam||null,cq:s.cq||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}
+    var qr=$('#qretry');if(qr)qr.addEventListener('click',function(){state={sel:s.sel,les:s.les||'',qs:shuffle(s.wrong.slice()),i:0,score:0,wrong:[],grad:0};render();root.scrollIntoView({block:'start'});});
     var ag=$('#again');if(ag)ag.addEventListener('click',function(){start(s.sel,s.sel==='weak'?0:s.qs.length,true,s.les,true);});
     var tw=$('#toweak');if(tw)tw.addEventListener('click',function(){start('weak',0,true);});
   }

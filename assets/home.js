@@ -711,9 +711,18 @@
     }
     var brkH = brkHtml(dn, all, cur);
     var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:8px;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:12px 14px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
+    var prSt = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : { ok: true, mode: "trial", daysLeft: 3 };
+    var prLk = !prSt.ok;
+    var lrnU = "learn.html";
+    try { var r0 = w.NursinResume && w.NursinResume.get ? w.NursinResume.get() : null; if (r0 && r0.u) lrnU = "learn.html?u=" + encodeURIComponent(r0.done && r0.nx ? r0.nx.u : r0.u); } catch (e) {}
+    var prTag = prSt.mode === "trial" ? "<span class='protag'>PRO · تجربة " + prSt.daysLeft + " أيام</span>" : prLk ? "<span class='protag'>🔒 PRO</span>" : "<span class='protag free'>PRO ✓</span>";
+    var proStrip = '<div class="progrid">' +
+      '<a class="procard' + (prLk ? ' lk' : '') + '" href="' + esc(lrnU) + '" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("وضع التعلّم", "Mode apprentissage") + ' ' + prTag + '</b><small>' + T("درس فقرة فقرة + 🔒 قفل الإتقان + بسّطلي", "Paragraphe par paragraphe + verrou") + '</small></span></a>' +
+      '<a class="procard' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان ومصحّح /20", "Plan examen + correcteur /20") + ' ' + prTag + '</b><small>' + T("جاهزيتك + تصحيح كتابي رسمي بالصوت", "Préparation + correction écrite /20") + '</small></span></a>' +
+      '</div>';
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
-      fxH + qbtn + brkH +
+      proStrip + fxH + qbtn + brkH +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
@@ -774,9 +783,10 @@
     /* 🎬 30s (Abdullah, Nov 8 2026 1:36 PM: «بدي بدل كلمة الكل تنحط المواد يعني فوق يكون فيه بس المواد و الخرائط الذهنية وتحت بدل المواد بينحط الreels»):
        the chip row is ONLY «📚 المواد» (opens the subjects sheet, what the old bottom-nav «المواد» did — [data-hz="learn"] in assets/ui.js) and
        «🗺️ الخرائط الذهنية». «الكل» and the per-subject chips are gone from this row; the subjects stay one tap away under «📚 المواد». */
+    var pb = (w.NursinPro && w.NursinPro.barHtml) ? w.NursinPro.barHtml() : "";
     return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="learn">📚 ' + T("المواد", "Matières") + "</button>" +
       '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +
-      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + podCard();
+      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + pb + podCard();
   }
   /* 💬 31c «نقاش»: يبقى الزر فوق بدون إشعار تحته، ومكانه تحت الأزرار وفوق المستشفى/المسار بتنحط بطاقة 🎙️ بودكاست اليوم. */
   function dsNew() { var s = null; try { s = JSON.parse(localStorage.getItem("nursin_discuss_v1") || "null"); } catch (e) {} return !(s && s.visited) && Date.now() < Date.parse("2026-11-22T00:00:00Z"); }
@@ -842,6 +852,10 @@
   function stepClick(e) {
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
+    if ((b = t.closest("[data-hzprogo]"))) {
+      if (w.NursinPro && !w.NursinPro.guard(b.getAttribute("data-hzprogo"))) { e.preventDefault(); return; }
+      return;
+    }
     if ((b = t.closest("[data-hzexfocus]"))) { lsSet("nursin_exfocus_off_v1", b.getAttribute("data-hzexfocus") === "off" ? { d: today() } : null); draw(); return; }
     if ((b = t.closest("[data-hzcramqz]"))) { openSheet("quiz.html?t=mid&s=cram", "mid:" + today(), T("⚡ كويز شامل للامتحان", "⚡ Quiz complet de l'examen")); return; }
     if ((b = t.closest("[data-hzcramles]"))) { var hr = b.getAttribute("data-hzcramles") || "", tt = b.getAttribute("data-hzcramttl") || ""; openSheet("learn.html?u=" + encodeURIComponent(hr), "cram:" + hr, "📖 " + esc(tt)); return; }
@@ -1069,7 +1083,7 @@
     setInterval(brkTick, 1000);
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast", "nursin:pro"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });
