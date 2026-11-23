@@ -633,10 +633,59 @@
     if (page === "games.html") setTimeout(function () { useMark("games"); }, 20000);   // 20 s on the games page counts as playing
     (function wrapCase(n) { var R = w.Retain; if (R && R.openCase && !R.openCase.__use) { var o = R.openCase; R.openCase = function () { useMark("cases"); return o.apply(this, arguments); }; R.openCase.__use = 1; } else if (n < 20) setTimeout(function () { wrapCase(n + 1); }, 500); })(0);
   }
+  /* 🔤 Site-wide BiDi auto-fixer: isolates French terms, parenthetical Latin phrases, and medical units/ratios in Arabic text so RTL never scrambles word order */
+  var BIDI_SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION|CODE|PRE|SVG|BDI|NOSCRIPT|IFRAME)$/;
+  var BIDI_RE = /\([^()\u0600-\u06FF]*[A-Za-z\u00C0-\u024F][^()\u0600-\u06FF]*\)|(?:[<>≤≥±]\s*)?[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9'’\-\/\+\.]*(?:(?:\s+|[:\/\-–+,]\s*)[A-Za-z\u00C0-\u024F0-9%°≤≥<>±\+\-\/\.]+)*|[<>≤≥±]\s*\d+(?:[.,\/]\d+)?(?:\s*%|\s*mmHg|\s*bpm|\s*°C)?/g;
+  function bidiFixNode(root) {
+    if (!root || !d.createTreeWalker) return;
+    if (d.documentElement && d.documentElement.getAttribute("lang") === "fr") return;
+    var tw = d.createTreeWalker(root, 4, null, false), nodes = [], n;
+    while ((n = tw.nextNode())) {
+      var p = n.parentNode;
+      if (!p || p.nodeType !== 1 || BIDI_SKIP.test(p.tagName) || (p.closest && p.closest("bdi,.bdl,script,style,textarea,input,code,pre,svg,[data-nobidi],[contenteditable]"))) continue;
+      var s = n.nodeValue;
+      if (!s || s.length < 3 || !/[\u0600-\u06FF]/.test(s) || !/[A-Za-z\u00C0-\u024F<>≤≥±]/.test(s)) continue;
+      nodes.push(n);
+    }
+    for (var i = 0; i < nodes.length; i++) {
+      var tn = nodes[i], txt = tn.nodeValue;
+      if (!tn.parentNode) continue;
+      BIDI_RE.lastIndex = 0;
+      var frag = d.createDocumentFragment(), at = 0, m, changed = false;
+      while ((m = BIDI_RE.exec(txt))) {
+        var raw = m[0], trimEnd = raw.replace(/[\s,.:;،؛؟!]+$/, ""), idx = m.index;
+        if (!trimEnd || trimEnd.length < 2) { if (!m[0].length) BIDI_RE.lastIndex++; continue; }
+        if (idx > at) frag.appendChild(d.createTextNode(txt.slice(at, idx)));
+        var b = d.createElement("bdi"); b.dir = "ltr"; b.className = "bdl"; b.textContent = trimEnd;
+        frag.appendChild(b);
+        at = idx + trimEnd.length;
+        changed = true;
+      }
+      if (changed) {
+        if (at < txt.length) frag.appendChild(d.createTextNode(txt.slice(at)));
+        tn.parentNode.replaceChild(frag, tn);
+      }
+    }
+  }
+  function bidiBoot() {
+    try { bidiFixNode(d.body); } catch (e) {}
+    var bt = 0;
+    try {
+      new MutationObserver(function (ms) {
+        for (var i = 0; i < ms.length; i++) {
+          if (ms[i].addedNodes && ms[i].addedNodes.length) {
+            clearTimeout(bt);
+            bt = setTimeout(function () { try { bidiFixNode(d.body); } catch (e) {} }, 180);
+            return;
+          }
+        }
+      }).observe(d.body, { childList: true, subtree: true });
+    } catch (e) {}
+  }
   w.NursinUI = { ALL: ALL, PAGES: PAGES, info: info, open: openAll, groupOf: groupOf, menuState: menuState, allHtml: allHtml, toggleGroup: toggleGroup, openSheet: openSheet, close: closeSheet, drag: drag, picker: picker, act: act,
     setAvatar: setAvatar, avUrl: avUrl, avHtml: avHtml, myAvatar: myAvatar, AKEY: AK, AVN: AVN, shrink: shrink, pull: pull, fcHref: fcHref,
     lessonsNow: lessonsNow, lastNow: lastNow, lastLes: lastLes, caseLes: caseLes, blobTo: blobTo, navCur: navCur, navHome: navHome, focusMode: focusMode,
-    busyRound: busyRound, isOpen: function () { return !!sh; }, page: page, use: useMark, usage: useGet, UKEY: UK };
+    busyRound: busyRound, isOpen: function () { return !!sh; }, page: page, use: useMark, usage: useGet, UKEY: UK, bidiFix: bidiFixNode };
   if (!d || !d.getElementById) return;
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); }); else setTimeout(init, 0);
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); setTimeout(bidiBoot, 120); }); else { setTimeout(init, 0); setTimeout(bidiBoot, 120); }
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

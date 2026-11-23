@@ -1,6 +1,7 @@
 (function (w, d) {
   "use strict";
   var K = "nursin_pro_v1", TK = "nursin_pro_trial_v1", PK = "nursin_pro_preview_v1";
+  var UK = "nursin_pro_used_v1", NK = "nursin_pro_notif_v1", EVK = "nursin_eve_rem_v1", NDK = "nursin_pro_nudge_v1";
   var OWNER = "abdullahjaber1452003@gmail.com";
   var TRIAL_DAYS = 3, TRIAL_MS = TRIAL_DAYS * 864e5;
   var WHISH_NUM = "79 117 048", WHISH_RAW = "79117048", WA_NUM = "96179117048";
@@ -9,6 +10,14 @@
   function lsSet(k, v) { try { w.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function emit() { try { d.dispatchEvent(new CustomEvent("nursin:pro")); } catch (e) {} }
+  function todayB() {
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+    catch (e) { return new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10); }
+  }
+  function hourB() {
+    try { return +new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Beirut", hour: "numeric", hour12: false }).format(new Date()) % 24; }
+    catch (e) { return new Date().getHours(); }
+  }
 
   function isRealAdmin() {
     try {
@@ -42,30 +51,40 @@
   }
 
   function status() {
-    if (isAdmin()) return { ok: true, mode: "admin", daysLeft: 999, hoursLeft: 999 };
+    if (isAdmin()) return { ok: true, mode: "admin", daysLeft: 999, hoursLeft: 999, elapsedHours: 0 };
     var pm = previewMode();
-    if (pm === "expired") return { ok: false, mode: "expired", daysLeft: 0, hoursLeft: 0 };
-    if (pm === "trial") return { ok: true, mode: "trial", daysLeft: 2, hoursLeft: 48 };
+    if (pm === "expired") return { ok: false, mode: "expired", daysLeft: 0, hoursLeft: 0, elapsedHours: 73 };
+    if (pm === "trial") return { ok: true, mode: "trial", daysLeft: 1, hoursLeft: 9, elapsedHours: 63 };
     var p = lsGet(K);
     if (p && p.exp > Date.now()) {
       var dLeft = Math.max(1, Math.ceil((p.exp - Date.now()) / 864e5));
-      return { ok: true, mode: "pro", daysLeft: dLeft, hoursLeft: dLeft * 24 };
+      return { ok: true, mode: "pro", daysLeft: dLeft, hoursLeft: dLeft * 24, elapsedHours: 0 };
     }
     var tr = ensureTrial();
     var left = (tr.start + TRIAL_MS) - Date.now();
+    var elap = Math.max(0, Math.floor((Date.now() - tr.start) / 36e5));
     if (left > 0) {
       return {
         ok: true,
         mode: "trial",
         daysLeft: Math.max(1, Math.ceil(left / 864e5)),
-        hoursLeft: Math.max(1, Math.ceil(left / 36e5))
+        hoursLeft: Math.max(1, Math.ceil(left / 36e5)),
+        elapsedHours: elap
       };
     }
-    return { ok: false, mode: "expired", daysLeft: 0, hoursLeft: 0 };
+    return { ok: false, mode: "expired", daysLeft: 0, hoursLeft: 0, elapsedHours: 73 };
   }
 
   function canUse() { return status().ok; }
   function isPro() { return canUse(); }
+
+  function markUsed(key) {
+    if (!key) return;
+    var u = lsGet(UK) || {};
+    u[key] = (u[key] | 0) + 1;
+    lsSet(UK, u);
+  }
+  function usedStats() { return lsGet(UK) || {}; }
 
   function checkCode(c) {
     c = String(c || "").trim().toUpperCase();
@@ -84,8 +103,11 @@
     return "NURSIN-" + num + "-" + suf;
   }
 
-  function guard(featureName) {
-    if (canUse()) return true;
+  function guard(featureName, trackKey) {
+    if (canUse()) {
+      if (trackKey) markUsed(trackKey);
+      return true;
+    }
     open(featureName || "ميزة Pro");
     return false;
   }
@@ -114,9 +136,39 @@
       ".procard .pe{font-size:22px;line-height:1}.procard b{display:block;font-size:14px;line-height:1.3}.procard small{display:block;font-size:12px;opacity:.8;margin-top:2px}" +
       ".procard.lk{border-color:rgba(220,38,38,.35);opacity:.92}" +
       ".prolockbox{background:var(--card,#fff);border:1px solid rgba(245,158,11,.45);border-radius:16px;padding:18px;text-align:center;margin:12px 0}" +
-      ".probadge{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:700;font-size:13px;border:0;cursor:pointer;margin:6px 0}" +
-      ".probadge.adm{background:linear-gradient(135deg,#0f766e,#0d9488)}";
+      ".protoast{position:fixed;left:12px;right:12px;bottom:84px;z-index:96;max-width:440px;margin:0 auto;background:var(--card,#fff);color:var(--ink,#0f172a);border:1.5px solid rgba(245,158,11,.6);border-radius:16px;padding:12px 14px;box-shadow:0 10px 28px rgba(0,0,0,.22);font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:8px}" +
+      ".protoast .ptx{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.protoast .ptc{border:0;background:none;font-size:18px;cursor:pointer;color:inherit;opacity:.7;padding:0 4px}" +
+      ".protoast .pta{display:flex;flex-wrap:wrap;gap:6px}";
     (d.head || d.body).appendChild(s);
+  }
+
+  function showToast(title, body, ctaText, ctaFn) {
+    css();
+    var old = d.querySelector(".protoast"); if (old) old.remove();
+    var t = d.createElement("div"); t.className = "protoast"; t.setAttribute("role", "status");
+    t.innerHTML = "<div class='ptx'><div><b>" + esc(title) + "</b><div class='small' style='margin-top:2px'>" + esc(body) + "</div></div><button type='button' class='ptc' aria-label='سكّر'>✕</button></div>" +
+      (ctaText ? "<div class='pta'><button type='button' class='btn sm pri ptgo'>" + esc(ctaText) + "</button><button type='button' class='btn sm ptno'>لاحقاً</button></div>" : "");
+    d.body.appendChild(t);
+    var kill = function () { if (t.parentNode) t.parentNode.removeChild(t); };
+    t.querySelector(".ptc").onclick = kill;
+    var no = t.querySelector(".ptno"); if (no) no.onclick = kill;
+    var go = t.querySelector(".ptgo"); if (go) go.onclick = function () { kill(); if (ctaFn) ctaFn(); };
+    setTimeout(kill, 14000);
+  }
+
+  function pushLocalNotif(title, body) {
+    try {
+      if (w.Notification && Notification.permission === "granted") {
+        new Notification(title, { body: body, tag: "nursin-pro-trial", dir: "rtl", lang: "ar" });
+      }
+    } catch (e) {}
+  }
+
+  function masteredCount() {
+    var n = 0;
+    try { var pq = lsGet("nursin_partq_v1") || {}; n += Object.keys(pq).length; } catch (e) {}
+    try { var rd = lsGet("nursin_read_v1") || {}; n = Math.max(n, Object.keys(rd).length); } catch (e) {}
+    return n;
   }
 
   function barHtml() {
@@ -126,13 +178,75 @@
       return "<button type='button' class='probar adm' data-proopen><div><b>👑 أدمن · Pro مفعّل تلقائياً ✓</b><small>ولّد كود اشتراك لطالب أو جرّب معاينة الطالب</small></div><span class='protag free'>لوحة الأدمن</span></button>";
     }
     if (st.mode === "pro") {
-      return "<button type='button' class='probar adm' data-proopen><div><b>⭐ اشتراكك Pro مفعّل ✓</b><small>باقي " + st.daysLeft + " يوم · كل الميزات مفتوحة</small></div><span class='protag free'>PRO ✓</span></button>";
+      return "<button type='button' class='probar adm' data-proopen><div><b>⭐ اشتراكك Pro مفعّل ✓</b><small>باقي " + st.daysLeft + " يوم · كل الميزات مفتوحة إلك</small></div><span class='protag free'>PRO ✓</span></button>";
     }
     if (st.mode === "trial") {
-      var dTxt = st.daysLeft === 1 ? "باقي أقل من يوم" : "باقي " + st.daysLeft + " أيام";
-      return "<button type='button' class='probar' data-proopen><div><b>🎁 تجربة Pro المجانية شغّالة (" + dTxt + ")</b><small>" + (rAdm && pm ? "👁️ معاينة كطالب · " : "") + "جرّب وضع التعلّم والمصحّح ومحاكي المريض · بعدها $4/شهر عبر Whish</small></div><span class='protag'>فعّل Pro</span></button>";
+      var urgent = st.hoursLeft <= 12;
+      var tTxt = st.hoursLeft <= 24 ? ("⏳ باقي " + st.hoursLeft + (st.hoursLeft <= 10 ? " ساعات" : " ساعة") + " بس!") : ("باقي " + st.daysLeft + " أيام مجاناً");
+      return "<button type='button' class='probar" + (urgent ? " exp" : "") + "' data-proopen><div><b>" + (urgent ? "🔥 آخر ساعات بالتجربة المجانية (" + tTxt + ")" : "🎁 تجربة Pro المجانية شغّالة (" + tTxt + ")") + "</b><small>" + (rAdm && pm ? "👁️ معاينة كطالب · " : "") + "جرّب وضع التعلّم، خطة عثمان اليومية، ومصحّح /20 قبل ما تقفل · بعدها $4/شهر</small></div><span class='protag'>فعّل Pro</span></button>";
     }
-    return "<button type='button' class='probar exp' data-proopen><div><b>🔒 خلصت التجربة المجانية (٣ أيام)</b><small>" + (rAdm && pm ? "👁️ معاينة كطالب · " : "") + "فعّل Pro بـ $4/شهر عبر Whish Money لتكمل وضع التعلّم والمصحّح</small></div><span class='protag'>$4 / شهر</span></button>";
+    return "<button type='button' class='probar exp' data-proopen><div><b>🔒 خلصت التجربة المجانية (٣ أيام)</b><small>" + (rAdm && pm ? "👁️ معاينة كطالب · " : "") + "فعّل Pro بـ $4/شهر عبر Whish Money لتكمل وضع التعلّم وخطة عثمان والمصحّح</small></div><span class='protag'>$4 / شهر</span></button>";
+  }
+
+  function nudge(msg) {
+    var st = status();
+    if (st.mode !== "trial") return;
+    var dk = todayB();
+    if (lsGet(NDK) === dk) return;
+    lsSet(NDK, dk);
+    var leftTxt = st.hoursLeft <= 24 ? ("باقي " + st.hoursLeft + " ساعة") : ("باقي " + st.daysLeft + " أيام");
+    showToast("🔥 برافو! شفت قديش أسرع مع Pro؟", (msg || "عم تثبّت الدروس بسرعة") + " · " + leftTxt + " بالتجربة المجانية.", "⭐ شوف تفاصيل Pro", function () { open(); });
+  }
+
+  function checkNotifications() {
+    var st = status(), dk = todayB();
+    // 1) 3-stage Trial reminders (Day 1, Day 2, Last 12 hours)
+    if (st.mode === "trial") {
+      var seen = lsGet(NK) || {}, stage = "", title = "", body = "";
+      if (st.hoursLeft <= 12 && !seen.s3) {
+        stage = "s3";
+        var mc = masteredCount();
+        title = "⏳ باقي " + st.hoursLeft + " ساعات عانتهاء تجربة Pro!";
+        body = (mc > 0 ? "أنجزت " + mc + " أجزاء لحد هلق 🔥 " : "") + "لا تخسر وضع التعلّم، خطة عثمان اليومية، ومصحّح الكتابي /20 ($4/شهر عبر Whish).";
+      } else if (st.elapsedHours >= 24 && !seen.s2) {
+        stage = "s2";
+        var u = usedStats(), miss = [];
+        if (!u.learn) miss.push("وضع التعلّم");
+        if (!u.exam) miss.push("مصحّح الكتابي /20");
+        if (!u.case) miss.push("محاكي المريض /10");
+        title = "⏳ باقيلك أقل من يومين بتجربة Pro المجانية";
+        body = miss.length ? ("في أشياء قوية بعد ما جرّبتها: " + miss.slice(0, 2).join(" و") + " — جرّبن قبل ما تقفل التجربة!") : "استغل باقي التجربة المجانية وخلّص أكبر عدد من الدروس!";
+      } else if (!seen.s1) {
+        stage = "s1";
+        title = "🎁 انفتحتلك ٣ أيام Pro مجاناً!";
+        body = "جرّب وضع التعلّم فقرة فقرة، خطة عثمان اليومية، ومصحّح الكتابي /20 — بعد ٣ أيام بتصير $4/شهر.";
+      }
+      if (stage) {
+        seen[stage] = Date.now(); lsSet(NK, seen);
+        setTimeout(function () {
+          showToast(title, body, stage === "s3" ? "⭐ فعّل Pro ($4)" : "📖 جرّب وضع التعلّم", function () {
+            if (stage === "s3") open(); else w.location.href = "learn.html";
+          });
+          pushLocalNotif(title, body);
+        }, 2500);
+        return;
+      }
+    }
+    // 2) Evening Osman gentle study reminder (7 PM - 11:30 PM Beirut, if not studied yet today)
+    var hr = hourB();
+    if (hr >= 19 && hr <= 23 && lsGet(EVK) !== dk) {
+      var stAct = lsGet("nursin_stact_v1"), studiedMins = stAct && stAct.d === dk ? Math.floor(Math.max(stAct.s | 0, stAct.r | 0) / 60) : 0;
+      if (studiedMins < 5) {
+        lsSet(EVK, dk);
+        var wk = 0; try { wk = w.Weak && w.Weak.count ? w.Weak.count() : 0; } catch (e) {}
+        var et = "👨‍🏫 الأستاذ عثمان عم يذكّرك قبل النوم";
+        var eb = wk > 0 ? ("عندك " + wk + " غلطات ناطرينك — ٥ دقايق بس بتثبّتن وبتحافظ عسلسلتك 🔥") : "٥ دقايق دراسة خفيفة اليوم بتخليك سابق الصف وبتحافظ عسلسلتك 🔥";
+        setTimeout(function () {
+          showToast(et, eb, "⚡ تحدّي ٥ دقايق", function () { w.location.href = wk > 0 ? "quiz.html?t=weak&n=5" : "learn.html"; });
+          pushLocalNotif(et, eb);
+        }, 4500);
+      }
+    }
   }
 
   function open(featureName) {
@@ -151,7 +265,7 @@
         "<p class='small' style='margin:0 0 6px'>👁️ <b>معاينة كطالب</b> (لتشوف كيف بتبين التجربة والقفل للطلاب):</p>" +
         "<div style='display:flex;flex-wrap:wrap;gap:6px'>" +
         "<button type='button' class='btn sm" + (!pm ? " pri" : "") + "' data-propm=''>👑 وضع الأدمن</button>" +
-        "<button type='button' class='btn sm" + (pm === "trial" ? " pri" : "") + "' data-propm='trial'>🎁 طالب (تجربة)</button>" +
+        "<button type='button' class='btn sm" + (pm === "trial" ? " pri" : "") + "' data-propm='trial'>🎁 طالب (آخر ساعات)</button>" +
         "<button type='button' class='btn sm" + (pm === "expired" ? " pri" : "") + "' data-propm='expired'>🔒 طالب (خلصت التجربة)</button>" +
         "</div></div>"
       : "";
@@ -165,6 +279,7 @@
       "<p class='small' style='margin:0 0 6px'>كل طالب بيقدر يجرّب ميزات Pro <b>٣ أيام مجاناً</b>، وبعدها الاشتراك <b>$4/شهر</b>:</p>" +
       "<ul>" +
       "<li>📖 <b>وضع التعلّم + 🔒 قفل الإتقان</b> فقرة فقرة لكل المواد</li>" +
+      "<li>👨‍🏫 <b>خطة عثمان اليومية</b> بتقسملك كل المواد والدروس الجديدة يوم بيوم</li>" +
       "<li>🧑‍🏫 <b>بسّطلي هالفقرة</b> + 🩺 <b>محاكي المريض الحيّ (/10)</b></li>" +
       "<li>📅 <b>خطة ليلة الامتحان</b> + ✍️ <b>مصحّح الكتابي الرسمي (/20)</b></li>" +
       "</ul>" +
@@ -221,13 +336,8 @@
 
   function paint() {
     css();
-    // On index.html (#hz exists), home.js renders barHtml() cleanly inside #hz.
-    // Remove any fallback #prohome if #hz exists.
     var old = d.getElementById("prohome");
-    if (d.getElementById("hz")) {
-      if (old && old.parentNode) old.parentNode.removeChild(old);
-      return;
-    }
+    if (d.getElementById("hz") && old && old.parentNode) old.parentNode.removeChild(old);
   }
 
   d.addEventListener("click", function (e) {
@@ -242,6 +352,8 @@
     canUse: canUse,
     status: status,
     guard: guard,
+    markUsed: markUsed,
+    nudge: nudge,
     open: open,
     barHtml: barHtml,
     checkCode: checkCode,
@@ -253,6 +365,7 @@
   ["nursin:auth", "nursin:me"].forEach(function (ev) {
     d.addEventListener(ev, function () { setTimeout(function () { paint(); emit(); }, 100); });
   });
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", paint); else paint();
+  function boot() { paint(); checkNotifications(); }
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
   setTimeout(function () { paint(); emit(); }, 1200);
 })(window, document);

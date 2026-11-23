@@ -710,7 +710,7 @@
       fxH = '<div style="margin:4px 0 6px;text-align:start"><button type="button" class="btn sm" data-hzexfocus="on">🎯 ' + T("تفعيل وضع التركيز للامتحان", "Activer le mode examen") + "</button></div>";
     }
     var brkH = brkHtml(dn, all, cur);
-    var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:8px;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم (١٠ دقائق)", "▶ Commencer l'étude du jour (10 min)") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:12px 14px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
+    var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;min-width:170px;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم", "▶ Commencer l'étude") + '</button><button type="button" class="btn" data-hz5min style="padding:11px 12px;border-radius:14px;white-space:nowrap;font-weight:700">⚡ ' + T("تحدّي ٥ د", "Défi 5 min") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:11px 12px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
     var prSt = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : { ok: true, mode: "trial", daysLeft: 3 };
     var prLk = !prSt.ok;
     var lrnU = "learn.html";
@@ -720,9 +720,11 @@
       '<a class="procard' + (prLk ? ' lk' : '') + '" href="' + esc(lrnU) + '" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("وضع التعلّم", "Mode apprentissage") + ' ' + prTag + '</b><small>' + T("درس فقرة فقرة + 🔒 قفل الإتقان + بسّطلي", "Paragraphe par paragraphe + verrou") + '</small></span></a>' +
       '<a class="procard' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان ومصحّح /20", "Plan examen + correcteur /20") + ' ' + prTag + '</b><small>' + T("جاهزيتك + تصحيح كتابي رسمي بالصوت", "Préparation + correction écrite /20") + '</small></span></a>' +
       '</div>';
+    var rdH = readinessHtml();
+    var plH = (w.NursinPlanner && w.NursinPlanner.homeHtml) ? w.NursinPlanner.homeHtml() : "";
     var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
       '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
-      proStrip + fxH + qbtn + brkH +
+      rdH + proStrip + plH + fxH + qbtn + brkH +
       '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
@@ -771,11 +773,36 @@
     return s;
   }
   var root = null;
+  function shieldCount() {
+    var st = streak(), sh = lsGet("nursin_shield_v1") || { n: 0, lastAt: 0 };
+    if (st >= 5 && Math.floor(st / 5) > (sh.lastAt | 0)) {
+      sh.n = Math.min(2, (sh.n | 0) + 1); sh.lastAt = Math.floor(st / 5); lsSet("nursin_shield_v1", sh);
+    }
+    return sh.n | 0;
+  }
+  function readinessHtml() {
+    var NL = w.NLESSONS || {}, P = NL.parts || [], LS = w.NursinLessons, rm = LS && LS.readMap ? LS.readMap() : (lsGet("nursin_read_v1") || {});
+    var pq = lsGet("nursin_partq_v1") || {}, tot = P.length || 1, dn = 0, wkDn = 0, wkCut = Date.now() - 7 * 864e5;
+    for (var i = 0; i < P.length; i++) {
+      var k = LS && LS.key ? LS.key(P[i]) : (P[i].s + ":" + (P[i].l || P[i].t) + (P[i].p ? "#" + P[i].p : ""));
+      var rOk = LS && LS.isRead ? LS.isRead(P[i], rm) : !!rm[k];
+      if (rOk || pq[k]) {
+        dn++;
+        var ts = +rm[k] || (pq[k] && +pq[k].t) || 0;
+        if (ts > wkCut) wkDn++;
+      }
+    }
+    var pct = Math.round(100 * dn / tot), goal = Math.min(100, pct + 5);
+    return '<div style="margin:6px 0 8px;padding:10px 12px;border-radius:14px;background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.25)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px"><b>📊 ' + T("جاهزيتك للامتحان الرسمي: ", "Préparation examen : ") + '<span dir="ltr">' + pct + '%</span></b><small style="font-weight:700">' + T("الهدف اليوم: ", "Objectif : ") + '<span dir="ltr">' + goal + '%</span> · 🏆 ' + wkDn + T(" هالأسبوع", " cette sem.") + '</small></div>' +
+      '<div style="height:8px;border-radius:99px;background:rgba(127,127,127,.2);overflow:hidden;margin-top:6px"><i style="display:block;height:100%;width:' + Math.max(3, pct) + '%;background:linear-gradient(90deg,#0f766e,#16a34a);border-radius:99px"></i></div></div>';
+  }
   function headHtml() {
     var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));       // assets/announce.js: «on» = unread
+    var shN = shieldCount();
     return '<div class="hzhd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
       '<div class="t"><small>' + greet(hourB()) + "</small><b>" + (nm ? "<bdi>" + esc(nm) + "</bdi> 👋" : T("يا بطل 👋", "champion 👋")) + "</b></div>" +
-      '<a class="hzpill glass" href="me.html" aria-label="' + T("السلسلة: ", "Série : ") + streak() + T(" يوم", " jour(s)") + '"><span aria-hidden="true">🔥</span>' + streak() + "</a>" +
+      '<a class="hzpill glass" href="me.html" title="' + T("سلسلة الدراسة" + (shN ? " + درع حماية (" + shN + ")" : " (كل ٥ أيام بتربح درع 🛡️)"), "Série") + '" aria-label="' + T("السلسلة: ", "Série : ") + streak() + T(" يوم", " jour(s)") + '"><span aria-hidden="true">🔥</span>' + streak() + (shN ? ' · 🛡️' + shN : '') + "</a>" +
       (bell ? '<button class="hzcb glass" type="button" data-hz="bell" aria-label="' + T("الإعلانات", "Annonces") + '"><span aria-hidden="true">🔔</span>' + (dot ? '<span class="dot"></span>' : "") + "</button>" : "") + "</div>" +
       '<button class="hzsrch glass" type="button" data-hz="search"><span class="e" aria-hidden="true">🔍</span><span class="ph">' + T("دوّر على درس، سؤال، دوا…", "Cherche une leçon, une question, un médicament…") + "</span></button>";
   }
@@ -853,7 +880,18 @@
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
     if ((b = t.closest("[data-hzprogo]"))) {
-      if (w.NursinPro && !w.NursinPro.guard(b.getAttribute("data-hzprogo"))) { e.preventDefault(); return; }
+      var fName = b.getAttribute("data-hzprogo");
+      var tKey = fName && fName.indexOf("التعلّم") > -1 ? "learn" : "exam";
+      if (w.NursinPro && !w.NursinPro.guard(fName, tKey)) { e.preventDefault(); return; }
+      return;
+    }
+    if ((b = t.closest("[data-hz5min]"))) {
+      var wkC = wqNow();
+      if (wkC > 0) { openSheet("quiz.html?t=weak&n=5", "wq:" + today(), T("⚡ تحدّي ٥ دقايق (نقاط ضعفك)", "⚡ Défi 5 min")); return; }
+      var pl5 = w.NursinPlanner && w.NursinPlanner.buildWeek ? w.NursinPlanner.buildWeek() : null;
+      var fIt = pl5 && pl5.days[0] && pl5.days[0].items[0];
+      if (fIt && (!w.NursinPro || w.NursinPro.canUse())) { openSheet("learn.html?u=" + encodeURIComponent(fIt.href), "fast:" + fIt.key, "⚡ " + esc(fIt.n)); return; }
+      openSheet("quiz.html?n=5", "qall:" + today(), T("⚡ تحدّي ٥ دقايق", "⚡ Défi 5 min"));
       return;
     }
     if ((b = t.closest("[data-hzexfocus]"))) { lsSet("nursin_exfocus_off_v1", b.getAttribute("data-hzexfocus") === "off" ? { d: today() } : null); draw(); return; }
@@ -1083,7 +1121,7 @@
     setInterval(brkTick, 1000);
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast", "nursin:pro"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast", "nursin:pro", "nursin:planner"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });

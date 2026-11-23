@@ -1344,3 +1344,7 @@ html[data-theme=night] #caddmsg.err{color:#e5938a}
 
 /* 📌 29j «أنا» → التذكيرات: one switch per kind (assets/remind.js #merem) */
 .merem h2{font-size:18px;margin:0 0 8px}.remsw{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(127,127,127,.18);cursor:pointer}.remsw input{width:20px;height:20px;flex:0 0 auto}
+
+/* 🔤 BiDi isolation so Arabic + French medical terms, parentheses & units never scramble in RTL */
+bdi,.bdl,[lang="fr"]{unicode-bidi:isolate}
+.bdl{direction:ltr;unicode-bidi:isolate;display:inline}
