@@ -422,6 +422,6 @@
       put(U, S); progress(); draw();
       try { d.documentElement.classList.add("lnready"); } catch (e) {}
     });
-  }
-  }catch(err){if(root)root.innerHTML='<p class=lnerr>⚠️ '+err.message+'</p>';}}if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
+  }catch(err){if(root)root.innerHTML='<p class=lnerr>⚠️ '+err.message+'</p>';}}
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);
