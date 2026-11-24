@@ -27,22 +27,43 @@ OUT_DIR = ROOT / "assets" / "reels-audio"
 
 GEMINI_MODEL_DEFAULT = "gemini-2.5-flash-preview-tts"
 GEMINI_SAMPLE_RATE = 24000
-VOICE_SARA = "Aoede"   # Warm, natural young female voice
-VOICE_OSMAN = "Orus"   # Warm, calm male mentor voice
+VOICE_SARA = "Aoede"    # Warm, natural young female voice
+VOICE_OSMAN = "Orus"    # Warm, calm male mentor voice
+VOICE_KARIM = "Puck"    # Energetic young Lebanese male nursing student voice
+
+SPEAKER_META = {
+    "s": ("Sara", VOICE_SARA, "Sara is a friendly young Lebanese female nurse"),
+    "o": ("Osman", VOICE_OSMAN, "Osman is a warm, calm Lebanese male nursing mentor"),
+    "k": ("Karim", VOICE_KARIM, "Karim is an enthusiastic young Lebanese male nursing student"),
+}
 
 
 def gemini_multispeaker_pcm(story: dict, api_key: str, model: str) -> bytes:
     """Generate an entire 2-speaker Reel dialogue in ONE single Gemini TTS API call."""
+    used_codes = []
     lines_txt = []
     for sc in story.get("scenes", []):
         for ln in sc.get("lines", []):
-            sp = "Sara" if ln["sp"] == "s" else "Osman"
-            lines_txt.append(f"{sp}: {ln['tx']}")
+            code = ln.get("sp", "o")
+            if code not in SPEAKER_META:
+                code = "o"
+            if code not in used_codes:
+                used_codes.append(code)
+            sp_name = SPEAKER_META[code][0]
+            lines_txt.append(f"{sp_name}: {ln['tx']}")
+
+    if len(used_codes) < 2:
+        used_codes = ["s", "o"]
+    used_codes = used_codes[:2]
+    desc = "; ".join(SPEAKER_META[c][2] for c in used_codes)
+    spk_cfgs = [
+        {"speaker": SPEAKER_META[c][0], "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": SPEAKER_META[c][1]}}}
+        for c in used_codes
+    ]
 
     prompt = (
         "Read the following two-speaker nursing dialogue naturally in warm, everyday conversational Lebanese Arabic "
-        "(اللهجة اللبنانية الطبيعية اليومية). Sara is a friendly young Lebanese female nurse; Osman is a warm, calm "
-        "Lebanese male nursing mentor. Use natural human pacing, gentle emotion, natural pauses between turns, and clear "
+        f"(اللهجة اللبنانية الطبيعية اليومية). {desc}. Use natural human pacing, gentle emotion, natural pauses between turns, and clear "
         "pronunciation of French/medical terms. Read ONLY the dialogue lines below without adding anything:\n\n"
         + "\n".join(lines_txt)
     )
@@ -55,16 +76,7 @@ def gemini_multispeaker_pcm(story: dict, api_key: str, model: str) -> bytes:
             "responseModalities": ["AUDIO"],
             "speechConfig": {
                 "multiSpeakerVoiceConfig": {
-                    "speakerVoiceConfigs": [
-                        {
-                            "speaker": "Sara",
-                            "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE_SARA}},
-                        },
-                        {
-                            "speaker": "Osman",
-                            "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE_OSMAN}},
-                        },
-                    ]
+                    "speakerVoiceConfigs": spk_cfgs
                 }
             },
         },
