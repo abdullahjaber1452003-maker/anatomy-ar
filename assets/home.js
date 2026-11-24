@@ -787,17 +787,7 @@
   }
   function readinessHtml() {
     var NL = w.NLESSONS || {}, P = NL.parts || [], LS = w.NursinLessons, rm = LS && LS.readMap ? LS.readMap() : (lsGet("nursin_read_v1") || {});
-    var pq = lsGet("nursin_partq_v1") || {}, tot = P.length || 1, dn = 0, wkDn = 0, wkCut = Date.now() - 7 * 864e5;
-    for (var i = 0; i < P.length; i++) {
-      var k = LS && LS.key ? LS.key(P[i]) : (P[i].s + ":" + (P[i].l || P[i].t) + (P[i].p ? "#" + P[i].p : ""));
-      var rOk = LS && LS.isRead ? LS.isRead(P[i], rm) : !!rm[k];
-      if (rOk || pq[k]) {
-        dn++;
-        var ts = +rm[k] || (pq[k] && +pq[k].t) || 0;
-        if (ts > wkCut) wkDn++;
-      }
-    }
-    var pct = Math.round(100 * dn / tot), goal = Math.min(100, pct + 5);
+    var pq = lsGet("nursin_partq_v1") || {}, ln = lsGet("nursin_learn_v1") || {}, pt = lsGet("nursin_plan_track_v1") || {}, tot = P.length || 1, dn = 0, wkDn = 0, wkCut = Date.now() - 7 * 864e5; for (var i = 0; i < P.length; i++) { var k = LS && LS.key ? LS.key(P[i]) : (P[i].s + ":" + (P[i].l || P[i].t) + (P[i].p ? "#" + P[i].p : "")); var u = P[i].href || P[i].u || (P[i].l ? (P[i].l + (P[i].p ? "#" + P[i].p : "")) : ""); var rOk = LS && LS.isRead ? LS.isRead(P[i], rm) : !!rm[k]; var lObj = (u && ln[u]) || (P[i].u && ln[P[i].u]) || ln[k] || null; var lFin = !!(lObj && lObj.fin); var lPart = !!(lObj && (lObj.i > 0 || lObj.ph === "fin" || (lObj.ans && Object.keys(lObj.ans).length > 0))); var pDone = !!(pt[k] || (u && pt[u]) || (pt.done && (pt.done[k] || (u && pt.done[u])))); if (rOk || pq[k] || lFin || pDone) { dn += 1; var ts = +rm[k] || (pq[k] && +pq[k].t) || (lObj && +lObj.ts) || +pt[k] || (u && +pt[u]) || 0; if (ts > wkCut) wkDn++; } else if (lPart) { dn += 0.5; if (lObj && +lObj.ts > wkCut) wkDn++; } } var pct = dn > 0 ? Math.max(1, Math.round(100 * dn / tot)) : 0, goal = Math.min(100, pct + 5);
     return '<div style="margin:6px 0 8px;padding:10px 12px;border-radius:14px;background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.25)">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px"><b>📊 ' + T("جاهزيتك للامتحان الرسمي: ", "Préparation examen : ") + '<span dir="ltr">' + pct + '%</span></b><small style="font-weight:700">' + T("الهدف اليوم: ", "Objectif : ") + '<span dir="ltr">' + goal + '%</span> · 🏆 ' + wkDn + T(" هالأسبوع", " cette sem.") + '</small></div>' +
       '<div style="height:8px;border-radius:99px;background:rgba(127,127,127,.2);overflow:hidden;margin-top:6px"><i style="display:block;height:100%;width:' + Math.max(3, pct) + '%;background:linear-gradient(90deg,#0f766e,#16a34a);border-radius:99px"></i></div></div>';
