@@ -165,6 +165,13 @@ def main() -> None:
 
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
+        env_f = ROOT / ".env.local"
+        if env_f.exists():
+            for line in env_f.read_text(encoding="utf-8").splitlines():
+                if line.strip().startswith("GEMINI_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+    if not api_key:
         raise SystemExit("❌ Missing GEMINI_API_KEY.")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
