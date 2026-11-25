@@ -1089,7 +1089,7 @@
       if (!st.notified) { st.notified = true; brkSet(st); brkBeep(); brkNotify(st.mins); }
       return '<div class="bx" id="hzqbrkc" style="margin:6px 0 8px;padding:12px 14px;border-radius:16px;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.45)">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
-        '<div><b>⏰ ' + T("خلص البريك! يلا فوت ارجع ادرس 💪", "Pause terminée ! C'est reparti 💪") + '</b>' +
+        '<div><b>⏰ ' + T("👨‍🏫 عثمان: تعا لهون وليه! 👀 خلص البريك يلا عالدرس!", "Pause terminée ! C'est reparti 💪") + '</b>' +
         '<small style="display:block;opacity:.85">' + T("جاهز للخطوة الجاية بمسار اليوم", "Prêt(e) pour la prochaine étape") + '</small></div>' +
         '<button type="button" class="btn sm pri" data-hzqbrk="go">▶ ' + T("ابدأ الخطوة الجاية", "Étape suivante") + '</button></div></div>';
     }

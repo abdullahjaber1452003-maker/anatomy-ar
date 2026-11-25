@@ -31,7 +31,7 @@ self.addEventListener("message", e => {
       brkDone = res;
       brkT = setTimeout(() => {
         brkT = 0; brkDone = null;
-        self.registration.showNotification(String(m.title || "⏰ خلص البريك! يلا فوت ارجع ادرس 💪"), {
+        self.registration.showNotification(String(m.title || "👨‍🏫 عثمان: تعا لهون وليه! 👀"), {
           body: String(m.body || "كمّل الخطوة الجاية بمسار اليوم على nursin"),
           icon: "/assets/icon-192.png", badge: "/assets/badge-96.png",
           tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" }

@@ -115,7 +115,7 @@
       toast(setDone ? REWARD + "<br><small>خلّصت ٤ جولات! بريك طويل ١٥ دقيقة 🌴</small>" : "✅ <b>خلصت جولة تركيز!</b> " + (paid ? "+" + POMO_PTS + " نقاط · " : "") + "هلّق بريك ٥ دقايق ☕", 9000);
     } else {
       p.m = "f"; p.run = false; p.left = DUR.f; markBrk(); put(PK, p); pushTimer(p, true);
-      toast("⏰ <b>خلص البريك!</b> يلا جولة جديدة ▶️", 8000);
+      toast("👨‍🏫 <b>عثمان: تعا لهون وليه! 👀</b> خلص البريك يلا عالدرس!", 8000);
     }
     render();
   }
