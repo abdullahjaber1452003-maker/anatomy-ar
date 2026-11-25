@@ -724,6 +724,7 @@
     var proStrip = '<div class="progrid">' +
       '<a class="procard' + (prLk ? ' lk' : '') + '" href="' + esc(lrnU) + '" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("وضع التعلّم", "Mode apprentissage") + ' ' + prTag + '</b><small>' + T("درس فقرة فقرة + 🔒 قفل الإتقان + بسّطلي", "Paragraphe par paragraphe + verrou") + '</small></span></a>' +
       '<a class="procard' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان ومصحّح /20", "Plan examen + correcteur /20") + ' ' + prTag + '</b><small>' + T("جاهزيتك + تصحيح كتابي رسمي بالصوت", "Préparation + correction écrite /20") + '</small></span></a>' +
+      '<a class="procard' + (prLk ? ' lk' : '') + '" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="pe" aria-hidden="true">🌍</span><span><b>' + T("شريك الدراسة لايف", "Partenaire d\'étude live") + ' ' + prTag + '</b><small>' + T("خريطة لبنان الحية · ادرس ٢٥ د مع طالب حقيقي", "Carte live · 25 min avec un vrai étudiant") + '</small></span></a>' +
       '</div>';
     var rdH = readinessHtml();
     var plH = (w.NursinPlanner && w.NursinPlanner.homeHtml) ? w.NursinPlanner.homeHtml() : "";
