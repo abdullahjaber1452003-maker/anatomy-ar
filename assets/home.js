@@ -719,7 +719,6 @@
     var prSt = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : { ok: true, mode: "trial", daysLeft: 3 };
     var prLk = !prSt.ok;
     var lrnU = "learn.html";
-    try { var r0 = w.NursinResume && w.NursinResume.get ? w.NursinResume.get() : null; if (r0 && r0.u) lrnU = "learn.html?u=" + encodeURIComponent(r0.done && r0.nx ? r0.nx.u : r0.u); } catch (e) {}
     var prTag = prSt.mode === "trial" ? "<span class='protag'>PRO · تجربة " + prSt.daysLeft + " أيام</span>" : prLk ? "<span class='protag'>🔒 PRO</span>" : "<span class='protag free'>PRO ✓</span>";
     var proStrip = '<div class="progrid">' +
       '<a class="procard' + (prLk ? ' lk' : '') + '" href="' + esc(lrnU) + '" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("وضع التعلّم", "Mode apprentissage") + ' ' + prTag + '</b><small>' + T("درس فقرة فقرة + 🔒 قفل الإتقان + بسّطلي", "Paragraphe par paragraphe + verrou") + '</small></span></a>' +

@@ -41,6 +41,7 @@
 
   var state = {
     fb: null,
+    authReady: false,
     user: null,
     profile: null,
     city: 'nabatieh',
@@ -224,7 +225,7 @@
     for (var j = 0; j < CITIES.length; j++) {
       var ct = CITIES[j];
       labels += '<circle cx="' + ct.x + '" cy="' + ct.y + '" r="2.2" fill="rgba(226,232,240,.5)"/>';
-      labels += '<text x="' + (ct.x + 6) + '" y="' + (ct.y + 3) + '" fill="rgba(226,232,240,.78)" font-size="9.5" font-family="system-ui,sans-serif">' + esc(ct.name) + '</text>';
+      labels += '<text x="' + (ct.x + 6) + '" y="' + (ct.y + 3) + '" fill="rgba(226,232,240,.85)" font-size="9.5" font-family="system-ui,sans-serif">' + esc(ct.name) + '</text>';
     }
 
     var radar = '';
@@ -263,7 +264,15 @@
   }
 
   function findOrCreateRoom() {
-    if (!state.fb || !state.user) return;
+    if (!state.fb || !state.user) {
+      if (state.fb && state.fb.signIn) {
+        state.fb.signIn();
+      } else {
+        state.statusMsg = '⏳ عم نفعّل الاتصال بحسابك… جرّب تكبس كمان ثانية.';
+        render();
+      }
+      return;
+    }
     state.statusMsg = '';
     state.mode = 'searching';
     state.partner = null;
@@ -527,7 +536,7 @@
     var url = location.origin + location.pathname + '?room=' + encodeURIComponent(state.roomId);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function () {
-        state.copyMsg = '✅ تم نسخ الرابط! ابعته لزميلك على واتساب ليفوت معك مباشرة.';
+        state.copyMsg = '✅ تم نسخ الرابط! ابعته لزميلك ليفوت معك مباشرة.';
         render();
       }).catch(function () {
         state.copyMsg = 'انسخ هالرابط وابعته لزميلك: ' + url;
@@ -540,13 +549,13 @@
   }
 
   function render() {
-    var onlineCount = state.peers.length || 1;
+    var onlineCount = state.peers.length || (state.user ? 1 : 0);
     var meCity = cityById(state.city);
 
     var html = '';
     html += '<div class="sb-map">';
     html += '<div class="sb-map-top">';
-    html += '<span class="sb-live-pill"><span class="sb-live-dot"></span>' + onlineCount + ' طالب تمريض حقيقي أونلاين</span>';
+    html += '<span class="sb-live-pill"><span class="sb-live-dot"></span>' + (onlineCount ? onlineCount + ' طالب تمريض حقيقي أونلاين' : 'خريطة طلاب التمريض الحية') + '</span>';
     html += '<span>📍 موقعك: <b>' + esc(meCity.name) + '</b> — ' + esc(state.inst) + '</span>';
     html += '</div>';
     html += buildMapSvg();
@@ -554,6 +563,18 @@
 
     if (state.statusMsg) {
       html += '<div class="sb-banner">' + esc(state.statusMsg) + '</div>';
+    }
+
+    if (state.authReady && !state.user) {
+      html += '<div class="sb-card" style="text-align:center">';
+      html += '<h2 style="margin:0 0 8px;font-size:18px">🔑 سجّل دخولك لتفعيل الرادار</h2>';
+      html += '<p style="margin:0 0 14px;font-size:13.5px;opacity:.85">التسجيل بحساب Google بيخلي طلاب معهدك ومنطقتك يشوفوك حقيقي على الخريطة (بلا أي حسابات وهمية).</p>';
+      html += '<button type="button" id="sb-login-btn" class="btn pri">تسجيل الدخول بحساب Google</button>';
+      html += '</div>';
+      appEl.innerHTML = html;
+      var lb = document.getElementById('sb-login-btn');
+      if (lb && state.fb) lb.addEventListener('click', function () { state.fb.signIn(); });
+      return;
     }
 
     if (state.mode === 'idle') {
@@ -577,7 +598,7 @@
       html += '</div>';
       html += '<div class="sb-field" style="margin-top:10px"><label for="sb-subj">📚 المادة يلي عم تدرسها هلق</label><select id="sb-subj">' + subjOpts + '</select></div>';
       html += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">';
-      html += '<button type="button" id="sb-start-btn" class="btn primary" style="flex:1;min-width:200px">🔍 ابحث عن شريك دراسة حقيقي</button>';
+      html += '<button type="button" id="sb-start-btn" class="btn pri" style="flex:1;min-width:200px">' + (state.user ? '🔍 ابحث عن شريك دراسة حقيقي' : '⏳ عم نربط حسابك…') + '</button>';
       html += '</div>';
       html += '</div>';
 
@@ -604,7 +625,7 @@
         html += '<div class="sb-nudge-toast">' + esc(state.copyMsg) + '</div>';
       }
       html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px">';
-      html += '<button type="button" id="sb-copy-btn" class="btn primary">📋 نسخ رابط الدعوة لزميلك</button>';
+      html += '<button type="button" id="sb-copy-btn" class="btn pri">📋 نسخ رابط الدعوة لزميلك</button>';
       html += '<button type="button" id="sb-cancel-btn" class="btn">إلغاء البحث</button>';
       html += '</div>';
       html += '</div>';
@@ -707,57 +728,57 @@
     }
   }
 
-  function boot(fb) {
+  var syncedUid = '';
+  function syncFB() {
+    var fb = window.NursinFB;
+    if (!fb || !fb.db) return false;
     state.fb = fb;
-    loadPrefs();
-
-    if (!fb.user) {
-      appEl.innerHTML =
-        '<div class="sb-card" style="text-align:center">' +
-          '<h2 style="margin:0 0 8px">🌍 شريك الدراسة لايف</h2>' +
-          '<p style="margin:0 0 14px;opacity:.85">سجّل دخولك بحساب Google لتظهر على الخريطة الحية وتلاقي شريك دراسة حقيقي من معهدك أو منطقتك.</p>' +
-          '<button type="button" id="sb-login-btn" class="btn primary">تسجيل الدخول بحساب Google</button>' +
-        '</div>';
-      var btn = document.getElementById('sb-login-btn');
-      if (btn) btn.addEventListener('click', function () { fb.signIn(); });
-      return;
-    }
-
-    state.user = fb.user;
+    state.authReady = true;
+    state.user = fb.user || null;
     state.profile = fb.profile || {};
-    updatePresence();
-    fetchPeers();
 
-    if (!state.hbTimer) {
-      state.hbTimer = setInterval(updatePresence, 90 * 1000);
-    }
-    if (!state.peerTimer) {
-      state.peerTimer = setInterval(fetchPeers, 25 * 1000);
-    }
-
-    var urlRoom = getUrlRoom();
-    if (urlRoom) {
-      joinRoomById(urlRoom);
-    } else {
+    if (!state.user) {
+      syncedUid = '';
       render();
+      return true;
     }
+
+    if (syncedUid !== state.user.uid) {
+      syncedUid = state.user.uid;
+      updatePresence();
+      fetchPeers();
+      if (!state.hbTimer) state.hbTimer = setInterval(updatePresence, 90 * 1000);
+      if (!state.peerTimer) state.peerTimer = setInterval(fetchPeers, 25 * 1000);
+      var urlRoom = getUrlRoom();
+      if (urlRoom && !state.roomId) {
+        joinRoomById(urlRoom);
+        return true;
+      }
+    }
+    render();
+    return true;
   }
 
-  function waitFB() {
-    if (window.NursinFB && window.NursinFB.db) {
-      window.addEventListener('nursin:auth', function () {
-        boot(window.NursinFB);
-      });
-      boot(window.NursinFB);
-    } else {
-      window.addEventListener('nursin:fb-ready', function () {
-        window.addEventListener('nursin:auth', function () {
-          boot(window.NursinFB);
-        });
-        boot(window.NursinFB);
-      });
-    }
-  }
+  // 1. Render the Lebanon map IMMEDIATELY in 0ms!
+  loadPrefs();
+  render();
 
-  waitFB();
+  // 2. Listen to document nursin:auth (fired by assets/fb.js) + poll briefly until Firebase module settles
+  document.addEventListener('nursin:auth', function () {
+    syncFB();
+  });
+  document.addEventListener('nursin:me', function () {
+    if (window.NursinFB && window.NursinFB.user) syncFB();
+  });
+
+  var tries = 0;
+  var poll = setInterval(function () {
+    tries++;
+    if (window.NursinFB && window.NursinFB.db && (window.NursinFB.user || tries > 10)) {
+      syncFB();
+      if (window.NursinFB.user || tries > 35) clearInterval(poll);
+    } else if (tries > 50) {
+      clearInterval(poll);
+    }
+  }, 150);
 })();

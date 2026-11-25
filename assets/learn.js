@@ -305,7 +305,7 @@
     var n = paras.length, i = Math.min(S.i, n), fpc = S.ph === "fin" || S.ph === "done";
     var pct = fpc ? 100 : Math.round(((i + ((S.ans || {})[S.i] != null ? 1 : 0)) / Math.max(1, n)) * 100);
     return '<div class="lnhd"><div class="lnt"><small>📖 ' + T("وضع التعلّم", "Mode apprentissage (وضع التعلّم)") + " · " + esc(subjName()) + "</small><b>" + esc(title()) + "</b></div>" +
-      '<a class="lnfull" href="' + esc(X.href) + '" target="_top">📄 ' + T("افتح الدرس كامل", "Leçon complète (افتح الدرس)") + "</a></div>" +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap"><a class="lnfull" href="learn.html">📚 ' + T("قائمة الدروس", "Liste") + '</a><a class="lnfull" href="' + esc(X.href) + '" target="_top">📄 ' + T("الدرس كامل", "Leçon complète") + "</a></div></div>" +
       '<div class="lnpg"><span class="lnbar"><i style="width:' + pct + '%"></i></span><span class="lnpn">' +
       (fpc ? "🏁 " + T("كويز شامل", "Quiz final (كويز شامل)") : T("فقرة " + (i + 1) + " من " + n, "Paragraphe " + (i + 1) + " sur " + n + " (فقرة)")) + "</span></div>";
   }
@@ -392,16 +392,151 @@
   function onClick(e){var t=e.target&&e.target.closest?e.target:null;if(!t)return;var b=t.closest("[data-ln]"),o=t.closest(".opt[data-lk]");if(o&&!o.disabled){var k=+o.getAttribute("data-lk");if(S.ph==="fin"){var at=S.fj|0,fq=fin[at];if((S.fin||{})[at]!=null)return;S.fin=S.fin||{};S.fin[at]=k;var ok2=k===fq.a;snd(ok2);record(fq,ok2,fq._p);save();if(Object.keys(S.fin).length>=fin.length)finish(1);draw();return;}if(S.ph==="rq"||S.ph==="ra"){var rq=S.rq||[],ri=Math.max(0,Math.min(rq.length-1,S.ri|0)),oi=rq[ri],qL0=qSets[S.i]||[qs[S.i]],qr=variant(qL0[oi],paras,S.i,ctxKey+":r"+(S.rc|0)+":"+oi);S.rans=S.rans||{};if(S.rans[ri]!=null)return;S.rans[ri]=k;S.ph="ra";var okr=k===qr.a;snd(okr);if(!okr&&rq.length<10)S.rq.push(oi);save();draw();return;}var qL=qSets[S.i]||[qs[S.i]],qi=Math.max(0,Math.min(qL.length-1,S.qi|0)),q=qL[qi],ak=S.i+":"+qi;S.ans=S.ans||{};if(S.ans[ak]!=null)return;S.ans[ak]=k;S.ph="a";var ok=k===q.a;snd(ok);if(!ok){S.wr=S.wr||[];if(S.wr.indexOf(ak)<0)S.wr.push(ak);}if(ok&&!q.gen)record(q,ok,S.i);else if(!ok)record(q,ok,S.i);try{if(!q.gen&&w.NURSIN_QV&&w.NURSIN_QV.mark&&!w.NursinSRS)w.NURSIN_QV.mark(q.id,ok);}catch(x){}save();draw();return;}if(!b)return;var a=b.getAttribute("data-ln");if(a==="simp"){if(w.NursinPro&&!w.NursinPro.guard("بسّطلي هالفقرة"))return;lnSimp(paras[S.i],d.getElementById("lnsimp"));return;}if(a==="say"){var sp=d.getElementById("lnsimp");if(sp)lnSpeak(sp.getAttribute("data-say"),b);return;}if(a==="toq"){S.ph="q";S.qi=0;S.rq=null;S.ri=0;save();draw();top();return;}if(a==="qnext"){S.qi=(S.qi|0)+1;S.ph="q";save();draw();top();return;}if(a==="retry"){var qL3=qSets[S.i]||[qs[S.i]],ms=[];qL3.forEach(function(qq,ix){var av=(S.ans||{})[S.i+":"+ix];if(av!=null&&av!==qq.a)ms.push(ix);});S.rq=ms;S.ri=0;S.rc=(S.rc|0)+1;S.rans={};S.ph="rq";save();draw();top();return;}if(a==="rnext"){S.ri=(S.ri|0)+1;S.rc=(S.rc|0)+1;S.ph="rq";save();draw();top();return;}if(a==="next"){if(S.i+1<paras.length){S.i++;S.qi=0;S.rq=null;S.ri=0;S.ph="p";}else{S.ph="fin";S.fj=0;S.fin={};}save();draw();top();return;}if(a==="fnext"){if((S.fj|0)+1<fin.length){S.fj=(S.fj|0)+1;save();}else finish();draw();top();return;}if(a==="again"){S={i:0,qi:0,rq:null,ri:0,ph:"p",ans:{},fin:{},ts:0,fd:1};save();draw();top();return;}} function top() { try { root.scrollIntoView({ block: "start" }); w.scrollTo(0, 0); } catch (e) {} }
   function locked() { var c = String(d.documentElement.className); if (c.indexOf("gl-out") < 0) return false; try { var m = JSON.parse(w.sessionStorage.getItem("nursin_adunlock_v1") || "{}") || {}; return !(+m[X.href.split("#")[0]] > Date.now()); } catch (e) { return true; } }
   function lockHtml() { return head() + '<div class="lnend"><p>🔒 ' + T("وضع التعلّم بس للي عندن حساب — سجّل دخول بغوغل (ببلاش) وبيفتحلك.", "Le mode apprentissage demande un compte (gratuit).") + '</p><p><a class="btn pri" href="' + esc(X.href) + '" target="_top">📄 ' + T("افتح الدرس", "Ouvrir la leçon") + "</a></p></div>"; }
-  /* learn.html with no lesson: where he stopped first, then every part by subject */
-  function pickHtml() {
-    var N = NL(), P = N && N.parts ? N.parts : [], SB = (N && N.subjects) || {}, R = w.NursinResume, r = null, by = {}, ord = [];
-    try { r = R && R.get ? R.get() : null; } catch (e) {}
-    P.forEach(function (x) { if (!by[x.s]) { by[x.s] = []; ord.push(x.s); } by[x.s].push(x); });
+  /* learn.html with no lesson: organized smart Learn Hub (Osman's plan, weak lessons, in-progress, all subjects) */
+  var hubTab = "plan";
+  function hubCss() {
+    if (d.getElementById("lnhubcss")) return;
+    var s = d.createElement("style"); s.id = "lnhubcss";
+    s.textContent = ".lnhub-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}.lnhub-tab{padding:8px 12px;border-radius:999px;border:1px solid rgba(127,127,127,.28);background:var(--card,#fff);color:inherit;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.lnhub-tab.on{background:#0f766e;color:#fff;border-color:#0f766e}.lnhub-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.lnhub-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;border:1px solid rgba(127,127,127,.22);background:var(--card,#fff);text-decoration:none;color:inherit}.lnhub-item b{display:block;font-size:14.5px}.lnhub-item small{display:block;font-size:12px;opacity:.78;margin-top:2px}.lnhub-pill{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;background:rgba(15,118,110,.12);color:#0f766e}.lnhub-pill.bad{background:rgba(220,38,38,.12);color:#dc2626}.lnhub-pill.ok{background:rgba(22,163,74,.14);color:#16a34a}.lnhub-empty{padding:16px;border-radius:14px;border:1px dashed rgba(127,127,127,.35);text-align:center;font-size:13.5px;opacity:.82}";
+    (d.head || d.documentElement).appendChild(s);
+  }
+  function hubData() {
+    var N = NL(), P = (N && N.parts) || [], SB = (N && N.subjects) || {};
+    var lnAll = lsGet(K) || {}, rm = (N && N.readMap) ? N.readMap() : (lsGet("nursin_read_v1") || {});
     var lab = function (x) { try { return N.label(x); } catch (e) { return x.n; } };
-    var h = '<div class="lnhd"><div class="lnt"><small>📖 ' + T("وضع التعلّم", "Mode apprentissage") + "</small><b>" + T("الدرس فقرة فقرة، وبعد كل فقرة سؤال، وبالآخر كويز شامل", "La leçon paragraphe par paragraphe, une question après chacun, puis un quiz final") + "</b></div></div>";
-    if (r && r.u) { var go = r.done && r.nx ? r.nx.u : r.u, gx = partOf(go); if (gx) h += '<p class="lnnav"><a class="btn pri" href="' + esc(hrefFor(gx.href)) + '">▶ ' + T("كمّل: ", "Continuer : ") + esc(lab(gx)) + "</a></p>"; }
-    ord.forEach(function (k) { var sb = SB[k] || {}; h += '<details class="lnpeek lnpick"><summary>' + esc((sb.e || "📚") + " " + T(sb.ar || k, sb.fr || sb.ar || k)) + " · " + by[k].length + "</summary><ul>" + by[k].map(function (x) { return '<li><a href="' + esc(hrefFor(x.href)) + '">' + esc(lab(x)) + "</a></li>"; }).join("") + "</ul></details>"; });
+    var sbTxt = function (s) { var o = SB[s] || {}; return (o.e || "📚") + " " + T(o.ar || s, o.fr || o.ar || s); };
+    var byBase = {};
+    P.forEach(function (x) {
+      var b = x.s + ":" + (x.l || x.t);
+      if (!byBase[b]) byBase[b] = [];
+      byBase[b].push(x);
+    });
+    function firstUnreadOf(baseId) {
+      var arr = byBase[baseId] || [];
+      for (var i = 0; i < arr.length; i++) {
+        if (!(N && N.isRead ? N.isRead(arr[i], rm) : rm[pkey(arr[i])])) return arr[i];
+      }
+      return arr[0] || null;
+    }
+    var planItems = [], seenPlan = {};
+    function pushPlan(x, tag) {
+      if (!x || seenPlan[x.href]) return;
+      seenPlan[x.href] = 1;
+      planItems.push({ x: x, tag: tag, done: !!(N && N.isRead ? N.isRead(x, rm) : rm[pkey(x)]) });
+    }
+    var pathObj = lsGet("nursin_path_v1");
+    if (pathObj && Array.isArray(pathObj.steps)) {
+      pathObj.steps.concat(pathObj.more || []).forEach(function (st0) {
+        if (!st0) return;
+        var px = st0.href ? partOf(st0.href) : null;
+        if (!px && st0.id) px = firstUnreadOf(st0.id);
+        if (!px) return;
+        var tag = st0.k === "cls" ? "🏫 درس اليوم بالمعهد" : st0.k === "weak" || st0.k === "cvw" ? "💪 من نقاط ضعفك" : st0.k === "today" ? "⭐ درس اليوم (مخطط عثمان)" : st0.k === "mid" ? "🎯 خطة الامتحان" : "🧭 مسار اليوم";
+        pushPlan(px, tag);
+      });
+    }
+    if (N && N.todayPlan) {
+      try { (N.todayPlan() || []).forEach(function (tp) { pushPlan(tp, "📅 جدول الصف اليوم"); }); } catch (e) {}
+    }
+    var weakItems = [], weakByBase = {};
+    var wkRaw = (w.Weak && w.Weak.items ? w.Weak.items() : (lsGet("nursin_weak_v1") || {}).items) || {};
+    var Ret = w.NursinRet;
+    (w.QUIZ || []).forEach(function (q) {
+      var e = wkRaw[q.id]; if (!e) return;
+      var bid = Ret && Ret.ofQ ? Ret.ofQ(q) : null; if (!bid) return;
+      var rec = weakByBase[bid] || (weakByBase[bid] = { id: bid, miss: 0, cnt: 0, score: null });
+      rec.miss += (e.miss | 0) || 1; rec.cnt++;
+    });
+    var retLs = (lsGet("nursin_ret_v1") || {}).L || {};
+    Object.keys(retLs).forEach(function (bid) {
+      var sc = retLs[bid] && retLs[bid].s;
+      if (sc != null && sc < 70) {
+        var rec = weakByBase[bid] || (weakByBase[bid] = { id: bid, miss: 0, cnt: 0, score: sc });
+        rec.score = sc;
+      }
+    });
+    Object.keys(weakByBase).sort(function (a, b) {
+      return (weakByBase[b].miss - weakByBase[a].miss) || ((weakByBase[a].score == null ? 99 : weakByBase[a].score) - (weakByBase[b].score == null ? 99 : weakByBase[b].score));
+    }).forEach(function (bid) {
+      var x = firstUnreadOf(bid); if (!x) return;
+      var w0 = weakByBase[bid];
+      var why = w0.miss ? ("غلطت فيه " + w0.miss + (w0.miss === 1 ? " مرّة" : w0.miss === 2 ? " مرّتين" : " مرّات")) : ("حفظك " + Math.round(w0.score) + "٪");
+      weakItems.push({ x: x, why: why });
+    });
+    var progItems = [];
+    Object.keys(lnAll).sort(function (a, b) { return (lnAll[b].ts || 0) - (lnAll[a].ts || 0); }).forEach(function (u0) {
+      var o = lnAll[u0], px = partOf(u0);
+      if (!px || !o || o.ph === "done" || o.fd) return;
+      var ansN = o.ans ? Object.keys(o.ans).length : 0;
+      if (ansN > 0 || (o.i | 0) > 0) progItems.push({ x: px, step: (o.i | 0) + 1, ansN: ansN });
+    });
+    var by = {}, ord = [];
+    P.forEach(function (x) { if (!by[x.s]) { by[x.s] = []; ord.push(x.s); } by[x.s].push(x); });
+    return { N: N, SB: SB, rm: rm, lnAll: lnAll, lab: lab, sbTxt: sbTxt, plan: planItems, weak: weakItems, prog: progItems, by: by, ord: ord };
+  }
+  function pickHtml() {
+    hubCss();
+    var D = hubData(), R = w.NursinResume, r = null;
+    try { r = R && R.get ? R.get() : null; } catch (e) {}
+    if (hubTab === "plan" && !D.plan.length && D.weak.length) hubTab = "weak";
+    else if (hubTab === "plan" && !D.plan.length && !D.weak.length) hubTab = "all";
+    var h = '<div class="lnhd"><div class="lnt"><small>📖 ' + T("وضع التعلّم · PRO", "Mode apprentissage") + "</small><b>" + T("اختار الدرس يلي بدك تدرسه فقرة فقرة", "Choisis la leçon à étudier") + "</b></div></div>";
+    if (r && r.u) {
+      var go = r.done && r.nx ? r.nx.u : r.u, gx = partOf(go);
+      if (gx) h += '<a class="lnhub-item" href="' + esc(hrefFor(gx.href)) + '" style="margin-bottom:10px;border-color:rgba(15,118,110,.45);background:rgba(15,118,110,.07)"><span><b>▶ ' + T("كمّل من وين وقفت: ", "Continuer : ") + esc(D.lab(gx)) + '</b><small>' + esc(D.sbTxt(gx.s)) + '</small></span><span class="lnhub-pill">كمّل ←</span></a>';
+    }
+    var tabs = [
+      { id: "plan", label: "🎯 خطة عثمان (" + D.plan.length + ")" },
+      { id: "weak", label: "💪 نقاط ضعفي (" + D.weak.length + ")" },
+      { id: "prog", label: "⏳ مبلّش فيها (" + D.prog.length + ")" },
+      { id: "all",  label: "📚 كل المواد (" + D.ord.length + ")" }
+    ];
+    h += '<div class="lnhub-tabs" role="tablist">';
+    tabs.forEach(function (tb) { h += '<button type="button" class="lnhub-tab' + (hubTab === tb.id ? ' on' : '') + '" data-hubtab="' + tb.id + '">' + esc(tb.label) + '</button>'; });
+    h += '</div>';
+    if (hubTab === "plan") {
+      if (D.plan.length) {
+        h += '<div class="lnhub-list">';
+        D.plan.forEach(function (it) { h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(it.tag) + ' · ' + esc(D.sbTxt(it.x.s)) + '</small></span><span class="lnhub-pill' + (it.done ? ' ok' : '') + '">' + (it.done ? '✅ منجز' : 'ابدأ ←') + '</span></a>'; });
+        h += '</div>';
+      } else h += '<div class="lnhub-empty">ما في دروس محددة بخطة اليوم بعد — اختار أي درس من <b>📚 كل المواد</b> أو <b>💪 نقاط ضعفي</b>.</div>';
+    } else if (hubTab === "weak") {
+      if (D.weak.length) {
+        h += '<div class="lnhub-list">';
+        D.weak.forEach(function (it) { h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(D.sbTxt(it.x.s)) + '</small></span><span class="lnhub-pill bad">' + esc(it.why) + '</span></a>'; });
+        h += '</div>';
+      } else h += '<div class="lnhub-empty">🎉 ما عندك دروس ضعيفة مسجّلة لهلق! كل ما تحل كويزات، الدروس يلي بتغلط فيها بتتصفّى هون تلقائياً لتقوّيها.</div>';
+    } else if (hubTab === "prog") {
+      if (D.prog.length) {
+        h += '<div class="lnhub-list">';
+        D.prog.forEach(function (it) { h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(D.sbTxt(it.x.s)) + ' · واصل عالفقرة ' + it.step + '</small></span><span class="lnhub-pill">كمّل ←</span></a>'; });
+        h += '</div>';
+      } else h += '<div class="lnhub-empty">ما في دروس نصّها مخلّص حالياً. أي درس بتبلّش فيه وما بتكمّله بيطلعلك هون دغري.</div>';
+    } else {
+      D.ord.forEach(function (k) {
+        var sb = D.SB[k] || {};
+        var doneC = D.by[k].filter(function (x) { return !!(D.N && D.N.isRead ? D.N.isRead(x, D.rm) : D.rm[pkey(x)]); }).length;
+        h += '<details class="lnpeek lnpick"><summary>' + esc((sb.e || "📚") + " " + T(sb.ar || k, sb.fr || sb.ar || k)) + " · " + doneC + "/" + D.by[k].length + "</summary><ul>" +
+          D.by[k].map(function (x) {
+            var ok = !!(D.N && D.N.isRead ? D.N.isRead(x, D.rm) : D.rm[pkey(x)]);
+            var st0 = D.lnAll[x.href];
+            var badge = ok ? " ✅" : (st0 && !st0.fd && (st0.i > 0 || (st0.ans && Object.keys(st0.ans).length)) ? " ⏳" : "");
+            return '<li><a href="' + esc(hrefFor(x.href)) + '">' + esc(D.lab(x)) + badge + "</a></li>";
+          }).join("") + "</ul></details>";
+      });
+    }
     return h;
+  }
+  function drawHub() {
+    if (!root) return;
+    root.innerHTML = pickHtml();
+    var btns = root.querySelectorAll("[data-hubtab]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function () {
+        hubTab = this.getAttribute("data-hubtab") || "plan";
+        drawHub();
+      });
+    }
   }
   function proLockHtml(x) {
     return '<div class="prolockbox"><h3>🔒 وضع التعلّم (PRO)</h3><p class="small">خلصت فترة التجربة المجانية (٣ أيام). فعّل اشتراك Pro بـ <b>$4 / شهر</b> عبر Whish Money لتكمل دراسة الدروس فقرة فقرة مع 🔒 قفل الإتقان و🧑‍🏫 بسّطلي.</p><p style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px"><button type="button" class="btn pri" id="lnprogo">⭐ فعّل Pro ($4/شهر)</button>' + (x ? '<a class="btn" href="' + esc(x.href) + '" target="_top">📄 افتح الدرس العادي (مجاني)</a>' : '<a class="btn" href="index.html" target="_top">🏠 رجوع للرئيسية</a>') + '</p></div>';
@@ -416,7 +551,7 @@
       d.addEventListener("nursin:pro", function () { if (w.NursinPro.canUse()) w.location.reload(); });
       return;
     }
-    if (!U) { root.innerHTML = pickHtml(); return; }
+    if (!U) { drawHub(); return; }
     if (!X) { root.innerHTML = '<p class="lnerr">' + T("ما لقيت هالدرس 🤔", "Leçon introuvable") + ' — <a href="index.html">🧭 ' + T("رجوع للمسار", "Retour") + "</a></p>"; return; }
     U = X.href; ctxKey = pkey(X);
     S = st(U); paras = []; root.innerHTML = head().replace(/فقرة 1 من 0|Paragraphe 1 sur 0 \(فقرة\)/, "…") + '<p class="lnload">⏳ ' + T("عم حضّرلك الدرس فقرة فقرة…", "Je prépare la leçon paragraphe par paragraphe…") + "</p>";
