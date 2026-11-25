@@ -6,6 +6,322 @@
   /* STORIES_JSON_START */
   var STORIES = [
     {
+      "id": "ph_story_coag",
+      "s": "pharma",
+      "story": 1,
+      "e": "🎥",
+      "ti": "مضادات التخثر (Héparine، Lovenox، Sintrom) ومراقبة النزيف",
+      "ls": "الأدوية — مضادات التخثر",
+      "h": "pharma.html#lessons",
+      "ln": [
+        "الـ Héparine و Lovenox و Sintrom كلّهم Anticoagulants بيمنعوا الجلطات (DVT، EP، IDM) — وممنوعين بالنزيف والقرحة والضغط غير المضبوط.",
+        "المراقبة الذهبية: علامات النزيف (دم بالبول، كدمات، نزيف لثة)، الصفائح الدموية (خطر Thrombopénie)، وضغط الدم.",
+        "نصيحة للامتحان: ممنوع الأسبرين مع Sintrom، ومنعلّم المريض يستعمل فرشاة أسنان ناعمة وماكينة حلاقة آمنة."
+      ],
+      "scenes": [
+        {
+          "img": "assets/reels/coag-1.jpg",
+          "ken": "zin",
+          "t0": 0.0,
+          "t1": 14.95,
+          "lines": [
+            {
+              "sp": "s",
+              "t0": 0.0,
+              "t1": 6.71,
+              "tx": "عثمان، مريض عم ياخد Lovenox وواحد تاني عم ياخد Sintrom — شو أهم شي مشترك لازم أراقبه؟"
+            },
+            {
+              "sp": "o",
+              "t0": 6.71,
+              "t1": 14.95,
+              "tx": "كلهن مضادات تخثر Anticoagulants متل Héparine و Lovenox و Sintrom! أول وأهم خطر عندك هوّي النزيف Hémorragie!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/coag-2.jpg",
+          "ken": "panr",
+          "t0": 14.95,
+          "t1": 27.68,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 14.95,
+              "t1": 27.68,
+              "tx": "الـ Lovenox بينعطى تحت الجلد بالبطن للوقاية من الجلطات، وممكن يعمل بقع بنفسجية مكان الحقنة. أما الـ Sintrom فموي من عائلة Antivitamine K وممنوع يتاخد مع الأسبرين أو بالحمل!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/coag-3.jpg",
+          "ken": "zout",
+          "t0": 27.68,
+          "t1": 38.4,
+          "lines": [
+            {
+              "sp": "s",
+              "t0": 27.68,
+              "t1": 38.4,
+              "tx": "يعني بدنا نراقب علامات النزيف متل دم بالبول Hématurie أو ورم دموي، ونراقب الصفائح لخطر Thrombopénie، وننصح المريض يتجنّب الجروح والشفرة الحادة!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/coag-4.jpg",
+          "ken": "zin",
+          "t0": 38.4,
+          "t1": 47.33,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 38.4,
+              "t1": 47.33,
+              "tx": "برافو سارة! واحفظي الموانع للامتحان: أي نزيف دماغي أو قرحة معدة أو ضغط غير مضبوط أو نقص صفائح — مضادات التخثر ممنوعة!"
+            }
+          ]
+        }
+      ],
+      "aud": "assets/reels-audio/ph_story_coag.wav"
+    },
+    {
+      "id": "ph_story_atb",
+      "s": "pharma",
+      "story": 1,
+      "e": "🎥",
+      "ti": "المضادات الحيوية (Augmentin، Rocéphine، Amikin) والحساسية والكلى",
+      "ls": "الأدوية — المضادات الحيوية",
+      "h": "pharma.html#lessons",
+      "ln": [
+        "قبل أول جرعة من البنسيلين أو السيفالوسبورين (Augmentin، Rocéphine، Claforan): اختبار تحسّس (Test d'allergie) ضروري!",
+        "مع عائلة الـ Aminosides (Amikin و Gentamycine): أهم مراقبتين للامتحان هنّي الكلى (Fonction rénale) والسمع (Audition).",
+        "مع Flagyl (Métronidazole): ممنوع الكحول، ومع Tavanic (Fluoroquinolone): ممنوع عند الأطفال والصرع والحمل."
+      ],
+      "scenes": [
+        {
+          "img": "assets/reels/atb-1.jpg",
+          "ken": "zin",
+          "t0": 0.0,
+          "t1": 14.92,
+          "lines": [
+            {
+              "sp": "k",
+              "t0": 0.0,
+              "t1": 8.03,
+              "tx": "أستاذ عثمان، عنا مضادات حيوية كتير بدرس الـ Pharma متل Augmentin و Rocéphine و Amikin — كيف منميز مراقبتهن؟"
+            },
+            {
+              "sp": "o",
+              "t0": 8.03,
+              "t1": 14.92,
+              "tx": "قسّمهن بمخّك يا كريم لقسمين كبار: أولاً البنسيلين والسيفالوسبورين، وتانياً الـ Aminosides!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/atb-2.jpg",
+          "ken": "panr",
+          "t0": 14.92,
+          "t1": 27.14,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 14.92,
+              "t1": 27.14,
+              "tx": "مع Augmentin و Rocéphine و Claforan، أول قاعدة ذهبية هي Test d'allergie قبل أول جرعة! لأن الحساسية من البنسيلين والسيفالوسبورين ممكن تعمل صدمة تأقية Choc anaphylactique!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/atb-3.jpg",
+          "ken": "zout",
+          "t0": 27.14,
+          "t1": 38.0,
+          "lines": [
+            {
+              "sp": "k",
+              "t0": 27.14,
+              "t1": 38.0,
+              "tx": "أما مع Amikin و Gentamycine من عائلة الـ Aminosides، فمنراقب شغلتين أساسيتين: وظيفة الكلى والسمع! وكمان Vancomycine بتأثّر عالكلى وبترفع الكرياتينين!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/atb-4.jpg",
+          "ken": "zin",
+          "t0": 38.0,
+          "t1": 48.33,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 38.0,
+              "t1": 48.33,
+              "tx": "ممتاز! وما تنسى تلات أسرار للامتحان: ممنوع الكحول مع Flagyl، ممنوع Tavanic عند الأطفال والصرع، ومنراقب الإسهال والطفح الجلدي مع كل مضاد حيوي!"
+            }
+          ]
+        }
+      ],
+      "aud": "assets/reels-audio/ph_story_atb.wav"
+    },
+    {
+      "id": "ph_story_cardio",
+      "s": "pharma",
+      "story": 1,
+      "e": "🎥",
+      "ti": "أدوية القلب والضغط (Concor، Lasix، Digoxine، Trinitrine)",
+      "ls": "الأدوية — القلب والضغط",
+      "h": "pharma.html#lessons",
+      "ln": [
+        "حاصرات بيتا (Concor / Ténormin): بتوطّي النبض والضغط — ممنوعة بالربو الشديد وبطء النبض (Bradycardie).",
+        "الـ Digoxine (Lanoxin): بتقوّي انقباض القلب وبتبطّئ النبض — راقب النبض ومستوى الدواء بالدم والبوتاسيوم.",
+        "الـ Lasix (Furosémide): مدرّ بول بينزّل البوتاسيوم (Hypokaliémie) والضغط، والـ Trinitrine بيوسّع الشرايين وبيعمل هبوط ضغط وصداع."
+      ],
+      "scenes": [
+        {
+          "img": "assets/reels/phc-1.jpg",
+          "ken": "zin",
+          "t0": 0.0,
+          "t1": 12.01,
+          "lines": [
+            {
+              "sp": "s",
+              "t0": 0.0,
+              "t1": 7.19,
+              "tx": "عثمان، بالامتحان دايماً بيجيبوا أدوية القلب سوا: Concor و Lasix و Digoxine و Trinitrine!"
+            },
+            {
+              "sp": "o",
+              "t0": 7.19,
+              "t1": 12.01,
+              "tx": "هيدول أسهل ٤ أدوية بس تحفظي قاعدة كل واحد فيهن يا سارة!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/phc-2.jpg",
+          "ken": "panr",
+          "t0": 12.01,
+          "t1": 25.9,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 12.01,
+              "t1": 25.9,
+              "tx": "أولاً Concor و Ténormin حاصرات بيتا: بتوطّي النبض والضغط وممنوعة بالربو الشديد وبطء النبض. وتانياً Digoxine بتقوّي القلب وبتبطّئه — فلازم نقيس النبض ونراقب مستوى الدواء والبوتاسيوم!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/phc-3.jpg",
+          "ken": "zout",
+          "t0": 25.9,
+          "t1": 36.12,
+          "lines": [
+            {
+              "sp": "s",
+              "t0": 25.9,
+              "t1": 36.12,
+              "tx": "وتالتاً Lasix يعني Furosémide مدرّ بول للوذمات وقصور القلب: منراقب معه الكهارل وخصوصاً نقص البوتاسيوم Hypokaliémie والجفاف والضغط!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/phc-4.jpg",
+          "ken": "zin",
+          "t0": 36.12,
+          "t1": 47.77,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 36.12,
+              "t1": 47.77,
+              "tx": "ورابعاً Trinitrine موسّع أوعية للذبحة الصدرية: ممكن يعمل هبوط ضغط وصداع، فدايماً منراقب الضغط ومنعلّم المريض يقوم شوي شوي من التخت مشان ما يدوخ ويوقع!"
+            }
+          ]
+        }
+      ],
+      "aud": "assets/reels-audio/ph_story_cardio.wav"
+    },
+    {
+      "id": "ph_story_cort_pain",
+      "s": "pharma",
+      "story": 1,
+      "e": "🎥",
+      "ti": "الكورتيزون (Solumédrol / Décadron) والمسكنات (AINS / Perfalgan / Tramal)",
+      "ls": "الأدوية — الكورتيزون والمسكنات",
+      "h": "pharma.html#lessons",
+      "ln": [
+        "الكورتيزون (Solumédrol و Décadron): راقب السكر (Hyperglycémie)، الضغط، الوزن، والصوديوم، وحمية قليلة ملح وسكر!",
+        "مضادات الالتهاب غير الستيرويدية AINS (Olfen، Profénid، Aspirine): ممنوعة بقرحة المعدة وقصور الكلى — راقب النزيف الهضمي والكلى.",
+        "الـ Perfalgan (Paracétamol) بيأثّر عالكبد بالجرعة الزائدة، والـ Tramal (أفيوني) بيحتاج مراقبة التنفس وخطر الإدمان."
+      ],
+      "scenes": [
+        {
+          "img": "assets/reels/cort-1.jpg",
+          "ken": "zin",
+          "t0": 0.0,
+          "t1": 13.29,
+          "lines": [
+            {
+              "sp": "k",
+              "t0": 0.0,
+              "t1": 7.91,
+              "tx": "أستاذ عثمان، شو الفرق بالمراقبة التمريضية بين الكورتيزون متل Solumédrol والمسكنات متل Olfen و Perfalgan؟"
+            },
+            {
+              "sp": "o",
+              "t0": 7.91,
+              "t1": 13.29,
+              "tx": "سؤال مهم كتير كريم! كل عيلة إلها عضو معيّن بتأثّر عليه لازم تراقبه."
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/cort-2.jpg",
+          "ken": "panr",
+          "t0": 13.29,
+          "t1": 24.27,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 13.29,
+              "t1": 24.27,
+              "tx": "مع الكورتيزون متل Solumédrol و Décadron: بيحبس مي وملح وبيرفع السكر والضغط! فمنراقب السكر والضغط والوزن والصوديوم، ومنعطي المريض حمية قليلة ملح وسكر!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/cort-3.jpg",
+          "ken": "zout",
+          "t0": 24.27,
+          "t1": 33.4,
+          "lines": [
+            {
+              "sp": "k",
+              "t0": 24.27,
+              "t1": 33.4,
+              "tx": "ومع الـ AINS متل Olfen و Profénid و Aspirine: ممنوعين بقرحة المعدة وقصور الكلى، فمنراقب علامات النزيف الهضمي ووظيفة الكلى!"
+            }
+          ]
+        },
+        {
+          "img": "assets/reels/cort-4.jpg",
+          "ken": "zin",
+          "t0": 33.4,
+          "t1": 44.17,
+          "lines": [
+            {
+              "sp": "o",
+              "t0": 33.4,
+              "t1": 44.17,
+              "tx": "وبالختام: الـ Perfalgan أو Dafalgan منراقب معه الكبد، أما المسكنات الأفيونية متل Tramal و Dolosal فمنراقب الجرعة وخطر الإدمان وهبوط التنفس والضغط!"
+            }
+          ]
+        }
+      ],
+      "aud": "assets/reels-audio/ph_story_cort_pain.wav"
+    },
+    {
       "id": "ne_story_tc_hed",
       "s": "neuro",
       "story": 1,
@@ -20,7 +336,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/cran-1.jpg",
+          "img": "assets/reels/tched-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 13.9,
@@ -40,7 +356,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-2.jpg",
+          "img": "assets/reels/tched-2.jpg",
           "ken": "panr",
           "t0": 13.9,
           "t1": 29.69,
@@ -54,7 +370,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-3.jpg",
+          "img": "assets/reels/tched-3.jpg",
           "ken": "zout",
           "t0": 29.69,
           "t1": 45.64,
@@ -74,7 +390,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-5.jpg",
+          "img": "assets/reels/tched-4.jpg",
           "ken": "zin",
           "t0": 45.64,
           "t1": 57.85,
@@ -105,7 +421,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/pl-1.jpg",
+          "img": "assets/reels/mi-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 17.75,
@@ -125,7 +441,7 @@
           ]
         },
         {
-          "img": "assets/reels/avc-2.jpg",
+          "img": "assets/reels/mi-2.jpg",
           "ken": "panr",
           "t0": 17.75,
           "t1": 31.8,
@@ -139,7 +455,7 @@
           ]
         },
         {
-          "img": "assets/reels/avc-3.jpg",
+          "img": "assets/reels/mi-3.jpg",
           "ken": "zout",
           "t0": 31.8,
           "t1": 47.55,
@@ -153,7 +469,7 @@
           ]
         },
         {
-          "img": "assets/reels/avc-5.jpg",
+          "img": "assets/reels/mi-4.jpg",
           "ken": "zin",
           "t0": 47.55,
           "t1": 59.01,
@@ -184,7 +500,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/gcs-1.jpg",
+          "img": "assets/reels/ang-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 15.17,
@@ -204,7 +520,7 @@
           ]
         },
         {
-          "img": "assets/reels/gcs-2.jpg",
+          "img": "assets/reels/ang-2.jpg",
           "ken": "panr",
           "t0": 15.17,
           "t1": 32.0,
@@ -218,7 +534,7 @@
           ]
         },
         {
-          "img": "assets/reels/gcs-3.jpg",
+          "img": "assets/reels/ang-3.jpg",
           "ken": "zout",
           "t0": 32.0,
           "t1": 42.07,
@@ -232,7 +548,7 @@
           ]
         },
         {
-          "img": "assets/reels/gcs-5.jpg",
+          "img": "assets/reels/ang-4.jpg",
           "ken": "zin",
           "t0": 42.07,
           "t1": 52.21,
@@ -263,7 +579,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/lam-1.jpg",
+          "img": "assets/reels/ic-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 15.11,
@@ -283,7 +599,7 @@
           ]
         },
         {
-          "img": "assets/reels/lam-2.jpg",
+          "img": "assets/reels/ic-2.jpg",
           "ken": "panr",
           "t0": 15.11,
           "t1": 32.8,
@@ -297,7 +613,7 @@
           ]
         },
         {
-          "img": "assets/reels/lam-3.jpg",
+          "img": "assets/reels/ic-3.jpg",
           "ken": "zout",
           "t0": 32.8,
           "t1": 49.78,
@@ -311,7 +627,7 @@
           ]
         },
         {
-          "img": "assets/reels/lam-5.jpg",
+          "img": "assets/reels/ic-4.jpg",
           "ken": "zin",
           "t0": 49.78,
           "t1": 61.21,
@@ -342,7 +658,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/cran-1.jpg",
+          "img": "assets/reels/choc-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 15.36,
@@ -362,7 +678,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-2.jpg",
+          "img": "assets/reels/choc-2.jpg",
           "ken": "panr",
           "t0": 15.36,
           "t1": 26.43,
@@ -376,7 +692,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-3.jpg",
+          "img": "assets/reels/choc-3.jpg",
           "ken": "zout",
           "t0": 26.43,
           "t1": 37.58,
@@ -390,7 +706,7 @@
           ]
         },
         {
-          "img": "assets/reels/cran-4.jpg",
+          "img": "assets/reels/choc-4.jpg",
           "ken": "zin",
           "t0": 37.58,
           "t1": 48.73,
@@ -421,7 +737,7 @@
       ],
       "scenes": [
         {
-          "img": "assets/reels/pl-2.jpg",
+          "img": "assets/reels/peri-1.jpg",
           "ken": "zin",
           "t0": 0.0,
           "t1": 17.61,
@@ -441,7 +757,7 @@
           ]
         },
         {
-          "img": "assets/reels/pl-3.jpg",
+          "img": "assets/reels/peri-2.jpg",
           "ken": "panr",
           "t0": 17.61,
           "t1": 33.13,
@@ -455,7 +771,7 @@
           ]
         },
         {
-          "img": "assets/reels/pl-4.jpg",
+          "img": "assets/reels/peri-3.jpg",
           "ken": "zout",
           "t0": 33.13,
           "t1": 43.32,
@@ -469,7 +785,7 @@
           ]
         },
         {
-          "img": "assets/reels/pl-5.jpg",
+          "img": "assets/reels/peri-4.jpg",
           "ken": "zin",
           "t0": 43.32,
           "t1": 54.49,
