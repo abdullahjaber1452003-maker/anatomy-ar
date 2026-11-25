@@ -1063,8 +1063,8 @@
     } catch (e) {}
   }
   function brkNotify(mins) {
-    var ttl = T("⏰ خلص البريك! يلا فوت ارجع ادرس 💪", "⏰ Pause terminée ! Reviens étudier 💪");
-    var body = T("خلصت الـ " + (mins || 5) + " دقايق راحة — كمّل الخطوة الجاية بمسار اليوم على nursin", "Tes " + (mins || 5) + " min de pause sont finies — continue ton parcours sur nursin");
+    var ttl = T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens étudier 💪");
+    var body = T("خلص البريك يلا عالدرس!", "Tes " + (mins || 5) + " min de pause sont finies — continue ton parcours sur nursin");
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(function (reg) { if (reg && reg.showNotification) reg.showNotification(ttl, { body: body, tag: "nursin-break", renotify: true }); }).catch(function () {});
@@ -1136,7 +1136,7 @@
       var q = root && root.querySelector("[data-hzquick]"); if (q) q.click();
       return;
     }
-    var mins = (+act || 5), ttl = T("⏰ خلص البريك! يلا فوت ارجع ادرس 💪", "⏰ Pause terminée ! Reviens étudier 💪"), body = T("خلصت الـ " + mins + " دقايق راحة — كمّل الخطوة الجاية بمسار اليوم على nursin", "Tes " + mins + " min de pause sont finies — continue ton parcours sur nursin");
+    var mins = (+act || 5), ttl = T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens étudier 💪"), body = T("خلص البريك يلا عالدرس!", "Tes " + mins + " min de pause sont finies — continue ton parcours sur nursin");
     try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().catch(function () {}); } catch (e) {}
     st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st);
     brkSW({ type: "nursin-break", end: st.end, mins: mins, title: ttl, body: body });

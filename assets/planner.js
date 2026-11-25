@@ -203,7 +203,7 @@
       lsSet(REM_K, null);
       try {
         if (w.Notification && Notification.permission === "granted") {
-          new Notification("👨‍🏫 صار وقت الجلسة التانية!", { body: "مرق الوقت المحدد — ٥ دقايق بس لتكمّل خطة اليوم عـ nursin.store 🔥", dir: "rtl", lang: "ar" });
+          new Notification("👨‍🏫 عثمان: تعا لهون ولي! 👀", { body: "مرق الوقت المحدد — ٥ دقايق بس لتكمّل خطة اليوم عـ nursin.store 🔥", dir: "rtl", lang: "ar" });
         }
       } catch (e) {}
       return null;
