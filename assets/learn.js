@@ -407,6 +407,7 @@
   function hubData() {
     var N = NL(), P = (N && N.parts) || [], SB = (N && N.subjects) || {};
     var lnAll = lsGet(K) || {}, rm = (N && N.readMap) ? N.readMap() : (lsGet("nursin_read_v1") || {});
+    var pqAll = lsGet("nursin_partq_v1") || {};
     var retLs = (lsGet("nursin_ret_v1") || {}).L || {};
     var lab = function (x) { try { return N.label(x); } catch (e) { return x.n; } };
     var sbTxt = function (s) { var o = SB[s] || {}; return (o.e || "📚") + " " + T(o.ar || s, o.fr || o.ar || s); };
@@ -416,41 +417,9 @@
       if (!byBase[b]) byBase[b] = [];
       byBase[b].push(x);
     });
-    function isMastered(x) {
-      var o = lnAll[x.href];
-      if (o && (o.m === 1 || (o.pct != null && o.pct >= 80))) return true;
-      var b = x.s + ":" + (x.l || x.t);
-      if (retLs[b] && retLs[b].s != null && retLs[b].s >= 80 && (o && o.fd || (N && N.isRead ? N.isRead(x, rm) : rm[pkey(x)]))) return true;
-      return false;
-    }
-    function firstUnreadOf(baseId) {
-      var arr = byBase[baseId] || [];
-      for (var i = 0; i < arr.length; i++) {
-        if (!(N && N.isRead ? N.isRead(arr[i], rm) : rm[pkey(arr[i])])) return arr[i];
-      }
-      return arr[0] || null;
-    }
-    var planItems = [], seenPlan = {};
-    function pushPlan(x, tag) {
-      if (!x || seenPlan[x.href]) return;
-      seenPlan[x.href] = 1;
-      planItems.push({ x: x, tag: tag, done: isMastered(x) || !!(N && N.isRead ? N.isRead(x, rm) : rm[pkey(x)]) });
-    }
-    var pathObj = lsGet("nursin_path_v1");
-    if (pathObj && Array.isArray(pathObj.steps)) {
-      pathObj.steps.concat(pathObj.more || []).forEach(function (st0) {
-        if (!st0) return;
-        var px = st0.href ? partOf(st0.href) : null;
-        if (!px && st0.id) px = firstUnreadOf(st0.id);
-        if (!px) return;
-        var tag = st0.k === "cls" ? "🏫 درس اليوم بالمعهد" : st0.k === "weak" || st0.k === "cvw" ? "💪 من نقاط ضعفك" : st0.k === "today" ? "⭐ درس اليوم (مخطط عثمان)" : st0.k === "mid" ? "🎯 خطة الامتحان" : "🧭 مسار اليوم";
-        pushPlan(px, tag);
-      });
-    }
-    if (N && N.todayPlan) {
-      try { (N.todayPlan() || []).forEach(function (tp) { pushPlan(tp, "📅 جدول الصف اليوم"); }); } catch (e) {}
-    }
-    var weakItems = [], weakByBase = {};
+
+    // Weak mistakes map (built first so masteryOf knows if a lesson has active mistakes)
+    var weakByBase = {};
     var wkRaw = (w.Weak && w.Weak.items ? w.Weak.items() : (lsGet("nursin_weak_v1") || {}).items) || {};
     var Ret = w.NursinRet;
     (w.QUIZ || []).forEach(function (q) {
@@ -466,14 +435,88 @@
         rec.score = sc;
       }
     });
+
+    // Unified Single Source of Truth across ALL tabs & ALL site study surfaces (Learn Mode, Part Quiz, Quizzes/Cards, Reading)
+    var mCache = {};
+    function masteryOf(x) {
+      if (!x) return { level: "none", pct: 0, pill: "🔒 غير متقَن", cls: "", icon: "🔒", prio: 4 };
+      if (mCache[x.href]) return mCache[x.href];
+      var pk = pkey(x), bid = x.s + ":" + (x.l || x.t);
+      var o = lnAll[x.href] || null;
+      var pq = pqAll[pk] || pqAll[bid] || null;
+      var ret = retLs[bid] || null;
+      var retS = (ret && ret.s != null) ? Math.round(ret.s) : null;
+      var readOk = !!(N && N.isRead ? N.isRead(x, rm) : rm[pk]);
+      var lnAns = (o && o.ans) ? Object.keys(o.ans).length : 0;
+      var lnProg = !!(o && !o.fd && (lnAns > 0 || (o.i | 0) > 0));
+      var pqPct = pq && pq.pct != null ? Math.round(pq.pct) : (pq ? 100 : null);
+      var lnPct = o && o.pct != null ? Math.round(o.pct) : (o && o.fd ? 100 : null);
+
+      var bestPct = 0;
+      if (lnPct != null && lnPct > bestPct) bestPct = lnPct;
+      if (pqPct != null && pqPct > bestPct) bestPct = pqPct;
+      if (retS != null && retS > bestPct) bestPct = retS;
+
+      var res;
+      if ((o && o.m === 1) || bestPct >= 80) {
+        res = { level: "mastered", pct: Math.max(80, bestPct), pill: "🏆 متقَن (" + Math.max(80, bestPct) + "٪)", cls: "ok", icon: "🏆", prio: 9 };
+      } else if (o && o.pct != null && o.pct < 80) {
+        res = { level: "partial", pct: o.pct, pill: "⚠️ متقَن جزئياً (" + o.pct + "٪)", cls: "bad", icon: "🟡", prio: 0 };
+      } else if (lnProg) {
+        var ep = Math.max(25, bestPct || 35);
+        res = { level: "partial", pct: ep, pill: "🟡 مبلّش فيه (فقرة " + ((o.i | 0) + 1) + ")", cls: "warn", icon: "🟡", prio: 1 };
+      } else if (retS != null && retS > 0) {
+        res = { level: "partial", pct: retS, pill: (retS < 60 ? "💪 " : "🟡 ") + "متقَن جزئياً (" + retS + "٪)", cls: retS < 60 ? "bad" : "warn", icon: "🟡", prio: retS < 60 ? 1 : 2 };
+      } else if (readOk) {
+        res = { level: "partial", pct: 40, pill: "🟡 قريته — كمّل إتقانه", cls: "warn", icon: "🟡", prio: 2 };
+      } else if (weakByBase[bid]) {
+        res = { level: "none", pct: 15, pill: "💪 فيه أخطاء — بحاجة لإتقان", cls: "bad", icon: "🔒", prio: 1 };
+      } else {
+        res = { level: "none", pct: 0, pill: "🔒 غير متقَن بعد", cls: "", icon: "🔒", prio: 3 };
+      }
+      mCache[x.href] = res;
+      return res;
+    }
+
+    function firstUnmasteredOf(baseId) {
+      var arr = byBase[baseId] || [];
+      for (var i = 0; i < arr.length; i++) {
+        if (masteryOf(arr[i]).level !== "mastered") return arr[i];
+      }
+      return arr[0] || null;
+    }
+
+    var planItems = [], seenPlan = {};
+    function pushPlan(x, tag) {
+      if (!x || seenPlan[x.href]) return;
+      seenPlan[x.href] = 1;
+      planItems.push({ x: x, tag: tag, m: masteryOf(x) });
+    }
+    var pathObj = lsGet("nursin_path_v1");
+    if (pathObj && Array.isArray(pathObj.steps)) {
+      pathObj.steps.concat(pathObj.more || []).forEach(function (st0) {
+        if (!st0) return;
+        var px = st0.href ? partOf(st0.href) : null;
+        if (!px && st0.id) px = firstUnmasteredOf(st0.id);
+        if (!px) return;
+        var tag = st0.k === "cls" ? "🏫 درس اليوم بالمعهد" : st0.k === "weak" || st0.k === "cvw" ? "💪 من نقاط ضعفك" : st0.k === "today" ? "⭐ درس اليوم (مخطط عثمان)" : st0.k === "mid" ? "🎯 خطة الامتحان" : "🧭 مسار اليوم";
+        pushPlan(px, tag);
+      });
+    }
+    if (N && N.todayPlan) {
+      try { (N.todayPlan() || []).forEach(function (tp) { pushPlan(tp, "📅 جدول الصف اليوم"); }); } catch (e) {}
+    }
+
+    var weakItems = [];
     Object.keys(weakByBase).sort(function (a, b) {
       return (weakByBase[b].miss - weakByBase[a].miss) || ((weakByBase[a].score == null ? 99 : weakByBase[a].score) - (weakByBase[b].score == null ? 99 : weakByBase[b].score));
     }).forEach(function (bid) {
-      var x = firstUnreadOf(bid); if (!x) return;
+      var x = firstUnmasteredOf(bid); if (!x) return;
       var w0 = weakByBase[bid];
       var why = w0.miss ? ("غلطت فيه " + w0.miss + (w0.miss === 1 ? " مرّة" : w0.miss === 2 ? " مرّتين" : " مرّات")) : ("حفظك " + Math.round(w0.score) + "٪");
       weakItems.push({ x: x, why: why });
     });
+
     var progItems = [];
     Object.keys(lnAll).sort(function (a, b) { return (lnAll[b].ts || 0) - (lnAll[a].ts || 0); }).forEach(function (u0) {
       var o = lnAll[u0], px = partOf(u0);
@@ -481,23 +524,22 @@
       var ansN = o.ans ? Object.keys(o.ans).length : 0;
       if (ansN > 0 || (o.i | 0) > 0) progItems.push({ x: px, step: (o.i | 0) + 1, ansN: ansN });
     });
-    var unmastered = [], mastered = [];
+
+    var unmastered = [], mastered = [], partialCount = 0;
     P.forEach(function (x) {
-      var o = lnAll[x.href], bid = x.s + ":" + (x.l || x.t);
-      if (isMastered(x)) {
-        mastered.push({ x: x, pct: (o && o.pct != null) ? o.pct : (retLs[bid] && retLs[bid].s != null ? Math.round(retLs[bid].s) : 100) });
+      var m = masteryOf(x);
+      if (m.level === "mastered") {
+        mastered.push({ x: x, pct: m.pct });
       } else {
-        var prio = 3, note = "🔒 غير متقَن بعد", cls = "";
-        if (o && o.pct != null && o.pct < 80) { prio = 0; note = "⚠️ علامتك " + o.pct + "٪ — عيدها لتتقنها"; cls = "bad"; }
-        else if (weakByBase[bid]) { prio = 1; note = "💪 بحاجة لتقوية وإتقان"; cls = "bad"; }
-        else if (o && (o.i > 0 || (o.ans && Object.keys(o.ans).length))) { prio = 2; note = "⏳ مبلّش فيه (فقرة " + ((o.i | 0) + 1) + ")"; cls = "warn"; }
-        unmastered.push({ x: x, prio: prio, note: note, cls: cls });
+        if (m.level === "partial") partialCount++;
+        unmastered.push({ x: x, prio: m.prio, note: m.pill, cls: m.cls, level: m.level });
       }
     });
     unmastered.sort(function (a, b) { return a.prio - b.prio; });
+
     var by = {}, ord = [];
     P.forEach(function (x) { if (!by[x.s]) { by[x.s] = []; ord.push(x.s); } by[x.s].push(x); });
-    return { N: N, SB: SB, rm: rm, lnAll: lnAll, lab: lab, sbTxt: sbTxt, plan: planItems, weak: weakItems, prog: progItems, mastered: mastered, unmastered: unmastered, isMastered: isMastered, by: by, ord: ord, tot: P.length };
+    return { N: N, SB: SB, rm: rm, lnAll: lnAll, lab: lab, sbTxt: sbTxt, plan: planItems, weak: weakItems, prog: progItems, mastered: mastered, unmastered: unmastered, partialCount: partialCount, masteryOf: masteryOf, by: by, ord: ord, tot: P.length };
   }
   function pickHtml() {
     hubCss();
@@ -511,7 +553,7 @@
     }
     var tabs = [
       { id: "plan",    label: "🎯 خطة عثمان (" + D.plan.length + ")" },
-      { id: "mastery", label: "🏆 وضع الإتقان (" + D.unmastered.length + ")" },
+      { id: "mastery", label: "🏆 وضع الإتقان (" + D.mastered.length + "/" + D.tot + ")" },
       { id: "weak",    label: "💪 نقاط ضعفي (" + D.weak.length + ")" },
       { id: "prog",    label: "⏳ مبلّش فيها (" + D.prog.length + ")" },
       { id: "all",     label: "📚 كل المواد (" + D.ord.length + ")" }
@@ -522,12 +564,17 @@
     if (hubTab === "plan") {
       if (D.plan.length) {
         h += '<div class="lnhub-list">';
-        D.plan.forEach(function (it) { h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(it.tag) + ' · ' + esc(D.sbTxt(it.x.s)) + '</small></span><span class="lnhub-pill' + (it.done ? ' ok' : '') + '">' + (it.done ? '🏆 متقَن' : 'ابدأ ←') + '</span></a>'; });
+        D.plan.forEach(function (it) {
+          var m = it.m;
+          var label = m.level === "none" ? "ابدأ ←" : m.pill;
+          h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(it.tag) + ' · ' + esc(D.sbTxt(it.x.s)) + '</small></span><span class="lnhub-pill ' + m.cls + '">' + esc(label) + '</span></a>';
+        });
         h += '</div>';
       } else h += '<div class="lnhub-empty">ما في دروس محددة بخطة اليوم بعد — فوت على <b>🏆 وضع الإتقان</b> لتشوف الدروس يلي بعد ما أتقنتها.</div>';
     } else if (hubTab === "mastery") {
-      var mpct = D.tot ? Math.round(D.mastered.length / D.tot * 100) : 0;
-      h += '<div class="lnhub-mbar"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px;gap:8px;flex-wrap:wrap"><b>🏆 نسبة الإتقان الكلّية: ' + mpct + '٪</b><small style="font-weight:700">أتقنت ' + D.mastered.length + ' من ' + D.tot + ' درس (شرط الإتقان: ≥ ٨٠٪)</small></div><div class="lnhub-mtrack"><i style="width:' + Math.max(2, mpct) + '%"></i></div></div>';
+      var effScore = D.mastered.length + D.partialCount * 0.4;
+      var mpct = D.tot ? Math.min(100, Math.round(effScore / D.tot * 100)) : 0;
+      h += '<div class="lnhub-mbar"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px;gap:8px;flex-wrap:wrap"><b>🏆 إتقانك العام: ' + mpct + '٪</b><small style="font-weight:700">🏆 متقَن: ' + D.mastered.length + ' · 🟡 جزئي: ' + D.partialCount + ' · 🔒 باقي: ' + (D.unmastered.length - D.partialCount) + '</small></div><div class="lnhub-mtrack"><i style="width:' + Math.max(2, mpct) + '%"></i></div></div>';
       var subCounts = {};
       D.unmastered.forEach(function (it) { subCounts[it.x.s] = (subCounts[it.x.s] || 0) + 1; });
       h += '<div class="lnhub-subtabs">';
@@ -544,7 +591,7 @@
         shown.slice(0, 40).forEach(function (it) {
           h += '<a class="lnhub-item" href="' + esc(hrefFor(it.x.href)) + '"><span><b>' + esc(D.lab(it.x)) + '</b><small>' + esc(D.sbTxt(it.x.s)) + '</small></span><span class="lnhub-pill ' + it.cls + '">' + esc(it.note) + '</span></a>';
         });
-        if (shown.length > 40) h += '<p class="small" style="text-align:center">اختار مادة محددة من فوق لعرض كل الدروس (' + shown.length + ' درس غير متقَن)</p>';
+        if (shown.length > 40) h += '<p class="small" style="text-align:center">اختار مادة محددة من فوق لعرض كل الدروس (' + shown.length + ' درس بحاجة لإتقان)</p>';
         h += '</div>';
       } else {
         h += '<div class="lnhub-empty">🎉 بطل! أتقنت كل دروس هالمادة بنسبة ٨٠٪ وفوق!</div>';
@@ -568,13 +615,12 @@
     } else {
       D.ord.forEach(function (k) {
         var sb = D.SB[k] || {};
-        var mC = D.by[k].filter(function (x) { return D.isMastered(x); }).length;
-        h += '<details class="lnpeek lnpick"><summary>' + esc((sb.e || "📚") + " " + T(sb.ar || k, sb.fr || sb.ar || k)) + " · 🏆 " + mC + "/" + D.by[k].length + "</summary><ul>" +
+        var mC = D.by[k].filter(function (x) { return D.masteryOf(x).level === "mastered"; }).length;
+        var pC = D.by[k].filter(function (x) { return D.masteryOf(x).level === "partial"; }).length;
+        h += '<details class="lnpeek lnpick"><summary>' + esc((sb.e || "📚") + " " + T(sb.ar || k, sb.fr || sb.ar || k)) + " · 🏆 " + mC + (pC ? " · 🟡 " + pC : "") + " / " + D.by[k].length + "</summary><ul>" +
           D.by[k].map(function (x) {
-            var ms = D.isMastered(x);
-            var st0 = D.lnAll[x.href];
-            var badge = ms ? " 🏆" : (st0 && st0.fd ? " ⚠️" : (st0 && (st0.i > 0 || (st0.ans && Object.keys(st0.ans).length)) ? " ⏳" : " 🔒"));
-            return '<li><a href="' + esc(hrefFor(x.href)) + '">' + esc(D.lab(x)) + badge + "</a></li>";
+            var m = D.masteryOf(x);
+            return '<li><a href="' + esc(hrefFor(x.href)) + '">' + esc(D.lab(x)) + " " + m.icon + (m.level === "partial" && m.pct ? " (" + m.pct + "٪)" : "") + "</a></li>";
           }).join("") + "</ul></details>";
       });
     }
