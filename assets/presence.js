@@ -99,44 +99,81 @@ function openList() {
   fillList(s); s.hidden = false;
 }
 
-/* ---------- 📚 Live Study Buddy invite toast across the whole site ---------- */
-let sbUnsub = null;
+/* ---------- 📚 Live Study Buddy (Group Hall + 1-on-1) feed for Home Stories Bar + Site-Wide Toast ---------- */
+let sbUnsub = null, sbGroupTimer = 0;
 const sbDismissed = new Set();
-function showStudyToast(rm) {
-  if (!rm || sbDismissed.has(rm.id)) return;
+const livePeers = { group: [], rooms: [], online: [] };
+window.NursinLivePeers = livePeers;
+function emitLivePeers() {
+  try { document.dispatchEvent(new CustomEvent("nursin:live-peers", { detail: livePeers })); } catch (e) {}
+}
+function showStudyToast(item) {
+  if (!item || sbDismissed.has(item.key)) return;
   let el = document.getElementById("sb-live-toast");
   if (!el) {
     el = document.createElement("div");
     el.id = "sb-live-toast";
-    el.style.cssText = "position:fixed;bottom:76px;left:12px;right:12px;max-width:440px;margin:0 auto;z-index:9990;background:#0f172a;color:#f8fafc;border:1px solid rgba(56,189,248,.45);border-radius:16px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;direction:rtl";
+    el.style.cssText = "position:fixed;bottom:76px;left:12px;right:12px;max-width:440px;margin:0 auto;z-index:9990;background:#0f172a;color:#f8fafc;border:1px solid rgba(16,185,129,.5);border-radius:16px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;direction:rtl";
     document.body.appendChild(el);
   }
-  el.innerHTML = '<div><b>📚 ' + esc(rm.hostName) + ' عم يدرس هلق!</b><div style="font-size:12px;opacity:.85">' + esc(rm.topic || "مراجعة") + ' · معهد الزهراء — بدك تذاكر معه؟</div></div>' +
-    '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><a class="btn pri sm" href="study-buddy.html?room=' + encodeURIComponent(rm.id) + '" style="white-space:nowrap">🤝 ذاكر معه</a>' +
+  const href = item.roomId ? ("study-buddy.html?room=" + encodeURIComponent(item.roomId)) : "study-buddy.html";
+  const btnTxt = item.roomId ? "🤝 ذاكر معه" : "🏫 فوت عالقاعة";
+  el.innerHTML = '<div><b>📚 ' + esc(item.name) + ' عم يدرس هلق!</b><div style="font-size:12px;opacity:.85">' + esc(item.topic || "مراجعة") + ' · معهد الزهراء — بدك تذاكر معه؟</div></div>' +
+    '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><a class="btn pri sm" href="' + href + '" style="white-space:nowrap">' + btnTxt + '</a>' +
     '<button type="button" id="sb-toast-x" aria-label="إغلاق" style="background:transparent;border:0;color:#94a3b8;font-size:16px;cursor:pointer;padding:4px">✕</button></div>';
   el.hidden = false;
   const xb = document.getElementById("sb-toast-x");
-  if (xb) xb.onclick = () => { sbDismissed.add(rm.id); el.hidden = true; };
+  if (xb) xb.onclick = () => { sbDismissed.add(item.key); el.hidden = true; };
+}
+function pickToast() {
+  if (page === "study-buddy.html") return;
+  const cand = livePeers.rooms[0]
+    ? { key: "r:" + livePeers.rooms[0].id, roomId: livePeers.rooms[0].id, name: livePeers.rooms[0].hostName, topic: livePeers.rooms[0].topic }
+    : livePeers.group[0]
+      ? { key: "g:" + livePeers.group[0].uid, roomId: "", name: livePeers.group[0].name, topic: livePeers.group[0].subj }
+      : null;
+  const el = document.getElementById("sb-live-toast");
+  if (cand && !sbDismissed.has(cand.key)) showStudyToast(cand);
+  else if (el) el.hidden = true;
+}
+async function pollGroupHall() {
+  if (!A || !A.user) return;
+  try {
+    const now = Date.now();
+    const gq = F.query(F.collection(A.db, "users"), F.where("sbMode", "==", "group"), F.limit(20));
+    const snap = await F.getDocs(gq);
+    const gl = [];
+    snap.forEach(d => {
+      const r = d.data() || {};
+      if (!r.sbAt || now - r.sbAt > 25 * 60000) return;
+      if (d.id === A.user.uid) return;
+      gl.push({ uid: d.id, name: r.name || "طالب تمريض", photo: r.photo || "", subj: r.sbSubj || "مراجعة", at: r.sbAt });
+    });
+    gl.sort((a, b) => b.at - a.at);
+    livePeers.group = gl;
+    livePeers.online = online.slice();
+    emitLivePeers();
+    pickToast();
+  } catch (e) {}
 }
 function watchStudyRooms() {
-  if (sbUnsub || !A || !A.user || page === "study-buddy.html") return;
+  if (sbUnsub || !A || !A.user) return;
+  pollGroupHall();
+  if (!sbGroupTimer) sbGroupTimer = setInterval(pollGroupHall, 30000);
   try {
     const q = F.query(F.collection(A.db, "rooms"), F.where("state", "==", "waiting"), F.where("guest", "==", null), F.where("invited", "==", null), F.limit(10));
     sbUnsub = F.onSnapshot(q, snap => {
-      const now = Date.now();
-      let found = null;
+      const now = Date.now(), list = [];
       snap.forEach(d => {
-        if (found) return;
         const r = d.data() || {};
         if (!Array.isArray(r.qids) || r.qids[0] !== "sb_25") return;
         if (r.host === A.user.uid) return;
         if (r.hostSeen && now - r.hostSeen > 15 * 60000) return;
-        if (sbDismissed.has(d.id)) return;
-        found = { id: d.id, hostName: r.hostName || "طالب تمريض", topic: r.topic || "مراجعة" };
+        list.push({ id: d.id, hostName: r.hostName || "طالب تمريض", topic: r.topic || "مراجعة", at: r.hostSeen || now });
       });
-      const el = document.getElementById("sb-live-toast");
-      if (found) showStudyToast(found);
-      else if (el) el.hidden = true;
+      livePeers.rooms = list;
+      emitLivePeers();
+      pickToast();
     }, () => {});
   } catch (e) {}
 }

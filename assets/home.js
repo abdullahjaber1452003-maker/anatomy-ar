@@ -715,22 +715,10 @@
       fxH = '<div style="margin:4px 0 6px;text-align:start"><button type="button" class="btn sm" data-hzexfocus="on">🎯 ' + T("تفعيل وضع التركيز للامتحان", "Activer le mode examen") + "</button></div>";
     }
     var brkH = brkHtml(dn, all, cur);
-    var qbtn = !all && cur >= 0 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px"><button type="button" class="btn pri" data-hzquick style="flex:1;min-width:170px;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;font-weight:700;border-radius:14px">' + T("▶ ابدأ دراسة اليوم", "▶ Commencer l'étude") + '</button><button type="button" class="btn" data-hz5min style="padding:11px 12px;border-radius:14px;white-space:nowrap;font-weight:700">⚡ ' + T("تحدّي ٥ د", "Défi 5 min") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("خود بريك ٥ دقايق", "Pause 5 min") + '" style="padding:11px 12px;border-radius:14px;white-space:nowrap">☕ ٥ د</button></div>' : "";
-    var prSt = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : { ok: true, mode: "trial", daysLeft: 3 };
-    var prLk = !prSt.ok;
-    var lrnU = "learn.html";
-    var prTag = prSt.mode === "trial" ? "<span class='protag'>PRO · تجربة " + prSt.daysLeft + " أيام</span>" : prLk ? "<span class='protag'>🔒 PRO</span>" : "<span class='protag free'>PRO ✓</span>";
-    var proStrip = '<div class="progrid">' +
-      '<a class="procard' + (prLk ? ' lk' : '') + '" href="' + esc(lrnU) + '" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("وضع التعلّم", "Mode apprentissage") + ' ' + prTag + '</b><small>' + T("درس فقرة فقرة + 🔒 قفل الإتقان + بسّطلي", "Paragraphe par paragraphe + verrou") + '</small></span></a>' +
-      '<a class="procard' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان ومصحّح /20", "Plan examen + correcteur /20") + ' ' + prTag + '</b><small>' + T("جاهزيتك + تصحيح كتابي رسمي بالصوت", "Préparation + correction écrite /20") + '</small></span></a>' +
-      '<a class="procard' + (prLk ? ' lk' : '') + '" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="pe" aria-hidden="true">🌍</span><span><b>' + T("شريك الدراسة لايف", "Partenaire d\'étude live") + ' ' + prTag + '</b><small>' + T("طلاب معهد الزهراء الفاتحين هلق · إشعار فوري لتذاكروا سوا", "Étudiants en ligne · étudiez ensemble") + '</small></span></a>' +
-      '</div>';
-    var rdH = readinessHtml();
-    var plH = (w.NursinPlanner && w.NursinPlanner.homeHtml) ? w.NursinPlanner.homeHtml() : "";
-    var h = '<div class="hzph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 50) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
-      '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + "</small></div></div>" +
-      rdH + proStrip + plH + fxH + qbtn + brkH +
-      '<p class="hztm"><span>' + phase(p.d, hmB()) + "</span>" + (mn ? '<span class="hzmn">⏱️ ' + mn + T(" د اليوم", " min aujourd'hui") + "</span>" : "") + "</p>";
+    var qbtn = !all && cur >= 0 ? '<div class="hzv2-act"><button type="button" class="btn pri" data-hzquick style="flex:1;min-width:155px;padding:10px 12px;font-weight:700;border-radius:13px">' + T("▶ ابدأ خطوة اليوم", "▶ Commencer") + '</button><button type="button" class="btn" data-hz5min style="padding:10px 11px;border-radius:13px;white-space:nowrap;font-weight:700">⚡ ' + T("٥ د", "5 min") + '</button><button type="button" class="btn" data-hzqbrk="5" title="' + T("بريك ٥ دقايق", "Pause 5 min") + '" style="padding:10px 11px;border-radius:13px;white-space:nowrap">☕</button></div>' : "";
+    var h = '<div class="hzph hzv2-ph' + (all ? " all" : "") + '"><div class="hzrg">' + ring(dn, tot, 44) + '<div class="c"><b>' + dn + "/" + tot + "</b></div></div>" +
+      '<div class="tx"><h2 id="hzpathh">' + T("🧭 مسار اليوم", "🧭 Parcours du jour") + '</h2><small>' + line + (mn ? ' · ⏱️ ' + mn + T(" د", " min") : "") + "</small></div></div>" +
+      fxH + qbtn + brkH;
     h += stepsHtml(p, st, tot, dn, cur, D).replace('<ol class="hztl">', '<ol class="hztl' + (tot > 7 ? " hzlong" : "") + '">') + "</ol>";
     return h;
   }
@@ -785,32 +773,72 @@
     }
     return sh.n | 0;
   }
-  function readinessHtml() {
-    var NL = w.NLESSONS || {}, P = NL.parts || [], LS = w.NursinLessons, rm = LS && LS.readMap ? LS.readMap() : (lsGet("nursin_read_v1") || {});
-    var pq = lsGet("nursin_partq_v1") || {}, ln = lsGet("nursin_learn_v1") || {}, pt = lsGet("nursin_plan_track_v1") || {}, wx = lsGet("nursin_wriex_v1") || [], ep = lsGet("nursin_ep_done_v1") || {}, nt = lsGet("nursin_ntemp_v1") || {}, tot = P.length || 1, dn = 0, wkDn = 0, wkCut = Date.now() - 7 * 864e5; function nk(x){return String(x||"").replace(/^https?:\/\/[^\/]+/,"").replace(/^\/+/,"");} var lnMap={}; Object.keys(ln).forEach(function(k){lnMap[nk(k)]=ln[k]; lnMap[nk(k).split("#")[0]]=lnMap[nk(k).split("#")[0]]||ln[k];}); var matchedLn=0; for (var i = 0; i < P.length; i++) { var k = LS && LS.key ? LS.key(P[i]) : (P[i].s + ":" + (P[i].l || P[i].t) + (P[i].p ? "#" + P[i].p : "")); var uh = nk(P[i].href || P[i].u || (P[i].l ? (P[i].l + (P[i].p ? "#" + P[i].p : "")) : "")); var rOk = LS && LS.isRead ? LS.isRead(P[i], rm) : !!rm[k]; var lObj = lnMap[uh] || lnMap[uh.split("#")[0]] || lnMap[nk(k)] || null; if(lObj) matchedLn++; var lFin = !!(lObj && (lObj.fin || lObj.ph === "fin")); var lPart = !!(lObj && (lObj.i > 0 || (lObj.ans && Object.keys(lObj.ans).length > 0))); if (rOk || pq[k] || lFin) { dn += 1; var ts = +rm[k] || (pq[k] && +pq[k].t) || (lObj && +lObj.ts) || 0; if (ts > wkCut) wkDn++; } else if (lPart) { dn += 0.5; if (lObj && +lObj.ts > wkCut) wkDn++; } } if(!matchedLn){ Object.keys(ln).forEach(function(k){ var o=ln[k]; if(o&&(o.fin||o.i>0||(o.ans&&Object.keys(o.ans).length))){ dn += o.fin?1:0.5; if(+o.ts>wkCut) wkDn++; } }); } var planDone = (pt && typeof pt.done === "number") ? pt.done : 0; var epN = (Array.isArray(wx) ? wx.length : 0) + (+ep.n || 0) + planDone + (nt.done ? Object.keys(nt.done).length : 0); if(epN > 0){ dn += Math.min(epN * 0.5, tot * 0.25); wkDn += Math.min(epN, 10); } var pct = dn > 0 ? Math.max(1, Math.min(100, Math.round(100 * dn / tot))) : 0, goal = Math.min(100, pct + 5);
-    return '<div style="margin:6px 0 8px;padding:10px 12px;border-radius:14px;background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.25)">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px"><b>📊 ' + T("جاهزيتك للامتحان الرسمي: ", "Préparation examen : ") + '<span dir="ltr">' + pct + '%</span></b><small style="font-weight:700">' + T("الهدف اليوم: ", "Objectif : ") + '<span dir="ltr">' + goal + '%</span> · 🏆 ' + wkDn + T(" هالأسبوع", " cette sem.") + '</small></div>' +
-      '<div style="height:8px;border-radius:99px;background:rgba(127,127,127,.2);overflow:hidden;margin-top:6px"><i style="display:block;height:100%;width:' + Math.max(3, pct) + '%;background:linear-gradient(90deg,#0f766e,#16a34a);border-radius:99px"></i></div></div>';
+  var homeTab = "path";
+  function homeCss() {
+    if (d.getElementById("hzv2css")) return;
+    var s = d.createElement("style"); s.id = "hzv2css";
+    s.textContent = ".hzv2-hd{display:flex;align-items:center;gap:8px;margin:2px 0 8px}.hzv2-hd .t{flex:1;min-width:0}.hzv2-hd .t b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hzv2-hd .t small{display:block;font-size:11.5px;opacity:.72}.hzv2-p{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;color:inherit;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.22);white-space:nowrap}.hzv2-ic{width:34px;height:34px;border-radius:50%;border:1px solid rgba(127,127,127,.24);background:var(--card,#fff);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;font-size:15px}.hzv2-live{background:var(--card,#fff);border:1px solid rgba(16,185,129,.28);border-radius:16px;padding:9px 11px;margin:0 0 8px}.hzv2-lh{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:7px;gap:6px}.hzv2-ldot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 7px #10b981;margin-inline-end:5px}.hzv2-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.hzv2-row::-webkit-scrollbar{display:none}.hzv2-bub{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;max-width:68px;text-decoration:none;color:inherit;flex-shrink:0}.hzv2-ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;border:2.5px solid #10b981;background:rgba(16,185,129,.12);overflow:hidden;position:relative}.hzv2-ring.add{border-style:dashed;border-color:#0f766e;background:rgba(15,118,110,.1);color:#0f766e}.hzv2-ring img{width:100%;height:100%;object-fit:cover}.hzv2-bub b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-bub small{font-size:10px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-pro2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 9px}.hzv2-pc{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(15,118,110,.25);text-decoration:none;color:inherit}.hzv2-pc .pe{font-size:20px;flex-shrink:0}.hzv2-pc b{display:block;font-size:13px;line-height:1.25}.hzv2-pc small{display:block;font-size:11px;opacity:.75;margin-top:2px}.hzv2-tabs{display:flex;gap:5px;padding:4px;border-radius:999px;background:rgba(127,127,127,.12);margin:0 0 10px}.hzv2-tab{flex:1;padding:8px 8px;border-radius:999px;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.hzv2-tab.on{background:#0f766e;color:#fff;box-shadow:0 2px 8px rgba(15,118,110,.3)}.hzv2-ph{margin:0 0 6px !important;padding:0 !important}.hzv2-act{display:flex;gap:6px;margin:6px 0 8px}.hzv2-qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.hzv2-qbtn{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(127,127,127,.22);text-decoration:none;color:inherit;font-weight:700;font-size:13.5px}html[data-theme=night] .hzv2-live,html[data-theme=night] .hzv2-pc,html[data-theme=night] .hzv2-qbtn{background:rgba(15,23,42,.72)}.hzst.now>.bx{background:linear-gradient(135deg,rgba(15,118,110,.14),rgba(20,184,166,.08));border-color:rgba(15,118,110,.45)}";
+    (d.head || d.documentElement).appendChild(s);
   }
+  function readinessPct() {
+    var NL = w.NLESSONS || {}, P = NL.parts || [], LS = w.NursinLessons, rm = LS && LS.readMap ? LS.readMap() : (lsGet("nursin_read_v1") || {});
+    var pq = lsGet("nursin_partq_v1") || {}, ln = lsGet("nursin_learn_v1") || {}, pt = lsGet("nursin_plan_track_v1") || {}, wx = lsGet("nursin_wriex_v1") || [], ep = lsGet("nursin_ep_done_v1") || {}, nt = lsGet("nursin_ntemp_v1") || {}, tot = P.length || 1, dn = 0; function nk(x){return String(x||"").replace(/^https?:\/\/[^\/]+/,"").replace(/^\/+/,"");} var lnMap={}; Object.keys(ln).forEach(function(k){lnMap[nk(k)]=ln[k]; lnMap[nk(k).split("#")[0]]=lnMap[nk(k).split("#")[0]]||ln[k];}); var matchedLn=0; for (var i = 0; i < P.length; i++) { var k = LS && LS.key ? LS.key(P[i]) : (P[i].s + ":" + (P[i].l || P[i].t) + (P[i].p ? "#" + P[i].p : "")); var uh = nk(P[i].href || P[i].u || (P[i].l ? (P[i].l + (P[i].p ? "#" + P[i].p : "")) : "")); var rOk = LS && LS.isRead ? LS.isRead(P[i], rm) : !!rm[k]; var lObj = lnMap[uh] || lnMap[uh.split("#")[0]] || lnMap[nk(k)] || null; if(lObj) matchedLn++; var lFin = !!(lObj && (lObj.fin || lObj.ph === "fin" || lObj.fd)); var lPart = !!(lObj && (lObj.i > 0 || (lObj.ans && Object.keys(lObj.ans).length > 0))); if (rOk || pq[k] || lFin) dn += 1; else if (lPart) dn += 0.5; } if(!matchedLn){ Object.keys(ln).forEach(function(k){ var o=ln[k]; if(o&&(o.fin||o.fd||o.i>0||(o.ans&&Object.keys(o.ans).length))) dn += (o.fin||o.fd)?1:0.5; }); } var planDone = (pt && typeof pt.done === "number") ? pt.done : 0; var epN = (Array.isArray(wx) ? wx.length : 0) + (+ep.n || 0) + planDone + (nt.done ? Object.keys(nt.done).length : 0); if(epN > 0) dn += Math.min(epN * 0.5, tot * 0.25); return dn > 0 ? Math.max(1, Math.min(100, Math.round(100 * dn / tot))) : 0;
+  }
+  function readinessHtml() { return ""; }
   function headHtml() {
-    var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));       // assets/announce.js: «on» = unread
-    var shN = shieldCount();
-    return '<div class="hzhd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
-      '<div class="t"><small>' + greet(hourB()) + "</small><b>" + (nm ? "<bdi>" + esc(nm) + "</bdi> 👋" : T("يا بطل 👋", "champion 👋")) + "</b></div>" +
-      '<a class="hzpill glass" href="me.html" title="' + T("سلسلة الدراسة" + (shN ? " + درع حماية (" + shN + ")" : " (كل ٥ أيام بتربح درع 🛡️)"), "Série") + '" aria-label="' + T("السلسلة: ", "Série : ") + streak() + T(" يوم", " jour(s)") + '"><span aria-hidden="true">🔥</span>' + streak() + (shN ? ' · 🛡️' + shN : '') + "</a>" +
-      (bell ? '<button class="hzcb glass" type="button" data-hz="bell" aria-label="' + T("الإعلانات", "Annonces") + '"><span aria-hidden="true">🔔</span>' + (dot ? '<span class="dot"></span>' : "") + "</button>" : "") + "</div>" +
-      '<button class="hzsrch glass" type="button" data-hz="search"><span class="e" aria-hidden="true">🔍</span><span class="ph">' + T("دوّر على درس، سؤال، دوا…", "Cherche une leçon, une question, un médicament…") + "</span></button>";
+    var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));
+    var shN = shieldCount(), rpct = readinessPct();
+    return '<div class="hzv2-hd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
+      '<div class="t"><small>' + greet(hourB()) + '</small><b>' + (nm ? '<bdi>' + esc(nm) + '</bdi> 👋' : T("يا بطل 👋", "champion 👋")) + '</b></div>' +
+      '<a class="hzv2-p" href="exam-prep.html" title="' + T("جاهزيتك للامتحان", "Préparation") + '">📊 <span dir="ltr">' + rpct + '%</span></a>' +
+      '<a class="hzv2-p" href="me.html" title="' + T("سلسلة الدراسة", "Série") + '">🔥' + streak() + (shN ? '🛡️' : '') + '</a>' +
+      '<button class="hzv2-ic" type="button" data-hz="search" aria-label="' + T("بحث", "Rechercher") + '">🔍</button>' +
+      (bell ? '<button class="hzv2-ic" type="button" data-hz="bell" aria-label="' + T("الإعلانات", "Annonces") + '">🔔' + (dot ? '<span class="dot" style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#ef4444"></span>' : "") + '</button>' : "") + '</div>';
+  }
+  function liveStoriesHtml() {
+    var lp = w.NursinLivePeers || { group: [], rooms: [], online: [] };
+    var grp = lp.group || [], rms = lp.rooms || [], onl = lp.online || [];
+    var liveN = grp.length + rms.length;
+    var prSt = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : { ok: true, mode: "trial", daysLeft: 3 };
+    var prLk = !prSt.ok;
+    var h = '<div class="hzv2-live"><div class="hzv2-lh"><span><i class="hzv2-ldot"></i>' + T("معهد الزهراء لايف الآن", "Institut Al-Zahraa Live") + (liveN ? ' (' + liveN + ')' : '') + '</span><a href="study-buddy.html" data-hzprogo="شريك الدراسة لايف" style="color:#0f766e;text-decoration:none;font-size:11.5px">' + (liveN ? T("فوت عالقاعة ←", "Rejoindre ←") : T("بلّش دراسة ←", "Démarrer ←")) + '</a></div><div class="hzv2-row">';
+    h += '<a class="hzv2-bub" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="hzv2-ring add">＋</span><b>' + T("ادرس لايف", "Étudier live") + '</b><small>' + T("جماعي/ثنائي", "Groupe/Duo") + '</small></a>';
+    var seen = {};
+    grp.slice(0, 8).forEach(function (g) {
+      seen[g.uid] = 1;
+      var fn = String(g.name || "طالب").split(/\s+/)[0].slice(0, 10);
+      var av = g.photo ? '<img src="' + esc(g.photo) + '" alt="" referrerpolicy="no-referrer">' : esc(fn.charAt(0));
+      h += '<a class="hzv2-bub" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="hzv2-ring">' + av + '</span><b>' + esc(fn) + '</b><small>' + esc(g.subj || "قاعة") + '</small></a>';
+    });
+    rms.slice(0, 4).forEach(function (r) {
+      var fn = String(r.hostName || "طالب").split(/\s+/)[0].slice(0, 10);
+      h += '<a class="hzv2-bub" href="study-buddy.html?room=' + encodeURIComponent(r.id) + '" data-hzprogo="شريك الدراسة لايف"><span class="hzv2-ring">🤝</span><b>' + esc(fn) + '</b><small>' + esc(r.topic || "ثنائي") + '</small></a>';
+    });
+    onl.slice(0, 6).forEach(function (o) {
+      if (seen[o.uid]) return;
+      var fn = String(o.name || "طالب").split(/\s+/)[0].slice(0, 10);
+      var av = o.photo ? '<img src="' + esc(o.photo) + '" alt="" referrerpolicy="no-referrer">' : esc(fn.charAt(0));
+      h += '<a class="hzv2-bub" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="hzv2-ring" style="border-color:rgba(16,185,129,.55)">' + av + '</span><b>' + esc(fn) + '</b><small>أونلاين</small></a>';
+    });
+    if (!grp.length && !rms.length && !onl.length) {
+      h += '<a class="hzv2-bub" href="study-buddy.html" data-hzprogo="شريك الدراسة لايف"><span class="hzv2-ring">🏫</span><b>قاعة الزهراء</b><small>فوت وأشعر الكل</small></a>';
+    }
+    h += '</div></div>';
+    h += '<div class="hzv2-pro2">' +
+      '<a class="hzv2-pc' + (prLk ? ' lk' : '') + '" href="learn.html" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("التعلّم والإتقان", "Apprentissage") + '</b><small>' + T("فقرة فقرة + إتقان", "Paragraphe par parag.") + '</small></span></a>' +
+      '<a class="hzv2-pc' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان /20", "Plan examen /20") + '</b><small>' + T("جاهزيتك + تصحيح", "Plan + correcteur") + '</small></span></a>' +
+      '</div>';
+    return h;
   }
   function chipsHtml() {
-    /* 🎬 30s (Abdullah, Nov 8 2026 1:36 PM: «بدي بدل كلمة الكل تنحط المواد يعني فوق يكون فيه بس المواد و الخرائط الذهنية وتحت بدل المواد بينحط الreels»):
-       the chip row is ONLY «📚 المواد» (opens the subjects sheet, what the old bottom-nav «المواد» did — [data-hz="learn"] in assets/ui.js) and
-       «🗺️ الخرائط الذهنية». «الكل» and the per-subject chips are gone from this row; the subjects stay one tap away under «📚 المواد». */
     var pb = (w.NursinPro && w.NursinPro.barHtml) ? w.NursinPro.barHtml() : "";
-    return '<nav class="hzchips" aria-label="' + T("المواد", "Matières") + '"><button type="button" class="on" data-hz="learn">📚 ' + T("المواد", "Matières") + "</button>" +
-      '<a class="hzmm" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + "</a>" +
-      '<a class="hzdis" href="discuss.html">💬 ' + T("نقاش", "Discussion") + (dsNew() ? '<span class="nw">' + T("جديد", "nouveau") + "</span>" : "") + "</a></nav>" + pb;
+    return liveStoriesHtml() + pb +
+      '<div class="hzv2-tabs" role="tablist">' +
+      '<button type="button" class="hzv2-tab' + (homeTab === "path" ? " on" : "") + '" data-hzt="path">🧭 ' + T("مسار اليوم", "Parcours") + '</button>' +
+      '<button type="button" class="hzv2-tab' + (homeTab === "subs" ? " on" : "") + '" data-hzt="subs">📚 ' + T("موادي", "Matières") + '</button>' +
+      '<button type="button" class="hzv2-tab' + (homeTab === "more" ? " on" : "") + '" data-hzt="more">✨ ' + T("المزيد", "Plus") + '</button>' +
+      '</div>';
   }
-  /* 💬 31c «نقاش»: يبقى الزر فوق بدون إشعار تحته، ومكانه تحت الأزرار وفوق المستشفى/المسار بتنحط بطاقة 🎙️ بودكاست اليوم. */
   function dsNew() { var s = null; try { s = JSON.parse(localStorage.getItem("nursin_discuss_v1") || "null"); } catch (e) {} return !(s && s.visited) && Date.now() < Date.parse("2026-11-22T00:00:00Z"); }
   function podCard() { try { return w.NursinPodcast ? w.NursinPodcast.homeHtml() : ""; } catch (e) { return ""; } }
   function subsHtml() {
@@ -822,7 +850,7 @@
       seen[k] = 1;
       subj.push({ k: k, p: LS[k].href, e: LS[k].e || "📘", ar: LS[k].ar || k, fr: LS[k].fr || LS[k].ar || k, s: [k], g: LS[k].g || "linear-gradient(160deg,#14b8a6,#0f766e)" });
     });
-    return '<div class="hzsh"><h2>' + T("📚 موادي", "📚 Mes matières") + '</h2><a class="hzmmb" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales (الخرائط الذهنية)") + '</a><button type="button" data-hz="learn">' + T("الكل", "Tout") + " (" + (subj.length - 1) + ")</button></div><div class=\"hzsubs\">" +
+    return '<div class="hzsubs">' +
       subj.map(function (s) {
         var xs = L.filter(function (l) { return s.s.indexOf(l.s) > -1 && l.score != null; }), pc = xs.length ? Math.round(xs.reduce(function (a, l) { return a + l.score; }, 0) / xs.length) : null;
         return '<a class="hzsc" href="' + s.p + '" style="background:' + s.g + '"><span class="art" aria-hidden="true"><i></i><i></i><span>' + s.e + "</span></span><b>" + esc(T(s.ar, s.fr)) + "</b><small>" +
@@ -832,13 +860,17 @@
   function footHtml() {
     var R = w.NursinRet, c = null; try { c = R && R.counts ? R.counts() : null; } catch (e) {}
     var tn = tnNow();
-    return '<button type="button" class="hzft" data-hzduel><span aria-hidden="true">⚔️</span><span><b>' + T("بطولة صفّك", "Le tournoi de ta classe") + "</b><small>" + esc(tn && tn.txt ? tn.txt : T("الجدول، الترتيب والجوائز", "Tableau, classement et prix")) + "</small></span></button>" +
+    var plH = (w.NursinPlanner && w.NursinPlanner.homeHtml) ? w.NursinPlanner.homeHtml() : "";
+    return '<div class="hzv2-qgrid">' +
+      '<a class="hzv2-qbtn" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales") + '</a>' +
+      '<a class="hzv2-qbtn" href="discuss.html">💬 ' + T("نقاش الطلاب", "Discussion") + '</a>' +
+      '<a class="hzv2-qbtn" href="reels.html">🎬 ' + T("أفلام ريلز", "Reels") + '</a>' +
+      '<a class="hzv2-qbtn" href="games.html">🎮 ' + T("ألعاب مراجعة", "Jeux") + '</a>' +
+      '</div>' + plH +
+      '<button type="button" class="hzft" data-hzduel><span aria-hidden="true">⚔️</span><span><b>' + T("بطولة صفّك", "Le tournoi de ta classe") + "</b><small>" + esc(tn && tn.txt ? tn.txt : T("الجدول، الترتيب والجوائز", "Tableau, classement et prix")) + "</small></span></button>" +
       (w.NursinMid && w.NursinMid.active() ? '<a class="hzft hzmidft" href="midterm.html"><span aria-hidden="true">🎯</span><span><b>' + T("الامتحان الجاي", "Prochain examen") + "</b><small>" + (function (M) { var nx = M.next ? M.next() : null; return T("باقي " + M.daysLeft() + " يوم" + (nx ? " · " + M.dmOf(nx.d) + " " + nx.ar : ""), "J-" + M.daysLeft() + (nx ? " · " + M.dmOf(nx.d) + " " + nx.fr : "")); })(w.NursinMid) + "</small></span></a>" : "") +
       '<a class="hzft" href="hifzi.html"><span aria-hidden="true">🗺️</span><span><b>' + T("حفظي", "Ma mémoire") + "</b><small>" + (c ? '<i class="rdot r-green"></i>' + c.green + ' <i class="rdot r-yellow"></i>' + c.yellow + ' <i class="rdot r-red"></i>' + c.red : T("خريطة حفظك لكل الدروس", "La carte de ta mémoire")) + "</small></span></a>";
   }
-  // 🛠️ Nov 1 2026 7:34 AM (Abdullah: the suggestion box «المفروض تكون مبيّنة بس في محل رئيسي», not hidden under «الكل»): one clear card
-  // right AFTER «🧭 مسار اليوم» (outside the path, never a step, no ad next to it) → suggest.html. Shown signed-out too (suggest.html asks
-  // for the sign-in). «جديد» badge until the student has opened suggest.html once (assets/suggest.js sets SUGK).
   var SUGK = "nursin_sug_open_v1";
   function sugHtml() {
     var fresh = !lsGet(SUGK);
@@ -851,20 +883,25 @@
   function remHtml() { var R = w.NursinRem; try { return R && R.homeHtml ? R.homeHtml() : ""; } catch (e) { return ""; } }
   function draw() {
     if (!root) return;
-    if (!parts) {                                        // built once: the tournament card (#duel, drawn by assets/duel.js) lives inside the path
-      // Study-first layout: «🧭 مسار اليوم» right at the top, followed by «☕ استراحة وتدريب إضافي» (daily clinical case, podcast, tournament, memory)
+    homeCss();
+    if (!parts) {
       root.innerHTML = '<div class="hztop"></div><section class="hzpath" id="path" aria-labelledby="hzpathh"><div class="hzpin"></div>' +
-        '<div class="hzextra" style="margin-top:14px"><h3 style="margin:0 0 8px;font-size:15px;opacity:.85">☕ ' + T("استراحة وتدريب إضافي", "Pause et entraînement") + '</h3><div class="hzlivew"></div><div class="hzpodw"></div><div class="hzfoot"></div></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsugw"></div><div class="hzsubw"></div>';
-      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), pod: root.querySelector(".hzpodw"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
+        '<div class="hzextra" style="margin-top:6px"><div class="hzpodw"></div><div class="hzfoot"></div><div class="hzsugw" style="margin-top:10px"></div></div><div class="hzduelbox" id="hzduelbox" hidden></div></section><div class="hzsubw"></div>';
+      parts = { top: root.querySelector(".hztop"), pin: root.querySelector(".hzpin"), extra: root.querySelector(".hzextra"), pod: root.querySelector(".hzpodw"), foot: root.querySelector(".hzfoot"), duel: root.querySelector(".hzduelbox"), sug: root.querySelector(".hzsugw"), subs: root.querySelector(".hzsubw") };
       var du = d.getElementById("duel"); if (du) parts.duel.appendChild(du);
     }
     var p = refreshDone(plan());
     parts.top.innerHTML = headHtml() + chipsHtml();
-    parts.pin.innerHTML = pathHtml(p) + remHtml();
-    if (parts.pod) parts.pod.innerHTML = podCard();
-    parts.foot.innerHTML = footHtml();
-    parts.sug.innerHTML = sugHtml();
-    parts.subs.innerHTML = subsHtml();
+    parts.pin.hidden = homeTab !== "path";
+    parts.subs.hidden = homeTab !== "subs";
+    parts.extra.hidden = homeTab !== "more";
+    if (homeTab === "path") parts.pin.innerHTML = pathHtml(p) + remHtml();
+    if (homeTab === "subs") parts.subs.innerHTML = subsHtml();
+    if (homeTab === "more") {
+      if (parts.pod) parts.pod.innerHTML = podCard();
+      parts.foot.innerHTML = footHtml();
+      parts.sug.innerHTML = sugHtml();
+    }
   }
   function openDuel(scroll) {
     if (!parts) return; parts.duel.hidden = false;
@@ -875,6 +912,11 @@
   function stepClick(e) {
     var t = e.target.closest ? e.target : e.target.parentElement, p = lsGet(PK); if (!p || p.d !== today() || p.v !== V) return;
     var b;
+    if ((b = t.closest("[data-hzt]"))) {
+      homeTab = b.getAttribute("data-hzt") || "path";
+      draw();
+      return;
+    }
     if ((b = t.closest("[data-hzprogo]"))) {
       var fName = b.getAttribute("data-hzprogo");
       var tKey = fName && fName.indexOf("التعلّم") > -1 ? "learn" : "exam";
@@ -1117,7 +1159,7 @@
     setInterval(brkTick, 1000);
     root.addEventListener("click", stepClick);          // the [data-hz] buttons (avatar, 🔔, search, chips, «الكل») are handled by assets/ui.js
     var t = 0, redraw = function () { clearTimeout(t); t = setTimeout(draw, 60); };
-    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast", "nursin:pro", "nursin:planner"].forEach(function (ev) { d.addEventListener(ev, redraw); });
+    ["nursin:ret", "nursin:srs", "nursin:me", "nursin:wexam", "nursin:theme", "nursin:avatar", "nursin:name", "nursin:goals", "nursin:tourney", "nursin:lesson-read", "nursin:weekles", "nursin:use", "nursin:study", "nursin:rest", "nursin:mid", "nursin:hw", "nursin:rem", "nursin:podcast", "nursin:pro", "nursin:planner", "nursin:live-peers"].forEach(function (ev) { d.addEventListener(ev, redraw); });
     d.addEventListener("nursin:auth", function (e) { redraw(); if (e.detail && e.detail.signedIn) setTimeout(pull, 1200); });
     d.addEventListener("nursin:tile", function (e) { var x = e.detail || {}; if (x.k === "cq") { cqItems = (x.items || []).map(function (y) { return { k: "cq:" + (y.href || y.n), e: y.e || "📝", n: y.n, s: y.s, href: y.href, done: !!y.done }; }); redraw(); } });
     d.addEventListener("visibilitychange", function () { if (!d.hidden) redraw(); });
