@@ -1,18 +1,38 @@
 /* 📜 دورات شهادة الإجازة الفنية (LT) الرسمية — العناية التمريضية (PRO)
    ES5-safe (iOS 12+). Gated by window.NursinPro.canUse().
-   Includes: 2009-2024 archive + native iPhone PDF open + top inline PDF viewer + Interactive Official LT 2023 & 2024 Quizzes (78 MCQs + 6 Written Cases). */
+   Includes: ALL 174 exams (2009–2024, ZERO ZIP/RAR!) + Arabic-first reader + instant & Osman model solutions + 78 Interactive Official MCQs (2023+2024) & 6 Written Cases. */
 (function (w, d) {
   "use strict";
 
   var YEARS = [2024, 2023, 2022, 2021, 2020, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009];
-  var L4 = "abcd";
-  var st = { tab: "archive", year: "all", round: "all", view: "", qYear: "2024", qKey: "2024_med", qi: 0, score: 0, ans: {}, mPick: [], showCase: false };
+  var L4 = "abcd", SOL_K = "nursin_lt_sol_v1";
+  var st = {
+    tab: "archive",
+    year: "2024",
+    round: "all",
+    search: "",
+    view: "",
+    viewTitle: "",
+    docId: "",
+    docLang: "ar",
+    solId: "",
+    solBusy: false,
+    qYear: "2024",
+    qKey: "2024_med",
+    qi: 0,
+    score: 0,
+    ans: {},
+    mPick: [],
+    showCase: false
+  };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
+  function lsGet(k) { try { return JSON.parse(w.localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function lsSet(k, v) { try { w.localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
   function isMulti(q) { return !!(q && (Array.isArray(q.a) || q.multi)); }
   function ansArr(q) { return Array.isArray(q.a) ? q.a.slice().sort(function (a, b) { return a - b; }) : [q.a]; }
@@ -54,6 +74,96 @@
     return Q[key] || { title: "دورة رسمية", qs: [], caseStudy: null };
   }
 
+  function matchBuiltInQuiz(item) {
+    var Q = w.LT_EXAMS_QUIZ || {};
+    if (!item || (item.y !== 2024 && item.y !== 2023) || item.r !== 1) return null;
+    var t = String(item.t || "");
+    var map = [
+      ["الطبية", "med"], ["الطبيه", "med"],
+      ["الجراحية", "surg"], ["الجراحيه", "surg"],
+      ["الطارئة", "rea"], ["الطارئه", "rea"], ["المركزة", "rea"], ["المركّزة", "rea"],
+      ["الجماعية", "comm"], ["الجماعيه", "comm"], ["الوقائية", "comm"],
+      ["إدارة", "mgmt"], ["ادارة", "mgmt"], ["الجودة", "mgmt"],
+      ["العقلية", "psych"], ["العقليه", "psych"],
+      ["القانون", "law"],
+      ["الشيخوخة", "geri"]
+    ];
+    for (var i = 0; i < map.length; i++) {
+      if (t.indexOf(map[i][0]) > -1) {
+        var k = item.y + "_" + map[i][1];
+        if (Q[k]) return Q[k];
+      }
+    }
+    return null;
+  }
+
+  function formatBuiltInSolution(ex) {
+    var lines = ["🏆 الحل النموذجي الرسمي — " + ex.title, ""];
+    lines.push("أولاً: إجابات الاختيار من متعدّد (MCQ):");
+    (ex.qs || []).forEach(function (q, idx) {
+      var ansTxt = ansArr(q).map(function (i) { return q.o[i]; }).join(" + ");
+      lines.push((idx + 1) + ") " + q.q);
+      lines.push("   ✅ الجواب الصح: " + ansTxt);
+      if (q.x) lines.push("   💡 الشرح: " + q.x);
+    });
+    if (ex.caseStudy) {
+      lines.push("");
+      lines.push("ثانياً: حل دراسة الحالة الرسمية:");
+      (ex.caseStudy.qs || []).forEach(function (it, idx) {
+        lines.push((idx + 1) + ") " + it.q);
+        lines.push("   ✅ " + it.a);
+      });
+    }
+    return lines.join("\n");
+  }
+
+  function solveExam(root, item) {
+    var cache = lsGet(SOL_K) || {}, key = item.file;
+    st.solId = key;
+    var built = matchBuiltInQuiz(item);
+    if (built) {
+      cache[key] = formatBuiltInSolution(built);
+      lsSet(SOL_K, cache);
+      st.solBusy = false;
+      render(root);
+      return;
+    }
+    if (cache[key]) { st.solBusy = false; render(root); return; }
+    var ep = w.NursinAsk && w.NursinAsk.API ? w.NursinAsk.API : "";
+    if (!ep) { st.solBusy = false; return; }
+    var DOCS = w.LT_EXAMS_DOCS || {}, docObj = DOCS[key] || null;
+    var examText = docObj ? (docObj.ar || docObj.full || "").slice(0, 6500) : "";
+    st.solBusy = true;
+    render(root);
+    var prompt = examText
+      ? "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. هي دورة شهادة LT رسمية (" + item.t + "). حلّ كل أسئلة هالدورة بشكل مرتّب وواضح بالعربي (مع المصطلحات الطبية الفرنسية/الإنكليزية بين قوسين) وبناءً على منهاج التمريض اللبناني ودروس الموقع. بلا نجوم (**)، استخدم أرقام واضحة وعلامة ✅ جنب كل جواب:\n\n" + examText
+      : "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. الطالب فاتح دورة رسمية (" + item.t + "). اعطيه الحل النموذجي وأهم النقاط والمحاور والأجوبة المعتمدة بهالمادة بـ LT لبنان بناءً على دروس الموقع، مرتّبة بنقاط واضحة بالعربي مع المصطلحات الطبية الأساسية وبلا نجوم.";
+    w.fetch(ep, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", text: prompt }], context: w.Osman && w.Osman.persona ? w.Osman.persona() : "" })
+    })
+      .then(function (r) { if (!r.ok) throw 1; return r.json(); })
+      .then(function (j) {
+        var txt = j && j.text ? String(j.text).replace(/\*\*?/g, "").trim() : "";
+        if (!txt) throw 1;
+        var c2 = lsGet(SOL_K) || {};
+        c2[key] = txt;
+        var ks = Object.keys(c2);
+        if (ks.length > 40) delete c2[ks[0]];
+        lsSet(SOL_K, c2);
+        st.solBusy = false;
+        render(root);
+      })
+      .catch(function () {
+        st.solBusy = false;
+        var c2 = lsGet(SOL_K) || {};
+        c2[key] = "⚠️ تعذّر الاتصال مؤقتاً لجلب الحل — جرّب اكبس «🏆 الحل النموذجي» مرّة تانية.";
+        lsSet(SOL_K, c2);
+        render(root);
+      });
+  }
+
   function css() {
     if (d.getElementById("ltcss")) return;
     var s = d.createElement("style");
@@ -68,12 +178,15 @@
       ".ltchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}" +
       ".ltchip{padding:6px 11px;border-radius:999px;border:1px solid rgba(127,127,127,.3);background:transparent;color:inherit;cursor:pointer;font-size:12.5px;font-weight:600}" +
       ".ltchip.on{background:#0f766e;color:#fff;border-color:#0f766e}" +
+      ".ltsearch{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;border:1px solid rgba(127,127,127,.35);background:transparent;color:inherit;font:inherit;font-size:14px;margin:6px 0}" +
       ".ltsrc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:10px 0}" +
       ".ltsrc a{display:block;padding:12px;border-radius:14px;border:1px solid rgba(15,118,110,.28);background:rgba(15,118,110,.07);text-decoration:none;color:inherit}" +
       ".ltsrc a b{display:block;font-size:14.5px;margin-bottom:3px;color:var(--pri,#0f766e)}" +
       ".ltsrc a small{display:block;font-size:12px;opacity:.82;line-height:1.5}" +
       ".ltitem{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;border:1px solid rgba(127,127,127,.2);margin:6px 0}" +
       ".ltpdf{width:100%;height:70vh;border:1px solid rgba(127,127,127,.25);border-radius:12px;margin-top:8px}" +
+      ".ltdocbody{white-space:pre-wrap;font-size:14.5px;line-height:1.8;padding:12px;border-radius:12px;background:rgba(127,127,127,.06);border:1px solid rgba(127,127,127,.18);max-height:60vh;overflow:auto;margin:8px 0}" +
+      ".ltsolbox{white-space:pre-wrap;font-size:14px;line-height:1.8;padding:12px;border-radius:12px;background:rgba(22,163,74,.09);border:1px solid rgba(22,163,74,.32);margin-top:10px}" +
       ".ltopt{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:right;padding:11px 12px;margin:6px 0;border-radius:12px;border:1.5px solid rgba(127,127,127,.28);background:var(--card,#fff);color:inherit;font:inherit;font-size:14.5px;cursor:pointer}" +
       ".ltopt .l{flex:0 0 24px;height:24px;border-radius:50%;background:rgba(127,127,127,.14);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px}" +
       ".ltopt.msel{border-color:#0f766e;background:rgba(15,118,110,.14);box-shadow:0 0 0 2px rgba(15,118,110,.2)}" +
@@ -158,15 +271,19 @@
   }
 
   function renderArchiveTab() {
-    var pdfs = (w.LT_EXAMS_PDF || []).filter(function (x) {
-      if (st.year !== "all" && String(x.y) !== String(st.year)) return false;
-      if (st.round !== "all" && String(x.r) !== String(st.round)) return false;
-      return true;
-    });
     var allList = w.LT_EXAMS_PDF || [], byY = {};
     allList.forEach(function (x) { byY[x.y] = (byY[x.y] || 0) + 1; });
+
+    var qTxt = String(st.search || "").trim().toLowerCase();
+    var pdfs = allList.filter(function (x) {
+      if (st.year !== "all" && String(x.y) !== String(st.year)) return false;
+      if (st.round !== "all" && String(x.r) !== String(st.round)) return false;
+      if (qTxt && String(x.t || "").toLowerCase().indexOf(qTxt) < 0) return false;
+      return true;
+    });
+
     var yearChips =
-      '<button type="button" class="ltchip' + (st.year === "all" ? " on" : "") + '" data-lty="all">كل السنوات (' + allList.length + ')</button>' +
+      '<button type="button" class="ltchip' + (st.year === "all" ? " on" : "") + '" data-lty="all">الكل (' + allList.length + ')</button>' +
       YEARS.map(function (y) {
         var cnt = byY[y] || 0;
         return '<button type="button" class="ltchip' + (String(st.year) === String(y) ? " on" : "") + '" data-lty="' + y + '">' + y + (cnt ? ' (' + cnt + ')' : '') + '</button>';
@@ -176,41 +293,83 @@
       '<button type="button" class="ltchip' + (st.round === "1" ? " on" : "") + '" data-ltr="1">الدورة الأولى</button>' +
       '<button type="button" class="ltchip' + (st.round === "2" ? " on" : "") + '" data-ltr="2">الدورة الثانية</button>';
 
+    var cache = lsGet(SOL_K) || {};
+    var DOCS = w.LT_EXAMS_DOCS || {};
+
+    var topCard = "";
+    if (st.docId && DOCS[st.docId]) {
+      var docObj = DOCS[st.docId];
+      var showText = (st.docLang === "full" && docObj.full) ? docObj.full : (docObj.ar || docObj.full || "");
+      var solTxt = st.solId === st.docId ? cache[st.docId] : "";
+      topCard =
+        '<div id="lt-viewer" class="ltcard" style="border-color:#0f766e">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<b style="font-size:15.5px">📖 ' + esc(docObj.t) + '</b>' +
+        '<button type="button" class="btn sm" data-ltclose="1">❌ إغلاق</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' +
+        '<button type="button" class="ltchip' + (st.docLang === "ar" ? " on" : "") + '" data-ltlang="ar">🇱🇧 النسخة العربية</button>' +
+        (docObj.full ? '<button type="button" class="ltchip' + (st.docLang === "full" ? " on" : "") + '" data-ltlang="full">🌐 النص الكامل</button>' : '') +
+        '<button type="button" class="btn sm pri" data-ltsolve="' + esc(st.docId) + '">🏆 الحل النموذجي (بناءً على دروس الموقع)</button>' +
+        '</div>' +
+        '<div class="ltdocbody" dir="auto">' + esc(showText) + '</div>' +
+        (st.solId === st.docId && st.solBusy ? '<div id="lt-solbox" class="ltsolbox">⏳ الأستاذ عثمان عم يحلّ هالدورة بناءً على دروس الموقع…</div>' : '') +
+        (st.solId === st.docId && !st.solBusy && solTxt ? '<div id="lt-solbox" class="ltsolbox"><b>🏆 الحل النموذجي:</b>\n\n' + esc(solTxt) + '</div>' : '') +
+        '</div>';
+    } else if (st.view) {
+      var solPdf = st.solId === st.view ? cache[st.view] : "";
+      topCard =
+        '<div id="lt-viewer" class="ltcard" style="border-color:#0f766e">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<b style="font-size:15px">📄 ' + esc(st.viewTitle || "عرض الدورة") + '</b>' +
+        '<button type="button" class="btn sm" data-ltclose="1">❌ إغلاق</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<a class="btn sm pri" href="' + esc(st.view) + '" target="_blank" rel="noopener">📱 فتح بملء الشاشة (الأفضل للآيفون)</a>' +
+        '<button type="button" class="btn sm" data-ltsolve="' + esc(st.view) + '">🏆 الحل النموذجي</button>' +
+        '</div>' +
+        '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe>' +
+        (st.solId === st.view && st.solBusy ? '<div id="lt-solbox" class="ltsolbox">⏳ الأستاذ عثمان عم يحضّرلك الحل النموذجي…</div>' : '') +
+        (st.solId === st.view && !st.solBusy && solPdf ? '<div id="lt-solbox" class="ltsolbox"><b>🏆 الحل النموذجي:</b>\n\n' + esc(solPdf) + '</div>' : '') +
+        '</div>';
+    }
+
     var listHtml = pdfs.length
       ? pdfs.map(function (x) {
-          var isPdf = x.kind === "pdf" || /\.pdf(\?|$)/i.test(x.file || "");
-          var ext = x.kind === "rar" ? "RAR" : "ZIP";
+          var isPdf = x.kind === "pdf";
+          var hasSol = !!matchBuiltInQuiz(x) || !!cache[x.file];
+          var solLabel = hasSol ? "🏆 عرض الحل" : "🤖 حلّ الدورة";
           var btns = isPdf
-            ? '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">👁️ فتح الدورة (PDF)</a>' +
-              '<button type="button" class="btn sm" data-ltview="' + esc(x.file) + '">🖥️ عرض هون</button>'
-            : '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">📦 تحميل الدورة كاملة (' + ext + ')</a>';
-          return '<div class="ltitem"><div><b>' + esc(x.t) + '</b><div class="small">سنة ' + esc(x.y) + ' · الدورة ' + (x.r === 2 ? 'الثانية' : 'الأولى') + '</div></div>' +
+            ? '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">👁️ فتح PDF</a>' +
+              '<button type="button" class="btn sm" data-ltview="' + esc(x.file) + '" data-lttitle="' + esc(x.t) + '">🖥️ عرض هون</button>' +
+              '<button type="button" class="btn sm" data-ltsolve="' + esc(x.file) + '">' + solLabel + '</button>'
+            : '<button type="button" class="btn sm pri" data-ltdoc="' + esc(x.file) + '">📖 قراءة الدورة (عربي)</button>' +
+              '<button type="button" class="btn sm" data-ltsolve="' + esc(x.file) + '">' + solLabel + '</button>';
+          return '<div class="ltitem"><div><b>' + esc(x.t) + '</b><div class="small">سنة ' + esc(x.y) + ' · الدورة ' + (x.r === 2 ? 'الثانية' : 'الأولى') + (isPdf ? ' · PDF' : ' · نص عربي فوري') + '</div></div>' +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' + btns + '</div></div>';
         }).join("")
-      : '<p class="small" style="margin:10px 0">ما في ملف محفوظ مباشرة لهالسنة بعد — افتح رابط معهد طرابلس الفني (ITOTAS) أو معاهد الآفاق تحت.</p>';
-
-    var viewerHtml = st.view
-      ? '<div id="lt-viewer" class="ltcard" style="border-color:#0f766e">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
-        '<a class="btn sm pri" href="' + esc(st.view) + '" target="_blank" rel="noopener">📱 فتح بملء الشاشة (الأفضل للآيفون)</a>' +
-        '<button type="button" class="btn sm" data-ltclose="1">❌ إغلاق العارض</button>' +
-        '</div>' +
-        '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe></div>'
-      : "";
+      : '<p class="small" style="margin:10px 0">ما في نتائج مطابقة — جرّب سنة تانية أو امسح البحث.</p>';
 
     var afakUrl = "https://alafak.me/oldexams/" + (st.year !== "all" ? "?year=" + encodeURIComponent(st.year) : "");
-    return viewerHtml +
-      '<div class="ltcard"><h2 class="lthd">📂 أرشيف الدورات الرسمية (٢٠٠٩–٢٠٢٤) <span class="ltprobadge">PRO</span></h2>' +
+    return topCard +
+      '<div class="ltcard"><h2 class="lthd">📂 كل الدورات الرسمية (٢٠٠٩–٢٠٢٤ · بدون ZIP) <span class="ltprobadge">PRO</span></h2>' +
       '<div class="ltchips">' + yearChips + '</div><div class="ltchips">' + roundChips + '</div>' +
-      '<p class="small" style="margin:6px 0">المعروض: <b>' + pdfs.length + '</b> ملف رسمي</p>' +
+      '<input type="search" class="ltsearch" id="ltsearch" placeholder="🔍 ابحث عن مادة (مثلاً: الجراحية، الطارئة، الشيخوخة، القانون)…" value="' + esc(st.search) + '">' +
+      '<p class="small" style="margin:6px 0">المعروض: <b>' + pdfs.length + '</b> دورة جاهزة للفتح والحل</p>' +
       listHtml +
       '</div>' +
       '<div class="ltcard"><h3 style="margin:0 0 8px;font-size:15.5px">🔗 مصادر رسمية إضافية</h3>' +
       '<div class="ltsrc">' +
-      '<a href="' + afakUrl + '" target="_blank" rel="noopener"><b>🏛️ أرشيف معاهد الآفاق (' + (st.year === "all" ? "٢٠٠٩–٢٠٢٣" : "دورة " + st.year) + ') ↗</b><small>السنة ← الإجازة الفنية LT ← العناية التمريضية ← المرحلة الأولى/الثانية.</small></a>' +
-      '<a href="https://www.itotas.com/past-exams" target="_blank" rel="noopener"><b>🏫 معهد طرابلس الفني (ITOTAS · شامل 2024) ↗</b><small>الإجازة الفنية (LT) ← العناية التمريضية (أ17 / أ71).</small></a>' +
-      '<a href="https://web.vte.gov.lb/%D8%AF%D9%88%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%85%D8%AA%D8%AD%D8%A7%D9%86%D8%A7%D8%AA-%D9%84%D9%84%D8%B4%D9%87%D8%A7%D8%AF%D8%A7%D8%AA-%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9-%D8%A7%D9%84/" target="_blank" rel="noopener"><b>🇱🇧 المديرية العامة للتعليم المهني (VTE) ↗</b><small>الدورات الرسمية والتعاميم.</small></a>' +
+      '<a href="' + afakUrl + '" target="_blank" rel="noopener"><b>🏛️ أرشيف معاهد الآفاق ↗</b><small>أرشيف الدورات الرسمية.</small></a>' +
+      '<a href="https://www.itotas.com/past-exams" target="_blank" rel="noopener"><b>🏫 معهد طرابلس الفني (ITOTAS) ↗</b><small>أرشيف 2009–2024.</small></a>' +
+      '<a href="https://web.vte.gov.lb/%D8%AF%D9%88%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%85%D8%AA%D8%AD%D8%A7%D9%86%D8%A7%D8%AA-%D9%84%D9%84%D8%B4%D9%87%D8%A7%D8%AF%D8%A7%D8%AA-%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9-%D8%A7%D9%84/" target="_blank" rel="noopener"><b>🇱🇧 المديرية العامة للتعليم المهني (VTE) ↗</b><small>التعاميم والدورات.</small></a>' +
       '</div></div>';
+  }
+
+  function findByFile(f) {
+    var list = w.LT_EXAMS_PDF || [];
+    for (var i = 0; i < list.length; i++) if (list[i].file === f) return list[i];
+    return null;
   }
 
   function render(root) {
@@ -219,7 +378,7 @@
       root.innerHTML =
         '<div class="ltcard" style="text-align:center;padding:24px 16px">' +
         '<h2 class="lthd">🔒 دورات شهادة LT الرسمية (تمريض) <span class="ltprobadge">PRO</span></h2>' +
-        '<p class="small" style="max-width:480px;margin:8px auto 14px;line-height:1.7">أسئلة وحالات دورات شهادة الإجازة الفنية <b>LT — العناية التمريضية</b> التفاعلية + ملفات PDF الرسمية متوفّرة حصراً ضمن باقة <b>Pro ($4 / شهر)</b> عبر Whish Money.</p>' +
+        '<p class="small" style="max-width:480px;margin:8px auto 14px;line-height:1.7">كل دورات شهادة الإجازة الفنية <b>LT — العناية التمريضية (2009–2024)</b> مع الحلول النموذجية والأسئلة التفاعلية متوفّرة حصراً ضمن باقة <b>Pro ($4 / شهر)</b> عبر Whish Money.</p>' +
         '<p style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"><button type="button" class="btn pri" id="ltprogo">⭐ فعّل Pro ($4/شهر)</button><a class="btn" href="index.html">🏠 رجوع للرئيسية</a></p></div>';
       var pg = d.getElementById("ltprogo");
       if (pg) pg.onclick = function () { w.NursinPro.open("دورات شهادة LT الرسمية (تمريض)"); };
@@ -228,8 +387,8 @@
 
     var tabsHtml =
       '<div class="lttabs">' +
-      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 أرشيف الدورات 2009–2024 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
-      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 أسئلة وحالات 2023+2024 (' + totalQuizCount("all") + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 كل الدورات 2009–2024 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 كويز رسمي 2023+2024 (' + totalQuizCount("all") + ')</button>' +
       '</div>';
 
     root.innerHTML = tabsHtml + (st.tab === "quiz" ? renderQuizTab() : renderArchiveTab());
@@ -278,16 +437,52 @@
     [].forEach.call(root.querySelectorAll("[data-ltr]"), function (b) {
       b.onclick = function () { st.round = b.getAttribute("data-ltr"); render(root); };
     });
+    var srch = d.getElementById("ltsearch");
+    if (srch) {
+      srch.oninput = function () {
+        st.search = srch.value;
+        var pos = srch.selectionStart;
+        render(root);
+        var s2 = d.getElementById("ltsearch");
+        if (s2) { s2.focus(); try { s2.setSelectionRange(pos, pos); } catch (e) {} }
+      };
+    }
     [].forEach.call(root.querySelectorAll("[data-ltview]"), function (b) {
       b.onclick = function () {
+        st.docId = "";
         st.view = b.getAttribute("data-ltview");
+        st.viewTitle = b.getAttribute("data-lttitle") || "";
         render(root);
         var v = d.getElementById("lt-viewer");
         if (v && v.scrollIntoView) v.scrollIntoView({ behavior: "smooth", block: "start" });
       };
     });
+    [].forEach.call(root.querySelectorAll("[data-ltdoc]"), function (b) {
+      b.onclick = function () {
+        st.view = "";
+        st.docId = b.getAttribute("data-ltdoc");
+        st.docLang = "ar";
+        render(root);
+        var v = d.getElementById("lt-viewer");
+        if (v && v.scrollIntoView) v.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+    });
+    [].forEach.call(root.querySelectorAll("[data-ltlang]"), function (b) {
+      b.onclick = function () { st.docLang = b.getAttribute("data-ltlang"); render(root); };
+    });
+    [].forEach.call(root.querySelectorAll("[data-ltsolve]"), function (b) {
+      b.onclick = function () {
+        var f = b.getAttribute("data-ltsolve"), item = findByFile(f);
+        if (!item) return;
+        if (item.kind === "doc") { st.view = ""; st.docId = f; st.docLang = "ar"; }
+        else { st.docId = ""; st.view = f; st.viewTitle = item.t; }
+        solveExam(root, item);
+        var v = d.getElementById("lt-viewer");
+        if (v && v.scrollIntoView) v.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+    });
     [].forEach.call(root.querySelectorAll("[data-ltclose]"), function (b) {
-      b.onclick = function () { st.view = ""; render(root); };
+      b.onclick = function () { st.view = ""; st.docId = ""; st.solId = ""; st.solBusy = false; render(root); };
     });
   }
 
