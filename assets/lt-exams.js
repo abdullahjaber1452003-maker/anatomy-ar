@@ -498,7 +498,9 @@
   function boot() {
     var r = d.getElementById("lt-app");
     if (!r) return;
-    d.addEventListener("nursin:pro", function () { render(r); });
+    ["nursin:pro", "nursin:auth", "nursin:me"].forEach(function (ev) {
+      d.addEventListener(ev, function () { render(r); });
+    });
     render(r);
   }
 
