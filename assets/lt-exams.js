@@ -154,28 +154,30 @@
       '<button type="button" class="ltchip' + (st.round === "1" ? " on" : "") + '" data-ltr="1">الدورة الأولى</button>' +
       '<button type="button" class="ltchip' + (st.round === "2" ? " on" : "") + '" data-ltr="2">الدورة الثانية</button>';
 
-    var localHtml = "";
-    if (pdfs.length) {
-      localHtml =
-        '<div class="ltcard"><h3 style="margin:0 0 8px;font-size:16px">📄 ملفات الدورات الرسمية الجاهزة جوّا الموقع (' + pdfs.length + ')</h3>' +
-        pdfs.map(function (x) {
+    var listHtml = pdfs.length
+      ? pdfs.map(function (x) {
+          var isPdf = x.kind === "pdf" || /\.pdf(\?|$)/i.test(x.file || "");
+          var ext = x.kind === "rar" ? "RAR" : "ZIP";
+          var btns = isPdf
+            ? '<button type="button" class="btn sm pri" data-ltview="' + esc(x.file) + '">👁️ عرض</button>' +
+              '<a class="btn sm" href="' + esc(x.file) + '" target="_blank" rel="noopener">⬇️ PDF</a>'
+            : '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">📦 تحميل الدورة كاملة (' + ext + ')</a>';
           return '<div class="ltitem"><div><b>' + esc(x.t) + '</b><div class="small">سنة ' + esc(x.y) + ' · الدورة ' + (x.r === 2 ? 'الثانية' : 'الأولى') + '</div></div>' +
-            '<div style="display:flex;gap:6px">' +
-            '<button type="button" class="btn sm pri" data-ltview="' + esc(x.file) + '">👁️ عرض</button>' +
-            '<a class="btn sm" href="' + esc(x.file) + '" target="_blank" rel="noopener">⬇️ PDF</a>' +
-            '</div></div>';
-        }).join("") +
-        (st.view ? '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe>' : "") +
-        '</div>';
-    }
+            '<div style="display:flex;gap:6px">' + btns + '</div></div>';
+        }).join("")
+      : '<p class="small" style="margin:10px 0">ما في ملف محفوظ مباشرة لهالسنة بعد — افتح رابط معهد طرابلس الفني (ITOTAS) أو معاهد الآفاق تحت.</p>';
 
     var afakUrl = "https://alafak.me/oldexams/" + (st.year !== "all" ? "?year=" + encodeURIComponent(st.year) : "");
-    return localHtml +
-      '<div class="ltcard"><h2 class="lthd">📂 أرشيف الدورات PDF (٢٠٠٩–٢٠٢٤) <span class="ltprobadge">PRO</span></h2>' +
+    return '<div class="ltcard"><h2 class="lthd">📂 أرشيف الدورات الرسمية (٢٠٠٩–٢٠٢٤) <span class="ltprobadge">PRO</span></h2>' +
       '<div class="ltchips">' + yearChips + '</div><div class="ltchips">' + roundChips + '</div>' +
+      '<p class="small" style="margin:6px 0">المعروض: <b>' + pdfs.length + '</b> ملف رسمي</p>' +
+      listHtml +
+      (st.view ? '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe>' : "") +
+      '</div>' +
+      '<div class="ltcard"><h3 style="margin:0 0 8px;font-size:15.5px">🔗 مصادر رسمية إضافية (2024 وأحدث الدورات)</h3>' +
       '<div class="ltsrc">' +
-      '<a href="' + afakUrl + '" target="_blank" rel="noopener"><b>🏛️ أرشيف معاهد الآفاق (' + (st.year === "all" ? "٢٠٠٩–٢٠٢٤" : "دورة " + st.year) + ') ↗</b><small>السنة ← الإجازة الفنية LT ← العناية التمريضية ← المرحلة الأولى/الثانية.</small></a>' +
-      '<a href="https://www.itotas.com/past-exams" target="_blank" rel="noopener"><b>🏫 معهد طرابلس الفني (ITOTAS) ↗</b><small>الإجازة الفنية (LT) ← العناية التمريضية (أ17 / أ71).</small></a>' +
+      '<a href="' + afakUrl + '" target="_blank" rel="noopener"><b>🏛️ أرشيف معاهد الآفاق (' + (st.year === "all" ? "٢٠٠٩–٢٠٢٣" : "دورة " + st.year) + ') ↗</b><small>السنة ← الإجازة الفنية LT ← العناية التمريضية ← المرحلة الأولى/الثانية.</small></a>' +
+      '<a href="https://www.itotas.com/past-exams" target="_blank" rel="noopener"><b>🏫 معهد طرابلس الفني (ITOTAS · شامل 2024) ↗</b><small>الإجازة الفنية (LT) ← العناية التمريضية (أ17 / أ71).</small></a>' +
       '<a href="https://web.vte.gov.lb/%D8%AF%D9%88%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%85%D8%AA%D8%AD%D8%A7%D9%86%D8%A7%D8%AA-%D9%84%D9%84%D8%B4%D9%87%D8%A7%D8%AF%D8%A7%D8%AA-%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9-%D8%A7%D9%84/" target="_blank" rel="noopener"><b>🇱🇧 المديرية العامة للتعليم المهني (VTE) ↗</b><small>الدورات الرسمية والتعاميم.</small></a>' +
       '</div></div>';
   }
@@ -196,7 +198,7 @@
     var tabsHtml =
       '<div class="lttabs">' +
       '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 أسئلة وحالات دورة 2023 (تفاعلي)</button>' +
-      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 ملفات PDF الدورات (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 أرشيف الدورات 2009–2023 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
       '</div>';
 
     root.innerHTML = tabsHtml + (st.tab === "quiz" ? renderQuizTab() : renderArchiveTab());
