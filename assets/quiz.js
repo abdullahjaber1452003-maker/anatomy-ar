@@ -81,6 +81,61 @@
     if(scroll)root.scrollIntoView({block:'start'});
   }
   function tick(){var s=state;if(!s||!s.timed){clearInterval(tmr);return;}var left=Math.max(0,Math.round((s.timed-Date.now())/1000)),el=root.querySelector('.wxclk');if(el){el.textContent='⏱️ '+Math.floor(left/60)+':'+('0'+left%60).slice(-2);el.classList.toggle('low',left<=60);}if(left<=0){clearInterval(tmr);s.timeUp=true;done();}}
+  function isMulti(q){return !!(q&&(Array.isArray(q.a)||q.multi));}
+  function ansArr(q){return Array.isArray(q.a)?q.a.slice().sort(function(a,b){return a-b;}):[q.a];}
+  function isOkPick(q,k){if(!isMulti(q))return k===q.a;if(!Array.isArray(k))return false;var a=ansArr(q);if(k.length!==a.length)return false;var ks=k.slice().sort(function(x,y){return x-y;});for(var i=0;i<a.length;i++)if(ks[i]!==a[i])return false;return true;}
+  function ansLetters(q){return ansArr(q).map(function(i){return L[i];}).join(' + ');}
+  function ansFull(q){return ansArr(q).map(function(i){return L[i]+') '+(q.o[i]||'');}).join(' · ');}
+  function msCss(){if(document.getElementById('qmscss'))return;var s=document.createElement('style');s.id='qmscss';s.textContent='.opt.msel{border-color:#0f766e!important;background:rgba(15,118,110,.14)!important;box-shadow:0 0 0 2px rgba(15,118,110,.22)}.msbadge{display:inline-block;margin:0 0 8px;padding:4px 10px;border-radius:999px;background:rgba(15,118,110,.12);color:#0f766e;font-size:12.5px;font-weight:700}.mscheck{margin-top:10px}';(document.head||document.documentElement).appendChild(s);}
+  function upgradeMulti(qs){
+    var out=[],byT={},allBank=(window.QUIZ||[]);
+    qs.forEach(function(q){
+      if(!q||!q.o||q.a==null)return;
+      var ans=Array.isArray(q.a)?'':String(q.o[q.a]||'');
+      if(!Array.isArray(q.a)&&/^(كل|جميع)\s+ما\s+سبق|كلها\s+صحيحة|جميعها/i.test(ans.trim())&&q.o.length>=3){
+        var real=q.o.filter(function(_,idx){return idx!==q.a;});
+        var dist=allBank.filter(function(z){return z&&z.t!==q.t&&z.o&&z.o[z.a]&&z.o[z.a].length>=12&&z.o[z.a].length<=95;});
+        if(dist.length){
+          var dTxt=dist[Math.floor(Math.random()*dist.length)].o[dist[0].a];
+          var dPick=dist[Math.floor(Math.random()*dist.length)]; dTxt=dPick.o[dPick.a];
+          var opts=real.concat([dTxt]),idxs=opts.map(function(_,i){return i;});
+          shuffle(idxs);
+          var newO=idxs.map(function(i){return opts[i];}),newA=[];
+          idxs.forEach(function(orig,ni){if(orig<real.length)newA.push(ni);});
+          newA.sort(function(a,b){return a-b;});
+          var c=Object.assign({},q,{o:newO,a:newA,multi:1});
+          out.push(c); return;
+        }
+      }
+      out.push(q);
+      if(!Array.isArray(q.a)&&q.o[q.a]&&q.o[q.a].length>=12&&q.o[q.a].length<=95){(byT[q.t]=byT[q.t]||[]).push(q);}
+    });
+    if(out.length>=4){
+      var added=0,tKeys=Object.keys(byT);
+      shuffle(tKeys);
+      for(var ti=0;ti<tKeys.length&&added<2;ti++){
+        var tk=tKeys[ti],arr=byT[tk];
+        if(arr.length<2)continue;
+        var q1=arr[0],q2=arr[1],a1=q1.o[q1.a],a2=q2.o[q2.a];
+        if(a1===a2)continue;
+        var dPool=allBank.filter(function(z){return z&&z.t!==tk&&z.o&&!Array.isArray(z.a)&&z.o[z.a]&&z.o[z.a].length>=12&&z.o[z.a].length<=95&&z.o[z.a]!==a1&&z.o[z.a]!==a2;});
+        if(dPool.length<2)continue;
+        shuffle(dPool);
+        var d1=dPool[0].o[dPool[0].a],d2=dPool[1].o[dPool[1].a];
+        if(d1===d2)continue;
+        var items=[{t:a1,ok:1},{t:a2,ok:1},{t:d1,ok:0},{t:d2,ok:0}];
+        shuffle(items);
+        var newO=items.map(function(x){return x.t;}),newA=[];
+        items.forEach(function(x,ni){if(x.ok)newA.push(ni);});
+        var tName=(QTOP[tk]||QS[tk]||tk);
+        var mq={id:'ms_'+tk+'_'+q1.id+'_'+q2.id,t:tk,l:q1.l||'',multi:1,q:'☑️ اختار كل الإجابات الصحيحة المتعلقة بـ «'+tName+'» (أكثر من خيار صح):',o:newO,a:newA,x:(q1.x||a1)+' · '+(q2.x||a2)};
+        var insAt=Math.min(out.length,2+added*3);
+        out.splice(insAt,0,mq);
+        added++;
+      }
+    }
+    return out;
+  }
   function start(sel,n,scroll,les,force){
     clearInterval(tmr);adsOff(sel==='mixed');
     if((sel==='review'||sel==='reviewmore')&&S&&S.needsCases&&S.needsCases()&&window.NursinMid&&!start.lc){start.lc=1;root.innerHTML='<div class="qcard"><p>⏳</p></div>';return window.NursinMid.loadCases().then(function(){start(sel,n,scroll,les,force);});}   // 🩺 case questions in today's review
@@ -90,7 +145,8 @@
     if(qs.length<3&&isLesson(sel,les)&&!(force&&qs.length))return few(sel,les,qs,scroll);
     if(!qs.length){if(sel==='weak')return emptyWeak(scroll);if(sel==='review'||sel==='reviewmore')return emptyReview(scroll);if(sel==='mixed')return mixedIntro(scroll);qs=QUIZ.slice();sel='all';les='';}
     if(sel!=='mixed')qs=shuffle(qs.slice());if(n&&n<qs.length)qs=qs.slice(0,n);
-    if(window.NursinVar)qs=NursinVar.varyAll(qs);   // 🔀 29y: a question seen before comes back in another shape (assets/qvary.js)
+    if(window.NursinVar)qs=NursinVar.varyAll(qs);
+    if(sel!=='challenge'&&sel!=='exam')qs=upgradeMulti(qs);   // 🔀 29y: a question seen before comes back in another shape (assets/qvary.js)
     state={sel:sel,les:les||'',qs:qs,i:0,score:0,wrong:[],grad:0};
     if(sel==='mixed'){state.by={};state.timed=force&&force.timed?Date.now()+RT.WMIN*60000:0;}
     chips(les?'':sel);
@@ -99,13 +155,29 @@
   }
   function label(sel){var les=state&&state.les;return sel==='challenge'||sel==='exam'?(state&&state.clabel||'⚔️ تحدّي'):sel==='all'?'كل الأسئلة':sel==='weak'?'كويز من أخطائك 🎯':sel==='review'?T2('🔁 التكرار المتباعد · مراجعة اليوم','🔁 Révision espacée du jour'):sel==='reviewmore'?T2('🔁 مراجعة إضافية','🔁 Révision en plus'):sel==='note'?'📒 سؤال من ملاحظاتي':sel==='mixed'?'📝 '+T2('الامتحان الأسبوعي المختلط','Examen mixte de la semaine'):sel==='link'?T2('🔗 اربط: درس قديم مع جديد','🔗 Relier : ancienne et nouvelle leçon'):sel==='mid'?'🎯 '+T2('امتحان الفصل: ','Examen : ')+(window.NursinMid&&state?NursinMid.subjName(state.subj):''):sel==='cq'?(state&&state.clabel||'📝 كويز الصف'):les?'درس: '+lessonName(sel,les):QGROUPS[sel]&&QS[sel]?'كل مادة '+QS[sel]:QTOP[sel]&&!QGROUPS[sel]?'درس: '+QTOP[sel]:(QTOP[sel]||sel);}
   function render(){
-    var s=state,q=s.qs[s.i];
+    msCss();
+    var s=state,q=s.qs[s.i],multi=isMulti(q),picked=[];
     var h='<div class="qbar"><span>'+label(s.sel)+'</span><span>'+(s.timed?'<b class="wxclk"></b> · ':'')+'سؤال '+(s.i+1)+' من '+s.qs.length+' · ✅ '+s.score+'</span></div><div class="prog"><i style="width:'+(100*s.i/s.qs.length)+'%"></i></div>';
-    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(q._l?midLn(q._l):(QTOP[q.t]||q.t))+'</span>'+(window.NursinAD?NursinAD.badge(q):'')+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+'<p class="qq">'+q.q+'</p>';   // data-qid: «📝 ملاحظة» (assets/notes.js)
+    h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(q._l?midLn(q._l):(QTOP[q.t]||q.t))+'</span>'+(window.NursinAD?NursinAD.badge(q):'')+(q.ls&&window.NursinX?NursinX.linkLine(q):'')+(multi?'<p class="msbadge">☑️ اختار كل الإجابات الصح (أكثر من خيار) لتكون إجابتك كاملة</p>':'')+'<p class="qq">'+q.q+'</p>';
     q.o.forEach(function(o,k){h+='<button class="opt" data-k="'+k+'"><span class="l" dir="ltr">'+L[k]+'</span><span>'+o+'</span></button>';});
+    if(multi)h+='<p class="mscheck"><button class="btn pri" id="qmsub" type="button" disabled>✅ تأكيد الإجابة</button></p>';
     h+=p50(s)+'<div id="fb" aria-live="polite"></div><div class="qnav"><span></span><button class="btn pri" id="next" hidden>التالي ←</button></div></div>';
     root.innerHTML=h;
-    root.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){answer(+b.dataset.k);});});
+    if(multi){
+      var sb=$('#qmsub');
+      root.querySelectorAll('.opt').forEach(function(b){
+        b.addEventListener('click',function(){
+          if(b.disabled)return;
+          var kk=+b.dataset.k,ix=picked.indexOf(kk);
+          if(ix>-1){picked.splice(ix,1);b.classList.remove('msel');}
+          else{picked.push(kk);b.classList.add('msel');}
+          if(sb)sb.disabled=!picked.length;
+        });
+      });
+      if(sb)sb.addEventListener('click',function(){if(!picked.length)return;sb.remove();answer(picked.slice().sort(function(a,b){return a-b;}));});
+    }else{
+      root.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){answer(+b.dataset.k);});});
+    }
     if(s.timed){clearInterval(tmr);tmr=setInterval(tick,1000);tick();}
     var pb=$('#p50');if(pb)pb.addEventListener('click',use50);
     $('#next').addEventListener('click',function(){s.i++;if(s.i<s.qs.length)render();else done();});
@@ -129,16 +201,16 @@
       if(state!==s||s.i!==i0)return;
       var row=root.querySelector('.p50row');
       if(!r||!r.ok){if(row)row.innerHTML='<small>⚠️ '+((r&&r.msg)||'ما زبط، جرّب كمان مرّة')+'</small>';return;}
-      s.used50=true;var q=s.qs[s.i],wr=[];q.o.forEach(function(o,k){if(k!==q.a)wr.push(k);});
+      s.used50=true;var q=s.qs[s.i],wr=[];var aa=ansArr(q);q.o.forEach(function(o,k){if(aa.indexOf(k)<0)wr.push(k);});
       shuffle(wr);wr.slice(0,q.o.length>=4?2:1).forEach(function(k){var o=root.querySelector('.opt[data-k="'+k+'"]');if(o){o.disabled=true;o.classList.add('gone');}});
       if(row)row.innerHTML='<small>✂️ انحذف '+(q.o.length>=4?'جوابين غلط':'جواب غلط')+(r.left!=null?' · باقيلك '+r.left:'')+'</small>';
     });
   }
   function answer(k){
-    var s=state,q=s.qs[s.i],ok=k===q.a;
+    var s=state,q=s.qs[s.i],multi=isMulti(q),aa=ansArr(q),ka=Array.isArray(k)?k:[k],ok=isOkPick(q,k);
     if(root.querySelector('.opt[disabled]:not(.gone)'))return;
     var pr=root.querySelector('.p50row');if(pr)pr.remove();
-    root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;if(kk===q.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
+    root.querySelectorAll('.opt').forEach(function(b){var kk=+b.dataset.k;b.disabled=true;b.classList.remove('msel');if(aa.indexOf(kk)>-1)b.classList.add('ok');else if(ka.indexOf(kk)>-1)b.classList.add('bad');});
     if(ok)s.score++;else s.wrong.push(q);(s.picks||(s.picks={}))[q.id]=k;
     if(window.NursinAD&&!s.exam&&!s.mid&&!s.timed&&!s.challenge&&!s.cq){try{var adT=NursinAD.step(s.ad||(s.ad={}),q,ok);NursinAD.reorder(s.qs,s.i+1,null,null,adT);}catch(e){}}   // 🎚️ 29v adaptive: 2 right → harder next, wrong → easier / same lesson (assets/ready.js)
     if(q.t==='ecg'||q.t==='arythmies'){s.eN=(s.eN|0)+1;if(ok)s.eOk=(s.eOk|0)+1;}   // for the «ملك الـ ECG» badge
@@ -150,7 +222,7 @@
     try{document.dispatchEvent(new CustomEvent('nursin:answer',{detail:{qid:q.id,ok:ok,set:s.sel}}));}catch(e){}   // ⚠️ class + site counters (assets/qstats.js)
     refresh();
     var O=window.Osman,om=O?(ok?O.right():O.wrong()):'';   // 👨‍🏫 الأستاذ عثمان (assets/osman.js)
-    $('#fb').innerHTML=(!ok&&!s.exam&&!s.challenge&&!s.cq?'<p style="margin:0 0 6px;padding:6px 9px;border-radius:9px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.35);font-size:13px;font-weight:700">🔒 قفل الإتقان: انضاف هالغلط لتعيدو بآخر الكويز وتثبّتو.</p>':'')+'<div class="expl'+(ok?'':' w')+'">'+(ok?'✅ <b>صح!</b> ':'❌ <b>الجواب الصح: '+L[q.a]+'</b> — ')+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
+    $('#fb').innerHTML=(!ok&&!s.exam&&!s.challenge&&!s.cq?'<p style="margin:0 0 6px;padding:6px 9px;border-radius:9px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.35);font-size:13px;font-weight:700">🔒 قفل الإتقان: انضاف هالغلط لتعيدو بآخر الكويز وتثبّتو.</p>':'')+'<div class="expl'+(ok?'':' w')+'">'+(ok?(multi?'✅ <b>صح! إجابة كاملة.</b> ':'✅ <b>صح!</b> '):(multi&&ka.every(function(x){return aa.indexOf(x)>-1;})?'⚠️ <b>إجابتك ناقصة! الجواب الكامل الصح: '+ansLetters(q)+'</b> — ':'❌ <b>الجواب الصح: '+ansLetters(q)+'</b> — '))+(q.ls?'<span class="xlx">'+T2('🔗 الرابط: ','🔗 Le lien : ')+'</span>':'')+q.x+'</div>'+om+(rec==='added'?'<p class="small wtag">🎯 انضاف لنقاط ضعفك</p>':rec==='graduated'?'<p class="small wtag">🎉 طلع من نقاط ضعفك (صح مرّتين ورا بعض)</p>':'')+
       (S&&sres&&S.tagHtml?S.tagHtml(sres):'');
     if(!ok&&window.NursinWX){var ex0=$('#fb .expl');if(ex0)ex0.insertAdjacentHTML('afterend',NursinWX.html(q,k,{skip:s.qs.map(function(z){return z.id;})}));}   // ❌ «ليش غلط؟» + 📖 + 🔁 (assets/wrongx.js)
     var whyOn=false;
@@ -177,7 +249,7 @@
       '<h3>'+T2('نتيجتك بكل مادة','Ton résultat par matière')+'</h3>'+RT.bySubjHtml(s.by)+
       (s.wrong.length?'<p class="small">🔁 '+T2('الأسئلة اللي غلطت فيها ('+s.wrong.length+') رجعت لـ «مراجعة اليوم» بكرا ولنقاط ضعفك.','Les questions ratées ('+s.wrong.length+') reviennent demain dans « Révision du jour » et dans tes points faibles.')+'</p>':'')+
       '<p><a class="btn pri" href="hifzi.html">🗺️ '+T2('حفظي','Ma mémoire')+'</a> <a class="btn" href="quiz.html?t=review">🔁 '+T2('مراجعة اليوم','Révision du jour')+'</a></p></div>';
-    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):'cardio.html';h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
+    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):'cardio.html';h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+ansFull(q)+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
   }
@@ -222,7 +294,7 @@
       '<h3>💪 '+T2('أضعف دروسك','Tes leçons les plus faibles')+'</h3>'+(r.weak.length?'<ul class="midwl">'+r.weak.slice(0,4).map(function(x){var l=M&&M.lessonInfo(x.id);return l?'<li><a href="'+esc(l.href)+'">📖 '+esc(l.n)+'</a> <span class="midbest r">'+x.p+'%</span></li>':'';}).join('')+'</ul>':'<p>🔥 '+T2('ما في ولا درس تحت ٧٠٪، برافو!','Aucune leçon sous 70 %, bravo !')+'</p>')+
       (s.wrong.length?'<p class="small">🔁 '+T2('الأسئلة اللي غلطت فيها رجعت لـ «مراجعة اليوم» بكرا ولنقاط ضعفك.','Les questions ratées reviennent demain dans « Révision du jour » et dans tes points faibles.')+'</p>':'')+
       '<p><a class="btn pri" href="midterm.html">🎯 '+T2('امتحان الفصل','Examen de mi-semestre')+'</a> <a class="btn" href="quiz.html?t=mid&amp;s='+esc(s.subj)+'">'+T2('جرّب مرّة تانية','Réessayer')+'</a></p></div>';
-    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var l=M&&q._l?M.lessonInfo(q._l):null;h+='<div class="qcard"'+(q._k==='q'?' data-qid="'+q.id+'"':'')+'><span class="qtopic">'+esc(l?l.n:'')+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div>'+(l?'<p><a href="'+esc(l.href)+'">'+T2('اقرا الدرس ←','Lire la leçon →')+'</a></p>':'')+askSlot(s,q)+'</div>';});}
+    if(s.wrong.length){h+='<h2>'+T2('راجع هودي:','Revois celles-ci :')+'</h2>';s.wrong.forEach(function(q){var l=M&&q._l?M.lessonInfo(q._l):null;h+='<div class="qcard"'+(q._k==='q'?' data-qid="'+q.id+'"':'')+'><span class="qtopic">'+esc(l?l.n:'')+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+ansFull(q)+'</b><br>'+q.x+'</div>'+(l?'<p><a href="'+esc(l.href)+'">'+T2('اقرا الدرس ←','Lire la leçon →')+'</a></p>':'')+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;adsOff(true);root.scrollIntoView({block:'start'});
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:'mid',les:null,challenge:null,exam:null,cq:null,ecg:null}}));}catch(e){}
   }
@@ -240,7 +312,7 @@
     if((s.sel==='review'||s.sel==='reviewmore')&&S){var rl=S.count();h+='<p>🔁 '+(rl?T2('باقي '+rl+' للمراجعة اليوم.',rl+' encore à réviser aujourd\'hui.'):T2('✅ خلّصت مراجعة اليوم 🔥','✅ Révision du jour terminée 🔥'))+'</p>'+(S.nextLine?'<p class="small srnext">'+S.nextLine()+'</p>':'');}
     h+=s.cq?'<div id="cqres" class="cqres" aria-live="polite"><p class="small">⏳ عم نحفظ علامتك ونجيب علامات الصف…</p></div><p><a class="btn pri" href="index.html">🏠 رجوع للرئيسية</a></p></div>':s.exam?'<p><a class="btn pri" href="exams.html">📅 رجوع للامتحانات</a></p></div>':s.challenge?'<p><a class="btn pri" href="friends.html">⚔️ رجوع لتحدّياتي</a></p></div>':'<p>'+(s.wrong.length?'<button class="btn pri" id="qretry" type="button">🔒 قفل الإتقان: أعد الغلط ('+s.wrong.length+')</button> ':'')+'<button class="btn'+(s.wrong.length?'':' pri')+'" id="again">جرّب مرّة تانية</button>'+(W&&W.count()&&s.sel!=='weak'?' <button class="btn" id="toweak" type="button">🎯 كويز من أخطائك</button>':'')+'</p></div>';
     if(!s.cq)h+='<div class="adx adx-box adx-keep adx-res" data-mobile="9892bba2f704f8ea66787de07f9f7be3" data-desktop="f0cd90c85278798fba5a155236050d61"></div>'; // result-screen banner (below the score card, never during questions)
-    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':q.t==='geri'?'geri.html':q.t==='comm'?'community.html':q.t==='prev'?'preventive.html':q.t==='medsurg'?'medsurg.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+L[q.a]+') '+q.o[q.a]+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
+    if(s.wrong.length){h+='<h2>راجع هودي:</h2>';s.wrong.forEach(function(q){var page=W?W.page(q.t):(QGROUPS.neuro.indexOf(q.t)>=0?'neuro.html':q.t==='henderson'?'henderson.html':q.t==='law'?'law.html':q.t==='mgmt'?'mgmt.html':q.t==='quality'?'quality.html':q.t==='pharma'?'pharma.html':q.t==='rea'?'rea.html':q.t==='geri'?'geri.html':q.t==='comm'?'community.html':q.t==='prev'?'preventive.html':q.t==='medsurg'?'medsurg.html':'cardio.html');h+='<div class="qcard" data-qid="'+q.id+'"><span class="qtopic">'+(QTOP[q.t]||q.t)+'</span><p class="qq">'+q.q+'</p><div class="expl">✅ <b>'+ansFull(q)+'</b><br>'+q.x+'</div><p><a href="'+(q.ls&&window.NursinX?NursinX.hrefOf(q):page+'#'+q.t)+'">اقرا الدرس ←</a></p>'+askSlot(s,q)+'</div>';});}
     root.innerHTML=h;
     try{if(s.sel==='weak'&&W&&W.ran)W.ran();}catch(e){}
     try{document.dispatchEvent(new CustomEvent('nursin:quiz-done',{detail:{score:s.score,total:s.qs.length,wrong:s.qs.length-s.score,set:s.sel,les:s.les||null,challenge:s.challenge||null,exam:s.exam||null,cq:s.cq||null,ecg:s.eN?[s.eOk|0,s.eN]:null}}));}catch(e){}
