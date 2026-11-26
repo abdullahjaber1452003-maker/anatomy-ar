@@ -22,13 +22,7 @@
     o.t = Date.now();
     try { w.localStorage.setItem(K, JSON.stringify(o)); } catch (e) {}
   }
-  function pick() {
-    var res = [], i;
-    for (i = 0; i < BANK.length && res.length < 3; i++) {
-      res.push(BANK[(Math.floor(Date.now() / 60000) + i) % BANK.length]);
-    }
-    return res;
-  }
+  function pick() { var ex={},M=w.NursinMid,earr=(M&&M.EXAMS&&M.EXAMS.length)?M.EXAMS:[]; try{ex=JSON.parse(w.localStorage.getItem('nursin_explan_v1')||'{}')||{};}catch(e){} if(!earr.length){try{earr=(JSON.parse(w.localStorage.getItem('nursin_exams_cfg_v1')||'{}')||{}).list||[];}catch(e){}} var td=new Date(Date.now()+2*36e5).toISOString().slice(0,10),subjs=Array.isArray(ex.subjs)&&ex.subjs.length?ex.subjs:['cardio','neuro']; function aLes(sk){var b=null;earr.forEach(function(e){if(e&&e.subs&&e.subs.indexOf(sk)>-1){if(!b||(e.d>=td&&(b.d<td||e.d<b.d)))b=e;}});return(b&&b.lessons&&Array.isArray(b.lessons[sk])&&b.lessons[sk].length)?b.lessons[sk]:null;} var Q=w.QUIZ||[],pool=[]; subjs.forEach(function(sk){var al=aLes(sk),m=Q.filter(function(q){return q.t===sk&&(!al||!q.l||al.indexOf(q.l)>-1);});if(!m.length&&al)m=Q.filter(function(q){return q.t===sk;});pool=pool.concat(m);}); if(!pool.length)pool=BANK.filter(function(q){return subjs.indexOf(q.s)>-1;}); if(!pool.length)pool=BANK.slice(); var sh=pool.slice(); for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=sh[i];sh[i]=sh[j];sh[j]=t;} return sh.slice(0,5); }
 
   function applyTabs(active) {
     var app = d.getElementById("ep-app");
@@ -79,7 +73,7 @@
     applyTabs(saved);
   }
 
-  function mountMix() {
+  d.addEventListener('nursin:explan',function(){var o=d.getElementById('ep-mix-card');if(o&&o.parentNode)o.parentNode.removeChild(o);mountMix();}); function mountMix() {
     var app = d.getElementById("ep-app");
     if (!app || d.getElementById("ep-mix-card")) return;
     var qs = pick();
