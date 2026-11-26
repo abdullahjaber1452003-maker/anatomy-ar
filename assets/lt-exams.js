@@ -6,7 +6,7 @@
 
   var YEARS = [2024, 2023, 2022, 2021, 2020, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009];
   var L4 = "abcd";
-  var st = { tab: "quiz", year: "all", round: "all", view: "", qKey: "2023_med", qi: 0, score: 0, ans: {}, mPick: [], showCase: false };
+  var st = { tab: "archive", year: "all", round: "all", view: "", qKey: "2023_med", qi: 0, score: 0, ans: {}, mPick: [], showCase: false };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -144,10 +144,13 @@
       if (st.round !== "all" && String(x.r) !== String(st.round)) return false;
       return true;
     });
+    var allList = w.LT_EXAMS_PDF || [], byY = {};
+    allList.forEach(function (x) { byY[x.y] = (byY[x.y] || 0) + 1; });
     var yearChips =
-      '<button type="button" class="ltchip' + (st.year === "all" ? " on" : "") + '" data-lty="all">كل السنوات</button>' +
+      '<button type="button" class="ltchip' + (st.year === "all" ? " on" : "") + '" data-lty="all">كل السنوات (' + allList.length + ')</button>' +
       YEARS.map(function (y) {
-        return '<button type="button" class="ltchip' + (String(st.year) === String(y) ? " on" : "") + '" data-lty="' + y + '">' + y + '</button>';
+        var cnt = byY[y] || 0;
+        return '<button type="button" class="ltchip' + (String(st.year) === String(y) ? " on" : "") + '" data-lty="' + y + '">' + y + (cnt ? ' (' + cnt + ')' : '') + '</button>';
       }).join("");
     var roundChips =
       '<button type="button" class="ltchip' + (st.round === "all" ? " on" : "") + '" data-ltr="all">الدورتين</button>' +

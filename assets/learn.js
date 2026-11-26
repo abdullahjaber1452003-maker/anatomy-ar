@@ -16,7 +16,19 @@
    • Where he stopped: localStorage nursin_learn_v1 {href: {i, ph, ans, fin, ts}} (≤ 30 parts). No ads on learn.html. ES5 (iOS 12). */
 (function (w, d) {
   "use strict";
-  var K = "nursin_learn_v1", MIN = 200, MAX = 720, BIG = 900, L3 = "abcd";
+  var K = "nursin_learn_v1", MIN = 200, MAX = 720, BIG = 900, L3 = "abcd", mPick = [];
+  function isMulti(q) { return !!(q && (Array.isArray(q.a) || q.multi)); }
+  function ansArr(q) { return Array.isArray(q.a) ? q.a.slice().sort(function (a, b) { return a - b; }) : [q.a]; }
+  function isOkPick(q, k) {
+    if (!isMulti(q)) return k === q.a;
+    if (!Array.isArray(k)) return false;
+    var a = ansArr(q);
+    if (k.length !== a.length) return false;
+    var ks = k.slice().sort(function (x, y) { return x - y; });
+    for (var i = 0; i < a.length; i++) if (ks[i] !== a[i]) return false;
+    return true;
+  }
+  function ansLet(q) { return ansArr(q).map(function (i) { return L3.charAt(i); }).join(" + "); }
   function FR() { return !!(w.Lang && w.Lang.fr); }
   function T(ar, fr) { return FR() && fr ? fr : ar; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -426,11 +438,11 @@
       '<div class="qnav"><span></span>' + (k != null ? '<button type="button" class="btn pri" data-ln="fnext">' + (at + 1 < fin.length ? T("التالي ←", "Suivant ←") : T("🏁 النتيجة", "🏁 Résultat")) + "</button>" : "") + "</div></div>";
   }
   function endHtml() {
-    var sc = 0, wr = []; fin.forEach(function (q, i) { var k = (S.fin || {})[i]; if (k === q.a) sc++; else wr.push(i); });
+    var sc = 0, wr = []; fin.forEach(function (q, i) { var k = (S.fin || {})[i]; if (isOkPick(q, k)) sc++; else wr.push(i); });
     var R = w.NursinResume, nx = R && R.nextOf ? R.nextOf(X.href) : null, pct = fin.length ? Math.round(sc / fin.length * 100) : 0;
     var h = '<div class="lnend"><p class="lnsc">' + (pct >= 80 ? "🎉" : pct >= 50 ? "👏" : "💪") + " <b>" + sc + " / " + fin.length + "</b></p><p>" +
       (pct >= 80 ? T("برافو! خلصت هالجزء بلا ما تقرأ الدرس كلّو", "Bravo ! Partie terminée") : pct >= 50 ? T("منيح! الغلطات انضافوا عالمراجعة 🔁", "Bien ! Tes erreurs vont dans tes révisions 🔁") : T("ولا يهمّك، الغلطات انضافوا عالمراجعة 🔁 وبترجعلك", "Pas grave : tes erreurs reviennent dans tes révisions 🔁")) + "</p>";
-    if (wr.length) h += '<ul class="lnwr">' + wr.map(function (i) { var q = fin[i]; return "<li>❌ " + q.q + "<br><small>✅ " + q.o[q.a] + "</small></li>"; }).join("") + "</ul>";
+    if (wr.length) h += '<ul class="lnwr">' + wr.map(function (i) { var q = fin[i], txt = ansArr(q).map(function (ix) { return q.o[ix]; }).join(" + "); return "<li>❌ " + q.q + "<br><small>✅ " + txt + "</small></li>"; }).join("") + "</ul>";
     h += '<p class="lnact">' + (nx ? '<a class="btn pri" href="' + esc(hrefFor(nx.u)) + '">➡️ ' + T("الجزء الجاي: ", "Partie suivante : ") + esc(nx.t) + "</a> " : "") +
       '<a class="btn" href="index.html">🧭 ' + T("رجوع للمسار", "Retour au parcours (رجوع للمسار)") + "</a> " +
       '<button type="button" class="btn" data-ln="again">🔁 ' + T("عيد هالجزء", "Refaire cette partie") + "</button></p></div>";
@@ -438,7 +450,7 @@
   }
   function finish(keep) {   // keep = the last answer of the final quiz: everything counts now, the result screen comes on «🏁 النتيجة»
     if (!keep) S.ph = "done";
-    var fsc = 0; fin.forEach(function (q, idx) { if ((S.fin || {})[idx] === q.a) fsc++; });
+    var fsc = 0; fin.forEach(function (q, idx) { if (isOkPick(q, (S.fin || {})[idx])) fsc++; });
     var fpct = fin.length ? Math.round(fsc / fin.length * 100) : 100;
     if (S.pct == null || fpct >= S.pct) S.pct = fpct;
     if (fpct >= 80) S.m = 1;
