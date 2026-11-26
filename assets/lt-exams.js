@@ -1,12 +1,12 @@
 /* 📜 دورات شهادة الإجازة الفنية (LT) الرسمية — العناية التمريضية (PRO)
    ES5-safe (iOS 12+). Gated by window.NursinPro.canUse().
-   Includes: 2009-2024 archive + built-in PDF viewer + Interactive Official LT 2023 Quiz (with Multi-Select) & Written Cases. */
+   Includes: 2009-2024 archive + native iPhone PDF open + top inline PDF viewer + Interactive Official LT 2023 & 2024 Quizzes (78 MCQs + 6 Written Cases). */
 (function (w, d) {
   "use strict";
 
   var YEARS = [2024, 2023, 2022, 2021, 2020, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009];
   var L4 = "abcd";
-  var st = { tab: "archive", year: "all", round: "all", view: "", qKey: "2023_med", qi: 0, score: 0, ans: {}, mPick: [], showCase: false };
+  var st = { tab: "archive", year: "all", round: "all", view: "", qYear: "2024", qKey: "2024_med", qi: 0, score: 0, ans: {}, mPick: [], showCase: false };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -27,16 +27,31 @@
   }
   function ansLet(q) { return ansArr(q).map(function (i) { return L4.charAt(i); }).join(" + "); }
 
+  function keysForYear(yr) {
+    var Q = w.LT_EXAMS_QUIZ || {};
+    return Object.keys(Q).filter(function (k) {
+      if (yr === "all") return true;
+      return k.indexOf(yr + "_") === 0;
+    });
+  }
+
+  function totalQuizCount(yr) {
+    var Q = w.LT_EXAMS_QUIZ || {}, n = 0;
+    keysForYear(yr).forEach(function (k) { n += (Q[k].qs || []).length; });
+    return n;
+  }
+
   function getExamSet(key) {
     var Q = w.LT_EXAMS_QUIZ || {};
-    if (key === "all_2023") {
-      var all = [];
-      Object.keys(Q).forEach(function (k) {
+    if (key === "all_year") {
+      var all = [], ks = keysForYear(st.qYear);
+      ks.forEach(function (k) {
         (Q[k].qs || []).forEach(function (q) { all.push(q); });
       });
-      return { title: "🏆 امتحان دورة 2023 الشامل (كل المواد — " + all.length + " سؤال)", qs: all, caseStudy: null };
+      var lbl = st.qYear === "all" ? "2023 + 2024" : "دورة " + st.qYear;
+      return { title: "🏆 امتحان " + lbl + " الشامل (" + all.length + " سؤال)", qs: all, caseStudy: null };
     }
-    return Q[key] || { title: "دورة 2023", qs: [], caseStudy: null };
+    return Q[key] || { title: "دورة رسمية", qs: [], caseStudy: null };
   }
 
   function css() {
@@ -58,7 +73,7 @@
       ".ltsrc a b{display:block;font-size:14.5px;margin-bottom:3px;color:var(--pri,#0f766e)}" +
       ".ltsrc a small{display:block;font-size:12px;opacity:.82;line-height:1.5}" +
       ".ltitem{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;border:1px solid rgba(127,127,127,.2);margin:6px 0}" +
-      ".ltpdf{width:100%;height:70vh;border:1px solid rgba(127,127,127,.25);border-radius:12px;margin-top:10px}" +
+      ".ltpdf{width:100%;height:70vh;border:1px solid rgba(127,127,127,.25);border-radius:12px;margin-top:8px}" +
       ".ltopt{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:right;padding:11px 12px;margin:6px 0;border-radius:12px;border:1.5px solid rgba(127,127,127,.28);background:var(--card,#fff);color:inherit;font:inherit;font-size:14.5px;cursor:pointer}" +
       ".ltopt .l{flex:0 0 24px;height:24px;border-radius:50%;background:rgba(127,127,127,.14);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px}" +
       ".ltopt.msel{border-color:#0f766e;background:rgba(15,118,110,.14);box-shadow:0 0 0 2px rgba(15,118,110,.2)}" +
@@ -71,14 +86,18 @@
   }
 
   function renderQuizTab() {
-    var Q = w.LT_EXAMS_QUIZ || {}, keys = Object.keys(Q);
-    var chips = '<button type="button" class="ltchip' + (st.qKey === "all_2023" ? " on" : "") + '" data-ltqk="all_2023">🏆 شامل 2023 (كل المواد)</button>' +
+    var Q = w.LT_EXAMS_QUIZ || {}, keys = keysForYear(st.qYear);
+    if (st.qKey !== "all_year" && keys.indexOf(st.qKey) < 0) st.qKey = keys[0] || "all_year";
+    var qYrChips =
+      '<button type="button" class="ltchip' + (st.qYear === "2024" ? " on" : "") + '" data-ltqy="2024">🆕 دورة 2024 (' + totalQuizCount("2024") + ' سؤال)</button>' +
+      '<button type="button" class="ltchip' + (st.qYear === "2023" ? " on" : "") + '" data-ltqy="2023">📜 دورة 2023 (' + totalQuizCount("2023") + ' سؤال)</button>' +
+      '<button type="button" class="ltchip' + (st.qYear === "all" ? " on" : "") + '" data-ltqy="all">🏆 2023 + 2024 (' + totalQuizCount("all") + ' سؤال)</button>';
+    var chips = '<button type="button" class="ltchip' + (st.qKey === "all_year" ? " on" : "") + '" data-ltqk="all_year">🏆 شامل (' + (st.qYear === "all" ? "كل السنوات" : st.qYear) + ')</button>' +
       keys.map(function (k) {
         return '<button type="button" class="ltchip' + (st.qKey === k ? " on" : "") + '" data-ltqk="' + esc(k) + '">' + esc(Q[k].title.split("—")[0].trim()) + '</button>';
       }).join("");
 
     var ex = getExamSet(st.qKey), qs = ex.qs || [];
-    var doneN = Object.keys(st.ans).length;
     var okN = 0;
     qs.forEach(function (q, idx) { if (st.ans[idx] != null && isOk(q, st.ans[idx])) okN++; });
     var score20 = qs.length ? Math.round((20 * okN) / qs.length) : 0;
@@ -90,7 +109,7 @@
       qHtml =
         '<div style="text-align:center;padding:14px 6px">' +
         '<h3 style="margin:0 0 6px;font-size:22px">🏁 نتيجتك الرسمية: ' + score20 + '/20</h3>' +
-        '<p class="small">جاوبت صح على <b>' + okN + '</b> من أصل <b>' + qs.length + '</b> سؤال من دورة LT 2023 الرسمية.</p>' +
+        '<p class="small">جاوبت صح على <b>' + okN + '</b> من أصل <b>' + qs.length + '</b> سؤال من دورات LT الرسمية.</p>' +
         '<p style="margin-top:10px"><button type="button" class="btn pri" data-ltact="restart">🔄 أعد هالدورة</button></p>' +
         '</div>';
     } else {
@@ -122,7 +141,7 @@
       var cs = ex.caseStudy;
       csHtml =
         '<div class="ltcard">' +
-        '<h3 style="margin:0 0 6px;font-size:16.5px">🩺 دراسة الحالة الرسمية (دورة 2023 الأولى)</h3>' +
+        '<h3 style="margin:0 0 6px;font-size:16.5px">🩺 دراسة الحالة الرسمية (' + esc(ex.title) + ')</h3>' +
         '<div class="ltcase"><p style="margin:0 0 6px"><b>👤 ' + esc(cs.pt) + '</b></p><p style="margin:0">📈 ' + esc(cs.v) + '</p></div>' +
         '<ol style="margin:8px 0;padding-inline-start:20px;line-height:1.7;font-size:14.5px">' +
         cs.qs.map(function (it) {
@@ -135,7 +154,7 @@
         '</p></div>';
     }
 
-    return '<div class="ltcard"><h2 class="lthd">🎯 أسئلة دورة LT 2023 الرسمية التفاعلية <span class="ltprobadge">PRO</span></h2><p class="small" style="margin:0 0 6px">أسئلة حقيقية مستخرجة حرفياً من امتحانات 2023 الرسمية (مع اختيار متعدّد وعلامة /20):</p><div class="ltchips">' + chips + '</div><hr style="border:0;border-top:1px dashed rgba(127,127,127,.25);margin:10px 0">' + qHtml + '</div>' + csHtml;
+    return '<div class="ltcard"><h2 class="lthd">🎯 أسئلة دورات LT الرسمية التفاعلية (2023 + 2024) <span class="ltprobadge">PRO</span></h2><p class="small" style="margin:0 0 6px">أسئلة حقيقية مستخرجة حرفياً من امتحانات 2023 و2024 الرسمية (مع اختيار متعدّد وعلامة /20):</p><div class="ltchips">' + qYrChips + '</div><div class="ltchips">' + chips + '</div><hr style="border:0;border-top:1px dashed rgba(127,127,127,.25);margin:10px 0">' + qHtml + '</div>' + csHtml;
   }
 
   function renderArchiveTab() {
@@ -162,22 +181,31 @@
           var isPdf = x.kind === "pdf" || /\.pdf(\?|$)/i.test(x.file || "");
           var ext = x.kind === "rar" ? "RAR" : "ZIP";
           var btns = isPdf
-            ? '<button type="button" class="btn sm pri" data-ltview="' + esc(x.file) + '">👁️ عرض</button>' +
-              '<a class="btn sm" href="' + esc(x.file) + '" target="_blank" rel="noopener">⬇️ PDF</a>'
+            ? '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">👁️ فتح الدورة (PDF)</a>' +
+              '<button type="button" class="btn sm" data-ltview="' + esc(x.file) + '">🖥️ عرض هون</button>'
             : '<a class="btn sm pri" href="' + esc(x.file) + '" target="_blank" rel="noopener">📦 تحميل الدورة كاملة (' + ext + ')</a>';
           return '<div class="ltitem"><div><b>' + esc(x.t) + '</b><div class="small">سنة ' + esc(x.y) + ' · الدورة ' + (x.r === 2 ? 'الثانية' : 'الأولى') + '</div></div>' +
-            '<div style="display:flex;gap:6px">' + btns + '</div></div>';
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' + btns + '</div></div>';
         }).join("")
       : '<p class="small" style="margin:10px 0">ما في ملف محفوظ مباشرة لهالسنة بعد — افتح رابط معهد طرابلس الفني (ITOTAS) أو معاهد الآفاق تحت.</p>';
 
+    var viewerHtml = st.view
+      ? '<div id="lt-viewer" class="ltcard" style="border-color:#0f766e">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<a class="btn sm pri" href="' + esc(st.view) + '" target="_blank" rel="noopener">📱 فتح بملء الشاشة (الأفضل للآيفون)</a>' +
+        '<button type="button" class="btn sm" data-ltclose="1">❌ إغلاق العارض</button>' +
+        '</div>' +
+        '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe></div>'
+      : "";
+
     var afakUrl = "https://alafak.me/oldexams/" + (st.year !== "all" ? "?year=" + encodeURIComponent(st.year) : "");
-    return '<div class="ltcard"><h2 class="lthd">📂 أرشيف الدورات الرسمية (٢٠٠٩–٢٠٢٤) <span class="ltprobadge">PRO</span></h2>' +
+    return viewerHtml +
+      '<div class="ltcard"><h2 class="lthd">📂 أرشيف الدورات الرسمية (٢٠٠٩–٢٠٢٤) <span class="ltprobadge">PRO</span></h2>' +
       '<div class="ltchips">' + yearChips + '</div><div class="ltchips">' + roundChips + '</div>' +
       '<p class="small" style="margin:6px 0">المعروض: <b>' + pdfs.length + '</b> ملف رسمي</p>' +
       listHtml +
-      (st.view ? '<iframe class="ltpdf" src="' + esc(st.view) + '"></iframe>' : "") +
       '</div>' +
-      '<div class="ltcard"><h3 style="margin:0 0 8px;font-size:15.5px">🔗 مصادر رسمية إضافية (2024 وأحدث الدورات)</h3>' +
+      '<div class="ltcard"><h3 style="margin:0 0 8px;font-size:15.5px">🔗 مصادر رسمية إضافية</h3>' +
       '<div class="ltsrc">' +
       '<a href="' + afakUrl + '" target="_blank" rel="noopener"><b>🏛️ أرشيف معاهد الآفاق (' + (st.year === "all" ? "٢٠٠٩–٢٠٢٣" : "دورة " + st.year) + ') ↗</b><small>السنة ← الإجازة الفنية LT ← العناية التمريضية ← المرحلة الأولى/الثانية.</small></a>' +
       '<a href="https://www.itotas.com/past-exams" target="_blank" rel="noopener"><b>🏫 معهد طرابلس الفني (ITOTAS · شامل 2024) ↗</b><small>الإجازة الفنية (LT) ← العناية التمريضية (أ17 / أ71).</small></a>' +
@@ -200,14 +228,22 @@
 
     var tabsHtml =
       '<div class="lttabs">' +
-      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 أسئلة وحالات دورة 2023 (تفاعلي)</button>' +
       '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 أرشيف الدورات 2009–2024 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 أسئلة وحالات 2023+2024 (' + totalQuizCount("all") + ')</button>' +
       '</div>';
 
     root.innerHTML = tabsHtml + (st.tab === "quiz" ? renderQuizTab() : renderArchiveTab());
 
     [].forEach.call(root.querySelectorAll("[data-lttab]"), function (b) {
       b.onclick = function () { st.tab = b.getAttribute("data-lttab"); render(root); };
+    });
+    [].forEach.call(root.querySelectorAll("[data-ltqy]"), function (b) {
+      b.onclick = function () {
+        st.qYear = b.getAttribute("data-ltqy");
+        var ks = keysForYear(st.qYear);
+        st.qKey = st.qYear === "all" ? "all_year" : (ks[0] || "all_year");
+        st.qi = 0; st.ans = {}; st.mPick = []; st.showCase = false; render(root);
+      };
     });
     [].forEach.call(root.querySelectorAll("[data-ltqk]"), function (b) {
       b.onclick = function () { st.qKey = b.getAttribute("data-ltqk"); st.qi = 0; st.ans = {}; st.mPick = []; st.showCase = false; render(root); };
@@ -243,7 +279,15 @@
       b.onclick = function () { st.round = b.getAttribute("data-ltr"); render(root); };
     });
     [].forEach.call(root.querySelectorAll("[data-ltview]"), function (b) {
-      b.onclick = function () { st.view = b.getAttribute("data-ltview"); render(root); };
+      b.onclick = function () {
+        st.view = b.getAttribute("data-ltview");
+        render(root);
+        var v = d.getElementById("lt-viewer");
+        if (v && v.scrollIntoView) v.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+    });
+    [].forEach.call(root.querySelectorAll("[data-ltclose]"), function (b) {
+      b.onclick = function () { st.view = ""; render(root); };
     });
   }
 
