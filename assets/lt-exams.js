@@ -76,7 +76,7 @@
 
   function matchBuiltInQuiz(item) {
     var Q = w.LT_EXAMS_QUIZ || {};
-    if (!item || (item.y !== 2024 && item.y !== 2023) || item.r !== 1) return null;
+    if (!item || item.r !== 1) return null;
     var t = String(item.t || "");
     var map = [
       ["الطبية", "med"], ["الطبيه", "med"],
@@ -132,12 +132,19 @@
     var ep = w.NursinAsk && w.NursinAsk.API ? w.NursinAsk.API : "";
     if (!ep) { st.solBusy = false; return; }
     var DOCS = w.LT_EXAMS_DOCS || {}, docObj = DOCS[key] || null;
-    var examText = docObj ? (docObj.ar || docObj.full || "").slice(0, 6500) : "";
+    var examText = docObj ? (docObj.ar || docObj.full || "").slice(0, 7500) : "";
+    if (!examText) {
+      var c0 = lsGet(SOL_K) || {};
+      c0[key] = "📄 هالملف مصوّر (PDF) وبعد ما استخرجنا نصّه الكامل، فحتى ما يألّف الأستاذ عثمان أسئلة من عندو:\nافتح الـ PDF فوق، وانسخ أو اكتب السؤال اللي بدّك حلّو بصفحة الأستاذ عثمان وبيحلّك ياه حرفياً!";
+      lsSet(SOL_K, c0);
+      st.solBusy = false;
+      render(root);
+      return;
+    }
     st.solBusy = true;
     render(root);
-    var prompt = examText
-      ? "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. هي دورة شهادة LT رسمية (" + item.t + "). حلّ كل أسئلة هالدورة بشكل مرتّب وواضح بالعربي (مع المصطلحات الطبية الفرنسية/الإنكليزية بين قوسين) وبناءً على منهاج التمريض اللبناني ودروس الموقع. بلا نجوم (**)، استخدم أرقام واضحة وعلامة ✅ جنب كل جواب:\n\n" + examText
-      : "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. الطالب فاتح دورة رسمية (" + item.t + "). اعطيه الحل النموذجي وأهم النقاط والمحاور والأجوبة المعتمدة بهالمادة بـ LT لبنان بناءً على دروس الموقع، مرتّبة بنقاط واضحة بالعربي مع المصطلحات الطبية الأساسية وبلا نجوم.";
+    var prompt = "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. هي دورة شهادة LT رسمية (" + item.t + ").\n" +
+      "⚠️ قاعدة صارمة: التزم حصراً وحرفياً بالأسئلة المرقّمة الموجودة داخل نص الدورة أدناه فقط! اكتب كل سؤال بنفس رقمه وترتيبه كما ورد بالنص وحلّه بدقة بناءً على دروس التمريض. ممنوع منعاً باتاً تأليف أو إضافة أي سؤال غير موجود بالنص. بلا نجوم (**)، واستخدم ✅ جنب كل جواب:\n\n" + examText;
     w.fetch(ep, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -201,10 +208,12 @@
   function renderQuizTab() {
     var Q = w.LT_EXAMS_QUIZ || {}, keys = keysForYear(st.qYear);
     if (st.qKey !== "all_year" && keys.indexOf(st.qKey) < 0) st.qKey = keys[0] || "all_year";
-    var qYrChips =
-      '<button type="button" class="ltchip' + (st.qYear === "2024" ? " on" : "") + '" data-ltqy="2024">🆕 دورة 2024 (' + totalQuizCount("2024") + ' سؤال)</button>' +
-      '<button type="button" class="ltchip' + (st.qYear === "2023" ? " on" : "") + '" data-ltqy="2023">📜 دورة 2023 (' + totalQuizCount("2023") + ' سؤال)</button>' +
-      '<button type="button" class="ltchip' + (st.qYear === "all" ? " on" : "") + '" data-ltqy="all">🏆 2023 + 2024 (' + totalQuizCount("all") + ' سؤال)</button>';
+    var qYrs = ["2024", "2023", "2022", "2021", "2020"];
+    var qYrChips = '<button type="button" class="ltchip' + (st.qYear === "all" ? " on" : "") + '" data-ltqy="all">🏆 الكل (' + totalQuizCount("all") + ' سؤال)</button>' +
+      qYrs.map(function (yr) {
+        var cnt = totalQuizCount(yr);
+        return cnt ? '<button type="button" class="ltchip' + (st.qYear === yr ? " on" : "") + '" data-ltqy="' + yr + '">' + yr + ' (' + cnt + ')</button>' : '';
+      }).join("");
     var chips = '<button type="button" class="ltchip' + (st.qKey === "all_year" ? " on" : "") + '" data-ltqk="all_year">🏆 شامل (' + (st.qYear === "all" ? "كل السنوات" : st.qYear) + ')</button>' +
       keys.map(function (k) {
         return '<button type="button" class="ltchip' + (st.qKey === k ? " on" : "") + '" data-ltqk="' + esc(k) + '">' + esc(Q[k].title.split("—")[0].trim()) + '</button>';
@@ -388,7 +397,7 @@
     var tabsHtml =
       '<div class="lttabs">' +
       '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 كل الدورات 2009–2024 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
-      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 كويز رسمي 2023+2024 (' + totalQuizCount("all") + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 كويز رسمي 2020–2024 (' + totalQuizCount("all") + ')</button>' +
       '</div>';
 
     root.innerHTML = tabsHtml + (st.tab === "quiz" ? renderQuizTab() : renderArchiveTab());
