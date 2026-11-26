@@ -824,7 +824,8 @@
     h += '<div class="hzv2-pro2">' +
       '<a class="hzv2-pc' + (prLk ? ' lk' : '') + '" href="learn.html" data-hzprogo="وضع التعلّم"><span class="pe" aria-hidden="true">📖</span><span><b>' + T("التعلّم والإتقان", "Apprentissage") + '</b><small>' + T("فقرة فقرة + إتقان", "Paragraphe par parag.") + '</small></span></a>' +
       '<a class="hzv2-pc' + (prLk ? ' lk' : '') + '" href="exam-prep.html" data-hzprogo="خطة الامتحان والمصحّح الكتابي"><span class="pe" aria-hidden="true">📅</span><span><b>' + T("خطة الامتحان /20", "Plan examen /20") + '</b><small>' + T("جاهزيتك + تصحيح", "Plan + correcteur") + '</small></span></a>' +
-      '</div>';
+      '</div>' +
+      '<a class="hzv2-pc' + (prLk ? ' lk' : '') + '" href="lt-exams.html" data-hzprogo="دورات شهادة LT الرسمية (تمريض)" style="margin:-4px 0 10px"><span class="pe" aria-hidden="true">📜</span><span><b>' + T("دورات شهادة LT الرسمية (تمريض) · PRO", "Annales officielles LT · PRO") + '</b><small>' + T("أرشيف ٢٠٠٩–٢٠٢٤ (الآفاق + الرسمي) ومحاكي LT", "Archives 2009-2024 + simulateur LT") + '</small></span></a>';
     return h;
   }
   function chipsHtml() {
