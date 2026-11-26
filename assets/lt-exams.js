@@ -198,7 +198,7 @@
     var tabsHtml =
       '<div class="lttabs">' +
       '<button type="button" class="lttab' + (st.tab === "quiz" ? " on" : "") + '" data-lttab="quiz">🎯 أسئلة وحالات دورة 2023 (تفاعلي)</button>' +
-      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 أرشيف الدورات 2009–2023 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
+      '<button type="button" class="lttab' + (st.tab === "archive" ? " on" : "") + '" data-lttab="archive">📂 أرشيف الدورات 2009–2024 (' + (w.LT_EXAMS_PDF || []).length + ')</button>' +
       '</div>';
 
     root.innerHTML = tabsHtml + (st.tab === "quiz" ? renderQuizTab() : renderArchiveTab());
