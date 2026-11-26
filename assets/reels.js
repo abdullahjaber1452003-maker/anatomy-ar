@@ -234,7 +234,7 @@
         '<a class="rlsrc" href="' + esc(r.h) + '">📖 ' + T("من درس: ", "Leçon : ") + "<u>" + bdx(r.ls || s[1]) + "</u></a>" +
         '<div class="rlside"><button type="button" data-ra="save"' + (on ? ' class="on"' : "") + ' aria-pressed="' + on + '"><span class="c">' + (on ? "❤️" : "🤍") + "</span>" + T("حفظ", "Sauver") + "</button>" +
         '<a href="' + esc(r.h) + '" data-ra="open"><span class="c">📖</span>' + T("الدرس", "Leçon") + "</a>" +
-        '<button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
+        '<a href="learn.html?u='+encodeURIComponent(r.h)+'" data-ra="learn"><span class="c">\uD83C\uDFAF</span>'+T("إتقان","Maîtrise")+'</a><button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
         (i === 0 ? '<div class="rlhint">⌃ ' + T("قلّب لفوق", "Glisse vers le haut") + "</div>" : "");
     }
     return top + (i === 0 && !unlocked && (voice || canAud) ? '<button type="button" class="rltap" data-rs="1">🔊 ' + T("اكبس لتشغيل الصوت", "Touche pour activer le son") + "</button>" : "") +
@@ -246,7 +246,7 @@
       '<a class="rlsrc" href="' + esc(r.h) + '">📖 ' + T("من درس: ", "Leçon : ") + "<u>" + bdx(r.ls || s[1]) + "</u></a>" +
       '<div class="rlside"><button type="button" data-ra="save"' + (on ? ' class="on"' : "") + ' aria-pressed="' + on + '"><span class="c">' + (on ? "❤️" : "🤍") + "</span>" + T("حفظ", "Sauver") + "</button>" +
       '<a href="' + esc(r.h) + '" data-ra="open"><span class="c">📖</span>' + T("الدرس", "Leçon") + "</a>" +
-      '<button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
+      '<a href="learn.html?u='+encodeURIComponent(r.h)+'" data-ra="learn"><span class="c">\uD83C\uDFAF</span>'+T("إتقان","Maîtrise")+'</a><button type="button" data-ra="share"><span class="c">↗️</span>' + T("شارك", "Partager") + "</button></div>" +
       (i === 0 ? '<div class="rlhint">⌃ ' + T("قلّب لفوق", "Glisse vers le haut") + "</div>" : "");
   }
   function sec(i) { return fd.children[i]; }
