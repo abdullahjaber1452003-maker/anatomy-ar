@@ -130,14 +130,25 @@
     return function (t) { return df[t] ? Math.log(1 + n / df[t]) * (isLat(t) ? 1.6 : 1) : 0; };
   }
   function qText(q) { return [q.q0 || q.q, (q.o0 || q.o || [])[q.a], q.x || ""].join(" "); }
+  function fitsPara(q, p) {
+    var set = {}, hits = 0, seen = {};
+    (p.tk || (p.tk = toks(p.html))).forEach(function (t) { set[t] = 1; });
+    toks(qText(q)).forEach(function (t) { if (!seen[t] && set[t]) { seen[t] = 1; hits++; } });
+    if (hits < 2) return false;
+    var ans = (q.o0 || q.o || [])[q.a] || "";
+    var aToks = toks(ans);
+    if (aToks.length && !aToks.some(function (t) { return !!set[t]; })) return false;
+    return true;
+  }
   function score(q, p, W) {
+    if (!fitsPara(q, p)) return 0;
     var set = {}, s = 0, n = 0; (p.tk || (p.tk = toks(p.html))).forEach(function (t) { set[t] = 1; });
     var seen = {}; toks(qText(q)).forEach(function (t) { if (seen[t]) return; seen[t] = 1; n++; if (set[t]) s += W(t); });
     return n ? s / Math.sqrt(n) : 0;
   }
   // each paragraph → the bank question that fits it best (each question used once; below TH = none)
   function mapQs(paras, bank, TH) {
-    TH = TH == null ? 0.9 : TH;
+    TH = TH == null ? 1.85 : TH;
     var W = idf(paras), pairs = [], out = paras.map(function () { return null; }), used = {};
     (bank || []).forEach(function (q, qi) { if (!q || !q.o || q.a == null) return; paras.forEach(function (p, pi) { var sc = score(q, p, W); if (sc >= TH) pairs.push([sc, qi, pi]); }); });
     pairs.sort(function (a, b) { return b[0] - a[0] || a[1] - b[1]; });
@@ -148,7 +159,27 @@
   var LATRE = /[A-Za-zÀ-ÖØ-öø-ÿŒœ][A-Za-zÀ-ÖØ-öø-ÿŒœ'’\-]{2,}(?:\s+(?:de|du|des|d'|la|le|à|et|en|l')?\s*[A-Za-zÀ-ÖØ-öø-ÿŒœ][A-Za-zÀ-ÖØ-öø-ÿŒœ'’\-]{2,}){0,2}/g;
   var LSTOP = /^(le|la|les|des|une|est|sont|pour|avec|dans|par|qui|que|the|and|ou|et)$/i;
   function latTerms(text) { var m = String(text).match(LATRE) || [], out = [], seen = {}; m.forEach(function (t) { t = t.replace(/[\-']+$/, "").trim(); if (t.length < 4 || LSTOP.test(t) || seen[t.toLowerCase()]) return; seen[t.toLowerCase()] = 1; out.push(t); }); return out; }
-  function items(html) { var m = String(html).match(/<li\b[^>]*>[\s\S]*?<\/li>/gi) || []; return m.map(textOf).filter(function (t) { return t.length >= 3 && t.length <= 70; }); }
+  var JUNK_LI = /^(وغيرها|غيرها|وغيره|الخ|إلخ|إلى آخره|مثلا|مثلاً|أمثلة|ملاحظة|تقارير|إدارة|تحليل|نعم|لا|etc\.?)[\s.،؛:؟!]*$/i;
+  function items(html) {
+    var m = String(html).match(/<li\b[^>]*>[\s\S]*?<\/li>/gi) || [];
+    return m.map(textOf).filter(function (t) {
+      if (!t || t.length < 10 || t.length > 90) return false;
+      if (/[؟?]\s*$/.test(t) || JUNK_LI.test(t)) return false;
+      var ws = t.split(/\s+/).filter(Boolean);
+      return ws.length >= 2 || latTerms(t).length > 0;
+    });
+  }
+  function headBefore(html, itemText) {
+    var s = String(html || ""), idx = norm(s).indexOf(norm(itemText));
+    var cutPos = s.indexOf(itemText.slice(0, 14));
+    var before = cutPos > 0 ? s.slice(0, cutPos) : (idx > 0 ? s.slice(0, idx) : "");
+    var ms = before.match(/<(?:h[2-5]|b|strong)[^>]*>([\s\S]*?)<\/(?:h[2-5]|b|strong)>/gi) || [];
+    for (var i = ms.length - 1; i >= 0; i--) {
+      var hd = textOf(ms[i]).replace(/[:：\s]+$/, "").trim();
+      if (hd.length >= 5 && hd.length <= 70 && !/[؟?]$/.test(hd)) return hd;
+    }
+    return "";
+  }
   function arWords(text) { var m = String(text).match(/[\u0621-\u064A]{5,}/g) || [], out = [], seen = {}; m.forEach(function (t) { if (seen[t] || STOP[norm(t)] || /^(وال|بال|ال)?(هذه|التي|الذي|يجب|يمكن|حيث|عندما|وذلك|كذلك)$/.test(t)) return; seen[t] = 1; out.push(t); }); return out; }
   function has(text, t) { return norm(text).indexOf(norm(t)) > -1; }
   // the right answer never the longest, distractors of a near length, all different, none present in the paragraph
@@ -184,8 +215,8 @@
       others.forEach(function (o) { items(o.html).forEach(function (t) { pool.push(t); }); });
       for (var i = 0; i < mine.length; i++) {
         var t = mine[(i + (k | 0) + hash(seed)) % mine.length], ds = pickD(t, pool.filter(function (x) { return mine.indexOf(x) < 0; }), text, seed); if (!ds) continue;
-        var pl = place(t, ds, pos), hd = p.head && p.head.length >= 6 && !/[:：]\s*$/.test(p.head) ? p.head : "", sib = mine.filter(function (y) { return y !== t; })[(hash(seed) >>> 3) % (mine.length - 1)];
-        var qq = hd ? T("حسب «" + hd + "»، شو من هول مذكور؟", "D'après « " + hd + " », lequel est cité ? (شو مذكور؟)") : T("بنفس القائمة مع «" + sib + "»، شو كمان مذكور؟", "Dans la même liste que « " + sib + " », lequel est aussi cité ? (شو كمان مذكور؟)");
+        var pl = place(t, ds, pos), hd = headBefore(p.html, t);
+        var qq = hd ? T("حسب «" + hd + "»، أي عبارة من هول مذكورة بالفقرة؟", "D'après « " + hd + " », lequel est cité ?") : T("حسب هالفقرة، أي نقطة من هول صحيحة ومذكورة؟", "D'après ce paragraphe, quel point est cité ?");
         return { q: qq, o: pl.o, a: pl.a, src: t, hit: [t], form: "item" };
       }
       return null;
@@ -216,12 +247,23 @@
   }
   // «🏁 كويز شامل»: every paragraph's question again, in another wording where there is one, order mixed (seeded)
   function variant(q, paras, pi, key) {
-    if (q.gen) { var g = gen(paras, pi, (posOf(key, pi) + 1) % 3, 1, key); return g.form === "tf" && q.form !== "tf" ? reshuffle(q, key) : g; }
+    if (q.gen) {
+      for (var t = 1; t <= 3; t++) {
+        var g = gen(paras, pi, (posOf(key, pi) + t) % 3, t, key + ":" + t);
+        if (g && g.form !== "tf" && norm(g.q) !== norm(q.q)) return g;
+      }
+      var r = reshuffle(q, key);
+      if (r.q && r.q.indexOf("🔁") < 0) r.q = T("🔁 بصيغة تانية لتثبيت الفهم: ", "🔁 Autre formulation : ") + r.q;
+      return r;
+    }
     var Q = w.NURSIN_QV, ws = [{ q: q.q0 != null ? q.q0 : q.q, o: q.o0 || q.o }].concat((q.v || []).map(function (v) { return { q: v.q, o: v.o && v.o.length === (q.o0 || q.o).length ? v.o : (q.o0 || q.o) }; }));
     var cur = q.qvi | 0, j = ws.length > 1 ? (cur + 1) % ws.length : 0;
     if (FR() && Q) j = 0;
     var c = {}, k; for (k in q) if (Object.prototype.hasOwnProperty.call(q, k)) c[k] = q[k];
-    c.q = ws[j].q; c.o = ws[j].o.slice(); c.vw = j !== cur ? 1 : 0; return c;
+    c.q = ws[j].q; c.o = ws[j].o.slice(); c.vw = j !== cur ? 1 : 0;
+    c = reshuffle(c, key);
+    if (!c.vw && c.q && c.q.indexOf("🔁") < 0) c.q = T("🔁 تأكيد الإتقان (بترتيب جديد): ", "🔁 Vérification : ") + c.q;
+    return c;
   }
   function reshuffle(q, key) { var c = {}, k; for (k in q) c[k] = q[k]; if (!q.o || q.o.length < 3) return c; var pos = (q.a + 1 + (hash(key) % 2)) % q.o.length, ans = q.o[q.a], ds = q.o.filter(function (x, i) { return i !== q.a; }); var pl = place(ans, ds, pos); c.o = pl.o; c.a = pl.a; return c; }
   function finalSet(qs, paras, key) {
@@ -230,7 +272,7 @@
     return out;
   }
 
-  function mapQsMulti(paras,bank,TH){TH=TH==null?0.9:TH;var W=idf(paras),out=paras.map(function(){return[];});(bank||[]).forEach(function(q){if(!q||!q.o||q.a==null)return;var bi=-1,bs=0;paras.forEach(function(p,pi){var sc=score(q,p,W);if(sc>bs){bs=sc;bi=pi;}});if(bi>=0&&bs>=TH&&out[bi].length<5)out[bi].push(q);});return out;}function planMulti(paras,bank,key){var m=mapQsMulti(paras,bank);return paras.map(function(p,i){var list=m[i].slice(),tg=Math.min(4,Math.max(2,Math.ceil((p.text||"").length/180))),seen={};list.forEach(function(q){seen[norm(q.q)]=1;if(q.o&&q.o[q.a])seen[norm(q.o[q.a])]=1;});for(var k=0;list.length<tg&&k<12;k++){var g=gen(paras,i,(posOf(key,i)+list.length)%3,k,key);if(!g)break;if(g.form==="tf"&&list.length>0)continue;var ak=norm(g.o[g.a]||""),qk=norm(g.q||"");if(seen[qk]||(ak&&seen[ak]))continue;seen[qk]=1;if(ak)seen[ak]=1;list.push(g);}if(!list.length)list.push(gen(paras,i,posOf(key,i),0,key));return list;});}function finalSetMulti(qSets,paras,key){var out=[],r,i,mx=Math.max(paras.length,12);for(r=0;out.length<mx&&r<4;r++){for(i=0;i<qSets.length&&out.length<mx;i++){if(qSets[i][r]){var v=variant(qSets[i][r],paras,i,key+":"+r);v._p=i;v._qi=r;out.push(v);}}}out.sort(function(a,b){return hash(key+a._p+":"+a._qi)-hash(key+b._p+":"+b._qi);});return out;} /* ---------------- where he stopped ---------------- */
+  function mapQsMulti(paras,bank,TH){TH=TH==null?1.85:TH;var W=idf(paras),out=paras.map(function(){return[];});(bank||[]).forEach(function(q){if(!q||!q.o||q.a==null)return;var bi=-1,bs=0;paras.forEach(function(p,pi){var sc=score(q,p,W);if(sc>bs){bs=sc;bi=pi;}});if(bi>=0&&bs>=TH&&out[bi].length<5)out[bi].push(q);});return out;}function planMulti(paras,bank,key){var m=mapQsMulti(paras,bank);return paras.map(function(p,i){var list=m[i].slice(),tg=Math.min(4,Math.max(2,Math.ceil((p.text||"").length/180))),seen={};list.forEach(function(q){seen[norm(q.q)]=1;if(q.o&&q.o[q.a])seen[norm(q.o[q.a])]=1;});for(var k=0;list.length<tg&&k<12;k++){var g=gen(paras,i,(posOf(key,i)+list.length)%3,k,key);if(!g)break;if(g.form==="tf"&&list.length>0)continue;var ak=norm(g.o[g.a]||""),qk=norm(g.q||"");if(seen[qk]||(ak&&seen[ak]))continue;seen[qk]=1;if(ak)seen[ak]=1;list.push(g);}if(!list.length)list.push(gen(paras,i,posOf(key,i),0,key));return list;});}function finalSetMulti(qSets,paras,key){var out=[],r,i,mx=Math.max(paras.length,12);for(r=0;out.length<mx&&r<4;r++){for(i=0;i<qSets.length&&out.length<mx;i++){if(qSets[i][r]){var v=variant(qSets[i][r],paras,i,key+":"+r);v._p=i;v._qi=r;out.push(v);}}}out.sort(function(a,b){return hash(key+a._p+":"+a._qi)-hash(key+b._p+":"+b._qi);});return out;} /* ---------------- where he stopped ---------------- */
   function st(u, all) { all = all || lsGet(K) || {}; var s = all[u]; return s && typeof s === "object" ? s : { i: 0, ph: "p", ans: {}, fin: {}, ts: 0 }; }
   function put(u, s, all) {
     all = all || lsGet(K) || {}; s.ts = Date.now(); all[u] = s;

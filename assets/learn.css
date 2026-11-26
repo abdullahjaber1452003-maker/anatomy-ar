@@ -33,3 +33,6 @@ mark.lnmk{background:#fde68a;color:inherit;border-radius:4px;padding:0 2px;box-s
 html.nzemb #ln-app{margin-top:0}
 html.nzemb body.lnpage main{padding-top:6px}
 .lnpick ul{margin:4px 0 10px;padding-inline-start:20px;line-height:1.9}.lnpick a{color:var(--pri)}
+
+#ln-app{padding-bottom:96px}
+.qcard.lnq{overflow:visible;margin-bottom:24px}
