@@ -392,8 +392,8 @@ var LiveDept = (function (C) {
   // ALL keeps its old order (the index is the presence code); the new rooms are appended. Every room is walkable; SOON = drawn with «🔜» (no cases yet).
   var ALL = ["er", "k", "n", "x", "r", "s", "g", "wt", "acc", "lab", "rad", "ph", "adm", "ns0", "ns1", "ns2", "ns3", "or", "sspi", "bb", "ster", "arch", "psy", "p", "m", "cln", "stf"];
   var FLOORS = [["er", "wt", "adm", "acc", "lab", "rad", "ph", "bb", "ns0"], ["k", "n", "r", "ns1"], ["s", "or", "sspi", "g", "ster", "ns2"], ["p", "m", "psy", "stf", "cln", "arch", "ns3"]],
-    SOON = { psy: 1, or: 1, sspi: 1 }, SVC = { wt: 1, acc: 1, lab: 1, rad: 1, ph: 1, adm: 1, ns0: 1, ns1: 1, ns2: 1, ns3: 1, or: 1, sspi: 1, bb: 1, ster: 1, arch: 1, psy: 1, cln: 1, stf: 1 },
-    WARDS = ["er", "k", "n", "r", "s", "g", "p", "m"];
+    SOON = { psy: 1, or: 1, sspi: 1 }, SVC = { k: 1, n: 1, r: 1, s: 1, g: 1, p: 1, m: 1, wt: 1, acc: 1, lab: 1, rad: 1, ph: 1, adm: 1, ns0: 1, ns1: 1, ns2: 1, ns3: 1, or: 1, sspi: 1, bb: 1, ster: 1, arch: 1, psy: 1, cln: 1, stf: 1 },
+    WARDS = ["er"];
   // 29e: the new wards' two patients do not all sit in the waiting room at 08:00 — each ward's pair arrives at its own time of the day (the same on
   // every phone, from the date), so the 12 chairs never overflow; their clock (the engine's drift) starts at that arrival
   var ARR = { r: [9 * 60, 11 * 60], s: [9 * 60 + 30, 12 * 60], g: [10 * 60, 13 * 60], p: [11 * 60, 15 * 60], m: [12 * 60, 16 * 60] };
@@ -462,12 +462,11 @@ var LiveDept = (function (C) {
     return o[i % n];
   }
   function deptCase(D, dk, key) { var id = pick(D, dk, key), L = cases(D, dk); for (var i = 0; i < L.length; i++) if (L[i].id === id) return L[i]; return null; }
-  // 🚨 the ambulances of a day: 2 or 3, between 10:00 and 23:00 Beirut, at least 90 min apart, the same on every phone
+  // 🚨 Max 1 surprise ambulance per day (11:00–21:00 Beirut) so the whole hospital has only 1–2 cases all day (1 ER + max 1 ambulance)
   function ambTimes(key) {
-    var r = C.rng(C.hash("amb-" + key)), c = r() < 0.5 ? 2 : 3, slack = AMB_TO - AMB_FROM - AMB_GAP * (c - 1), offs = [], t0 = C.dayStart(key);
-    for (var i = 0; i < c; i++) offs.push(Math.floor(r() * (slack + 1)));
-    offs.sort(function (a, b) { return a - b; });
-    return offs.map(function (o, i) { return t0 + (AMB_FROM + o + AMB_GAP * i) * MIN; });
+    var r = C.rng(C.hash("amb-" + key)), t0 = C.dayStart(key);
+    var off = 11 * 60 + Math.floor(r() * (10 * 60));
+    return [t0 + off * MIN];
   }
   // the one ambulance that holds «🛏️ سرير الإسعاف» at «now» (the newest that arrived) → { i (1…3), t (arrival), next (next arrival or 0), all }
   function ambNow(key, now) {
@@ -655,22 +654,9 @@ var LiveDept = (function (C) {
     if (!okP) return { k: "neu", d: -1, a: a, tri: t, inn: 1 };
     return { k: "ok", d: 4, a: a, tri: t, inn: 1 };
   }
-  // 🚶 the walk-ins of a day: 4–6 between 09:00 and 22:00 Beirut, ≥ 40 min apart, each waits ≤ 45 min, the same on every phone
+  // 🚶 Walk-ins disabled so the hospital stays calm with only 1–2 cases in the entire day
   function pad2(i) { return (i < 10 ? "0" : "") + i; }
-  function walkIns(D, key) {
-    var B = (D && D.walk) || []; if (!B.length) return [];
-    var r = C.rng(C.hash("wk-" + key)), c = 4 + Math.floor(r() * 3), slack = WK_TO - WK_FROM - WK_GAP * (c - 1), offs = [], t0 = C.dayStart(key);
-    for (var i = 0; i < c; i++) offs.push(Math.floor(r() * (slack + 1)));
-    offs.sort(function (a, b) { return a - b; });
-    var ids = shuffle(B.map(function (b, j) { return j; }), C.rng(C.hash("wkp-" + key)));
-    var out = offs.map(function (o, j) { var t = t0 + (WK_FROM + o + WK_GAP * j) * MIN; return { i: j + 1, dk: "w" + pad2(j + 1), t: t, until: t + WSTAY, b: B[ids[j % ids.length]] }; });
-    // 29h 🏥 (Abdullah, Nov 4 9:38 PM «خلصت الحالة عم يتقفل كل شي»): the hospital never closes — once today's 🚑 ER case is over, a walk-in
-    // comes every AFT_GAP min (08:00–24:00 slots, the same on every phone: «w11»… «w58», still «w\d\d_tg…» = rules v22 unchanged);
-    // a slot only shows (and can only be triaged) while the ER case of the day is finished (erDone)
-    var r2 = C.rng(C.hash("wkx-" + key)), ids2 = shuffle(B.map(function (b, j) { return j; }), C.rng(C.hash("wkxp-" + key)));
-    for (var s = 0; s < AFT_N; s++) { var tx = t0 + (AFT_FROM + s * AFT_GAP + Math.floor(r2() * 6)) * MIN; out.push({ i: AFT_I0 + s, dk: "w" + pad2(AFT_I0 + s), t: tx, until: tx + WSTAY, b: B[ids2[s % ids2.length]], aft: 1 }); }
-    return out;
-  }
+  function walkIns() { return []; }
   var AFT_FROM = 8 * 60, AFT_GAP = 20, AFT_N = 48, AFT_I0 = 11;
   function walkAt(L, dk) { for (var i = 0; i < L.length; i++) if (L[i].dk === dk) return L[i]; return null; }
   function erDone(D, raw, now) { var s = null; try { s = state(D, raw, "er", now); } catch (e) { s = null; } return !!(s && s.end); }
@@ -704,8 +690,8 @@ var LiveDept = (function (C) {
   function floorOf(dk) { if (dk === "x" || WK_RE.test(dk)) return 0; for (var f = 0; f < FLOORS.length; f++) if (FLOORS[f].indexOf(dk) > -1) return f; return 0; }
   function isSvc(dk) { return !!SVC[dk]; }
   function isOpen(dk) { return ALL.indexOf(dk) > -1; }          // 29e: every room is walkable (a «🔜» room is drawn, labelled, empty)
-  // 29e: a ward whose bank is empty becomes a «🔜» room (drawn, walkable, no case) — called once the bank is loaded
-  function prep(D) { ["r", "s", "g", "p", "m"].forEach(function (dk) { if (!cases(D, dk).length) { SOON[dk] = 1; SVC[dk] = 1; } else { delete SOON[dk]; delete SVC[dk]; } }); return SOON; }
+  // Keep extra wards walkable & calm (no extra daily cases beyond ER + 1 ambulance)
+  function prep() { ["k", "n", "r", "s", "g", "p", "m"].forEach(function (dk) { SVC[dk] = 1; }); return SOON; }
   // 👥 presence: the department rides in the 2 low bits of x (where he stands) and tx (where he walks to) — rules v22 fields unchanged
   function penc(v, dk) { v = Math.max(0, Math.min(356, Math.round(+v || 0))); return (v & ~3) | (CODE[dk] | 0); }
   function pdec(v) { v = Math.round(+v || 0); return { v: v & ~3, dep: KEYS[v & 3] }; }
@@ -780,9 +766,9 @@ var LiveDept = (function (C) {
   // 29d: in a service room (🪑 الانتظار · 💰 المحاسبة) there is no case of its own — the room still gets the ER state (so every card keeps working), tagged with where he stands
   function state() { if (!D) return null; if (LiveDept.isSvc(dep)) { var s0 = stateOf("er"); if (s0) { s0.dep = dep; s0.svc = 1; } return s0; } return stateOf(dep) || stateOf("er"); }
   function hospital() {
-    if (!D) return null; var now = Date.now(), A = LiveDept.ambNow(today(), now), o = { er: stateOf("er"), k: stateOf("k"), n: stateOf("n"), x: A.cur ? stateOf("x") : null, amb: A, now: now };
-    ["r", "s", "g", "p", "m"].forEach(function (k) { o[k] = LiveDept.SVC[k] ? null : stateOf(k); });      // 29e 🩺 🔪 👴 👶 🤰
-    try { o.wait = LiveDept.waiting(D, rawDoc(), now); } catch (e) { o.wait = []; }      // 29d 🪑 who is waiting to be brought in
+    if (!D) return null; var now = Date.now(), A = LiveDept.ambNow(today(), now), o = { er: stateOf("er"), k: null, n: null, x: A.cur ? stateOf("x") : null, amb: A, now: now };
+    ["r", "s", "g", "p", "m"].forEach(function (k) { o[k] = null; });
+    try { o.wait = LiveDept.waiting(D, rawDoc(), now); } catch (e) { o.wait = []; }
     return o;
   }
   function setDep(dk) { if (LiveDept.ALL.indexOf(dk) < 0 || !LiveDept.isOpen(dk)) dk = "er"; if (dk === "x" && !LiveDept.ambNow(today(), Date.now()).cur) dk = "er"; dep = dk; emit(); return dep; }

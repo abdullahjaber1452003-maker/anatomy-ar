@@ -69,10 +69,9 @@
     function hash(s) { var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
     function rng(seed) { var a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
     function ambTimes(key) {
-      var r = rng(hash("amb-" + key)), c = r() < 0.5 ? 2 : 3, slack = AMB_TO - AMB_FROM - AMB_GAP * (c - 1), offs = [], t0 = dayStart(key);
-      for (var i = 0; i < c; i++) offs.push(Math.floor(r() * (slack + 1)));
-      offs.sort(function (a, b) { return a - b; });
-      return offs.map(function (o, i) { return t0 + (AMB_FROM + o + AMB_GAP * i) * MIN; });
+      var r = rng(hash("amb-" + key)), t0 = dayStart(key);
+      var off = 11 * 60 + Math.floor(r() * (10 * 60));
+      return [t0 + off * MIN];
     }
     // the ambulance to announce at «now» (arrived ≤ 15 min ago) → { id: "YYYY-MM-DD#i", t } or null
     function fresh(now, win) { var key = dayKey(now), T = ambTimes(key), o = null; win = win || 15 * MIN;
