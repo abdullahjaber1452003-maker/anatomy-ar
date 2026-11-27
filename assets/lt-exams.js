@@ -5,7 +5,7 @@
   "use strict";
 
   var YEARS = [2024, 2023, 2022, 2021, 2020, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009];
-  var L4 = "abcd", SOL_K = "nursin_lt_sol_v1";
+  var L4 = "abcd", SOL_K = "nursin_lt_sol_v2";
   var st = {
     tab: "archive",
     year: "2024",
@@ -68,7 +68,7 @@
       ks.forEach(function (k) {
         (Q[k].qs || []).forEach(function (q) { all.push(q); });
       });
-      var lbl = st.qYear === "all" ? "2023 + 2024" : "دورة " + st.qYear;
+      var lbl = st.qYear === "all" ? "2020–2024" : "دورة " + st.qYear;
       return { title: "🏆 امتحان " + lbl + " الشامل (" + all.length + " سؤال)", qs: all, caseStudy: null };
     }
     return Q[key] || { title: "دورة رسمية", qs: [], caseStudy: null };
@@ -108,7 +108,7 @@
     });
     if (ex.caseStudy) {
       lines.push("");
-      lines.push("ثانياً: حل دراسة الحالة الرسمية:");
+      lines.push("ثانياً: حل معالجة المسألة / دراسة الحالة الرسمية:");
       (ex.caseStudy.qs || []).forEach(function (it, idx) {
         lines.push((idx + 1) + ") " + it.q);
         lines.push("   ✅ " + it.a);
@@ -117,25 +117,27 @@
     return lines.join("\n");
   }
 
-  function solveExam(root, item) {
+  function solveExam(root, item, forceFull) {
     var cache = lsGet(SOL_K) || {}, key = item.file;
     st.solId = key;
+    var DOCS = w.LT_EXAMS_DOCS || {}, docObj = DOCS[key] || null;
+    var examText = docObj ? (docObj.ar || docObj.full || "").slice(0, 11500) : "";
     var built = matchBuiltInQuiz(item);
-    if (built) {
+    if (!forceFull && built && (!examText || built.caseStudy)) {
       cache[key] = formatBuiltInSolution(built);
       lsSet(SOL_K, cache);
       st.solBusy = false;
       render(root);
       return;
     }
-    if (cache[key]) { st.solBusy = false; render(root); return; }
+    if (!forceFull && cache[key]) { st.solBusy = false; render(root); return; }
     var ep = w.NursinAsk && w.NursinAsk.API ? w.NursinAsk.API : "";
     if (!ep) { st.solBusy = false; return; }
-    var DOCS = w.LT_EXAMS_DOCS || {}, docObj = DOCS[key] || null;
-    var examText = docObj ? (docObj.ar || docObj.full || "").slice(0, 7500) : "";
     if (!examText) {
       var c0 = lsGet(SOL_K) || {};
-      c0[key] = "📄 هالملف مصوّر (PDF) وبعد ما استخرجنا نصّه الكامل، فحتى ما يألّف الأستاذ عثمان أسئلة من عندو:\nافتح الـ PDF فوق، وانسخ أو اكتب السؤال اللي بدّك حلّو بصفحة الأستاذ عثمان وبيحلّك ياه حرفياً!";
+      c0[key] = built
+        ? formatBuiltInSolution(built) + "\n\n📝 ملاحظة: لمعالجة المسألة أو أي سؤال إضافي بأسفل الـ PDF المصوّر، افتح الـ PDF فوق واكتب السؤال للأستاذ عثمان وبيحلّك ياه حرفياً!"
+        : "📄 هالملف مصوّر (PDF) وبعد ما استخرجنا نصّه الكامل، فحتى ما يألّف الأستاذ عثمان أسئلة من عندو:\nافتح الـ PDF فوق، وانسخ أو اكتب السؤال اللي بدّك حلّو بصفحة الأستاذ عثمان وبيحلّك ياه حرفياً!";
       lsSet(SOL_K, c0);
       st.solBusy = false;
       render(root);
@@ -143,8 +145,13 @@
     }
     st.solBusy = true;
     render(root);
-    var prompt = "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. هي دورة شهادة LT رسمية (" + item.t + ").\n" +
-      "⚠️ قاعدة صارمة: التزم حصراً وحرفياً بالأسئلة المرقّمة الموجودة داخل نص الدورة أدناه فقط! اكتب كل سؤال بنفس رقمه وترتيبه كما ورد بالنص وحلّه بدقة بناءً على دروس التمريض. ممنوع منعاً باتاً تأليف أو إضافة أي سؤال غير موجود بالنص. بلا نجوم (**)، واستخدم ✅ جنب كل جواب:\n\n" + examText;
+    var prompt = "إنت الأستاذ عثمان، مدرّس تمريض LT بلبنان على موقع nursin.store. هي دورة شهادة LT رسمية كاملة (" + item.t + ").\n" +
+      "⚠️ قواعد صارمة للحلّ الكامل:\n" +
+      "1) التزم حصراً وحرفياً بالأسئلة الموجودة داخل نص الدورة أدناه فقط — ممنوع تأليف أي سؤال غير موجود بالنص.\n" +
+      "2) حلّ الدورة بالكامل من أوّلها لآخرها بدون ما تترك أي قسم!\n" +
+      "   - أولاً: حلّ كل أسئلة الاختيار من متعدّد (MCQ) بنفس أرقامها وترتيبها.\n" +
+      "   - ثانياً: حلّ قسم «معالجة المسألة» و«دراسة الحالة» و«الأسئلة المقالية / عالج الأسئلة التالية» الموجودة بأسفل الدورة بالكامل بالتفصيل النموذجي.\n" +
+      "3) بلا نجوم (**)، واستخدم ✅ جنب كل جواب نموذجي واضح ومرتّب:\n\n" + examText;
     w.fetch(ep, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

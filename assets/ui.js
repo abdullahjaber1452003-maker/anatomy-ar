@@ -686,6 +686,33 @@
     setAvatar: setAvatar, avUrl: avUrl, avHtml: avHtml, myAvatar: myAvatar, AKEY: AK, AVN: AVN, shrink: shrink, pull: pull, fcHref: fcHref,
     lessonsNow: lessonsNow, lastNow: lastNow, lastLes: lastLes, caseLes: caseLes, blobTo: blobTo, navCur: navCur, navHome: navHome, focusMode: focusMode,
     busyRound: busyRound, isOpen: function () { return !!sh; }, page: page, use: useMark, usage: useGet, UKEY: UK, bidiFix: bidiFixNode };
+  /* ☕ Global break watcher on non-home pages so «👨‍🏫 عثمان: تعا لهون وليه! 👀» fires everywhere */
+  function brkWatch() {
+    if (page === "index.html") return;
+    function check() {
+      var st = lsGet("nursin_qbrk_v1");
+      if (!st || !st.end || st.notified || Date.now() < st.end) return;
+      st.notified = true; lsSet("nursin_qbrk_v1", st);
+      var ttl = T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens 💪");
+      var body = T("خلص البريك يلا عالدرس!", "Tes " + (st.mins || 5) + " min sont finies — c'est reparti !");
+      try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) {}
+      try {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(function (reg) { if (reg && reg.showNotification) reg.showNotification(ttl, { body: body, icon: "/assets/icon-192.png", tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" } }); }).catch(function () {});
+        }
+        if (w.Notification && Notification.permission === "granted") new Notification(ttl, { body: body, icon: "/assets/icon-192.png", tag: "nursin-break", dir: "rtl", lang: "ar" });
+      } catch (e) {}
+      var old = d.getElementById("uibrktoast"); if (old) old.remove();
+      var t = d.createElement("div"); t.id = "uibrktoast";
+      t.style.cssText = "position:fixed;top:14px;left:12px;right:12px;z-index:120;max-width:440px;margin:0 auto;padding:13px 15px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;box-shadow:0 12px 32px rgba(0,0,0,.35);border:2px solid #f59e0b;display:flex;align-items:center;justify-content:space-between;gap:10px";
+      t.innerHTML = '<div><b style="display:block;font-size:15px">' + esc(ttl) + '</b><small style="opacity:.92">' + esc(body) + '</small></div><a href="index.html#path" class="btn sm" style="background:#f59e0b;color:#111;border:0;font-weight:800;flex-shrink:0;text-decoration:none">▶ ' + esc(T("يلا عالدرس", "Go")) + '</a>';
+      d.body.appendChild(t);
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 18000);
+    }
+    setInterval(check, 2000);
+    d.addEventListener("visibilitychange", function () { if (!d.hidden) check(); });
+    check();
+  }
   if (!d || !d.getElementById) return;
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); setTimeout(bidiBoot, 120); }); else { setTimeout(init, 0); setTimeout(bidiBoot, 120); }
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); setTimeout(bidiBoot, 120); setTimeout(brkWatch, 400); }); else { setTimeout(init, 0); setTimeout(bidiBoot, 120); setTimeout(brkWatch, 400); }
 })(typeof window !== "undefined" ? window : this, typeof document !== "undefined" ? document : null);

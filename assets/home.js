@@ -777,7 +777,7 @@
   function homeCss() {
     if (d.getElementById("hzv2css")) return;
     var s = d.createElement("style"); s.id = "hzv2css";
-    s.textContent = ".hzv2-hd{display:flex;align-items:center;gap:8px;margin:2px 0 8px}.hzv2-hd .t{flex:1;min-width:0}.hzv2-hd .t b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hzv2-hd .t small{display:block;font-size:11.5px;opacity:.72}.hzv2-p{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;color:inherit;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.22);white-space:nowrap}.hzv2-ic{width:34px;height:34px;border-radius:50%;border:1px solid rgba(127,127,127,.24);background:var(--card,#fff);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;font-size:15px}.hzv2-live{background:var(--card,#fff);border:1px solid rgba(16,185,129,.28);border-radius:16px;padding:9px 11px;margin:0 0 8px}.hzv2-lh{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:7px;gap:6px}.hzv2-ldot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 7px #10b981;margin-inline-end:5px}.hzv2-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.hzv2-row::-webkit-scrollbar{display:none}.hzv2-bub{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;max-width:68px;text-decoration:none;color:inherit;flex-shrink:0}.hzv2-ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;border:2.5px solid #10b981;background:rgba(16,185,129,.12);overflow:hidden;position:relative}.hzv2-ring.add{border-style:dashed;border-color:#0f766e;background:rgba(15,118,110,.1);color:#0f766e}.hzv2-ring img{width:100%;height:100%;object-fit:cover}.hzv2-bub b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-bub small{font-size:10px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-pro2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 9px}.hzv2-pc{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(15,118,110,.25);text-decoration:none;color:inherit}.hzv2-pc .pe{font-size:20px;flex-shrink:0}.hzv2-pc b{display:block;font-size:13px;line-height:1.25}.hzv2-pc small{display:block;font-size:11px;opacity:.75;margin-top:2px}.hzv2-tabs{display:flex;gap:5px;padding:4px;border-radius:999px;background:rgba(127,127,127,.12);margin:0 0 10px}.hzv2-tab{flex:1;padding:8px 8px;border-radius:999px;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.hzv2-tab.on{background:#0f766e;color:#fff;box-shadow:0 2px 8px rgba(15,118,110,.3)}.hzv2-ph{margin:0 0 6px !important;padding:0 !important}.hzv2-act{display:flex;gap:6px;margin:6px 0 8px}.hzv2-qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.hzv2-qbtn{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(127,127,127,.22);text-decoration:none;color:inherit;font-weight:700;font-size:13.5px}html[data-theme=night] .hzv2-live,html[data-theme=night] .hzv2-pc,html[data-theme=night] .hzv2-qbtn{background:rgba(15,23,42,.72)}.hzst.now>.bx{background:linear-gradient(135deg,rgba(15,118,110,.14),rgba(20,184,166,.08));border-color:rgba(15,118,110,.45)}";
+    s.textContent = ".hzv2-hd{display:flex;align-items:center;gap:8px;margin:2px 0 8px}.hzv2-hd .t{flex:1;min-width:0}.hzv2-hd .t b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hzv2-hd .t small{display:block;font-size:11.5px;opacity:.72}.hzav-wrap{position:relative;display:inline-flex;flex-direction:column;align-items:center;flex-shrink:0}.hzav.is-pro{box-shadow:0 0 0 2.5px #f59e0b,0 0 12px rgba(245,158,11,.45) !important;border-radius:50%}.hzav-pro-pill{position:relative;margin-top:-9px;z-index:3;padding:1px 7px;border-radius:999px;border:1.5px solid var(--card,#fff);background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font:inherit;font-size:9.5px;font-weight:900;letter-spacing:.2px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.22);line-height:1.45;white-space:nowrap}.hzav-pro-pill.adm{background:linear-gradient(135deg,#0f766e,#f59e0b)}.hzv2-p{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;color:inherit;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.22);white-space:nowrap}.hzv2-ic{width:34px;height:34px;border-radius:50%;border:1px solid rgba(127,127,127,.24);background:var(--card,#fff);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;font-size:15px}.hzv2-live{background:var(--card,#fff);border:1px solid rgba(16,185,129,.28);border-radius:16px;padding:9px 11px;margin:0 0 8px}.hzv2-lh{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:7px;gap:6px}.hzv2-ldot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 7px #10b981;margin-inline-end:5px}.hzv2-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.hzv2-row::-webkit-scrollbar{display:none}.hzv2-bub{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;max-width:68px;text-decoration:none;color:inherit;flex-shrink:0}.hzv2-ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;border:2.5px solid #10b981;background:rgba(16,185,129,.12);overflow:hidden;position:relative}.hzv2-ring.add{border-style:dashed;border-color:#0f766e;background:rgba(15,118,110,.1);color:#0f766e}.hzv2-ring img{width:100%;height:100%;object-fit:cover}.hzv2-bub b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-bub small{font-size:10px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;display:block}.hzv2-pro2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 9px}.hzv2-pc{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(15,118,110,.25);text-decoration:none;color:inherit}.hzv2-pc .pe{font-size:20px;flex-shrink:0}.hzv2-pc b{display:block;font-size:13px;line-height:1.25}.hzv2-pc small{display:block;font-size:11px;opacity:.75;margin-top:2px}.hzv2-tabs{display:flex;gap:5px;padding:4px;border-radius:999px;background:rgba(127,127,127,.12);margin:0 0 10px}.hzv2-tab{flex:1;padding:8px 8px;border-radius:999px;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.hzv2-tab.on{background:#0f766e;color:#fff;box-shadow:0 2px 8px rgba(15,118,110,.3)}.hzv2-ph{margin:0 0 6px !important;padding:0 !important}.hzv2-act{display:flex;gap:6px;margin:6px 0 8px}.hzv2-sechd{font-size:12.5px;font-weight:800;opacity:.75;margin:10px 2px 6px}.hzv2-qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.hzv2-qbtn{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(127,127,127,.22);text-decoration:none;color:inherit;font-weight:700;font-size:13.5px}.hzbrk-toast{position:fixed;top:14px;left:12px;right:12px;z-index:120;max-width:440px;margin:0 auto;padding:13px 15px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;box-shadow:0 12px 32px rgba(0,0,0,.35);border:2px solid #f59e0b;display:flex;align-items:center;justify-content:space-between;gap:10px;animation:hzbpop .28s ease}@keyframes hzbpop{from{transform:translateY(-22px);opacity:0}to{transform:translateY(0);opacity:1}}html[data-theme=night] .hzv2-live,html[data-theme=night] .hzv2-pc,html[data-theme=night] .hzv2-qbtn{background:rgba(15,23,42,.72)}.hzst.now>.bx{background:linear-gradient(135deg,rgba(15,118,110,.14),rgba(20,184,166,.08));border-color:rgba(15,118,110,.45)}";
     (d.head || d.documentElement).appendChild(s);
   }
   function readinessPct() { var NL=w.NLESSONS||{},LS=w.NursinLessons,P=(LS&&LS.parts&&LS.parts.length)?LS.parts:(NL.parts||NL.list||[]),rm=LS&&LS.readMap?LS.readMap():(lsGet('nursin_read_v1')||{}),pq=lsGet('nursin_partq_v1')||{},ln=lsGet('nursin_learn_v1')||{},rt=(lsGet('nursin_ret_v1')||{}).L||{},nt=lsGet('nursin_ntemp_v1')||{},ex=lsGet('nursin_explan_v1')||{},M=w.NursinMid,earr=(M&&M.EXAMS&&M.EXAMS.length)?M.EXAMS:((lsGet('nursin_exams_cfg_v1')||{}).list||[]),td=new Date(Date.now()+2*36e5).toISOString().slice(0,10); function aLes(sk){var b=null;earr.forEach(function(e){if(e&&e.subs&&e.subs.indexOf(sk)>-1){if(!b||(e.d>=td&&(b.d<td||e.d<b.d)))b=e;}});return(b&&b.lessons&&Array.isArray(b.lessons[sk])&&b.lessons[sk].length)?b.lessons[sk]:null;} var subjs=Array.isArray(ex.subjs)&&ex.subjs.length?ex.subjs:null,mine=[]; if(subjs){subjs.forEach(function(sk){var al=aLes(sk),m=P.filter(function(x){return x.s===sk&&(!al||al.indexOf(x.l||x.t)>-1);});if(!m.length&&al)m=P.filter(function(x){return x.s===sk;});mine=mine.concat(m);});}else{mine=P;} var tot=mine.length||1,dn=0; mine.forEach(function(x){ var pk=LS&&LS.key?LS.key(x):(x.s+':'+(x.l||x.t)+(x.p?'#'+x.p:'')),b=x.s+':'+(x.l||x.t),rOk=LS&&LS.isRead?LS.isRead(x,rm):!!rm[pk],o=ln[x.href]||null,lFin=!!(o&&(o.fd||o.m===1||o.ph==='done'||(o.pct!=null&&o.pct>=80))),lPart=!!(o&&((o.i|0)>0||(o.ans&&Object.keys(o.ans).length>0))),rs=(rt[b]&&rt[b].s!=null)?rt[b].s:null; if(rOk||pq[pk]||pq[b]||lFin||(rs!=null&&rs>=75))dn+=1; else if(lPart||(rs!=null&&rs>=35))dn+=0.5; }); if((!subjs||subjs.indexOf('neuro')>-1)&&!aLes('neuro')&&nt&&nt.done)dn=Math.min(tot,dn+Object.keys(nt.done).length*0.5); return Math.min(100,Math.round(100*dn/tot)); }
@@ -785,7 +785,10 @@
   function headHtml() {
     var nm = first(), bell = d.querySelector(".topbar .annbell"), dot = !!(bell && bell.classList.contains("on"));
     var shN = shieldCount(), rpct = readinessPct();
-    return '<div class="hzv2-hd"><button class="hzav" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' +
+    var pst = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : null;
+    var isAdm = pst && pst.mode === "admin", isPr = pst && (pst.mode === "admin" || pst.mode === "pro");
+    var proPill = isPr ? '<button type="button" class="hzav-pro-pill' + (isAdm ? ' adm' : '') + '" data-proopen title="' + (isAdm ? 'لوحة الأدمن · Pro' : 'اشتراك Pro مفعّل') + '">' + (isAdm ? '👑 PRO' : '⭐ PRO') + '</button>' : '';
+    return '<div class="hzv2-hd"><span class="hzav-wrap"><button class="hzav' + (isPr ? ' is-pro' : '') + '" type="button" data-hz="avatar" aria-label="' + T("غيّر صورتك", "Changer d'avatar") + '">' + (U().avHtml ? U().avHtml("hzavi") : '<span class="hzavi hzavx" aria-hidden="true">🙂</span>') + '<span class="hzavp" aria-hidden="true">✎</span></button>' + proPill + '</span>' +
       '<div class="t"><small>' + greet(hourB()) + '</small><b>' + (nm ? '<bdi>' + esc(nm) + '</bdi> 👋' : T("يا بطل 👋", "champion 👋")) + '</b></div>' +
       '<a class="hzv2-p" href="exam-prep.html" title="' + T("جاهزيتك للامتحان", "Préparation") + '">📊 <span dir="ltr">' + rpct + '%</span></a>' +
       '<a class="hzv2-p" href="me.html" title="' + T("سلسلة الدراسة", "Série") + '">🔥' + streak() + (shN ? '🛡️' : '') + '</a>' +
@@ -859,12 +862,16 @@
     var R = w.NursinRet, c = null; try { c = R && R.counts ? R.counts() : null; } catch (e) {}
     var tn = tnNow();
     var plH = (w.NursinPlanner && w.NursinPlanner.homeHtml) ? w.NursinPlanner.homeHtml() : "";
-    return '<div class="hzv2-qgrid">' +
+    return '<div class="hzv2-sechd">✨ ' + T("أدوات ومحتوى تفاعلي", "Outils & contenu") + '</div>' +
+      '<div class="hzv2-qgrid">' +
       '<a class="hzv2-qbtn" href="mindmap.html">🗺️ ' + T("الخرائط الذهنية", "Cartes mentales") + '</a>' +
-      '<a class="hzv2-qbtn" href="discuss.html">💬 ' + T("نقاش الطلاب", "Discussion") + '</a>' +
       '<a class="hzv2-qbtn" href="reels.html">🎬 ' + T("أفلام ريلز", "Reels") + '</a>' +
+      '<a class="hzv2-qbtn" href="discuss.html">💬 ' + T("نقاش الطلاب", "Discussion") + '</a>' +
       '<a class="hzv2-qbtn" href="games.html">🎮 ' + T("ألعاب مراجعة", "Jeux") + '</a>' +
-      '</div>' + plH +
+      '<a class="hzv2-qbtn" href="3d.html">🧊 ' + T("التشريح 3D", "Anatomie 3D") + '</a>' +
+      '<a class="hzv2-qbtn" href="lt-exams.html">📜 ' + T("دورات LT الرسمية", "Annales LT") + '</a>' +
+      '</div>' +
+      '<div class="hzv2-sechd">🏆 ' + T("التحدّي والمتابعة", "Défis & suivi") + '</div>' + plH +
       '<button type="button" class="hzft" data-hzduel><span aria-hidden="true">⚔️</span><span><b>' + T("بطولة صفّك", "Le tournoi de ta classe") + "</b><small>" + esc(tn && tn.txt ? tn.txt : T("الجدول، الترتيب والجوائز", "Tableau, classement et prix")) + "</small></span></button>" +
       (w.NursinMid && w.NursinMid.active() ? '<a class="hzft hzmidft" href="midterm.html"><span aria-hidden="true">🎯</span><span><b>' + T("الامتحان الجاي", "Prochain examen") + "</b><small>" + (function (M) { var nx = M.next ? M.next() : null; return T("باقي " + M.daysLeft() + " يوم" + (nx ? " · " + M.dmOf(nx.d) + " " + nx.ar : ""), "J-" + M.daysLeft() + (nx ? " · " + M.dmOf(nx.d) + " " + nx.fr : "")); })(w.NursinMid) + "</small></span></a>" : "") +
       '<a class="hzft" href="hifzi.html"><span aria-hidden="true">🗺️</span><span><b>' + T("حفظي", "Ma mémoire") + "</b><small>" + (c ? '<i class="rdot r-green"></i>' + c.green + ' <i class="rdot r-yellow"></i>' + c.yellow + ' <i class="rdot r-red"></i>' + c.red : T("خريطة حفظك لكل الدروس", "La carte de ta mémoire")) + "</small></span></a>";
@@ -1063,14 +1070,25 @@
       setTimeout(function () { try { c.close(); } catch (e) {} }, 1200);
     } catch (e) {}
   }
+  function showBrkToast(mins) {
+    var old = d.getElementById("hzbrktoast"); if (old) old.remove();
+    var t = d.createElement("div"); t.id = "hzbrktoast"; t.className = "hzbrk-toast"; t.setAttribute("role", "alert");
+    t.innerHTML = '<div><b style="display:block;font-size:15px">' + esc(T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens 💪")) + '</b><small style="opacity:.92">' + esc(T("خلص البريك يلا عالدرس!", "Tes " + (mins || 5) + " min sont finies — c'est reparti !")) + '</small></div>' +
+      '<button type="button" class="btn sm" style="background:#f59e0b;color:#111;border:0;font-weight:800;flex-shrink:0">▶ ' + esc(T("يلا عالدرس", "Go")) + '</button>';
+    d.body.appendChild(t);
+    var btn = t.querySelector("button");
+    if (btn) btn.onclick = function () { if (t.parentNode) t.parentNode.removeChild(t); homeTab = "path"; brkAct("go"); };
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 18000);
+  }
   function brkNotify(mins) {
     var ttl = T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens étudier 💪");
     var body = T("خلص البريك يلا عالدرس!", "Tes " + (mins || 5) + " min de pause sont finies — continue ton parcours sur nursin");
+    showBrkToast(mins);
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(function (reg) { if (reg && reg.showNotification) reg.showNotification(ttl, { body: body, tag: "nursin-break", renotify: true }); }).catch(function () {});
+        navigator.serviceWorker.ready.then(function (reg) { if (reg && reg.showNotification) reg.showNotification(ttl, { body: body, icon: "/assets/icon-192.png", badge: "/assets/icon-192.png", tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" } }); }).catch(function () {});
       }
-      if (w.Notification && Notification.permission === "granted") new Notification(ttl, { body: body, tag: "nursin-break" });
+      if (w.Notification && Notification.permission === "granted") new Notification(ttl, { body: body, icon: "/assets/icon-192.png", tag: "nursin-break", dir: "rtl", lang: "ar" });
     } catch (e) {}
   }
   function brkHtml(dn, all, cur) {
@@ -1080,10 +1098,14 @@
     if (ch) brkSet(st);
     var now = Date.now();
     if (st.end && now < st.end) {
+      var nPerm = w.Notification ? Notification.permission : "unsupported";
+      var permHint = nPerm === "default"
+        ? '<button type="button" class="btn sm" data-hzqbrk="perm" style="margin-top:6px">🔔 ' + T("فعّل الإشعار ليوصلك برا الموقع", "Activer la notif") + '</button>'
+        : (nPerm === "unsupported" || nPerm === "denied" ? '<small style="display:block;margin-top:4px;opacity:.78">📱 ' + T("للآيفون: أضف الموقع للشاشة الرئيسية (PWA) ليوصلك الإشعار برا الموقع", "iOS : ajoute à l'écran d'accueil pour les notifs") + '</small>' : '');
       return '<div class="bx" id="hzqbrkc" style="margin:6px 0 8px;padding:12px 14px;border-radius:16px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.35)">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
         '<div><b>☕ ' + T("وقت البريك (تيك توك / راحة)", "Temps de pause") + ' — <span id="hzqbrk-tm" dir="ltr">' + brkFmt(st.end - now) + '</span></b>' +
-        '<small style="display:block;opacity:.85">' + T("اطلع خد راحتك، وبس يخلص الوقت بيوصلك إشعار ترجع عالدرس 🔔", "Détends-toi, une notif te rappellera quand reprendre 🔔") + '</small></div>' +
+        '<small style="display:block;opacity:.85">' + T("اطلع خد راحتك، وبس يخلص الوقت بيقولك عثمان «تعا لهون وليه! 👀» 🔔", "Détends-toi, une notif te rappellera quand reprendre 🔔") + '</small>' + permHint + '</div>' +
         '<button type="button" class="btn sm" data-hzqbrk="stop">▶ ' + T("كمّل دراسة هلق", "Reprendre maintenant") + '</button></div></div>';
     }
     if (st.end && now >= st.end) {
@@ -1105,10 +1127,10 @@
     }
     return "";
   }
-  var WORKER = "https://summer-forest-fd40.abdullahjaber1452003.workers.dev";
+  var WORKER = (w.NursinAsk && w.NursinAsk.API) ? w.NursinAsk.API.replace(/\/+$/, "") : "";
   function brkPush(payload) {
     try {
-      var A = fbA(); if (!A || !A.user || !A.user.getIdToken) return;
+      var A = fbA(); if (!WORKER || !A || !A.user || !A.user.getIdToken) return;
       A.user.getIdToken().then(function (t) {
         var data = { t: t }, k;
         for (k in payload) if (Object.prototype.hasOwnProperty.call(payload, k)) data[k] = payload[k];
@@ -1123,7 +1145,7 @@
           var sw = (reg && reg.active) || navigator.serviceWorker.controller;
           if (sw && sw.postMessage) sw.postMessage(msg);
           if (msg.type === "nursin-break" && w.TimestampTrigger && reg && reg.showNotification) {
-            reg.showNotification(msg.title, { body: msg.body, tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" }, showTrigger: new w.TimestampTrigger(msg.end) }).catch(function () {});
+            reg.showNotification(msg.title, { body: msg.body, icon: "/assets/icon-192.png", tag: "nursin-break", renotify: true, dir: "rtl", lang: "ar", data: { u: "/#path" }, showTrigger: new w.TimestampTrigger(msg.end) }).catch(function () {});
           }
         }).catch(function () {});
       }
@@ -1131,6 +1153,10 @@
   }
   function brkAct(act) {
     var st = brkGet();
+    if (act === "perm") {
+      try { if (w.Notification && Notification.requestPermission) Notification.requestPermission().then(function () { draw(); }).catch(function () {}); } catch (e) {}
+      return;
+    }
     if (act === "skip" || act === "stop") { st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); brkPush({ cancel: true }); draw(); return; }
     if (act === "go") {
       st.offer = false; st.end = 0; st.notified = false; brkSet(st); brkSW({ type: "nursin-break-cancel" }); brkPush({ cancel: true }); draw();
@@ -1138,7 +1164,7 @@
       return;
     }
     var mins = (+act || 5), ttl = T("👨‍🏫 عثمان: تعا لهون وليه! 👀", "⏰ Pause terminée ! Reviens étudier 💪"), body = T("خلص البريك يلا عالدرس!", "Tes " + mins + " min de pause sont finies — continue ton parcours sur nursin");
-    try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().catch(function () {}); } catch (e) {}
+    try { if (w.Notification && Notification.permission === "default") Notification.requestPermission().then(function () { draw(); }).catch(function () {}); } catch (e) {}
     st.offer = false; st.mins = mins; st.end = Date.now() + mins * 60e3; st.notified = false; brkSet(st);
     brkSW({ type: "nursin-break", end: st.end, mins: mins, title: ttl, body: body });
     brkPush({ end: st.end, mins: mins, title: ttl, body: body, url: "/#path" });
@@ -1148,7 +1174,7 @@
     var st = brkGet(); if (!st.end) return;
     var left = st.end - Date.now(), tm = d.getElementById("hzqbrk-tm");
     if (left > 0) { if (tm) tm.textContent = brkFmt(left); return; }
-    if (!st.notified) { draw(); }
+    if (!st.notified) { st.notified = true; brkSet(st); brkBeep(); brkNotify(st.mins); draw(); }
   }
   function init() {
     root = d.getElementById("hz"); if (!root) return;

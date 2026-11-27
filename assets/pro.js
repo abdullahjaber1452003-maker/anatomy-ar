@@ -1,6 +1,6 @@
 (function (w, d) {
   "use strict";
-  var K = "nursin_pro_v1", TK = "nursin_pro_trial_v1", PK = "nursin_pro_preview_v1";
+  var K = "nursin_pro_v1", TK = "nursin_pro_trial_v1", PK = "nursin_pro_preview_v1", ADMK = "nursin_adm_v1";
   var UK = "nursin_pro_used_v1", NK = "nursin_pro_notif_v1", EVK = "nursin_eve_rem_v1", NDK = "nursin_pro_nudge_v1";
   var OWNER = "abdullahjaber1452003@gmail.com";
   var TRIAL_DAYS = 3, TRIAL_MS = TRIAL_DAYS * 864e5;
@@ -19,12 +19,18 @@
     catch (e) { return new Date().getHours(); }
   }
 
+  function normEm(s) { return String(s || "").trim().toLowerCase(); }
   function isRealAdmin() {
     try {
       var u = w.NursinFB && w.NursinFB.user;
-      if (u && u.email === OWNER) return true;
+      if (u && u.email) {
+        if (normEm(u.email) === OWNER) { lsSet(ADMK, 1); return true; }
+        lsSet(ADMK, 0);
+        return false;
+      }
       var me = (w.Nursin && w.Nursin.me) || lsGet("nursin_me_v1");
-      if (me && me.email === OWNER) return true;
+      if (me && normEm(me.email) === OWNER) { lsSet(ADMK, 1); return true; }
+      if (lsGet(ADMK) === 1) return true;
     } catch (e) {}
     return false;
   }
@@ -56,8 +62,10 @@
     if (pm === "expired") return { ok: false, mode: "expired", daysLeft: 0, hoursLeft: 0, elapsedHours: 73 };
     if (pm === "trial") return { ok: true, mode: "trial", daysLeft: 1, hoursLeft: 9, elapsedHours: 63 };
     var p = lsGet(K);
-    if (p && p.exp > Date.now()) {
-      var dLeft = Math.max(1, Math.ceil((p.exp - Date.now()) / 864e5));
+    var fbExp = (w.NursinFB && w.NursinFB.profile && +w.NursinFB.profile.proExp) || 0;
+    var exp = Math.max((p && +p.exp) || 0, fbExp);
+    if (exp > Date.now()) {
+      var dLeft = Math.max(1, Math.ceil((exp - Date.now()) / 864e5));
       return { ok: true, mode: "pro", daysLeft: dLeft, hoursLeft: dLeft * 24, elapsedHours: 0 };
     }
     var tr = ensureTrial();
@@ -174,12 +182,7 @@
   function barHtml() {
     css();
     var st = status(), rAdm = isRealAdmin(), pm = previewMode();
-    if (st.mode === "admin") {
-      return "<button type='button' class='probar adm' data-proopen><div><b>👑 أدمن · Pro مفعّل تلقائياً ✓</b><small>ولّد كود اشتراك لطالب أو جرّب معاينة الطالب</small></div><span class='protag free'>لوحة الأدمن</span></button>";
-    }
-    if (st.mode === "pro") {
-      return "<button type='button' class='probar adm' data-proopen><div><b>⭐ اشتراكك Pro مفعّل ✓</b><small>باقي " + st.daysLeft + " يوم · كل الميزات مفتوحة إلك</small></div><span class='protag free'>PRO ✓</span></button>";
-    }
+    if (st.mode === "admin" || st.mode === "pro") return "";
     if (st.mode === "trial") {
       var urgent = st.hoursLeft <= 12;
       var tTxt = st.hoursLeft <= 24 ? ("⏳ باقي " + st.hoursLeft + (st.hoursLeft <= 10 ? " ساعات" : " ساعة") + " بس!") : ("باقي " + st.daysLeft + " أيام مجاناً");

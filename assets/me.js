@@ -16,7 +16,13 @@
       return;
     }
     var g = N.progress ? N.progress(me.points | 0) : { level: 1, points: me.points | 0, pct: 0, left: 0 };
-    el.innerHTML = '<div class="meh">' + (N.avatar ? N.avatar(N.myPhoto ? N.myPhoto() : me.photo, me.name, "av meav") : "") + '<div><h2 dir="auto">' + esc((w.NursinName && w.NursinName.current().name) || me.name || T("أنا", "Moi")) + '</h2><p class="small"><b>Lv ' + g.level + "</b> · " + esc(T(g.points + " نقطة", g.points + " points")) + (g.left ? " · " + esc(T("باقي " + g.left + " للّيفل الجاي", "encore " + g.left + " pour le niveau suivant")) : "") + "</p>" +
+    var pst = w.NursinPro && w.NursinPro.status ? w.NursinPro.status() : null;
+    var isAdm = pst && pst.mode === "admin", isPr = pst && (pst.mode === "admin" || pst.mode === "pro");
+    var avRaw = N.avatar ? N.avatar(N.myPhoto ? N.myPhoto() : me.photo, me.name, "av meav") : "";
+    var avBox = isPr
+      ? '<span style="position:relative;display:inline-flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#0f766e,#f59e0b);box-shadow:0 0 12px rgba(245,158,11,.45);display:inline-flex">' + avRaw + '</span><button type="button" data-proopen style="margin-top:-10px;z-index:2;padding:2px 8px;border-radius:999px;border:1.5px solid var(--card,#fff);background:' + (isAdm ? 'linear-gradient(135deg,#0f766e,#f59e0b)' : 'linear-gradient(135deg,#f59e0b,#d97706)') + ';color:#fff;font:inherit;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap">' + (isAdm ? '👑 أدمن · PRO' : '⭐ PRO') + '</button></span>'
+      : avRaw;
+    el.innerHTML = '<div class="meh">' + avBox + '<div><h2 dir="auto">' + esc((w.NursinName && w.NursinName.current().name) || me.name || T("أنا", "Moi")) + '</h2><p class="small"><b>Lv ' + g.level + "</b> · " + esc(T(g.points + " نقطة", g.points + " points")) + (g.left ? " · " + esc(T("باقي " + g.left + " للّيفل الجاي", "encore " + g.left + " pour le niveau suivant")) : "") + "</p>" +
       '<i class="lvbar mebar"><i style="width:' + (g.pct | 0) + '%"></i></i></div></div><p><a class="btn" href="friends.html">' + esc(T("🏆 الليفل والترتيب", "🏆 Niveau et classement")) + '</a> <a class="btn" href="index.html#duel">' + esc(T("🎁 جوائز البطولة", "🎁 Prix du tournoi")) + '</a> <a class="btn" href="index.html#avatar">' + esc(T("🧑‍⚕️ غيّر صورتك", "🧑‍⚕️ Changer d'avatar")) + '</a> <a class="btn" href="me.html#ui-name" data-nm-open>' + esc(T("✏️ غيّر اسمك", "✏️ Changer ton nom")) + "</a></p>";
   }
   function push() {

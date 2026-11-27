@@ -714,8 +714,14 @@
     }
   }
   function proLockHtml(x) {
-    return '<div class="prolockbox"><h3>🔒 وضع التعلّم (PRO)</h3><p class="small">خلصت فترة التجربة المجانية (٣ أيام). فعّل اشتراك Pro بـ <b>$4 / شهر</b> عبر Whish Money لتكمل دراسة الدروس فقرة فقرة مع 🔒 قفل الإتقان و🧑‍🏫 بسّطلي.</p><p style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px"><button type="button" class="btn pri" id="lnprogo">⭐ فعّل Pro ($4/شهر)</button>' + (x ? '<a class="btn" href="' + esc(x.href) + '" target="_top">📄 افتح الدرس العادي (مجاني)</a>' : '<a class="btn" href="index.html" target="_top">🏠 رجوع للرئيسية</a>') + '</p></div>';
+    var rAdm = !!(w.NursinPro && w.NursinPro.isRealAdmin && w.NursinPro.isRealAdmin());
+    return '<div class="prolockbox"><h3>🔒 وضع التعلّم (PRO)</h3><p class="small">خلصت فترة التجربة المجانية (٣ أيام). فعّل اشتراك Pro بـ <b>$4 / شهر</b> عبر Whish Money لتكمل دراسة الدروس فقرة فقرة مع 🔒 قفل الإتقان و🧑‍🏫 بسّطلي.</p><p style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px">' +
+      (rAdm ? '<button type="button" class="btn pri" id="lnadmexit">👑 خروج من معاينة الطالب (فتح كأدمن)</button>' : '') +
+      '<button type="button" class="btn' + (rAdm ? '' : ' pri') + '" id="lnprogo">⭐ فعّل Pro ($4/شهر)</button>' +
+      (x ? '<a class="btn" href="' + esc(x.href) + '" target="_top">📄 افتح الدرس العادي (مجاني)</a>' : '<a class="btn" href="index.html" target="_top">🏠 رجوع للرئيسية</a>') +
+      '</p></div>';
   }
+  var proUnlocked = false;
   function boot(){try{
     root = d.getElementById("ln-app"); if (!root) return;
     var m = /[?&]u=([^&#]+)/.exec(w.location.search); U = m ? decodeURIComponent(m[1]) : "";
@@ -723,9 +729,12 @@
     if (w.NursinPro && !w.NursinPro.canUse()) {
       root.innerHTML = proLockHtml(X);
       var pb = d.getElementById("lnprogo"); if (pb) pb.onclick = function () { w.NursinPro.open("وضع التعلّم"); };
-      d.addEventListener("nursin:pro", function () { if (w.NursinPro.canUse()) w.location.reload(); });
+      var ax = d.getElementById("lnadmexit"); if (ax) ax.onclick = function () { w.NursinPro.setPreview(""); };
+      var retry = function () { if (!proUnlocked && w.NursinPro && w.NursinPro.canUse()) { proUnlocked = true; boot(); } };
+      ["nursin:pro", "nursin:auth", "nursin:me"].forEach(function (ev) { d.addEventListener(ev, retry); });
       return;
     }
+    proUnlocked = true;
     if (!U) { drawHub(); return; }
     if (!X) { root.innerHTML = '<p class="lnerr">' + T("ما لقيت هالدرس 🤔", "Leçon introuvable") + ' — <a href="index.html">🧭 ' + T("رجوع للمسار", "Retour") + "</a></p>"; return; }
     U = X.href; ctxKey = pkey(X);
