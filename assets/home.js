@@ -869,11 +869,11 @@
     return '<div class="hzv2-sechd">✨ ' + T("أدوات ومحتوى تفاعلي", "Outils & contenu") + '</div>' +
       '<div class="hzv2-qgrid">' +
       '<a class="hzv2-qbtn" href="mindmap.html">🗺️ <span>' + T("الخرائط الذهنية", "Cartes mentales") + '</span></a>' +
-      '<a class="hzv2-qbtn" href="reels.html">🎬 <span>' + T("أفلام ريلز", "Reels") + '</span></a>' +
       '<a class="hzv2-qbtn" href="podcast.html">🎙️ <span>' + T("البودكاست الصوتي", "Podcast") + '</span></a>' +
       '<a class="hzv2-qbtn" href="3d.html">🧊 <span>' + T("التشريح 3D", "Anatomie 3D") + '</span></a>' +
       '<a class="hzv2-qbtn" href="discuss.html">💬 <span>' + T("نقاش الطلاب", "Discussion") + '</span></a>' +
       '<a class="hzv2-qbtn" href="games.html">🎮 <span>' + T("ألعاب مراجعة", "Jeux") + '</span></a>' +
+      '<a class="hzv2-qbtn" href="notes.html">📒 <span>' + T("ملاحظاتي", "Mes notes") + '</span></a>' +
       '</div>' +
       '<div class="hzv2-sechd">🏆 ' + T("التحدّي والمتابعة", "Défis & suivi") + '</div>' +
       '<div class="hzmore-stack">' + plH +
