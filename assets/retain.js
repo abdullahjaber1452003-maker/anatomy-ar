@@ -473,7 +473,7 @@
   function row(x) {
     var p = d.createElement("p"); p.className = "rtrow"; p.setAttribute("data-k", pkey(x));
     p.innerHTML = '<button class="btn sm pri pqbtn" type="button" data-pq="' + esc(pkey(x)) + '">' + esc(T("📝 كويز هالجزء", "📝 Quiz de cette partie")) + '</button>' +
-      '<details class="rtmore" style="display:inline-block"><summary class="btn sm" style="list-style:none;cursor:pointer">⚙️ ' + esc(T("أدوات إضافية", "Plus d'outils")) + '</summary><span style="display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:6px">' +
+      '<details class="rtmore" style="display:inline-block;vertical-align:middle"><summary class="btn sm" style="list-style:none;cursor:pointer">🧠 ' + esc(T("ثبّت هالجزء ▾", "Mémoriser ▾")) + '</summary><span style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:8px;border-radius:12px;background:rgba(15,118,110,.06);border:1px solid rgba(15,118,110,.18)">' +
       '<button class="btn sm" type="button" data-ex="' + esc(pkey(x)) + '">' + esc(T("✍️ اشرحلي بكلامك", "✍️ Explique avec tes mots")) + '</button>' +
       '<button class="btn sm" type="button" data-teach="' + esc(pkey(x)) + '">' + esc(T("🧑‍🏫 علِّم عثمان", "🧑‍🏫 Enseigne à Osman")) + '</button>' +
       '<button class="btn sm" type="button" data-blank="' + esc(pkey(x)) + '">' + esc(T("📃 الورقة البيضا", "📃 Page blanche")) + '</button></span></details>';

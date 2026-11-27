@@ -23,6 +23,7 @@
     score: 0,
     ans: {},
     mPick: [],
+    retryQs: null,
     showCase: false
   };
 
@@ -226,21 +227,38 @@
         return '<button type="button" class="ltchip' + (st.qKey === k ? " on" : "") + '" data-ltqk="' + esc(k) + '">' + esc(Q[k].title.split("—")[0].trim()) + '</button>';
       }).join("");
 
-    var ex = getExamSet(st.qKey), qs = ex.qs || [];
-    var okN = 0;
-    qs.forEach(function (q, idx) { if (st.ans[idx] != null && isOk(q, st.ans[idx])) okN++; });
+    var ex = getExamSet(st.qKey), isRetry = !!(st.retryQs && st.retryQs.length), qs = isRetry ? st.retryQs : (ex.qs || []);
+    var okN = 0, missQs = [];
+    qs.forEach(function (q, idx) {
+      if (st.ans[idx] != null) {
+        if (isOk(q, st.ans[idx])) okN++;
+        else missQs.push(q);
+      }
+    });
     var score20 = qs.length ? Math.round((20 * okN) / qs.length) : 0;
 
     var qHtml = "";
     if (!qs.length) {
       qHtml = '<p class="small">⏳ عم نحمّل أسئلة الدورة…</p>';
     } else if (st.qi >= qs.length) {
+      var missHtml = missQs.length
+        ? '<div style="text-align:right;margin:12px 0;padding:10px 12px;border-radius:12px;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.22)">' +
+          '<b style="font-size:13.5px;display:block;margin-bottom:6px">❌ الأسئلة يلي غلطت فيها (' + missQs.length + '):</b>' +
+          '<ul style="margin:0;padding-inline-start:18px;font-size:13px;line-height:1.65">' +
+          missQs.map(function (mq) {
+            var ansTxt = ansArr(mq).map(function (i) { return mq.o[i]; }).join(" + ");
+            return '<li style="margin:4px 0">' + esc(mq.q) + '<br><small style="color:#15803d;font-weight:700">✅ ' + esc(ansTxt) + '</small></li>';
+          }).join("") + '</ul></div>'
+        : '<p class="small" style="color:#15803d;font-weight:700;margin:8px 0">🎉 علامة كاملة بدون ولا غلطة! بطل.</p>';
       qHtml =
         '<div style="text-align:center;padding:14px 6px">' +
-        '<h3 style="margin:0 0 6px;font-size:22px">🏁 نتيجتك الرسمية: ' + score20 + '/20</h3>' +
-        '<p class="small">جاوبت صح على <b>' + okN + '</b> من أصل <b>' + qs.length + '</b> سؤال من دورات LT الرسمية.</p>' +
-        '<p style="margin-top:10px"><button type="button" class="btn pri" data-ltact="restart">🔄 أعد هالدورة</button></p>' +
-        '</div>';
+        '<h3 style="margin:0 0 6px;font-size:22px">' + (isRetry ? '🎯 نتيجة التدريب على الأغلاط: ' + okN + '/' + qs.length : '🏁 نتيجتك الرسمية: ' + score20 + '/20') + '</h3>' +
+        '<p class="small">جاوبت صح على <b>' + okN + '</b> من أصل <b>' + qs.length + '</b> سؤال' + (isRetry ? ' من أغلاطك.' : ' من دورات LT الرسمية.') + '</p>' +
+        missHtml +
+        '<p style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
+        (missQs.length ? '<button type="button" class="btn pri" data-ltact="retry">🎯 درّبني على أغلاطي بهالدورة (' + missQs.length + ')</button>' : '') +
+        '<button type="button" class="btn' + (missQs.length ? '' : ' pri') + '" data-ltact="restart">' + (isRetry ? '📋 رجوع لكل أسئلة الدورة' : '🔄 أعد هالدورة') + '</button>' +
+        '</p></div>';
     } else {
       var q = qs[st.qi], picked = st.ans[st.qi], multi = isMulti(q), aa = ansArr(q);
       var pa = Array.isArray(picked) ? picked : (picked != null ? [picked] : []);
@@ -256,9 +274,10 @@
         fb = '<div class="ltfb' + (good ? "" : " w") + '">' +
           (good ? (multi ? "✅ <b>صح! إجابة كاملة.</b> " : "✅ <b>صح!</b> ") : (partial ? "⚠️ <b>إجابتك ناقصة! الجواب الكامل الصح: " + ansLet(q) + "</b> — " : "❌ <b>الجواب الصح: " + ansLet(q) + "</b> — ")) +
           esc(q.x || "") + '</div>' +
-          '<p style="margin:10px 0 0;text-align:left"><button type="button" class="btn pri" data-ltact="next">' + (st.qi + 1 < qs.length ? "السؤال التالي ←" : "شوف العلامة /20 🏁") + '</button></p>';
+          '<p style="margin:10px 0 0;text-align:left"><button type="button" class="btn pri" data-ltact="next">' + (st.qi + 1 < qs.length ? "السؤال التالي ←" : (isRetry ? "شوف النتيجة 🎯" : "شوف العلامة /20 🏁")) + '</button></p>';
       }
       qHtml =
+        (isRetry ? '<p style="margin:0 0 8px;padding:6px 10px;border-radius:10px;background:rgba(245,158,11,.14);color:#b45309;font-size:12.5px;font-weight:700">🎯 تدريب مركّز على أغلاطك بهالدورة (' + qs.length + ' سؤال)</p>' : '') +
         '<p class="small" style="display:flex;justify-content:space-between;margin:6px 0"><span><b>' + esc(ex.title) + '</b></span><span>سؤال ' + (st.qi + 1) + '/' + qs.length + ' · ✅ ' + okN + '</span></p>' +
         (multi ? '<p style="display:inline-block;margin:0 0 6px;padding:3px 9px;border-radius:999px;background:rgba(15,118,110,.12);color:#0f766e;font-size:12px;font-weight:700">☑️ اختار كل الإجابات الصح (أكثر من خيار)</p>' : '') +
         '<p style="font-size:16px;font-weight:700;line-height:1.65;margin:4px 0 8px">' + esc(q.q) + '</p>' +
@@ -417,15 +436,16 @@
         st.qYear = b.getAttribute("data-ltqy");
         var ks = keysForYear(st.qYear);
         st.qKey = st.qYear === "all" ? "all_year" : (ks[0] || "all_year");
-        st.qi = 0; st.ans = {}; st.mPick = []; st.showCase = false; render(root);
+        st.qi = 0; st.ans = {}; st.mPick = []; st.retryQs = null; st.showCase = false; render(root);
       };
     });
     [].forEach.call(root.querySelectorAll("[data-ltqk]"), function (b) {
-      b.onclick = function () { st.qKey = b.getAttribute("data-ltqk"); st.qi = 0; st.ans = {}; st.mPick = []; st.showCase = false; render(root); };
+      b.onclick = function () { st.qKey = b.getAttribute("data-ltqk"); st.qi = 0; st.ans = {}; st.mPick = []; st.retryQs = null; st.showCase = false; render(root); };
     });
     [].forEach.call(root.querySelectorAll("[data-ltopt]"), function (b) {
       b.onclick = function () {
-        var ex = getExamSet(st.qKey), q = (ex.qs || [])[st.qi];
+        var curQs = (st.retryQs && st.retryQs.length) ? st.retryQs : (getExamSet(st.qKey).qs || []);
+        var q = curQs[st.qi];
         if (!q || st.ans[st.qi] != null) return;
         var k = +b.getAttribute("data-ltopt");
         if (isMulti(q)) {
@@ -443,7 +463,14 @@
         var act = b.getAttribute("data-ltact");
         if (act === "msub") { if (!st.mPick.length) return; st.ans[st.qi] = st.mPick.slice().sort(function (a, b) { return a - b; }); st.mPick = []; render(root); }
         else if (act === "next") { st.qi++; st.mPick = []; render(root); }
-        else if (act === "restart") { st.qi = 0; st.ans = {}; st.mPick = []; render(root); }
+        else if (act === "retry") {
+          var curQs = (st.retryQs && st.retryQs.length) ? st.retryQs : (getExamSet(st.qKey).qs || []);
+          var missed = [];
+          curQs.forEach(function (q, idx) { if (st.ans[idx] != null && !isOk(q, st.ans[idx])) missed.push(q); });
+          if (!missed.length) return;
+          st.retryQs = missed; st.qi = 0; st.ans = {}; st.mPick = []; render(root);
+        }
+        else if (act === "restart") { st.qi = 0; st.ans = {}; st.mPick = []; st.retryQs = null; render(root); }
         else if (act === "togcase") { st.showCase = !st.showCase; render(root); }
       };
     });
